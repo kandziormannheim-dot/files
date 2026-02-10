@@ -1,0 +1,317 @@
+{
+  "wordpress_plugins": {
+    "required": [
+      {
+        "name": "Yoast SEO",
+        "slug": "wordpress-seo",
+        "version": "latest",
+        "purpose": "SEO optimization for better rankings",
+        "config": {
+          "enable_xml_sitemap": true,
+          "focus_keywords": true,
+          "readability_check": true
+        }
+      },
+      {
+        "name": "All in One WP Migration",
+        "slug": "all-in-one-wp-migration",
+        "version": "latest",
+        "purpose": "Backup and migration support",
+        "config": {
+          "enable_backups": true,
+          "backup_schedule": "daily"
+        }
+      },
+      {
+        "name": "WP Super Cache",
+        "slug": "wp-super-cache",
+        "version": "latest",
+        "purpose": "Performance optimization and caching",
+        "config": {
+          "enable_caching": true,
+          "cache_timeout": 3600,
+          "compress": true
+        }
+      },
+      {
+        "name": "Wordfence Security",
+        "slug": "wordfence",
+        "version": "latest",
+        "purpose": "Security hardening and monitoring",
+        "config": {
+          "enable_firewall": true,
+          "real_time_scans": true,
+          "email_alerts": true
+        }
+      }
+    ],
+    "recommended": [
+      {
+        "name": "MonsterInsights",
+        "slug": "google-analytics-for-wordpress",
+        "version": "latest",
+        "purpose": "Google Analytics integration",
+        "config": {
+          "track_affiliates": true,
+          "track_conversions": true
+        }
+      },
+      {
+        "name": "ThirstyAffiliates",
+        "slug": "thirstyaffiliates",
+        "version": "latest",
+        "purpose": "Affiliate link management",
+        "config": {
+          "cloak_links": true,
+          "track_clicks": true,
+          "redirect_slugs": "recommend,go"
+        }
+      },
+      {
+        "name": "Mailchimp for WordPress",
+        "slug": "mailchimp-for-wp",
+        "version": "latest",
+        "purpose": "Email list building",
+        "config": {
+          "enable_forms": true,
+          "double_optin": true
+        }
+      },
+      {
+        "name": "Elementor",
+        "slug": "elementor",
+        "version": "latest",
+        "purpose": "Page builder (if using theme that supports it)",
+        "config": {
+          "enable_responsive": true,
+          "enable_animations": true
+        }
+      }
+    ],
+    "optional": [
+      {
+        "name": "Akismet Anti-Spam",
+        "slug": "akismet",
+        "version": "latest",
+        "purpose": "Comment spam protection"
+      },
+      {
+        "name": "Simple Social Sharing",
+        "slug": "simple-share-buttons-adder",
+        "version": "latest",
+        "purpose": "Easy social sharing buttons"
+      },
+      {
+        "name": "Table of Contents Plus",
+        "slug": "table-of-contents-plus",
+        "version": "latest",
+        "purpose": "Auto-generate table of contents"
+      }
+    ]
+  },
+  "wordpress_theme": {
+    "recommended": "Neve",
+    "alternative": "Astra",
+    "config": {
+      "theme_colors": {
+        "primary": "#3b82f6",
+        "secondary": "#1e40af",
+        "accent": "#8b5cf6"
+      },
+      "fonts": {
+        "heading": "Playfair Display",
+        "body": "Open Sans"
+      },
+      "layout": {
+        "sidebar": "right",
+        "footer_columns": 4
+      },
+      "homepage": {
+        "use_static_page": true,
+        "page_template": "homepage"
+      }
+    }
+  },
+  "wordpress_settings": {
+    "general": {
+      "site_title": "AI Tools Guide",
+      "tagline": "Reviews and comparisons of the best AI tools",
+      "timezone": "Europe/Berlin",
+      "date_format": "d/m/Y",
+      "time_format": "H:i"
+    },
+    "reading": {
+      "posts_per_page": 10,
+      "posts_in_feed": 10,
+      "excerpt_length": 55
+    },
+    "discussion": {
+      "allow_comments": true,
+      "comment_moderation": true,
+      "require_name_email": true,
+      "close_comments_days": 30
+    },
+    "permalinks": {
+      "structure": "/%postname%/",
+      "category_base": "category",
+      "tag_base": "tag"
+    }
+  },
+  "wordpress_pages": [
+    {
+      "title": "Home",
+      "slug": "home",
+      "type": "homepage",
+      "status": "publish"
+    },
+    {
+      "title": "About",
+      "slug": "about",
+      "type": "page",
+      "content_snippet": "Learn about our mission to provide honest reviews...",
+      "status": "publish"
+    },
+    {
+      "title": "Contact",
+      "slug": "contact",
+      "type": "page",
+      "has_form": true,
+      "status": "publish"
+    },
+    {
+      "title": "Privacy Policy",
+      "slug": "privacy-policy",
+      "type": "legal",
+      "auto_generate": true,
+      "status": "publish"
+    },
+    {
+      "title": "Terms of Service",
+      "slug": "terms",
+      "type": "legal",
+      "auto_generate": true,
+      "status": "publish"
+    },
+    {
+      "title": "Affiliate Disclosure",
+      "slug": "affiliate-disclosure",
+      "type": "legal",
+      "content_snippet": "This website contains affiliate links...",
+      "status": "publish"
+    }
+  ],
+  "wordpress_menus": [
+    {
+      "location": "primary",
+      "name": "Main Menu",
+      "items": [
+        {
+          "title": "Home",
+          "url": "/"
+        },
+        {
+          "title": "Reviews",
+          "url": "/category/reviews"
+        },
+        {
+          "title": "Comparisons",
+          "url": "/category/comparisons"
+        },
+        {
+          "title": "About",
+          "url": "/about"
+        },
+        {
+          "title": "Contact",
+          "url": "/contact"
+        }
+      ]
+    },
+    {
+      "location": "footer",
+      "name": "Footer Menu",
+      "items": [
+        {
+          "title": "Privacy Policy",
+          "url": "/privacy-policy"
+        },
+        {
+          "title": "Terms",
+          "url": "/terms"
+        },
+        {
+          "title": "Contact",
+          "url": "/contact"
+        },
+        {
+          "title": "Affiliate Disclosure",
+          "url": "/affiliate-disclosure"
+        }
+      ]
+    }
+  ],
+  "yoast_seo_settings": {
+    "xml_sitemap": {
+      "enabled": true,
+      "show_posts": true,
+      "show_pages": true,
+      "show_categories": true,
+      "show_tags": true
+    },
+    "readability": {
+      "enabled": true,
+      "target_language": "de"
+    },
+    "advanced": {
+      "enable_advanced_settings": true,
+      "enable_metabox": true
+    }
+  },
+  "security_settings": {
+    "ssl": {
+      "enabled": true,
+      "provider": "letsencrypt",
+      "auto_renew": true
+    },
+    "xmlrpc": {
+      "enabled": true,
+      "comment_pingback": true
+    },
+    "file_permissions": {
+      "wp_content": "755",
+      "uploads": "755",
+      "config": "600"
+    },
+    "user_roles": {
+      "admin": "admin_user",
+      "editor": "editor",
+      "author": "author"
+    }
+  },
+  "performance_settings": {
+    "caching": {
+      "page_cache": true,
+      "browser_cache": true,
+      "cache_timeout": 3600
+    },
+    "cdn": {
+      "enabled": false,
+      "provider": "cloudflare"
+    },
+    "images": {
+      "lazy_load": true,
+      "compression": true,
+      "max_width": 1200
+    }
+  },
+  "installation_notes": {
+    "step1": "Install required plugins via WordPress admin",
+    "step2": "Configure Yoast SEO with focus keywords",
+    "step3": "Enable WP Super Cache for performance",
+    "step4": "Setup Wordfence with email alerts",
+    "step5": "Configure ThirstyAffiliates for link cloaking",
+    "step6": "Setup Mailchimp form for email collection",
+    "step7": "Configure Google Analytics via MonsterInsights",
+    "step8": "Test all functionality before launch"
+  }
+}

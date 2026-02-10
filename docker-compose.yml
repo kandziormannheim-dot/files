@@ -1,0 +1,302 @@
+version: '3.8'
+
+# ===============================================
+# AFFILIATE AUTOMATION - DOCKER COMPOSE SETUP
+# ===============================================
+# Optional: Use this for containerized deployment
+# Usage: docker-compose up -d
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: affiliate_postgres
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-affiliate_db}
+      POSTGRES_USER: ${DATABASE_USER:-affiliate_user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-change_me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database_schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - affiliate_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-affiliate_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # pgAdmin - PostgreSQL Management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: affiliate_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - affiliate_network
+    restart: unless-stopped
+
+  # Redis - Caching
+  redis:
+    image: redis:7-alpine
+    container_name: affiliate_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - affiliate_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # n8n - Workflow Automation
+  n8n:
+    image: n8n:latest
+    container_name: affiliate_n8n
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${DATABASE_NAME:-affiliate_db}
+      - DB_POSTGRESDB_USER=${DATABASE_USER:-affiliate_user}
+      - DB_POSTGRESDB_PASSWORD=${DATABASE_PASSWORD:-change_me}
+      - N8N_HOST=n8n.${MAIN_DOMAIN:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_TUNNEL_URL=https://n8n.${MAIN_DOMAIN:-localhost}/
+      - GENERIC_TIMEZONE=${TIMEZONE:-Europe/Berlin}
+    ports:
+      - "5678:5678"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - affiliate_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # WordPress 1 - AI Tools Guide
+  wordpress_ai:
+    image: wordpress:latest
+    container_name: affiliate_wordpress_ai
+    environment:
+      WORDPRESS_DB_HOST: postgres
+      WORDPRESS_DB_NAME: ${DATABASE_NAME:-affiliate_db}
+      WORDPRESS_DB_USER: ${DATABASE_USER:-affiliate_user}
+      WORDPRESS_DB_PASSWORD: ${DATABASE_PASSWORD:-change_me}
+      WORDPRESS_TABLE_PREFIX: ai_
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_MEMORY_LIMIT', '256M');
+        define('JETPACK_DEV_DEBUG', false);
+    ports:
+      - "8001:80"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - wordpress_ai_data:/var/www/html
+      - ./wordpress_plugin_config.json:/tmp/plugin_config.json:ro
+    networks:
+      - affiliate_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/wp-admin/admin-ajax.php?action=heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # WordPress 2 - Freelancer Tools
+  wordpress_freelancer:
+    image: wordpress:latest
+    container_name: affiliate_wordpress_freelancer
+    environment:
+      WORDPRESS_DB_HOST: postgres
+      WORDPRESS_DB_NAME: ${DATABASE_NAME:-affiliate_db}
+      WORDPRESS_DB_USER: ${DATABASE_USER:-affiliate_user}
+      WORDPRESS_DB_PASSWORD: ${DATABASE_PASSWORD:-change_me}
+      WORDPRESS_TABLE_PREFIX: freelancer_
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_MEMORY_LIMIT', '256M');
+        define('JETPACK_DEV_DEBUG', false);
+    ports:
+      - "8002:80"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - wordpress_freelancer_data:/var/www/html
+      - ./wordpress_plugin_config.json:/tmp/plugin_config.json:ro
+    networks:
+      - affiliate_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/wp-admin/admin-ajax.php?action=heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # WordPress 3 - Gaming Gear Reviews
+  wordpress_gaming:
+    image: wordpress:latest
+    container_name: affiliate_wordpress_gaming
+    environment:
+      WORDPRESS_DB_HOST: postgres
+      WORDPRESS_DB_NAME: ${DATABASE_NAME:-affiliate_db}
+      WORDPRESS_DB_USER: ${DATABASE_USER:-affiliate_user}
+      WORDPRESS_DB_PASSWORD: ${DATABASE_PASSWORD:-change_me}
+      WORDPRESS_TABLE_PREFIX: gaming_
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_MEMORY_LIMIT', '256M');
+        define('JETPACK_DEV_DEBUG', false);
+    ports:
+      - "8003:80"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - wordpress_gaming_data:/var/www/html
+      - ./wordpress_plugin_config.json:/tmp/plugin_config.json:ro
+    networks:
+      - affiliate_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/wp-admin/admin-ajax.php?action=heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: affiliate_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - n8n
+      - wordpress_ai
+      - wordpress_freelancer
+      - wordpress_gaming
+    networks:
+      - affiliate_network
+    restart: unless-stopped
+
+  # Application Service (Python Scripts)
+  app:
+    image: python:3.11-slim
+    container_name: affiliate_app
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=${DATABASE_NAME:-affiliate_db}
+      - DATABASE_USER=${DATABASE_USER:-affiliate_user}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-change_me}
+      - REDIS_URL=redis://redis:6379/0
+      - N8N_URL=http://n8n:5678
+      - N8N_API_KEY=${N8N_API_KEY}
+      - OPENCLAW_API_KEY=${OPENCLAW_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./:/app
+      - ./backups:/app/backups
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+      - n8n
+    networks:
+      - affiliate_network
+    command: /bin/bash -c "pip install -r requirements.txt && tail -f /dev/null"
+    restart: unless-stopped
+
+  # Backup Service (Optional)
+  backup:
+    image: python:3.11-slim
+    container_name: affiliate_backup
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=${DATABASE_NAME:-affiliate_db}
+      - DATABASE_USER=${DATABASE_USER:-affiliate_user}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-change_me}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+    volumes:
+      - ./:/app
+      - ./backups:/app/backups
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+    networks:
+      - affiliate_network
+    command: /bin/bash -c "pip install -r requirements.txt && python3 backup_manager.py --action full --s3"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  n8n_data:
+    driver: local
+  wordpress_ai_data:
+    driver: local
+  wordpress_freelancer_data:
+    driver: local
+  wordpress_gaming_data:
+    driver: local
+
+networks:
+  affiliate_network:
+    driver: bridge
+
+# ===============================================
+# DOCKER COMPOSE USAGE
+# ===============================================
+# 
+# Start all services:
+#   docker-compose up -d
+#
+# View logs:
+#   docker-compose logs -f
+#
+# Stop services:
+#   docker-compose down
+#
+# Remove all volumes:
+#   docker-compose down -v
+#
+# Access services:
+#   - WordPress AI:        http://localhost:8001
+#   - WordPress Freelancer: http://localhost:8002
+#   - WordPress Gaming:    http://localhost:8003
+#   - n8n:                 http://localhost:5678
+#   - pgAdmin:             http://localhost:5050
+#   - Nginx:               http://localhost:80
+#
+# ===============================================

@@ -1,0 +1,368 @@
+# Affiliate Business Automation - Master Configuration
+# =======================================================
+# Complete configuration for all three niche sites
+
+niches:
+  - niche: ai_tools
+    domain: ai-tools-guide.com
+    email: admin@ai-tools-guide.com
+    site_name: AI Tools Guide - Reviews & Comparisons
+    admin_user: admin_ai_tools
+    admin_password: CHANGEME_GENERATE_STRONG_PASSWORD_HERE
+    hosting_provider: kinsta  # Options: kinsta, siteground, bluehost
+    server_location: eu-west-1
+    theme: neve  # WordPress theme
+    affiliate_focus:
+      - copy_ai
+      - jasper
+      - heygen
+      - midjourney
+      - adobe_firefly
+
+  - niche: freelancer_tools
+    domain: freelancer-tools.com
+    email: admin@freelancer-tools.com
+    site_name: Freelancer Tools Hub
+    admin_user: admin_freelancer
+    admin_password: CHANGEME_GENERATE_STRONG_PASSWORD_HERE
+    hosting_provider: kinsta
+    server_location: eu-west-1
+    theme: astra
+    affiliate_focus:
+      - monday_com
+      - clickup
+      - asana
+      - zapier
+      - freshbooks
+      - calendly
+
+  - niche: gaming_periphery
+    domain: gaming-gear-reviews.com
+    email: admin@gaming-gear-reviews.com
+    site_name: Gaming Gear Reviews & Setups
+    admin_user: admin_gaming
+    admin_password: CHANGEME_GENERATE_STRONG_PASSWORD_HERE
+    hosting_provider: kinsta
+    server_location: eu-west-1
+    theme: neve
+    affiliate_focus:
+      - logitech
+      - steelseries
+      - corsair
+      - razer
+      - benq
+      - amazon_associates
+
+# ===== INFRASTRUCTURE SETUP =====
+
+server:
+  type: vps  # Options: vps, dedicated, shared (recommended: vps)
+  provider: linode  # Options: linode, digitalocean, vultr, hetzner
+  os: ubuntu_24.04_lts
+  region: eu-central-1  # EU recommended for GDPR
+  specs:
+    cpu: 4_cores
+    ram: 8gb
+    storage: 160gb_ssd
+    bandwidth: unlimited
+
+plesk:
+  username: admin
+  password: CHANGEME_PLESK_ADMIN_PASSWORD
+  server_ip: YOUR_SERVER_IP_HERE
+  port: 8443
+  ssl_enabled: true
+  backup_enabled: true
+  auto_update: true
+
+# ===== EMAIL & DOMAIN SETUP =====
+
+email:
+  provider: google_workspace  # Options: google_workspace, zoho, protonmail
+  domain: CHOOSE_YOUR_PARENT_DOMAIN.com
+  admin_email: admin@CHOOSE_YOUR_PARENT_DOMAIN.com
+  smtp_host: smtp.gmail.com
+  smtp_port: 587
+  smtp_user: YOUR_GMAIL_ADDRESS@gmail.com
+  smtp_password: YOUR_GMAIL_APP_PASSWORD  # Generate at myaccount.google.com/apppasswords
+  imap_enabled: true
+
+dns:
+  provider: cloudflare  # Options: cloudflare, route53, namecheap
+  cloudflare_email: your-email@gmail.com
+  cloudflare_api_key: YOUR_CLOUDFLARE_API_KEY
+  cloudflare_zone_id: YOUR_ZONE_ID
+
+# ===== CONTENT AUTOMATION SETUP =====
+
+openclaw:
+  api_key: CHANGEME_OPENCLAW_API_KEY
+  api_endpoint: https://api.openclaw.io/v1
+  
+  # Content generation schedule
+  content_generation:
+    # Each niche generates content daily
+    daily_articles: 2  # Articles to generate per day
+    words_per_article: 1500
+    include_seo_optimization: true
+    include_affiliate_links: true
+    auto_publish: true
+    publish_time: "06:00"  # UTC time
+    
+  templates_enabled:
+    - reviews
+    - comparisons
+    - listicles
+    - guides
+    - case_studies
+    - tutorials
+  
+  ai_model: gpt-4  # Options: gpt-4, claude-3, gpt-3.5-turbo
+  language: german  # Primary language
+  tone: professional_friendly
+
+# ===== n8n WORKFLOW AUTOMATION =====
+
+n8n:
+  url: https://n8n.CHOOSE_YOUR_PARENT_DOMAIN.com
+  port: 5678
+  api_key: CHANGEME_N8N_API_KEY
+  database: postgres  # Store workflows in PostgreSQL
+  
+  workflows:
+    wordpress_auto_publisher:
+      enabled: true
+      schedule: "0 6 * * *"  # Daily at 6 AM
+      articles_per_run: 2
+      
+    social_media_distributor:
+      enabled: true
+      platforms: ["linkedin", "reddit", "facebook", "twitter", "pinterest"]
+      schedule: "0 */4 * * *"  # Every 4 hours
+      
+    affiliate_link_tracker:
+      enabled: true
+      schedule: "0 22 * * *"  # Daily at 10 PM
+      track_conversions: true
+      
+    email_newsletter:
+      enabled: true
+      schedule: "0 9 * * 3"  # Wednesday 9 AM
+      recipients_from: newsletter_subscribers
+      
+    seo_monitoring:
+      enabled: true
+      schedule: "0 12 * * *"  # Daily at noon
+      check_rankings: true
+      
+    backup_automation:
+      enabled: true
+      schedule: "0 2 * * *"  # Daily at 2 AM
+      backup_to: s3  # S3 bucket for backups
+
+# ===== SOCIAL MEDIA ACCOUNTS =====
+
+social_media:
+  linkedin:
+    enabled: true
+    account_type: company_page
+    posting_frequency: 3  # posts per week
+    hashtags_per_post: 5
+    automation_tool: n8n
+    
+  reddit:
+    enabled: true
+    account_name: CHOOSE_HANDLE
+    subreddits_to_post:
+      ai_tools:
+        - r/ChatGPT
+        - r/Midjourney
+        - r/OpenAI
+        - r/entrepreneurship
+      freelancer_tools:
+        - r/freelance
+        - r/entrepreneur
+        - r/remotework
+        - r/productivityapps
+      gaming:
+        - r/gaming
+        - r/buildapc
+        - r/headphones
+        - r/valorant
+    posting_frequency: 5  # posts per week
+    automation_tool: praw  # Python Reddit API
+    
+  facebook:
+    enabled: true
+    groups_to_join: 15  # Join 15 relevant groups
+    posting_frequency: 3  # posts per week
+    automation_tool: n8n
+    
+  twitter:
+    enabled: true
+    account_name: CHOOSE_HANDLE
+    posting_frequency: 3  # tweets per day
+    hashtags_per_tweet: 3
+    automation_tool: n8n
+    
+  pinterest:
+    enabled: true
+    account_type: business
+    pins_per_day: 10
+    boards: 5  # Create 5 boards per niche
+    automation_tool: buffer
+    
+  youtube:
+    enabled: false  # Optional - can be added later
+    channel_type: product_reviews
+
+# ===== AFFILIATE PROGRAMS =====
+
+affiliate_networks:
+  awin:
+    enabled: true
+    username: YOUR_AWIN_USERNAME
+    api_key: YOUR_AWIN_API_KEY
+    programs: 50+  # Access to 50+ programs
+    
+  shareasale:
+    enabled: true
+    username: YOUR_SHAREASALE_USERNAME
+    api_key: YOUR_SHAREASALE_API_KEY
+    programs: 30+
+    
+  cj_affiliate:
+    enabled: true
+    username: YOUR_CJ_USERNAME
+    api_key: YOUR_CJ_API_KEY
+    programs: 40+
+
+affiliate_programs:
+  # AI Tools
+  jasper_ai:
+    enabled: true
+    commission: 30_percent_recurring
+    link: https://jasper.ai/ref/YOURUSERNAME
+    tracking: enabled
+    
+  copy_ai:
+    enabled: true
+    commission: 25_percent_recurring
+    link: https://copy.ai?via=YOURUSERNAME
+    tracking: enabled
+    
+  heygen:
+    enabled: true
+    commission: 25_percent
+    link: https://heygen.com/affiliates/YOURUSERNAME
+    tracking: enabled
+    
+  # Freelancer Tools
+  monday_com:
+    enabled: true
+    commission: 25_percent_recurring
+    link: https://monday.com/?r=YOURUSERNAME
+    tracking: enabled
+    
+  clickup:
+    enabled: true
+    commission: 30_percent_recurring
+    link: https://clickup.com/?invite=YOURUSERNAME
+    tracking: enabled
+    
+  zapier:
+    enabled: true
+    commission: 30_percent_recurring
+    link: https://zapier.com/partners/affiliate/YOURUSERNAME
+    tracking: enabled
+    
+  # Gaming
+  amazon_associates:
+    enabled: true
+    commission: 1_to_10_percent
+    associate_id: YOUR_AMAZON_ASSOCIATE_ID
+    tracking: enabled
+
+# ===== ANALYTICS & MONITORING =====
+
+analytics:
+  google_analytics:
+    enabled: true
+    tracking_id: UA-XXXXXXXXX-X
+    goals_configured: true
+    
+  hotjar:
+    enabled: true
+    site_id: YOUR_HOTJAR_ID
+    
+  affiliate_tracking:
+    database: postgres
+    track_metrics:
+      - clicks
+      - conversions
+      - revenue
+      - roi
+    reporting_frequency: daily
+
+dashboard:
+  enabled: true
+  url: https://dashboard.CHOOSE_YOUR_PARENT_DOMAIN.com
+  refresh_interval: 15  # minutes
+  widgets:
+    - total_revenue
+    - conversions_this_month
+    - top_affiliate_programs
+    - content_published
+    - social_engagement
+    - traffic_sources
+
+# ===== BACKUP & SECURITY =====
+
+backup:
+  enabled: true
+  frequency: daily
+  storage_location: aws_s3  # AWS S3 bucket
+  s3_bucket: affiliate-backups-YOURNAME
+  s3_region: eu-central-1
+  retention_days: 90
+  
+ssl:
+  provider: lets_encrypt  # Free SSL
+  auto_renew: true
+  certificate_email: admin@CHOOSE_YOUR_PARENT_DOMAIN.com
+
+security:
+  two_factor_enabled: true
+  ip_whitelist_enabled: false
+  rate_limiting: true
+  spam_protection: true
+
+# ===== API KEYS & SECRETS =====
+# Store these in environment variables, NOT in this file!
+# Example: export OPENCLAW_API_KEY="your-key-here"
+
+environment_variables:
+  OPENCLAW_API_KEY: "YOUR_KEY"
+  N8N_API_KEY: "YOUR_KEY"
+  WORDPRESS_ADMIN_PASSWORD: "YOUR_KEY"
+  PLESK_ADMIN_PASSWORD: "YOUR_KEY"
+  AWIN_API_KEY: "YOUR_KEY"
+  SHAREASALE_API_KEY: "YOUR_KEY"
+  SMTP_PASSWORD: "YOUR_KEY"
+  CLOUDFLARE_API_KEY: "YOUR_KEY"
+  AWS_ACCESS_KEY_ID: "YOUR_KEY"
+  AWS_SECRET_ACCESS_KEY: "YOUR_KEY"
+
+# ===== MAINTENANCE & MONITORING =====
+
+maintenance:
+  wordpress_updates: automatic
+  plugin_updates: automatic
+  php_version: "8.2"
+  mysql_version: "8.0"
+  
+monitoring:
+  uptime_monitoring: enabled
+  error_tracking: enabled
+  performance_monitoring: enabled
+  security_scanning: enabled
