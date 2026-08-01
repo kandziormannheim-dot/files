@@ -1,0 +1,53 @@
+--- a/setup-neos24.sh
++++ b/setup-neos24.sh
+@@ -80,15 +80,45 @@
+   bash "$REPO_DIR/scripts/bootstrap-vps.sh" "${BOOTSTRAP_ARGS[@]}"
+ 
+ # ---------------------------------------------------------------------------
+-log "3. Fehlende Migrationen 004-008 nachziehen"
++log "3. Fehlende Migrationen nachziehen (nur Schema, keine Mikra-Mandantendaten)"
+ # ---------------------------------------------------------------------------
+ # create-db.sh spielt nur 001-003 ein. Der Rest (dedup, health, seo_qa ...) fehlt sonst.
++#
++# ACHTUNG: hier stand frueher ein Glob 00[4-9]_*.sql. Der zieht auch
++# 005_mikra_config.sql und 006_mikra_domains.sql mit — beides Mikra-Webtec-
++# MANDANTENDATEN, keine Schema-Migrationen. 006 legt per INSERT drei aktive
++# Mikra-Projekte (.at/.ch/.com) an; das WHERE NOT EXISTS darin schuetzt nur
++# gegen Doppel-Anlage, nicht gegen die falsche Instanz. Ergebnis waere gewesen:
++# drei fremde, aktive Projekte im neos24-Dashboard, die der 06:00-Deploy-Job
++# taeglich anfasst und die ohne Vault-Credential Fehler-Alerts produzieren.
++#
++# Deshalb eine EXPLIZITE Liste statt eines Globs. 005a_schema_only.sql enthaelt
++# die DDL aus 005 (writer_guidance-Spalte, ftp-Protokoll) ohne die Mikra-Daten
++# und vermerkt 005+006 im schema_migrations-Ledger.
++MIGRATIONS=(
++    004_dedup.sql
++    005a_schema_only.sql   # Ersatz fuer 005_mikra_config.sql (nur DDL)
++    # 006_mikra_domains.sql — BEWUSST AUSGELASSEN, Mikra-Mandantendaten
++    007_health.sql
++    008_seo_qa.sql
++)
++
+ if [[ -f /etc/aiva/db.cnf ]]; then
+-    for mig in "$REPO_DIR"/database/migrations/00[4-9]_*.sql; do
+-        [[ -f "$mig" ]] || continue
+-        mysql --defaults-file=/etc/aiva/db.cnf < "$mig" && ok "eingespielt: $(basename "$mig")" \
+-            || warn "Migration $(basename "$mig") uebersprungen (evtl. schon drin)"
++    for name in "${MIGRATIONS[@]}"; do
++        mig="$REPO_DIR/database/migrations/$name"
++        if [[ ! -f "$mig" ]]; then
++            warn "Migration $name nicht gefunden unter $REPO_DIR/database/migrations/ - uebersprungen"
++            continue
++        fi
++        mysql --defaults-file=/etc/aiva/db.cnf < "$mig" && ok "eingespielt: $name" \
++            || warn "Migration $name uebersprungen (evtl. schon drin)"
+     done
++
++    # Kontrolle: welche Versionen sind jetzt drin?
++    echo
++    mysql --defaults-file=/etc/aiva/db.cnf -e \
++        'SELECT version, note FROM schema_migrations ORDER BY version;' 2>/dev/null \
++        || warn "schema_migrations nicht lesbar"
+ else
+     warn "/etc/aiva/db.cnf fehlt - DB-Schritt im Bootstrap wurde offenbar uebersprungen."
+ fi
