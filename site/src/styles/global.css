@@ -1,0 +1,413 @@
+/* ==========================================================================
+   kandzior.de — Grundlagen
+
+   Reihenfolge: fonts.css → tokens.css → global.css
+   Hier steht ausschließlich, was für jedes Dokument gilt. Alles Bereichs-
+   spezifische lebt in der jeweiligen Komponente.
+
+   Regel aus Phase 4: keine hartkodierten Werte. Jede Größe, Farbe, Dauer und
+   Rundung kommt aus einem Token.
+   ========================================================================== */
+
+/* --- Reset ---------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  /* Sprünge der Ankernavigation laufen weich, außer bei Bewegungsreduktion.
+     scroll-padding hält die Zielüberschrift unter der klebenden Kopfzeile. */
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-height) + var(--space-5));
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  min-height: 100svh;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  font-weight: var(--font-weight-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition:
+    background-color var(--duration-normal) var(--easing-default),
+    color var(--duration-normal) var(--easing-default);
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+li {
+  overflow-wrap: break-word;
+}
+
+ul[role="list"],
+ol[role="list"] {
+  list-style: none;
+  padding: 0;
+}
+
+/* --- Typografische Grundstufen -------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-snug);
+  letter-spacing: var(--letter-spacing-tight);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-extra);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tighter);
+}
+
+h2 {
+  font-size: var(--font-size-2xl);
+}
+
+h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+h4 {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--color-text-link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--duration-fast) var(--easing-default);
+}
+
+a:hover {
+  color: var(--color-text-link-hover);
+}
+
+strong,
+b {
+  font-weight: var(--font-weight-semibold);
+}
+
+small {
+  font-size: var(--font-size-sm);
+}
+
+/* --- Fokus ----------------------------------------------------------------
+   Sichtbar auf jedem bedienbaren Element, in beiden Themes über 3:1.
+   `:focus-visible` statt `:focus`, damit ein Mausklick keinen Ring erzeugt —
+   die Tastaturbedienung bleibt davon unberührt.
+   -------------------------------------------------------------------------- */
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-border-focus);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* --- Wiederkehrende Bausteine --------------------------------------------- */
+
+.container {
+  width: 100%;
+  max-width: var(--max-width-page);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.container--wide {
+  max-width: var(--max-width-wide);
+}
+
+.container--narrow {
+  max-width: var(--max-width-narrow);
+}
+
+.section {
+  padding-block: var(--space-section);
+}
+
+.section--tight {
+  padding-block: var(--space-section-tight);
+}
+
+.section--banded {
+  background-color: var(--color-bg-secondary);
+}
+
+.prose {
+  max-width: var(--max-width-content);
+}
+
+.prose p + p {
+  margin-top: var(--space-4);
+}
+
+.prose--relaxed {
+  line-height: var(--line-height-relaxed);
+}
+
+/* Versalien-Label — greift die gesperrte Wortmarke MARTIN KANDZIOR auf */
+.eyebrow {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-wider);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Sprungmarke — erstes fokussierbares Element im Dokument */
+.skip-link {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: var(--z-skip-link);
+  padding: var(--space-3) var(--space-5);
+  background-color: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(calc(-100% - var(--space-6)));
+  transition: transform var(--duration-fast) var(--easing-out);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  color: var(--color-text-on-accent);
+}
+
+/* --- Knöpfe ---------------------------------------------------------------
+   Zwei Varianten, mehr nicht. Pro Bildschirmhöhe existiert genau eine
+   primäre Ausprägung — sonst gibt es keine Hierarchie mehr.
+   -------------------------------------------------------------------------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--button-height);
+  min-width: var(--target-min);
+  padding-inline: var(--button-padding-x);
+  border-radius: var(--button-radius);
+  font-family: var(--font-family-display);
+  font-size: var(--button-font-size);
+  font-weight: var(--button-font-weight);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-fast) var(--easing-default),
+    color var(--duration-fast) var(--easing-default),
+    border-color var(--duration-fast) var(--easing-default),
+    box-shadow var(--duration-fast) var(--easing-default),
+    transform var(--duration-fast) var(--easing-default);
+}
+
+.button--primary {
+  background-color: var(--color-accent-fill);
+  color: var(--color-text-on-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.button--primary:hover {
+  background-color: var(--color-accent-fill-hover);
+  color: var(--color-text-on-accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(var(--lift-button));
+}
+
+.button--primary:active {
+  background-color: var(--color-accent-fill-active);
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.button--secondary {
+  background-color: transparent;
+  color: var(--color-text-primary);
+  border: var(--border-width) solid var(--color-border-strong);
+}
+
+.button--secondary:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+  transform: translateY(var(--lift-button));
+}
+
+.button--secondary:active {
+  transform: translateY(0);
+}
+
+.button--sm {
+  min-height: var(--button-height-sm);
+  font-size: var(--font-size-sm);
+  padding-inline: var(--space-4);
+}
+
+.button[disabled],
+.button[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* --- Karte ---------------------------------------------------------------- */
+
+.card {
+  background-color: var(--card-bg);
+  border: var(--border-width) solid var(--card-border);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  box-shadow: var(--card-shadow);
+  transition:
+    transform var(--duration-normal) var(--easing-out),
+    box-shadow var(--duration-normal) var(--easing-out),
+    border-color var(--duration-normal) var(--easing-out);
+}
+
+/* Hebung bei Zeigergerät UND bei Tastaturfokus — nicht nur bei Hover.
+   Eine Karte, die nur auf die Maus reagiert, ist für die Tastatur unsichtbar. */
+.card--interactive:hover,
+.card--interactive:focus-within {
+  transform: translateY(var(--lift-card));
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* --- Formularelemente ------------------------------------------------------ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field__label {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.field__control {
+  width: 100%;
+  min-height: var(--input-height);
+  padding: var(--space-3) var(--input-padding-x);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  border: var(--border-width) solid var(--input-border);
+  border-radius: var(--input-radius);
+  transition:
+    border-color var(--duration-fast) var(--easing-default),
+    box-shadow var(--duration-fast) var(--easing-default);
+}
+
+textarea.field__control {
+  min-height: var(--textarea-min-height);
+  resize: vertical;
+  line-height: var(--line-height-normal);
+}
+
+.field__control::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.field__control:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.field__control[aria-invalid="true"] {
+  border-color: var(--color-status-error);
+  border-width: var(--border-width-strong);
+}
+
+.field__error {
+  font-size: var(--font-size-sm);
+  color: var(--color-status-error);
+}
+
+.field__hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+/* --- Trennlinie ------------------------------------------------------------ */
+
+.rule {
+  height: var(--border-width);
+  border: 0;
+  background-color: var(--color-border-primary);
+}

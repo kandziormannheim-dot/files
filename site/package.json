@@ -1,0 +1,22 @@
+{
+  "name": "kandzior-de",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Persoenliche Expertise-Website Martin Kandzior",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "npm run sync:tokens && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "sync:tokens": "node scripts/sync-tokens.mjs",
+    "sync:fonts": "node scripts/sync-fonts.mjs"
+  },
+  "dependencies": {
+    "astro": "^5.14.1"
+  },
+  "devDependencies": {
+    "@fontsource-variable/plus-jakarta-sans": "^5.2.6",
+    "@fontsource/be-vietnam-pro": "^5.2.6"
+  }
+}

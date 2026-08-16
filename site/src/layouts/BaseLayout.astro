@@ -1,0 +1,117 @@
+---
+/**
+ * BaseLayout — Gerüst jeder Seite.
+ *
+ * Verantwortlich für: Dokumentkopf, Sprachauszeichnung, hreflang, kanonische
+ * URL, Schriftvorabladung und den flackerfreien Start des Themes.
+ */
+import "../styles/fonts.css";
+import "../styles/tokens.css";
+import "../styles/global.css";
+
+export interface Props {
+  /** Seitentitel ohne Namenszusatz — der wird hier angehängt. */
+  title: string;
+  description: string;
+  /** Sprache dieses Dokuments. */
+  lang?: "de" | "en";
+  /** Pfad der Entsprechung in der jeweils anderen Sprache, für hreflang. */
+  altPath?: string;
+  /** Von Suchmaschinen fernhalten (Musterseite, Fehlerseite). */
+  noIndex?: boolean;
+}
+
+const {
+  title,
+  description,
+  lang = "de",
+  altPath,
+  noIndex = false,
+} = Astro.props;
+
+const site = Astro.site ?? new URL("https://kandzior.de");
+const canonical = new URL(Astro.url.pathname, site);
+const alternate = altPath ? new URL(altPath, site) : undefined;
+const germanHref = lang === "de" ? canonical : alternate;
+
+const fullTitle = `${title} | Martin Kandzior`;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.href} />
+    {noIndex && <meta name="robots" content="noindex, nofollow" />}
+
+    {
+      /* hreflang nur, wenn eine Entsprechung existiert. Ein Verweis auf eine
+         Seite, die es nicht gibt, schadet mehr als er nützt. */
+      alternate && (
+        <>
+          <link
+            rel="alternate"
+            hreflang={lang === "de" ? "en" : "de"}
+            href={alternate.href}
+          />
+          <link rel="alternate" hreflang={lang} href={canonical.href} />
+          <link rel="alternate" hreflang="x-default" href={germanHref!.href} />
+        </>
+      )
+    }
+
+    {
+      /* Nur die beiden Dateien vorabladen, die auf jeder Seite sofort
+         gebraucht werden. Die -ext-Schnitte holt der Browser selbst, wenn ein
+         Zeichen daraus vorkommt. */
+    }
+    <link
+      rel="preload"
+      href="/fonts/plus-jakarta-sans-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/be-vietnam-pro-latin-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+
+    <script is:inline>
+      // Läuft VOR dem ersten Rendern. Ohne diesen Block blitzt beim Neuladen
+      // im dunklen Theme kurz die helle Fläche auf — der Klassiker, der sich
+      // später nicht mehr sauber nachrüsten lässt.
+      //
+      // Regel: Eine ausdrückliche Wahl gewinnt immer. Nur wer nie umgeschaltet
+      // hat, bekommt die Systemvorgabe.
+      (function () {
+        try {
+          var stored = localStorage.getItem("theme");
+          if (stored === "dark" || stored === "light") {
+            document.documentElement.setAttribute("data-theme", stored);
+          }
+        } catch (e) {
+          // Privater Modus oder gesperrter Speicher: Systemvorgabe greift
+          // über die prefers-color-scheme-Abfrage in tokens.css.
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">
+      {lang === "de" ? "Zum Inhalt springen" : "Skip to content"}
+    </a>
+    <slot />
+  </body>
+</html>
