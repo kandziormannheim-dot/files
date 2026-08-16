@@ -20,6 +20,7 @@ import Header from "./Header.astro";
 import Hero from "./Hero.astro";
 import StatsBand from "./StatsBand.astro";
 import ExpertiseGrid from "./ExpertiseGrid.astro";
+import OutlookBlock from "./OutlookBlock.astro";
 import { type Lang } from "../lib/i18n";
 
 export interface Props {
@@ -35,4 +36,5 @@ const { lang } = Astro.props;
   <Hero lang={lang} />
   <StatsBand lang={lang} />
   <ExpertiseGrid lang={lang} />
+  <OutlookBlock lang={lang} />
 </main>

@@ -1,0 +1,120 @@
+---
+/**
+ * Industrie 5.0 — Haltung, nicht Leistung.
+ *
+ * Diese Trennung ist der Grund, warum es den Block überhaupt gibt: Vier
+ * Karten beschreiben, woran Martin arbeitet. Hier steht, wo er die Wirtschaft
+ * hingehen sieht. Eine Meinung als Dienstleistung zu verkaufen wäre genau die
+ * Unschärfe, die Prinzip 3 aus dem Brief verbietet.
+ *
+ * Deshalb übernimmt der Block KEINE Eigenschaft der Karten — keinen Rahmen,
+ * keinen Schatten, keine Rundung, kein Raster. Stattdessen: durchgehende
+ * Fläche über die volle Breite, ein Zitatstrich und ein asymmetrischer
+ * Satzspiegel. Wer scrollt, soll den Wechsel bemerken, bevor er liest.
+ *
+ * Es ist außerdem der einzige Teil der Seite, dem der Leser widersprechen
+ * kann — und damit der wahrscheinlichste Anlass, das Formular auszufüllen.
+ */
+import { content, type Lang } from "../lib/i18n";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang).outlook;
+---
+
+<section class="outlook" id="outlook" aria-labelledby="outlook-heading">
+  <div class="container container--wide outlook__grid">
+    <div class="outlook__statement">
+      <h2 id="outlook-heading" class="eyebrow outlook__eyebrow">{c.eyebrow}</h2>
+      <blockquote class="outlook__quote">
+        <p>{c.quote}</p>
+      </blockquote>
+    </div>
+
+    <div class="outlook__body">
+      {c.body.map((absatz) => <p>{absatz}</p>)}
+      <p class="outlook__note">{c.note}</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .outlook {
+    padding-block: var(--space-section);
+    /* Teal-getönte Fläche über die volle Breite. Sie unterscheidet sich in
+       beiden Themes deutlich von der Kartenfläche daneben, ohne im dunklen
+       Theme zu blenden — eine echte Umkehrung auf Weiß wäre dort ein
+       Scheinwerfer mitten im Text. */
+    background-color: var(--color-bg-accent-subtle);
+    border-block: var(--border-width) solid var(--color-border-primary);
+  }
+
+  .outlook__grid {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .outlook__eyebrow {
+    /* Als Überschrift ausgezeichnet, damit die Gliederung stimmt, aber
+       optisch zurückgenommen: Tragen soll der Satz darunter. */
+    margin: 0 0 var(--space-4);
+    color: var(--color-accent);
+  }
+
+  .outlook__quote {
+    margin: 0;
+    /* Der Strich macht aus dem Satz sichtbar ein Zitat — die Haltung einer
+       Person, nicht eine Überschrift der Seite. */
+    border-left: 3px solid var(--color-accent);
+    padding-left: var(--space-5);
+  }
+
+  .outlook__quote p {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-extra);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tighter);
+    text-wrap: balance;
+  }
+
+  .outlook__body {
+    max-width: var(--max-width-content);
+  }
+
+  .outlook__body p + p {
+    margin-top: var(--space-4);
+  }
+
+  .outlook__note {
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: var(--border-width) solid var(--color-border-primary);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+  }
+
+  @media (min-width: 768px) {
+    .outlook__quote p {
+      font-size: var(--font-size-3xl);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    /* Asymmetrisch, nicht halbe-halbe: Ein gleichmäßiges Zweispaltenraster
+       sähe wieder nach zwei Karten aus. */
+    .outlook__grid {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: var(--space-8);
+      align-items: start;
+    }
+
+    .outlook__statement {
+      position: sticky;
+      top: calc(var(--header-height) + var(--space-6));
+    }
+  }
+</style>
