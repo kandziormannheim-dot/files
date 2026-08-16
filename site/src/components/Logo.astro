@@ -47,16 +47,21 @@ const Tag = href ? "a" : "span";
 </Tag>
 
 <style>
+  /* Die Farben kommen über Custom Properties mit Rückfallwert, nicht über
+     Klassen. Eine Klasse von außen (`.footer__logo`) hätte dieselbe
+     Spezifität wie `.logo` hier, und wer gewinnt, entschiede die Reihenfolge
+     der Stylesheets — in der Fußzeile stand das Logo dadurch unsichtbar auf
+     gleichfarbigem Grund. Vererbte Eigenschaften konkurrieren nicht. */
   .logo {
     display: inline-flex;
     align-items: center;
     min-height: var(--target-min);
-    color: var(--color-text-primary);
+    color: var(--logo-color, var(--color-text-primary));
     text-decoration: none;
   }
 
   .logo:hover {
-    color: var(--color-text-primary);
+    color: var(--logo-color, var(--color-text-primary));
   }
 
   .logo__svg :global(svg) {
@@ -82,7 +87,7 @@ const Tag = href ? "a" : "span";
 
   .logo__given {
     font-weight: var(--font-weight-normal);
-    color: var(--color-text-secondary);
+    color: var(--logo-muted, var(--color-text-secondary));
     transition: color var(--duration-fast) var(--easing-default);
   }
 
@@ -91,7 +96,7 @@ const Tag = href ? "a" : "span";
   }
 
   .logo:hover .logo__given {
-    color: var(--color-text-primary);
+    color: var(--logo-color, var(--color-text-primary));
   }
 
   @media (min-width: 768px) {

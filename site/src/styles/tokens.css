@@ -499,6 +499,31 @@
   --consent-min-height: 320px;
   --consent-bg:         var(--color-bg-secondary);
   --consent-border:     var(--color-border-primary);
+
+  /* Fußzeile — in BEIDEN Themes dunkel.
+     Eine echte Umkehrung hieße: heller Block am Ende einer dunklen Seite.
+     Das wäre ein Scheinwerfer zum Schluss, aus demselben Grund, aus dem der
+     Haltungsblock nicht umkehrt. Stattdessen ist die Fußzeile immer der
+     dunkle Boden der Seite — im dunklen Theme eine Stufe tiefer, damit sie
+     sich vom Seitengrund noch absetzt. */
+  --footer-bg:      var(--slate-900);
+  --footer-text:    var(--slate-300);
+  --footer-strong:  var(--white);
+  --footer-muted:   var(--slate-400);
+  --footer-border:  rgb(255 255 255 / 0.14);
+  --footer-accent:  var(--teal-300);
+}
+
+[data-theme="dark"] {
+  --footer-bg:     var(--slate-950);
+  --footer-border: rgb(255 255 255 / 0.10);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --footer-bg:     var(--slate-950);
+    --footer-border: rgb(255 255 255 / 0.10);
+  }
 }
 
 [data-theme="dark"] {

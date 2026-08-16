@@ -22,15 +22,25 @@ import {
 
 export interface Props {
   lang: Lang;
+  /**
+   * `pill` in der Kopfzeile, `plain` in der Fußzeile. Die Pillenform lebt von
+   * den hellen Flächentokens und wirkt auf der dunklen Fußzeile wie ein
+   * Fremdkörper; dort sind zwei schlichte Textlinks richtig.
+   */
+  variant?: "pill" | "plain";
   class?: string;
 }
 
-const { lang, class: className } = Astro.props;
+const { lang, variant = "pill", class: className } = Astro.props;
 const t = content(lang).a11y;
 const here = Astro.url.pathname;
 ---
 
-<div class:list={["lang", className]} role="group" aria-label={t.langSwitch}>
+<div
+  class:list={["lang", `lang--${variant}`, className]}
+  role="group"
+  aria-label={t.langSwitch}
+>
   {
     languages.map((code) => {
       const isCurrent = code === lang;
@@ -61,10 +71,41 @@ const here = Astro.url.pathname;
   .lang {
     display: inline-flex;
     align-items: center;
+  }
+
+  .lang--pill {
     gap: var(--space-1);
     padding: 3px;
     border-radius: var(--radius-full);
     background-color: var(--color-bg-tertiary);
+  }
+
+  /* Schlichte Fassung: erbt die Farben ihrer Umgebung, damit sie auf der
+     dunklen Fußzeile ebenso stimmt wie irgendwo sonst. */
+  .lang--plain {
+    gap: var(--space-2);
+  }
+
+  .lang--plain .lang__item {
+    min-width: 0;
+    height: auto;
+    padding: var(--space-2) 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    opacity: 0.7;
+  }
+
+  .lang--plain .lang__item--current {
+    opacity: 1;
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .lang--plain a.lang__item:hover {
+    opacity: 1;
+    background: none;
   }
 
   .lang__item {
@@ -98,11 +139,18 @@ const here = Astro.url.pathname;
 
   /* Das Umschaltfeld ist kleiner als 44px — es sitzt aber in der Kopfzeile,
      die selbst die volle Zielgröße einhält, und beide Schaltflächen liegen
-     nebeneinander ohne Zwischenraum. Auf Berührungsgeräten wächst es. */
+     nebeneinander ohne Zwischenraum. Auf Berührungsgeräten wächst es.
+     Nur die Pillenform: Die schlichte Fassung bekommt ihre Zielgröße unten
+     über Innenabstand, ohne als Kasten zu erscheinen. */
   @media (pointer: coarse) {
-    .lang__item {
+    .lang--pill .lang__item {
       min-width: var(--target-min);
       height: var(--target-min);
+    }
+
+    .lang--plain .lang__item {
+      padding-block: var(--space-3);
+      min-width: var(--target-min);
     }
   }
 </style>
