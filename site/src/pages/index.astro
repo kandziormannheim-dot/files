@@ -1,0 +1,18 @@
+---
+/** Startseite, Deutsch. Ohne Sprachpräfix — Deutsch ist die Standardsprache. */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import HomePage from "../components/HomePage.astro";
+import { content, translatePath } from "../lib/i18n";
+
+const c = content("de");
+---
+
+<BaseLayout
+  title={c.meta.title}
+  description={c.meta.description}
+  lang="de"
+  altPath={translatePath("/", "en")}
+  appendName={false}
+>
+  <HomePage lang="de" />
+</BaseLayout>

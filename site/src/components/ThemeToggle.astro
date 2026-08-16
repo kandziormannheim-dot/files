@@ -1,0 +1,155 @@
+---
+/**
+ * Umschalter zwischen heller und dunkler Darstellung.
+ *
+ * Der flackerfreie Start passiert bereits im Kopf des Dokuments
+ * (BaseLayout.astro). Hier geht es nur um das Umschalten selbst.
+ *
+ * Regel: Eine ausdrückliche Wahl gewinnt dauerhaft. Wer nie geschaltet hat,
+ * folgt der Systemvorgabe — auch wenn diese sich später ändert.
+ */
+import { content, type Lang } from "../lib/i18n";
+
+export interface Props {
+  lang: Lang;
+  class?: string;
+}
+
+const { lang, class: className } = Astro.props;
+const t = content(lang).a11y;
+---
+
+<button
+  type="button"
+  class:list={["theme-toggle", className]}
+  data-theme-toggle
+  data-label-light={t.toLight}
+  data-label-dark={t.toDark}
+  aria-label={t.toDark}
+>
+  <svg class="theme-toggle__icon theme-toggle__icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4.2" />
+    <g stroke-linecap="round">
+      <line x1="12" y1="2.6" x2="12" y2="5" />
+      <line x1="12" y1="19" x2="12" y2="21.4" />
+      <line x1="2.6" y1="12" x2="5" y2="12" />
+      <line x1="19" y1="12" x2="21.4" y2="12" />
+      <line x1="5.6" y1="5.6" x2="7.3" y2="7.3" />
+      <line x1="16.7" y1="16.7" x2="18.4" y2="18.4" />
+      <line x1="5.6" y1="18.4" x2="7.3" y2="16.7" />
+      <line x1="16.7" y1="7.3" x2="18.4" y2="5.6" />
+    </g>
+  </svg>
+  <svg class="theme-toggle__icon theme-toggle__icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8a8.6 8.6 0 1 0 10.8 10.8Z" />
+  </svg>
+</button>
+
+<style>
+  .theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: var(--target-min);
+    height: var(--target-min);
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    transition:
+      color var(--duration-fast) var(--easing-default),
+      background-color var(--duration-fast) var(--easing-default);
+  }
+
+  .theme-toggle:hover {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-secondary);
+  }
+
+  .theme-toggle__icon {
+    grid-area: 1 / 1;
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    transition:
+      opacity var(--duration-fast) var(--easing-default),
+      transform var(--duration-normal) var(--easing-out);
+  }
+
+  .theme-toggle__icon--moon {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  /* Gezeigt wird, wohin der Klick führt — nicht, was gerade gilt.
+     Im hellen Theme steht der Mond: „hier geht es nach dunkel". */
+  .theme-toggle__icon--sun {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+  }
+
+  .theme-toggle__icon--moon {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+
+  :global([data-theme="dark"]) .theme-toggle__icon--sun {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+
+  :global([data-theme="dark"]) .theme-toggle__icon--moon {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.7);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme="light"])) .theme-toggle__icon--sun {
+      opacity: 1;
+      transform: rotate(0) scale(1);
+    }
+
+    :global(:root:not([data-theme="light"])) .theme-toggle__icon--moon {
+      opacity: 0;
+      transform: rotate(45deg) scale(0.7);
+    }
+  }
+</style>
+
+<script>
+  function currentTheme(): "light" | "dark" {
+    const set = document.documentElement.getAttribute("data-theme");
+    if (set === "light" || set === "dark") return set;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
+  function syncLabels() {
+    const theme = currentTheme();
+    document.querySelectorAll<HTMLButtonElement>("[data-theme-toggle]").forEach((button) => {
+      // Die Beschriftung nennt das Ziel, nicht den Zustand: Wer sie hört,
+      // soll wissen, was der Klick bewirkt.
+      const label =
+        theme === "dark" ? button.dataset.labelLight : button.dataset.labelDark;
+      if (label) button.setAttribute("aria-label", label);
+    });
+  }
+
+  document.querySelectorAll<HTMLButtonElement>("[data-theme-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const next = currentTheme() === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try {
+        localStorage.setItem("theme", next);
+      } catch {
+        // Gesperrter Speicher: Der Wechsel gilt nur für diese Sitzung.
+      }
+      syncLabels();
+    });
+  });
+
+  syncLabels();
+
+  // Ändert sich die Systemvorgabe, folgt ihr nur, wer nie selbst geschaltet hat.
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (!document.documentElement.hasAttribute("data-theme")) syncLabels();
+  });
+</script>

@@ -5,6 +5,7 @@
  * Verantwortlich für: Dokumentkopf, Sprachauszeichnung, hreflang, kanonische
  * URL, Schriftvorabladung und den flackerfreien Start des Themes.
  */
+import { content } from "../lib/i18n";
 import "../styles/fonts.css";
 import "../styles/tokens.css";
 import "../styles/global.css";
@@ -19,6 +20,11 @@ export interface Props {
   altPath?: string;
   /** Von Suchmaschinen fernhalten (Musterseite, Fehlerseite). */
   noIndex?: boolean;
+  /**
+   * Namenszusatz anhängen. Die Startseite trägt den Namen bereits im Titel
+   * und würde ihn sonst doppelt führen.
+   */
+  appendName?: boolean;
 }
 
 const {
@@ -27,6 +33,7 @@ const {
   lang = "de",
   altPath,
   noIndex = false,
+  appendName = true,
 } = Astro.props;
 
 const site = Astro.site ?? new URL("https://kandzior.de");
@@ -34,7 +41,7 @@ const canonical = new URL(Astro.url.pathname, site);
 const alternate = altPath ? new URL(altPath, site) : undefined;
 const germanHref = lang === "de" ? canonical : alternate;
 
-const fullTitle = `${title} | Martin Kandzior`;
+const fullTitle = appendName ? `${title} | Martin Kandzior` : title;
 ---
 
 <!doctype html>
@@ -109,9 +116,7 @@ const fullTitle = `${title} | Martin Kandzior`;
   </head>
 
   <body>
-    <a class="skip-link" href="#main">
-      {lang === "de" ? "Zum Inhalt springen" : "Skip to content"}
-    </a>
+    <a class="skip-link" href="#main">{content(lang).a11y.skipLink}</a>
     <slot />
   </body>
 </html>

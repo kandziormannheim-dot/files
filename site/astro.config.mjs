@@ -16,9 +16,12 @@ export default defineConfig({
   output: "static",
   trailingSlash: "ignore",
   build: {
-    // Erzeugt /impressum.html statt /impressum/index.html — funktioniert auf
-    // einfachen Hostern ohne Rewrite-Regeln zuverlaessiger.
-    format: "file",
+    // Jede Route wird ein Verzeichnis mit index.html: /en/index.html,
+    // /impressum/index.html. Das liefert jeder statische Hoster korrekt aus,
+    // ohne Rewrite-Regeln. Die Alternative "file" erzeugt /en.html — und ein
+    // Aufruf von /en/ liefe dort ins Leere. Da der Hoster noch nicht
+    // feststeht, gilt die Variante, die nirgends Annahmen macht.
+    format: "directory",
     inlineStylesheets: "auto",
   },
   compressHTML: true,

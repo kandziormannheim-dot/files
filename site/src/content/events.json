@@ -1,0 +1,14 @@
+{
+  "_hinweis": "Steuert den Events-Bereich. Steht kein Termin an, blendet sich der gesamte Bereich samt Navigationspunkt aus — eine Seite ohne Events-Bereich wirkt vollstaendig, ein Events-Bereich ohne Events wirkt verlassen.",
+
+  "visible": false,
+
+  "boxOfficeUrl": "https://buytickets.at/mkevents1",
+
+  "widget": {
+    "_hinweis": "Das exakte Snippet erzeugt Ticket Tailor im Konto unter Box Office -> Publish -> Website widget. Bis es vorliegt, wird das dokumentierte Muster verwendet. Der Direktlink oben funktioniert unabhaengig davon.",
+    "scriptUrl": "https://cdn.tickettailor.com/js/widgets/min/widget.js",
+    "dataUrl": "https://www.tickettailor.com/all-tickets/mkevents1/",
+    "dataType": "inline"
+  }
+}

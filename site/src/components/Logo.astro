@@ -1,0 +1,102 @@
+---
+/**
+ * Wortmarke.
+ *
+ * Sobald das echte Logo als `public/assets/logo-mk.svg` im Projekt liegt,
+ * wird es automatisch verwendet — die Prüfung läuft zur Bauzeit. Bis dahin
+ * greift die typografische Ersatzfassung: die gesperrte Wortmarke in Plus
+ * Jakarta Sans, die dem Original nachempfunden ist.
+ *
+ * PLATZHALTER: logo-mk.svg fehlt noch. Als PNG auf weißem Grund ist das Logo
+ * auf dunklem Untergrund unbrauchbar — es braucht eine Vektorfassung mit
+ * Transparenz, die `currentColor` erbt.
+ */
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+export interface Props {
+  /** Als Überschrift auf der Startseite, sonst als Link zur Startseite. */
+  href?: string;
+  class?: string;
+}
+
+const { href, class: className } = Astro.props;
+
+const svgPath = resolve(process.cwd(), "public/assets/logo-mk.svg");
+const hasSvg = existsSync(svgPath);
+const svgMarkup = hasSvg ? readFileSync(svgPath, "utf8") : null;
+
+const Tag = href ? "a" : "span";
+---
+
+<Tag
+  class:list={["logo", className]}
+  {...href ? { href } : {}}
+  aria-label="Martin Kandzior"
+>
+  {
+    svgMarkup ? (
+      <span class="logo__svg" aria-hidden="true" set:html={svgMarkup} />
+    ) : (
+      <span class="logo__wordmark" aria-hidden="true">
+        <span class="logo__given">Martin</span
+        ><span class="logo__family">Kandzior</span>
+      </span>
+    )
+  }
+</Tag>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target-min);
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+
+  .logo:hover {
+    color: var(--color-text-primary);
+  }
+
+  .logo__svg :global(svg) {
+    height: 28px;
+    width: auto;
+    fill: currentColor;
+  }
+
+  /* Ersatzfassung: gesperrte Versalien, wie die Wortmarke im Original.
+     Der Vorname steht zurückgenommen, der Nachname trägt — beim Googeln
+     nach „Kandzior" ist er das, woran wiedererkannt wird. */
+  .logo__wordmark {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45em;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wider);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .logo__given {
+    font-weight: var(--font-weight-normal);
+    color: var(--color-text-secondary);
+    transition: color var(--duration-fast) var(--easing-default);
+  }
+
+  .logo__family {
+    font-weight: var(--font-weight-bold);
+  }
+
+  .logo:hover .logo__given {
+    color: var(--color-text-primary);
+  }
+
+  @media (min-width: 768px) {
+    .logo__wordmark {
+      font-size: var(--font-size-base);
+    }
+  }
+</style>

@@ -1,0 +1,491 @@
+---
+/**
+ * Kopfzeile — klebend, in beiden Themes, mit Sprach- und Theme-Umschalter.
+ *
+ * Drei Verhaltensweisen, die nicht offensichtlich sind:
+ *
+ * 1. Beim Scrollen schrumpft die Kopfzeile und bekommt eine Trennkante. Sie
+ *    verschwindet nie — der Weg zur Anfrage muss jederzeit erreichbar sein.
+ * 2. Der Anfrage-Knopf erscheint erst, wenn der Hero verlassen ist. Im Hero
+ *    steht bereits einer; zwei gleichzeitig heben sich gegenseitig auf.
+ * 3. Der Events-Punkt existiert nur, wenn Termine anstehen. Ein
+ *    Navigationspunkt, der auf einen leeren Bereich zeigt, ist schlimmer als
+ *    keiner.
+ */
+import { content, localePath, type Lang } from "../lib/i18n";
+import events from "../content/events.json";
+import LanguageToggle from "./LanguageToggle.astro";
+import ThemeToggle from "./ThemeToggle.astro";
+import Logo from "./Logo.astro";
+
+export interface Props {
+  lang: Lang;
+  /** Rechtstexte und Fehlerseite tragen keine Ankernavigation und keinen CTA. */
+  minimal?: boolean;
+}
+
+const { lang, minimal = false } = Astro.props;
+const c = content(lang);
+const home = localePath("/", lang);
+
+const navItems = [
+  { href: "#expertise", label: c.nav.expertise },
+  { href: "#about", label: c.nav.about },
+  { href: "#social", label: c.nav.social },
+  ...(events.visible ? [{ href: "#events", label: c.nav.events }] : []),
+  { href: "#contact", label: c.nav.contact },
+];
+---
+
+<div data-header-sentinel aria-hidden="true"></div>
+
+<header class="header" data-header>
+  <div class="header__inner container">
+    <Logo href={home} class="header__logo" />
+
+    {
+      !minimal && (
+        <nav class="header__nav" aria-label={c.a11y.mainNav}>
+          <ul class="header__list" role="list">
+            {navItems.map((item) => (
+              <li>
+                <a class="header__link" href={item.href} data-nav-link>
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+
+    <div class="header__utility">
+      <LanguageToggle lang={lang} class="header__lang" />
+      <ThemeToggle lang={lang} />
+      {
+        !minimal && (
+          <a class="button button--primary button--sm header__cta" href="#contact">
+            {c.nav.cta}
+          </a>
+        )
+      }
+      {
+        !minimal && (
+          <button
+            type="button"
+            class="header__burger"
+            data-menu-open
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+            aria-label={c.a11y.openMenu}
+          >
+            <span class="header__burger-bar" aria-hidden="true" />
+            <span class="header__burger-bar" aria-hidden="true" />
+          </button>
+        )
+      }
+    </div>
+  </div>
+</header>
+
+{
+  !minimal && (
+    <div class="menu" id="mobile-menu" data-menu hidden>
+      <div class="menu__panel">
+        <div class="menu__head container">
+          <Logo href={home} />
+          <button
+            type="button"
+            class="menu__close"
+            data-menu-close
+            aria-label={c.a11y.closeMenu}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <nav class="menu__nav container" aria-label={c.a11y.mainNav}>
+          <ul class="menu__list" role="list">
+            {navItems.map((item) => (
+              <li>
+                <a class="menu__link" href={item.href} data-menu-link>
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div class="menu__foot container">
+          <LanguageToggle lang={lang} />
+          <a class="button button--primary menu__cta" href="#contact" data-menu-link>
+            {c.nav.cta}
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<style>
+  /* --- Sensor für den Klebe-Zustand ---------------------------------------
+     Muss eine echte Fläche haben. Ein Element ohne Höhe liefert dem
+     IntersectionObserver keine verlässliche Aussage darüber, ob es im Bild
+     ist. Absolut positioniert, damit die 1px die Seite nicht verschieben. */
+  [data-header-sentinel] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    pointer-events: none;
+  }
+
+  /* --- Kopfzeile ---------------------------------------------------------- */
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    background-color: var(--header-bg);
+    backdrop-filter: blur(var(--header-blur));
+    -webkit-backdrop-filter: blur(var(--header-blur));
+    border-bottom: var(--border-width) solid transparent;
+    transition:
+      border-color var(--duration-normal) var(--easing-default),
+      background-color var(--duration-normal) var(--easing-default);
+  }
+
+  /* Trennkante erst, wenn tatsächlich etwas darunter liegt. Am Seitenanfang
+     schwebt die Kopfzeile randlos über dem Hero. */
+  .header[data-scrolled="true"] {
+    border-bottom-color: var(--color-border-primary);
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    height: var(--header-height);
+    transition: height var(--duration-normal) var(--easing-default);
+  }
+
+  .header[data-scrolled="true"] .header__inner {
+    height: var(--header-height-scrolled);
+  }
+
+  .header__nav {
+    display: none;
+  }
+
+  .header__utility {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  /* Auf Mobil führt der Weg über das Menü — Sprache und Theme liegen dort. */
+  .header__lang {
+    display: none;
+  }
+
+  .header__cta {
+    display: none;
+  }
+
+  .header__burger {
+    display: inline-grid;
+    place-items: center;
+    gap: 5px;
+    width: var(--target-min);
+    height: var(--target-min);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+  }
+
+  .header__burger-bar {
+    grid-column: 1;
+    width: 20px;
+    height: 2px;
+    border-radius: var(--radius-full);
+    background-color: currentColor;
+  }
+
+  @media (min-width: 768px) {
+    .header__nav {
+      display: block;
+    }
+
+    .header__list {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      margin: 0;
+    }
+
+    .header__link {
+      display: inline-flex;
+      align-items: center;
+      height: 38px;
+      padding-inline: var(--space-3);
+      border-radius: var(--radius-md);
+      font-family: var(--font-family-display);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      transition:
+        color var(--duration-fast) var(--easing-default),
+        background-color var(--duration-fast) var(--easing-default);
+    }
+
+    .header__link:hover {
+      color: var(--color-text-primary);
+      background-color: var(--color-bg-secondary);
+    }
+
+    /* Der gerade sichtbare Bereich wird markiert — Orientierung, nicht
+       Dekoration. Deshalb Farbe UND ein Strich, nicht nur Farbe. */
+    .header__link[data-active="true"] {
+      color: var(--color-text-primary);
+    }
+
+    .header__link[data-active="true"]::after {
+      content: "";
+      position: absolute;
+      margin-top: 2.2em;
+      width: 16px;
+      height: 2px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-accent);
+    }
+
+    .header__lang {
+      display: inline-flex;
+    }
+
+    .header__burger {
+      display: none;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    /* Der CTA taucht erst auf, wenn der Hero verlassen ist. Vorher wäre er
+       ein zweiter Aufruf neben dem im Hero — und damit keiner mehr. */
+    .header__cta {
+      display: inline-flex;
+      margin-left: var(--space-2);
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition:
+        opacity var(--duration-normal) var(--easing-out),
+        transform var(--duration-normal) var(--easing-out);
+    }
+
+    .header[data-scrolled="true"] .header__cta {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+  }
+
+  /* --- Mobiles Menü -------------------------------------------------------- */
+
+  .menu {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+  }
+
+  .menu[hidden] {
+    display: none;
+  }
+
+  .menu__panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--color-bg-primary);
+    animation: menu-in var(--duration-normal) var(--easing-out);
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .menu__panel {
+      animation: none;
+    }
+  }
+
+  .menu__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    flex-shrink: 0;
+  }
+
+  .menu__close {
+    display: inline-grid;
+    place-items: center;
+    width: var(--target-min);
+    height: var(--target-min);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+  }
+
+  .menu__close svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  .menu__nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .menu__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+    margin: 0;
+  }
+
+  .menu__link {
+    display: block;
+    padding-block: var(--space-3);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-tight);
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+
+  .menu__link:hover {
+    color: var(--color-accent-fill);
+  }
+
+  .menu__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-block: var(--space-6);
+    border-top: var(--border-width) solid var(--color-border-primary);
+    flex-shrink: 0;
+  }
+
+  .menu__cta {
+    flex: 1;
+    max-width: 60%;
+  }
+
+  @media (min-width: 768px) {
+    .menu {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // --- Klebe-Zustand -------------------------------------------------------
+  // Ein 1px hohes Element ganz oben im Dokument. Verlässt es den sichtbaren
+  // Bereich, ist gescrollt worden. Billiger und ruckelfreier als ein
+  // scroll-Ereignis.
+  const sentinel = document.querySelector("[data-header-sentinel]");
+  const header = document.querySelector<HTMLElement>("[data-header]");
+
+  if (sentinel && header) {
+    new IntersectionObserver(
+      ([entry]) => {
+        header.dataset.scrolled = String(!entry!.isIntersecting);
+      },
+      { threshold: 0 },
+    ).observe(sentinel);
+  }
+
+  // --- Aktiver Bereich -----------------------------------------------------
+  // Markiert den Navigationspunkt des Bereichs, der gerade im oberen Drittel
+  // steht. Läuft nur, wenn die Bereiche existieren — auf Rechtstexten ohne
+  // Ankernavigation passiert schlicht nichts.
+  const navLinks = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>("[data-nav-link]"),
+  );
+
+  const sections = navLinks
+    .map((link) => document.querySelector<HTMLElement>(link.hash))
+    .filter((el): el is HTMLElement => el !== null);
+
+  if (sections.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const id = `#${entry.target.id}`;
+          navLinks.forEach((link) => {
+            link.dataset.active = String(link.hash === id);
+          });
+        }
+      },
+      { rootMargin: "-20% 0px -70% 0px", threshold: 0 },
+    );
+    sections.forEach((section) => observer.observe(section));
+  }
+
+  // --- Mobiles Menü --------------------------------------------------------
+  // Vollständige Fokusverwaltung folgt in Aufgabe I5. Hier ist die Mechanik
+  // bereits funktionsfähig: öffnen, schließen, Esc, Scrollsperre.
+  const menu = document.querySelector<HTMLElement>("[data-menu]");
+  const openButton = document.querySelector<HTMLButtonElement>("[data-menu-open]");
+  const closeButton = document.querySelector<HTMLButtonElement>("[data-menu-close]");
+
+  function setMenu(open: boolean) {
+    if (!menu || !openButton) return;
+    menu.hidden = !open;
+    openButton.setAttribute("aria-expanded", String(open));
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open) {
+      closeButton?.focus();
+    } else {
+      openButton.focus();
+    }
+  }
+
+  openButton?.addEventListener("click", () => setMenu(true));
+  closeButton?.addEventListener("click", () => setMenu(false));
+
+  document.querySelectorAll("[data-menu-link]").forEach((link) => {
+    link.addEventListener("click", () => setMenu(false));
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menu && !menu.hidden) setMenu(false);
+  });
+
+  // Wird das Fenster auf Tablet-Breite gezogen, während das Menü offen ist,
+  // verschwindet das Overlay per CSS — die Scrollsperre muss mit.
+  window.matchMedia("(min-width: 768px)").addEventListener("change", (event) => {
+    if (event.matches && menu && !menu.hidden) setMenu(false);
+  });
+</script>

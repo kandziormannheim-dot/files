@@ -237,13 +237,20 @@ small {
   font-weight: var(--font-weight-semibold);
   text-decoration: none;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(calc(-100% - var(--space-6)));
-  transition: transform var(--duration-fast) var(--easing-out);
+  /* Kein Schatten im Ruhezustand: --shadow-lg wirft 12px nach unten und
+     zeichnet 32px weich: Das ragt sichtbar in die Seite hinein, obwohl das
+     Element selbst längst außerhalb liegt. Der Schatten kommt erst mit dem
+     Fokus dazu, wo er auch gebraucht wird. */
+  box-shadow: none;
+  transform: translateY(calc(-100% - var(--space-8)));
+  transition:
+    transform var(--duration-fast) var(--easing-out),
+    box-shadow var(--duration-fast) var(--easing-out);
 }
 
 .skip-link:focus {
   transform: translateY(0);
+  box-shadow: var(--shadow-lg);
   color: var(--color-text-on-accent);
 }
 
