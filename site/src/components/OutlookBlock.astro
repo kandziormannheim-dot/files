@@ -61,7 +61,10 @@ const c = content(lang).outlook;
     /* Als Überschrift ausgezeichnet, damit die Gliederung stimmt, aber
        optisch zurückgenommen: Tragen soll der Satz darunter. */
     margin: 0 0 var(--space-4);
-    color: var(--color-accent);
+    /* text-link statt accent: 14px-Versalien sind keine Grossschrift, also
+       gilt 4.5:1 — auf der getoenten Flaeche schafft das Markenteal das
+       nicht. */
+    color: var(--color-text-link);
   }
 
   .outlook__quote {

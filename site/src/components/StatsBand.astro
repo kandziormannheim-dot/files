@@ -93,7 +93,10 @@ const isCountable = (value: string) => /^\d+$/.test(value);
     font-size: 0.42em;
     font-weight: var(--font-weight-semibold);
     letter-spacing: var(--letter-spacing-wide);
-    color: var(--color-accent);
+    /* text-link statt accent: Bei 0.42em der Zahlengroesse liegt das Suffix
+       auf schmalen Bildschirmen unter der Grossschrift-Grenze, und dort gilt
+       4.5:1 — das Markenteal schafft nur 3.74:1 auf Hell. */
+    color: var(--color-text-link);
   }
 
   .proof__label {

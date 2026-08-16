@@ -465,7 +465,10 @@
 
   /* Knopf */
   --button-height:       48px;
-  --button-height-sm:    40px;
+  /* Nicht kleiner als das Beruehrungsziel: 40px sahen kompakter aus, fielen
+     aber im Barrierefreiheits-Durchgang durch — 44px sind die Untergrenze
+     aus WCAG 2.2, und ein Knopf ist immer ein Ziel. */
+  --button-height-sm:    44px;
   --button-padding-x:    var(--space-5);
   --button-radius:       var(--radius-md);
   --button-font-size:    var(--font-size-base);

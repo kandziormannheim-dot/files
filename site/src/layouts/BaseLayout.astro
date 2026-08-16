@@ -25,6 +25,11 @@ export interface Props {
    * und würde ihn sonst doppelt führen.
    */
   appendName?: boolean;
+  /**
+   * Person-Schema als JSON-LD einbetten — nur auf den Startseiten. Auf
+   * Rechtstexten wäre dieselbe Person noch einmal doppelt ausgezeichnet.
+   */
+  personSchema?: boolean;
 }
 
 const {
@@ -34,6 +39,7 @@ const {
   altPath,
   noIndex = false,
   appendName = true,
+  personSchema = false,
 } = Astro.props;
 
 const site = Astro.site ?? new URL("https://kandzior.de");
@@ -42,6 +48,56 @@ const alternate = altPath ? new URL(altPath, site) : undefined;
 const germanHref = lang === "de" ? canonical : alternate;
 
 const fullTitle = appendName ? `${title} | Martin Kandzior` : title;
+
+const ogImage = new URL("/assets/og.png", site);
+const ogLocale = lang === "de" ? "de_DE" : "en_GB";
+
+/**
+ * Person-Schema — bewusst schmal. Was hier NICHT steht, ist Absicht: kein
+ * Arbeitgeber (worksFor), keine Organisation (memberOf, affiliation), kein
+ * Amt. Die Neutralitätsregel aus dem Brief gilt auch für strukturierte
+ * Daten, die kein Besucher sieht — Suchmaschinen zeigen sie an.
+ */
+const person = personSchema
+  ? {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      name: "Martin Kandzior",
+      url: site.href,
+      image: ogImage.href,
+      email: "mailto:mail@kandzior.de",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Frankfurt am Main",
+        addressCountry: "DE",
+      },
+      homeLocation: {
+        "@type": "Place",
+        name: "Mannheim",
+      },
+      knowsAbout:
+        lang === "de"
+          ? [
+              "Logistische Risiken",
+              "E-Commerce-Logistik",
+              "Mergers & Acquisitions",
+              "Wirtschaft und Politik",
+              "Industrie 5.0",
+            ]
+          : [
+              "Logistical risk mitigation",
+              "E-commerce logistics",
+              "Mergers & acquisitions",
+              "Business and politics",
+              "Industry 5.0",
+            ],
+      sameAs: [
+        "https://linkedin.com/in/martin-kandzior",
+        "https://x.com/martinkandzior",
+        "https://facebook.com/martin.kandzior",
+      ],
+    }
+  : null;
 ---
 
 <!doctype html>
@@ -93,6 +149,24 @@ const fullTitle = appendName ? `${title} | Martin Kandzior` : title;
 
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+
+    {/* Vorschau beim Teilen — Messenger, LinkedIn, X. */}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Martin Kandzior" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:image" content={ogImage.href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={ogLocale} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {
+      person && (
+        <script type="application/ld+json" set:html={JSON.stringify(person)} />
+      )
+    }
 
     <script is:inline>
       // Läuft VOR dem ersten Rendern. Ohne diesen Block blitzt beim Neuladen

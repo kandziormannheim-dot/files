@@ -192,7 +192,9 @@ const exists = existsSync(resolve(process.cwd(), `public${file.src}`));
     display: none;
     font-family: var(--font-family-mono);
     font-size: var(--font-size-xs);
-    opacity: 0.75;
+    /* Kein opacity: Es drueckte die Tertiaerfarbe unter 4.5:1. Auch ein
+       Entwicklungs-Platzhalter muss lesbar sein — gerade der. */
+    color: var(--color-text-secondary);
   }
 
   @media (min-width: 1024px) {
