@@ -1,0 +1,85 @@
+---
+/**
+ * Fehlerseite.
+ *
+ * Statische Hoster liefern für jede unbekannte URL dieselbe 404.html aus —
+ * eine Sprachweiche über den Pfad ist damit serverseitig nicht möglich.
+ * Deshalb: Deutsch als Standardsprache der Seite, darunter eine englische
+ * Zeile. Kein Rätsel, zwei klare Auswege.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { content } from "../lib/i18n";
+
+const de = content("de").notFound;
+const en = content("en").notFound;
+---
+
+<BaseLayout
+  title="Seite nicht gefunden"
+  description="Diese Seite gibt es nicht."
+  lang="de"
+  noIndex={true}
+>
+  <Header lang="de" minimal />
+
+  <main id="main" class="notfound">
+    <div class="container notfound__inner">
+      <p class="notfound__code" aria-hidden="true">404</p>
+      <h1 class="notfound__title">{de.title}</h1>
+      <p class="notfound__body">{de.body}</p>
+      <div class="notfound__actions">
+        <a class="button button--primary" href="/">{de.cta}</a>
+      </div>
+      <p class="notfound__en" lang="en">
+        {en.title}. <a href="/en/">{en.cta}</a>
+      </p>
+    </div>
+  </main>
+
+  <Footer lang="de" />
+</BaseLayout>
+
+<style>
+  .notfound {
+    display: flex;
+    align-items: center;
+    min-height: calc(70svh - var(--header-height));
+    padding-block: var(--space-8);
+  }
+
+  .notfound__inner {
+    max-width: var(--max-width-narrow);
+  }
+
+  .notfound__code {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-extra);
+    letter-spacing: var(--letter-spacing-tighter);
+    line-height: 1;
+    color: var(--color-accent);
+  }
+
+  .notfound__title {
+    margin-top: var(--space-4);
+  }
+
+  .notfound__body {
+    margin-top: var(--space-3);
+    color: var(--color-text-secondary);
+  }
+
+  .notfound__actions {
+    margin-top: var(--space-5);
+  }
+
+  .notfound__en {
+    margin-top: var(--space-7);
+    padding-top: var(--space-4);
+    border-top: var(--border-width) solid var(--color-border-primary);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+  }
+</style>

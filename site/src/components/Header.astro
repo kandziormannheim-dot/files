@@ -462,11 +462,22 @@ const navItems = [
   }
 
   // --- Mobiles Menü --------------------------------------------------------
-  // Vollständige Fokusverwaltung folgt in Aufgabe I5. Hier ist die Mechanik
-  // bereits funktionsfähig: öffnen, schließen, Esc, Scrollsperre.
+  // Vollständige Fokusverwaltung (Aufgabe I5): Der Fokus wandert beim Öffnen
+  // hinein, Tab und Shift+Tab kreisen INNERHALB des Overlays, Esc schließt,
+  // der Fokus kehrt zum Auslöser zurück. Ohne die Falle tabbt eine
+  // Tastaturnutzerin hinter das Overlay in Inhalte, die sie nicht sieht.
   const menu = document.querySelector<HTMLElement>("[data-menu]");
   const openButton = document.querySelector<HTMLButtonElement>("[data-menu-open]");
   const closeButton = document.querySelector<HTMLButtonElement>("[data-menu-close]");
+
+  const fokussierbare = (): HTMLElement[] =>
+    menu
+      ? Array.from(
+          menu.querySelectorAll<HTMLElement>(
+            "a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])",
+          ),
+        ).filter((el) => el.getBoundingClientRect().height > 0)
+      : [];
 
   function setMenu(open: boolean) {
     if (!menu || !openButton) return;
@@ -488,7 +499,34 @@ const navItems = [
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && menu && !menu.hidden) setMenu(false);
+    if (!menu || menu.hidden) return;
+
+    if (event.key === "Escape") {
+      setMenu(false);
+      return;
+    }
+
+    // Die Falle: Tab am Ende springt zum Anfang, Shift+Tab am Anfang zum
+    // Ende. Landet der Fokus außerhalb (etwa durch die Adressleiste),
+    // fängt der nächste Tab ihn wieder ein.
+    if (event.key === "Tab") {
+      const elemente = fokussierbare();
+      if (elemente.length === 0) return;
+      const erstes = elemente[0]!;
+      const letztes = elemente[elemente.length - 1]!;
+      const aktiv = document.activeElement;
+
+      if (!menu.contains(aktiv)) {
+        event.preventDefault();
+        erstes.focus();
+      } else if (event.shiftKey && aktiv === erstes) {
+        event.preventDefault();
+        letztes.focus();
+      } else if (!event.shiftKey && aktiv === letztes) {
+        event.preventDefault();
+        erstes.focus();
+      }
+    }
   });
 
   // Wird das Fenster auf Tablet-Breite gezogen, während das Menü offen ist,
