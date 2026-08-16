@@ -1,0 +1,234 @@
+---
+/**
+ * Hero — die erste Bildschirmhöhe.
+ *
+ * Hier entscheidet sich in wenigen Sekunden, ob weitergelesen wird. Deshalb
+ * gilt eine harte Regel: Auf 375 × 667 muss alles ohne Scrollen sichtbar
+ * sein — Gesicht, Name, Positionierungssatz und der Weg zur Anfrage.
+ *
+ * Aufbau: Auf Mobil steht das Portrait über dem Text, klein und beschnitten.
+ * Ab 1024px wechselt die Anordnung auf zwei Spalten, Text links, Portrait
+ * rechts, und das Portrait wird groß.
+ */
+import { content, type Lang } from "../lib/i18n";
+import Portrait from "./Portrait.astro";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang).hero;
+---
+
+<section class="hero" id="hero">
+  <div class="container container--wide hero__grid">
+    <div class="hero__portrait">
+      <Portrait variant="cutout" alt={c.portraitAlt} priority />
+    </div>
+
+    <div class="hero__text">
+      <p class="eyebrow hero__eyebrow">{c.eyebrow}</p>
+      <h1 class="hero__name">{c.name}</h1>
+      <p class="hero__positioning">{c.positioning}</p>
+      <p class="hero__lead">{c.lead}</p>
+      <div class="hero__actions">
+        <a class="button button--primary" href="#contact">{c.cta}</a>
+        {
+          /* Bewusst ein stiller Textlink statt eines zweiten Knopfes: Zwei
+             Knöpfe nebeneinander sind zwei Angebote, und dann gibt es keine
+             Hauptaktion mehr. Auf 375px brachen sie außerdem in zwei Reihen
+             um und kosteten allein 60px der knappen ersten Bildschirmhöhe. */
+        }
+        <a class="hero__link" href="#expertise">
+          {c.ctaSecondary}
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 2.5v11M3.5 9.5 8 14l4.5-4.5" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    /* Kein 100svh auf Mobil: Auf iOS springt der Wert, wenn die Adresszeile
+       ein- und ausfährt, und der Bereich zuckt beim Scrollen. Stattdessen
+       ist der Inhalt so bemessen, dass er in 667px Höhe passt — nachgemessen,
+       nicht geschätzt. */
+    padding-block: var(--space-4) var(--space-5);
+    overflow: hidden;
+  }
+
+  .hero__grid {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  /* Auf Mobil steht das Bild oben, aber klein: Es soll das Gesicht zeigen,
+     nicht die Bildschirmhöhe füllen. Der Satz darunter ist wichtiger. */
+  .hero__portrait {
+    width: 120px;
+    justify-self: start;
+  }
+
+  @media (min-width: 480px) {
+    .hero__portrait {
+      width: 160px;
+    }
+  }
+
+  .hero__eyebrow {
+    margin-bottom: var(--space-3);
+  }
+
+  .hero__name {
+    /* Der Name ist auf Mobil bewusst kleiner als die Hero-Stufe: Er wird
+       ohnehin gesucht und muss nicht schreien. Der Positionierungssatz
+       trägt hier die Aufmerksamkeit. */
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-3);
+  }
+
+  /* Auf der kleinsten Bildschirmhöhe nutzt der Satz die volle Breite und
+     eine Stufe kleinere Schrift. Das spart zwei Zeilen — und zwei Zeilen
+     entscheiden hier darüber, ob der Anfrage-Knopf noch sichtbar ist. */
+  .hero__positioning {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
+    letter-spacing: var(--letter-spacing-tight);
+    text-wrap: balance;
+  }
+
+  .hero__lead {
+    margin-top: var(--space-3);
+    max-width: 46ch;
+    color: var(--color-text-secondary);
+  }
+
+  @media (min-width: 480px) {
+    .hero__positioning {
+      font-size: var(--font-size-xl);
+      max-width: 22ch;
+    }
+
+    .hero__lead {
+      margin-top: var(--space-4);
+    }
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+    margin-top: var(--space-5);
+  }
+
+  .hero__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    /* Volle Zielgröße für den Finger, ohne die Zeile höher zu machen als
+       den Knopf daneben. */
+    min-height: var(--target-min);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--easing-default);
+  }
+
+  .hero__link svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--duration-normal) var(--easing-out);
+  }
+
+  .hero__link:hover {
+    color: var(--color-text-primary);
+  }
+
+  .hero__link:hover svg {
+    transform: translateY(3px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__link:hover svg {
+      transform: none;
+    }
+  }
+
+  /* --- ab 768px: mehr Luft, Portrait wächst --- */
+  @media (min-width: 768px) {
+    .hero {
+      padding-block: var(--space-7) var(--space-9);
+    }
+
+    .hero__portrait {
+      width: 210px;
+    }
+
+    .hero__name {
+      font-size: var(--font-size-3xl);
+    }
+
+    .hero__positioning {
+      font-size: var(--font-size-2xl);
+      max-width: 24ch;
+    }
+  }
+
+  /* --- ab 1024px: zwei Spalten, Portrait rechts und groß --- */
+  @media (min-width: 1024px) {
+    .hero {
+      display: flex;
+      align-items: center;
+      min-height: calc(100svh - var(--header-height));
+      padding-block: var(--space-8);
+    }
+
+    .hero__grid {
+      width: 100%;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      align-items: center;
+      gap: var(--space-8);
+    }
+
+    /* Die Reihenfolge im Markup ist Portrait, dann Text — auf Mobil steht
+       das Gesicht oben. Auf Desktop wandert es nach rechts, ohne dass sich
+       die Reihenfolge für Tastatur und Vorlesesoftware ändert. */
+    .hero__portrait {
+      grid-column: 2;
+      grid-row: 1;
+      width: 100%;
+      max-width: 400px;
+      justify-self: center;
+    }
+
+    .hero__text {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .hero__name {
+      font-size: var(--font-size-4xl);
+      margin-bottom: var(--space-4);
+    }
+
+    .hero__positioning {
+      font-size: var(--font-size-2xl);
+      max-width: 22ch;
+    }
+  }
+</style>

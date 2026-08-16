@@ -5,90 +5,30 @@
  * Beide Sprachrouten sind dünne Hüllen um diese Komponente. Dadurch gibt es
  * genau eine Stelle, an der die Reihenfolge der Bereiche steht.
  *
- * STAND: Aufgaben F2 und F3. Kopfzeile und Sprachschicht sind fertig. Der
- * Bereich unten ist die Textfassung des Hero — Portrait, Teal-Schein und
- * Ruhebewegung kommen in Aufgabe C1. Die Bereiche #expertise bis #contact
- * folgen in C2 bis C6 und I2 bis I4.
+ * Reihenfolge laut INFORMATION_ARCHITECTURE.md — jede Position beantwortet
+ * die nächste Frage im Kopf des Besuchers:
+ *   #hero      Wer ist das?           ✔ Aufgabe C1
+ *   #proof     Kann der was?          → C2
+ *   #expertise Woran arbeitet er?     → C3
+ *   #outlook   Wo steht er?           → C4
+ *   #about     Wer ist er wirklich?   → C5
+ *   #social    Stimmt das auch?       → I2
+ *   #events    Wo treffe ich ihn?     → I3 (bedingt)
+ *   #contact   Wie erreiche ich ihn?  → I4
  */
 import Header from "./Header.astro";
-import { content, type Lang } from "../lib/i18n";
+import Hero from "./Hero.astro";
+import { type Lang } from "../lib/i18n";
 
 export interface Props {
   lang: Lang;
 }
 
 const { lang } = Astro.props;
-const c = content(lang);
 ---
 
 <Header lang={lang} />
 
 <main id="main">
-  <section class="hero">
-    <div class="container container--wide hero__inner">
-      <p class="eyebrow hero__eyebrow">{c.hero.eyebrow}</p>
-      <h1 class="hero__name">{c.hero.name}</h1>
-      <p class="hero__positioning">{c.hero.positioning}</p>
-      <p class="hero__lead">{c.hero.lead}</p>
-      <div class="hero__actions">
-        <a class="button button--primary" href="#contact">{c.hero.cta}</a>
-        <a class="button button--secondary" href="#expertise">{c.hero.ctaSecondary}</a>
-      </div>
-    </div>
-  </section>
+  <Hero lang={lang} />
 </main>
-
-<style>
-  .hero {
-    padding-block: var(--space-9) var(--space-8);
-  }
-
-  .hero__inner {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .hero__eyebrow {
-    margin-bottom: var(--space-4);
-  }
-
-  .hero__name {
-    /* Der Name trägt die Seite. Er steht groß, eng gesetzt und ungebrochen. */
-    margin-bottom: var(--space-5);
-  }
-
-  .hero__positioning {
-    max-width: 22ch;
-    font-family: var(--font-family-display);
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--line-height-snug);
-    letter-spacing: var(--letter-spacing-tight);
-    text-wrap: balance;
-  }
-
-  .hero__lead {
-    margin-top: var(--space-4);
-    max-width: var(--max-width-content);
-    color: var(--color-text-secondary);
-  }
-
-  .hero__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    margin-top: var(--space-6);
-  }
-
-  @media (min-width: 768px) {
-    .hero {
-      padding-block: var(--space-10) var(--space-9);
-    }
-
-    .hero__positioning {
-      max-width: 26ch;
-      font-size: var(--font-size-3xl);
-    }
-  }
-</style>

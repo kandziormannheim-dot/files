@@ -1,0 +1,187 @@
+---
+/**
+ * Portrait mit Teal-Schein.
+ *
+ * Liegt die Bilddatei im Projekt, wird sie verwendet. Fehlt sie, erscheint
+ * eine erkennbare Platzhalterfläche im richtigen Seitenverhältnis — die
+ * Komposition stimmt dadurch schon jetzt, und der spätere Austausch ist ein
+ * Dateikopiervorgang ohne Codeänderung.
+ *
+ * PLATZHALTER: Beide Bilder fehlen noch.
+ *   public/assets/portrait-freigestellt.png  — Hero, ohne Hintergrund,
+ *       damit der Teal-Schein hinter der Person liegen kann. PNG mit
+ *       Transparenz, nicht JPG.
+ *   public/assets/portrait-wasserturm.jpg    — Über mich, vollständig,
+ *       mit dem Mannheimer Wasserturm.
+ */
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+export interface Props {
+  /** `cutout` = freigestellt mit Schein (Hero), `full` = ganzes Foto (Über mich). */
+  variant: "cutout" | "full";
+  alt: string;
+  /** Nur beim Hero: Bild vorrangig laden, es steht über der Falz. */
+  priority?: boolean;
+  class?: string;
+}
+
+const { variant, alt, priority = false, class: className } = Astro.props;
+
+const files = {
+  cutout: { src: "/assets/portrait-freigestellt.png", ratio: "3 / 4" },
+  full: { src: "/assets/portrait-wasserturm.jpg", ratio: "2 / 3" },
+} as const;
+
+const file = files[variant];
+const exists = existsSync(resolve(process.cwd(), `public${file.src}`));
+---
+
+<figure
+  class:list={["portrait", `portrait--${variant}`, className]}
+  style={`--portrait-ratio: ${file.ratio};`}
+>
+  {variant === "cutout" && <span class="portrait__glow" aria-hidden="true" />}
+
+  {
+    exists ? (
+      <img
+        class="portrait__image"
+        src={file.src}
+        alt={alt}
+        loading={priority ? "eager" : "lazy"}
+        fetchpriority={priority ? "high" : "auto"}
+        decoding="async"
+      />
+    ) : (
+      <div class="portrait__placeholder" role="img" aria-label={alt}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8.4" r="4" />
+          <path d="M3.6 21.2a8.4 8.4 0 0 1 16.8 0" />
+        </svg>
+        <span>Portrait folgt</span>
+        <code>{file.src.replace("/assets/", "")}</code>
+      </div>
+    )
+  }
+</figure>
+
+<style>
+  .portrait {
+    position: relative;
+    margin: 0;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  /* Der Schein liegt HINTER der freigestellten Person und ist größer als
+     sie — er soll wie Licht wirken, das von hinten kommt, nicht wie ein
+     Rahmen um das Bild. */
+  .portrait__glow {
+    position: absolute;
+    inset: -18% -12% -8%;
+    background: var(--portrait-glow);
+    border-radius: var(--radius-full);
+    pointer-events: none;
+  }
+
+  .portrait__image,
+  .portrait__placeholder {
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--portrait-ratio);
+    object-fit: cover;
+  }
+
+  .portrait--full .portrait__image,
+  .portrait--full .portrait__placeholder {
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Ruhebewegung: langsam, klein, ohne Umkehrpunkt-Ruck. Sie soll auffallen,
+     wenn man hinsieht, und nicht, wenn man liest. */
+  .portrait--cutout .portrait__image,
+  .portrait--cutout .portrait__placeholder {
+    animation: portrait-float var(--float-duration) var(--easing-default) infinite
+      alternate;
+  }
+
+  @keyframes portrait-float {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(calc(-1 * var(--float-distance)));
+    }
+  }
+
+  /* Vollständig aus, nicht abgeschwächt. */
+  @media (prefers-reduced-motion: reduce) {
+    .portrait--cutout .portrait__image,
+    .portrait--cutout .portrait__placeholder {
+      animation: none;
+    }
+  }
+
+  .portrait__placeholder {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: var(--space-2);
+    /* Ohne dies bestimmt die Beschriftung die Mindestbreite der Fläche: Sie
+       wird breiter als vorgesehen und über das Seitenverhältnis auch höher.
+       Der Platzhalter würde damit eine Komposition vortäuschen, die das
+       echte Bild später nicht hat. */
+    min-width: 0;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-width-strong) dashed var(--color-border-strong);
+    border-radius: var(--radius-xl);
+    color: var(--color-text-tertiary);
+    text-align: center;
+    padding: var(--space-4);
+  }
+
+  .portrait__placeholder svg {
+    width: 44px;
+    height: 44px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+  }
+
+  .portrait__placeholder span,
+  .portrait__placeholder code {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .portrait__placeholder span {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+  }
+
+  /* Der Dateiname ist eine Notiz für die Entwicklung. Auf schmalen Flächen
+     tritt er zurück, statt die Fläche zu sprengen. */
+  .portrait__placeholder code {
+    display: none;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    opacity: 0.75;
+  }
+
+  @media (min-width: 1024px) {
+    .portrait__placeholder code {
+      display: block;
+    }
+
+    .portrait__placeholder span {
+      font-size: var(--font-size-sm);
+    }
+  }
+</style>

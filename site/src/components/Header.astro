@@ -60,7 +60,15 @@ const navItems = [
     }
 
     <div class="header__utility">
-      <LanguageToggle lang={lang} class="header__lang" />
+      {
+        /* Wrapper statt Klasse von außen: Eine übergebene Klasse konkurriert
+           mit den Stilen der Komponente auf gleicher Spezifität, und wer
+           gewinnt, hängt an der Reihenfolge der Stylesheets. Ein eigenes
+           Element steuert die Sichtbarkeit ohne diesen Zufall. */
+      }
+      <div class="header__lang">
+        <LanguageToggle lang={lang} />
+      </div>
       <ThemeToggle lang={lang} />
       {
         !minimal && (
@@ -265,7 +273,7 @@ const navItems = [
     }
 
     .header__lang {
-      display: inline-flex;
+      display: block;
     }
 
     .header__burger {
