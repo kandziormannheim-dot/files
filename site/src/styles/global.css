@@ -17,6 +17,14 @@
   box-sizing: border-box;
 }
 
+/* Das hidden-Attribut muss IMMER gewinnen. Ohne diese Regel überstimmt jede
+   Komponente mit eigenem display (flex, grid) das display:none des
+   Browser-Stylesheets — die Erfolgskarte des Formulars stand so trotz
+   hidden-Attribut sichtbar neben dem Formular. */
+[hidden] {
+  display: none !important;
+}
+
 * {
   margin: 0;
 }

@@ -13,8 +13,8 @@
  *   #outlook   Wo steht er?           → C4
  *   #about     Wer ist er wirklich?   ✔ Aufgabe C5
  *   #social    Stimmt das auch?       ✔ Aufgabe I2
- *   #events    Wo treffe ich ihn?     → I3 (bedingt)
- *   #contact   Wie erreiche ich ihn?  → I4
+ *   #events    Wo treffe ich ihn?     ✔ Aufgabe I3 (bedingt)
+ *   #contact   Wie erreiche ich ihn?  ✔ Aufgabe I4
  */
 import Header from "./Header.astro";
 import Hero from "./Hero.astro";
@@ -24,6 +24,8 @@ import OutlookBlock from "./OutlookBlock.astro";
 import About from "./About.astro";
 import Footer from "./Footer.astro";
 import SocialTabs from "./SocialTabs.astro";
+import EventsSection from "./EventsSection.astro";
+import ContactSection from "./ContactSection.astro";
 import { type Lang } from "../lib/i18n";
 
 export interface Props {
@@ -42,6 +44,8 @@ const { lang } = Astro.props;
   <OutlookBlock lang={lang} />
   <About lang={lang} />
   <SocialTabs lang={lang} />
+  <EventsSection lang={lang} />
+  <ContactSection lang={lang} />
 </main>
 
 <Footer lang={lang} />
