@@ -23,10 +23,18 @@ export interface Props {
   alt: string;
   /** Nur beim Hero: Bild vorrangig laden, es steht über der Falz. */
   priority?: boolean;
+  /** Sichtbare Bildunterschrift. */
+  caption?: string;
   class?: string;
 }
 
-const { variant, alt, priority = false, class: className } = Astro.props;
+const {
+  variant,
+  alt,
+  priority = false,
+  caption,
+  class: className,
+} = Astro.props;
 
 const files = {
   cutout: { src: "/assets/portrait-freigestellt.png", ratio: "3 / 4" },
@@ -64,6 +72,8 @@ const exists = existsSync(resolve(process.cwd(), `public${file.src}`));
       </div>
     )
   }
+
+  {caption && <figcaption class="portrait__caption">{caption}</figcaption>}
 </figure>
 
 <style>
@@ -97,6 +107,16 @@ const exists = existsSync(resolve(process.cwd(), `public${file.src}`));
   .portrait--full .portrait__placeholder {
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
+    /* Der Schatten allein trägt die Kante nur auf heller Fläche. Im dunklen
+       Theme steht ein dunkles Foto sonst randlos im dunklen Grund. Die
+       Haarlinie definiert sie in beiden Themes. */
+    border: var(--border-width) solid var(--color-border-primary);
+  }
+
+  .portrait__caption {
+    margin-top: var(--space-3);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
   }
 
   /* Ruhebewegung: langsam, klein, ohne Umkehrpunkt-Ruck. Sie soll auffallen,

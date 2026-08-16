@@ -11,7 +11,7 @@
  *   #proof     Kann der was?          ✔ Aufgabe C2
  *   #expertise Woran arbeitet er?     ✔ Aufgabe C3
  *   #outlook   Wo steht er?           → C4
- *   #about     Wer ist er wirklich?   → C5
+ *   #about     Wer ist er wirklich?   ✔ Aufgabe C5
  *   #social    Stimmt das auch?       → I2
  *   #events    Wo treffe ich ihn?     → I3 (bedingt)
  *   #contact   Wie erreiche ich ihn?  → I4
@@ -21,6 +21,7 @@ import Hero from "./Hero.astro";
 import StatsBand from "./StatsBand.astro";
 import ExpertiseGrid from "./ExpertiseGrid.astro";
 import OutlookBlock from "./OutlookBlock.astro";
+import About from "./About.astro";
 import { type Lang } from "../lib/i18n";
 
 export interface Props {
@@ -37,4 +38,5 @@ const { lang } = Astro.props;
   <StatsBand lang={lang} />
   <ExpertiseGrid lang={lang} />
   <OutlookBlock lang={lang} />
+  <About lang={lang} />
 </main>
