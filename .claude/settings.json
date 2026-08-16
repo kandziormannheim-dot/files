@@ -6,6 +6,12 @@
         "source": "github",
         "repo": "alirezarezvani/claude-skills"
       }
+    },
+    "mattpocock": {
+      "source": {
+        "source": "github",
+        "repo": "mattpocock/skills"
+      }
     }
   },
   "enabledPlugins": {
@@ -42,6 +48,7 @@
     "syllabus@claude-code-skills": true,
     "notebooklm@claude-code-skills": true,
     "research-orchestrator@claude-code-skills": true,
-    "landing@claude-code-skills": true
+    "landing@claude-code-skills": true,
+    "mattpocock-skills@mattpocock": true
   }
 }

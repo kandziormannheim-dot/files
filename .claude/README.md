@@ -1,13 +1,18 @@
 # Claude Code Skills
 
-Skills für dieses Repo, auf zwei Wegen installiert:
+Insgesamt **340 Skills** aus drei Quellen:
 
-1. **[Marketplace](#1-marketplace-alirezarezvaniclaude-skills)** — 314 Skills aus
-   `alirezarezvani/claude-skills`, per Konfiguration referenziert.
-2. **[Vendored](#2-vendored-web-design)** — `web-design`, direkt ins Repo kopiert.
+| # | Quelle | Skills | Always-on | Weg |
+| --- | --- | ---: | ---: | --- |
+| [1](#1-marketplace-alirezarezvaniclaude-skills) | `alirezarezvani/claude-skills` | 314 | ~60.300 | Marketplace |
+| [2](#2-vendored-web-design) | `xiaopu-ai/web-design` | 1 | — | ins Repo kopiert |
+| [3](#3-marketplace-mattpocockskills) | `mattpocock/skills` | 25 | ~1.600 | Marketplace |
 
-Beides greift automatisch in jeder Claude-Code-Session auf diesem Repo; eine manuelle
+Alles greift automatisch in jeder Claude-Code-Session auf diesem Repo; eine manuelle
 Installation pro Rechner ist nicht nötig.
+
+> **Offen:** Für die Matt-Pocock-Skills muss einmalig pro Repo
+> `/setup-matt-pocock-skills` laufen. Siehe [Abschnitt 3](#einmalige-einrichtung-nötig).
 
 ---
 
@@ -140,3 +145,75 @@ cp /tmp/web-design/SKILL.md /tmp/web-design/LICENSE .claude/skills/web-design/
 cp -r /tmp/web-design/references /tmp/web-design/scripts .claude/skills/web-design/
 claude plugin validate .claude
 ```
+
+---
+
+# 3. Marketplace: mattpocock/skills
+
+[mattpocock/skills](https://github.com/mattpocock/skills) (MIT), Plugin
+`mattpocock-skills` v1.2.3 — 25 Skills für **~1.600 Tokens** always-on. Damit das
+günstigste der drei Sets, gemessen an Skills pro Token.
+
+Der Upstream bewirbt zwei Installationswege: das Plugin (verwaltet, aktualisiert sich)
+oder `npx skills@latest add` (kopiert editierbare Dateien ins Repo). Wir nehmen das
+Plugin, konsistent zu Quelle 1. **Nicht beides installieren** — sonst liegt jeder Skill
+doppelt vor.
+
+Das README nennt den offiziellen Claude-Code-Marketplace, in dem das Plugin ohne
+weiteres Zutun verfügbar sein soll. In dieser Umgebung war es dort nicht auffindbar,
+deshalb ist `mattpocock/skills` in `settings.json` explizit als Marketplace registriert.
+Das funktioniert unabhängig davon, ob der offizielle Eintrag vorhanden ist.
+
+## Einmalige Einrichtung nötig
+
+Der Upstream verlangt einen Setup-Lauf pro Repo:
+
+```
+/setup-matt-pocock-skills
+```
+
+Der Skill fragt interaktiv nach Issue-Tracker (GitHub, Linear oder lokale Dateien), den
+Labels für `/triage` und dem Ablageort für erzeugte Dokumente. **Das ist noch nicht
+gelaufen** — die Antworten sind Projektentscheidungen und wurden bewusst nicht geraten.
+Skills wie `/triage` und `/to-tickets` funktionieren erst danach vollständig.
+
+## Enthaltene Skills
+
+Engineering: `ask-matt`, `code-review`, `codebase-design`, `diagnosing-bugs`,
+`domain-modeling`, `grill-with-docs`, `implement`, `improve-codebase-architecture`,
+`prototype`, `research`, `resolving-merge-conflicts`, `setup-matt-pocock-skills`, `tdd`,
+`to-spec`, `to-tickets`, `triage`, `wayfinder`, `wizard`
+
+Productivity: `grill-me`, `grilling`, `handoff`, `teach`, `to-questionnaire`,
+`wait-what`, `writing-for-agents`
+
+## Nicht enthalten
+
+Das Repo hat 35 `SKILL.md`-Dateien, das Plugin liefert 25. Der Autor listet die übrigen
+10 nicht in `plugin.json`:
+
+- `skills/in-progress/` — `claude-handoff`, `loop-me`, `setup-ts-deep-modules`,
+  `writing-beats`, `writing-fragments`, `writing-shape`
+- `skills/misc/` — `git-guardrails-claude-code`, `migrate-to-shoehorn`,
+  `scaffold-exercises`, `setup-pre-commit`
+
+Der Ausschluss ist beabsichtigt (unfertige Arbeit), deshalb sind sie hier nicht
+nachgereicht.
+
+---
+
+# Namenskollisionen
+
+Zwei Skill-Namen kommen in mehr als einem Plugin vor:
+
+| Name | Plugins |
+| --- | --- |
+| `handoff` | `handoff-productivity@claude-code-skills`, `mattpocock-skills@mattpocock` |
+| `research` | `research-orchestrator@claude-code-skills`, `mattpocock-skills@mattpocock` |
+
+Zusätzlich bringt `mattpocock-skills` ein `code-review` mit, das namensgleich zum
+eingebauten `/code-review` von Claude Code ist.
+
+Bei gleichem Namen ist nicht garantiert, welcher Skill anspringt. Wenn es stört, das
+jeweils ungewollte Plugin in `settings.json` auf `false` setzen — geprüft wurde das über
+alle installierten Plugins hinweg, weitere Kollisionen gibt es nicht.
