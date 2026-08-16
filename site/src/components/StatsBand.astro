@@ -1,0 +1,169 @@
+---
+/**
+ * Zahlen-Band — der schnellste Beleg der Seite.
+ *
+ * Steht laut INFORMATION_ARCHITECTURE.md unmittelbar unter dem Hero, nicht
+ * unten im CTA-Band: Die drei Zahlen beantworten „Kann der was?" in drei
+ * Sekunden, und Belege gehören dorthin, wo noch gelesen wird.
+ *
+ * ZUGÄNGLICHKEIT DER ZÄHLANIMATION
+ * Der Endwert steht im HTML. Ohne JavaScript ist er einfach da. Das Skript
+ * setzt ihn beim ersten Sichtbarwerden kurz zurück und zählt hoch — es baut
+ * den Inhalt also nicht auf, sondern belebt ihn nur. Für Vorlesesoftware ist
+ * die laufende Ziffer ausgeblendet; daneben steht der Endwert unsichtbar,
+ * aber jederzeit korrekt im Zugänglichkeitsbaum.
+ */
+import { content, type Lang } from "../lib/i18n";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang).proof;
+
+/** Nur ganze Zahlen lassen sich hochzählen — „Mio." bleibt, wie es ist. */
+const isCountable = (value: string) => /^\d+$/.test(value);
+---
+
+<section class="proof section--banded" id="proof" aria-labelledby="proof-heading">
+  <div class="container container--wide">
+    <h2 id="proof-heading" class="visually-hidden">{c.label}</h2>
+
+    <dl class="proof__grid">
+      {
+        c.items.map((item) => (
+          <div class="proof__item">
+            <dt class="proof__value">
+              {isCountable(item.value) ? (
+                <>
+                  <span aria-hidden="true" data-count-to={item.value}>
+                    {item.value}
+                  </span>
+                  <span class="visually-hidden">{item.value}</span>
+                </>
+              ) : (
+                item.value
+              )}
+              {item.suffix && <span class="proof__suffix">{item.suffix}</span>}
+            </dt>
+            <dd class="proof__label">{item.label}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>
+
+<style>
+  .proof {
+    padding-block: var(--space-6);
+    background-color: var(--color-bg-secondary);
+    border-block: var(--border-width) solid var(--color-border-primary);
+  }
+
+  .proof__grid {
+    display: grid;
+    gap: var(--space-5);
+    margin: 0;
+  }
+
+  .proof__item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .proof__value {
+    display: flex;
+    align-items: baseline;
+    gap: 0.12em;
+    font-family: var(--font-family-display);
+    font-size: var(--stat-value-size);
+    font-weight: var(--stat-value-weight);
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-tighter);
+    color: var(--color-text-primary);
+    /* Ziffern in gleicher Breite: Beim Hochzählen springt die Zeile sonst
+       bei jedem Wechsel, weil die 1 schmaler ist als die 8. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  .proof__suffix {
+    font-size: 0.42em;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--letter-spacing-wide);
+    color: var(--color-accent);
+  }
+
+  .proof__label {
+    margin: 0;
+    max-width: 34ch;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    color: var(--color-text-secondary);
+  }
+
+  @media (min-width: 768px) {
+    .proof {
+      padding-block: var(--space-7);
+    }
+
+    .proof__grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-6);
+    }
+
+    /* Haarlinien statt Kästen: Die Trennung soll das Auge führen, nicht
+       drei Karten erzeugen. */
+    .proof__item + .proof__item {
+      padding-left: var(--space-6);
+      border-left: var(--border-width) solid var(--color-border-primary);
+    }
+  }
+</style>
+
+<script>
+  // Zählen ist Zierde, kein Inhalt. Es passiert nur, wenn drei Bedingungen
+  // zugleich erfüllt sind: genug Platz, keine Bewegungsreduktion, und der
+  // Bereich ist tatsächlich im Bild.
+  const targets = document.querySelectorAll<HTMLElement>("[data-count-to]");
+
+  const zuSchmal = window.matchMedia("(max-width: 767px)").matches;
+  const ruhigGewuenscht = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (targets.length > 0 && !zuSchmal && !ruhigGewuenscht) {
+    const DAUER = 900;
+
+    const zaehle = (el: HTMLElement) => {
+      const ziel = Number(el.dataset.countTo);
+      if (!Number.isFinite(ziel)) return;
+
+      const start = performance.now();
+      const schritt = (jetzt: number) => {
+        const fortschritt = Math.min((jetzt - start) / DAUER, 1);
+        // Am Ende auslaufen lassen, nicht abrupt stehen bleiben.
+        const geglaettet = 1 - Math.pow(1 - fortschritt, 3);
+        el.textContent = String(Math.round(ziel * geglaettet));
+        if (fortschritt < 1) requestAnimationFrame(schritt);
+        else el.textContent = String(ziel); // Endwert exakt, nicht gerundet
+      };
+      requestAnimationFrame(schritt);
+    };
+
+    const beobachter = new IntersectionObserver(
+      (eintraege) => {
+        for (const eintrag of eintraege) {
+          if (!eintrag.isIntersecting) continue;
+          zaehle(eintrag.target as HTMLElement);
+          // Einmal genügt: Beim Zurückscrollen erneut zu zählen wirkt wie
+          // ein Fehler, nicht wie eine Absicht.
+          beobachter.unobserve(eintrag.target);
+        }
+      },
+      { threshold: 0.6 },
+    );
+
+    targets.forEach((el) => beobachter.observe(el));
+  }
+</script>
