@@ -43,7 +43,7 @@ Datum: 2026-08-16
 
 ## Review
 
-- [ ] **R1 — Design Review.** `/design-review` gegen den Brief. Prüft Hierarchie, Konsistenz, Responsive-Verhalten, Barrierefreiheit und Treue zur Ästhetik, mit Bildschirmfotos je Breakpoint und Theme. Ergebnis: `DESIGN_REVIEW.md` plus `screenshots/`.
+- [x] **R1 — Design Review.** `/design-review` gegen den Brief. Prüft Hierarchie, Konsistenz, Responsive-Verhalten, Barrierefreiheit und Treue zur Ästhetik, mit Bildschirmfotos je Breakpoint und Theme. Ergebnis: `DESIGN_REVIEW.md` plus `screenshots/`.
 
 ---
 
