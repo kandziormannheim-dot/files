@@ -7,6 +7,7 @@
  * Seite: von Suchmaschinen ausgenommen und nicht verlinkt.
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
+import ConsentEmbed from "../components/ConsentEmbed.astro";
 
 const typeScale = [
   ["--font-size-4xl", "4xl", "Hero", "Martin Kandzior"],
@@ -207,6 +208,59 @@ const radii = ["--radius-sm", "--radius-md", "--radius-lg", "--radius-xl"] as co
               <code>{token.replace("--shadow-", "")}</code>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Einwilligungs-Vorschau -->
+    <section class="section section--banded" aria-labelledby="t-consent">
+      <div class="container container--wide">
+        <h2 id="t-consent">Einwilligungs-Vorschau</h2>
+        <p class="prose sg-note">
+          Die Karte links lädt ein Skript, die rechte einen iframe. In beiden
+          Fällen geht <strong>vor dem Klick keine einzige Anfrage</strong> an
+          einen fremden Server — das ist der Grund, warum diese Seite ohne
+          Cookie-Banner auskommt. Der Direktlink steht immer daneben:
+          Einwilligung, nicht Sperre.
+        </p>
+        <div class="sg-grid sg-grid--cards">
+          <ConsentEmbed
+            id="demo-script"
+            platform="Ticket Tailor"
+            context="Kommende Veranstaltungen, direkt vom Anbieter."
+            notice="Erst mit Ihrem Klick wird eine Verbindung zu {platform} aufgebaut und Ihre IP-Adresse dorthin übertragen. Vorher passiert nichts."
+            action="Termine laden"
+            direct="Alle Termine bei Ticket Tailor"
+            directUrl="https://buytickets.at/mkevents1"
+            loading="Wird geladen …"
+            error="Die Termine ließen sich nicht laden. Der direkte Weg funktioniert weiterhin."
+            icon="calendar"
+            embed={{
+              type: "script",
+              src: "https://cdn.tickettailor.com/js/widgets/min/widget.js",
+              attrs: {
+                "data-url": "https://www.tickettailor.com/all-tickets/mkevents1/",
+                "data-type": "inline",
+              },
+            }}
+          />
+          <ConsentEmbed
+            id="demo-iframe"
+            platform="LinkedIn"
+            context="Ausgewählte Beiträge zu Logistik, Risiko und Wirtschaftspolitik."
+            notice="Erst mit Ihrem Klick wird eine Verbindung zu {platform} aufgebaut und Ihre IP-Adresse dorthin übertragen. Vorher passiert nichts."
+            action="Beiträge laden"
+            direct="Direkt zum Profil"
+            directUrl="https://www.linkedin.com/"
+            loading="Wird geladen …"
+            error="Die Beiträge ließen sich nicht laden. Der direkte Weg zum Profil funktioniert weiterhin."
+            embed={{
+              type: "iframe",
+              src: "https://www.linkedin.com/embed/feed/update/urn:li:share:0",
+              title: "LinkedIn",
+              height: 420,
+            }}
+          />
         </div>
       </div>
     </section>
