@@ -109,7 +109,7 @@ Tabs LinkedIn / X / Facebook, Zwei-Klick-Einbettung. LinkedIn ist der erste und 
 Steht bewusst **nach** der Biografie: erst behauptet die Seite etwas, dann bietet sie den Ort an, wo man es prüfen kann. Umgekehrt wäre es eine Aufforderung zum Wegklicken, bevor die Botschaft steht.
 
 **7. `#events` — Kommende Veranstaltungen.** *(bedingt sichtbar)*
-Ticket-Tailor-Einbindung, Zwei-Klick, plus direkter Box-Office-Link. Ohne anstehende Termine verschwindet der Bereich vollständig, samt Navigationspunkt.
+Ticket-Tailor-Einbindung, Zwei-Klick, plus direkter Box-Office-Link auf **`https://buytickets.at/mkevents1`**. Ohne anstehende Termine verschwindet der Bereich vollständig, samt Navigationspunkt.
 
 Steht nach Social, weil Termine derselben Kategorie angehören: Beleg, nicht Angebot. Und **vor** dem Kontakt, weil ein Termin ein zweiter Weg zum ersten Gespräch ist — wer sich nicht traut zu schreiben, kommt vielleicht hin.
 

@@ -210,8 +210,16 @@ Diese Fragen blockieren Phase 3 nicht, müssen aber vor Phase 6 (Bauen) beantwor
 | 6 | **Hosting und Formular-Endpunkt** | Wird hosting-neutral gebaut, der Endpunkt bleibt austauschbar. Die Entscheidung kostet später nichts. | Livegang |
 | 7 | **Kontaktdaten** | E-Mail-Adresse für Formular und Kontaktbereich, Profil-URLs für LinkedIn, X, Facebook. | Phase 6 |
 | 8 | **Biografie- und Säulentexte** | Entwurf kommt von mir, Korrektur von Martin. Schneller als andersherum. | Phase 6 |
-| 9 | **Ticket-Tailor-Zugangsdaten** | Box-Office-URL bzw. Widget-Kennung. Ohne sie baue ich den Events-Bereich gegen einen Platzhalter und tausche ihn später aus. | Phase 6 |
+| 9 | ~~Ticket-Tailor-Zugangsdaten~~ | **Geklärt.** Box Office: `https://buytickets.at/mkevents1`, Kürzel `mkevents1`. Offen bleibt nur das exakte Widget-Snippet — siehe Hinweis unter der Tabelle. | Phase 6 |
 | 10 | **Rechtliches zum Ticketverkauf** | Kostenpflichtige Tickets bedeuten Handel: Das wirkt auf Impressum, Umsatzsteuer, Widerrufsrecht und AGB. Kostenlose Anmeldungen sind unkritisch. Gehört auf den Tisch des Anwalts aus dem Out-of-Scope-Punkt. | Livegang |
+
+### Zu Punkt 9: das Ticket-Tailor-Snippet
+
+Die Box-Office-Adresse lautet **`https://buytickets.at/mkevents1`**. Der Direktlink neben der Vorschaukarte steht damit fest und funktioniert unabhängig von jeder Einbettung.
+
+Für die eingebettete Variante erzeugt Ticket Tailor im Konto unter **Box Office → Publish → Website widget** ein Snippet, das eine kontospezifische `data-url` enthält. Dieses Snippet sollte aus dem Dashboard kopiert werden, statt es aus dem Kürzel zu rekonstruieren — es enthält Parameter, die je Konto abweichen können. Bis es vorliegt, wird gegen das dokumentierte Muster gebaut und die Konfiguration in **einer** Datei (`site/src/content/events.json`) gehalten, sodass der Austausch eine Zeile ist und keinen Codeeingriff bedeutet.
+
+*Anmerkung zur Prüfbarkeit:* Ich konnte die Box-Office-Seite aus dieser Umgebung nicht aufrufen — die Domain ist durch den Egress-Proxy blockiert. Ob dort aktuell Termine stehen und wie die Seite aussieht, ist von hier aus nicht überprüfbar. Der Leerzustand aus dem Abschnitt „Key Interactions" wird deshalb so gebaut, dass er unabhängig davon trägt.
 
 ### Zu Punkt 3: der Wasserturm
 
