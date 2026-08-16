@@ -12,7 +12,7 @@
  *   #expertise Woran arbeitet er?     ✔ Aufgabe C3
  *   #outlook   Wo steht er?           → C4
  *   #about     Wer ist er wirklich?   ✔ Aufgabe C5
- *   #social    Stimmt das auch?       → I2
+ *   #social    Stimmt das auch?       ✔ Aufgabe I2
  *   #events    Wo treffe ich ihn?     → I3 (bedingt)
  *   #contact   Wie erreiche ich ihn?  → I4
  */
@@ -23,6 +23,7 @@ import ExpertiseGrid from "./ExpertiseGrid.astro";
 import OutlookBlock from "./OutlookBlock.astro";
 import About from "./About.astro";
 import Footer from "./Footer.astro";
+import SocialTabs from "./SocialTabs.astro";
 import { type Lang } from "../lib/i18n";
 
 export interface Props {
@@ -40,6 +41,7 @@ const { lang } = Astro.props;
   <ExpertiseGrid lang={lang} />
   <OutlookBlock lang={lang} />
   <About lang={lang} />
+  <SocialTabs lang={lang} />
 </main>
 
 <Footer lang={lang} />

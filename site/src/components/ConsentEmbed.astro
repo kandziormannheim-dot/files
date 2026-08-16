@@ -38,12 +38,18 @@ export interface Props {
   directUrl: string;
   loading: string;
   error: string;
-  /** Was beim Klick geladen wird. */
-  embed:
-    | { type: "script"; src: string; attrs?: Record<string, string> }
-    | { type: "iframe"; src: string; title: string; height?: number };
+  /**
+   * Was beim Klick geladen wird. Mehrere Einträge sind erlaubt: LinkedIn
+   * bietet keinen einbettbaren Profil-Feed, sondern nur einzelne Beiträge —
+   * ein Tab besteht dort aus zwei bis drei iframes.
+   */
+  embed: Einbettung | Einbettung[];
   icon?: "embed" | "calendar";
 }
+
+type Einbettung =
+  | { type: "script"; src: string; attrs?: Record<string, string> }
+  | { type: "iframe"; src: string; title: string; height?: number };
 
 const {
   id,
@@ -113,7 +119,13 @@ const noticeText = notice.replace("{platform}", platform);
     </div>
   </div>
 
-  {/* Zielbereich. Bleibt leer, bis geklickt wurde. */}
+  {
+    /* Zielbereich. Bleibt leer, bis geklickt wurde — mit einer Ausnahme:
+       Über den Slot kann vorbereitetes Markup hineingelegt werden, das der
+       Anbieter erwartet (die X-Timeline etwa rendert in einen Anker, den ihr
+       Skript sucht). Das ist eigenes HTML vom eigenen Server und löst keine
+       Fremdanfrage aus. */
+  }
   <div
     class="consent__mount"
     id={`${id}-mount`}
@@ -122,6 +134,7 @@ const noticeText = notice.replace("{platform}", platform);
     role="region"
     aria-label={platform}
   >
+    <slot name="mount" />
   </div>
 
   {/* Zustandsmeldungen für Vorlesesoftware. */}
@@ -294,10 +307,15 @@ const noticeText = notice.replace("{platform}", platform);
     knopf.addEventListener(
       "click",
       () => {
-        let konfiguration: Einbettung;
+        let konfiguration: Einbettung | Einbettung[];
         try {
           konfiguration = JSON.parse(wurzel.dataset.embed ?? "");
         } catch {
+          scheitern();
+          return;
+        }
+        const teile = Array.isArray(konfiguration) ? konfiguration : [konfiguration];
+        if (teile.length === 0) {
           scheitern();
           return;
         }
@@ -306,9 +324,14 @@ const noticeText = notice.replace("{platform}", platform);
         knopf.disabled = true;
         meldungstext.textContent = worte.loading ?? "";
 
+        // Erfolg, sobald ALLE Teile geladen sind; ein einzelner Fehlschlag
+        // bricht das Ganze ab. Halb geladene Tabs sähen kaputt aus.
+        let offen = teile.length;
         let erledigt = false;
         const geschafft = () => {
           if (erledigt) return;
+          offen -= 1;
+          if (offen > 0) return;
           erledigt = true;
           window.clearTimeout(wecker);
           setze("loaded");
@@ -327,29 +350,31 @@ const noticeText = notice.replace("{platform}", platform);
         // Ein Widget, das lädt, aber nichts rendert, meldet sich nie zurück.
         const wecker = window.setTimeout(misslungen, GEDULD);
 
-        if (konfiguration.type === "iframe") {
-          const rahmen = document.createElement("iframe");
-          rahmen.src = konfiguration.src;
-          rahmen.title = konfiguration.title;
-          rahmen.loading = "lazy";
-          rahmen.style.width = "100%";
-          rahmen.style.border = "0";
-          if (konfiguration.height) rahmen.style.height = `${konfiguration.height}px`;
-          rahmen.addEventListener("load", geschafft);
-          rahmen.addEventListener("error", misslungen);
-          ziel.appendChild(rahmen);
-        } else {
-          const skript = document.createElement("script");
-          skript.src = konfiguration.src;
-          skript.async = true;
-          for (const [name, wert] of Object.entries(konfiguration.attrs ?? {})) {
-            skript.setAttribute(name, wert);
+        for (const teil of teile) {
+          if (teil.type === "iframe") {
+            const rahmen = document.createElement("iframe");
+            rahmen.src = teil.src;
+            rahmen.title = teil.title;
+            rahmen.loading = "lazy";
+            rahmen.style.width = "100%";
+            rahmen.style.border = "0";
+            if (teil.height) rahmen.style.height = `${teil.height}px`;
+            rahmen.addEventListener("load", geschafft);
+            rahmen.addEventListener("error", misslungen);
+            ziel.appendChild(rahmen);
+          } else {
+            const skript = document.createElement("script");
+            skript.src = teil.src;
+            skript.async = true;
+            for (const [name, wert] of Object.entries(teil.attrs ?? {})) {
+              skript.setAttribute(name, wert);
+            }
+            skript.addEventListener("load", geschafft);
+            skript.addEventListener("error", misslungen);
+            // In den Zielbereich hängen, nicht in den Kopf: Die Widgets der
+            // Anbieter rendern an die Stelle ihres eigenen Skript-Elements.
+            ziel.appendChild(skript);
           }
-          skript.addEventListener("load", geschafft);
-          skript.addEventListener("error", misslungen);
-          // In den Zielbereich hängen, nicht in den Kopf: Die Widgets der
-          // Anbieter rendern an die Stelle ihres eigenen Skript-Elements.
-          ziel.appendChild(skript);
         }
       },
       { once: false },

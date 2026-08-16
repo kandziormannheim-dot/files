@@ -1,12 +1,10 @@
 {
   "_hinweis": "DRAFT. All copy written by Claude and pending review by Martin Kandzior. PLATZHALTER marks unconfirmed details. The German version is the authoritative one for legal texts.",
-
   "meta": {
     "title": "Martin Kandzior — Logistics, Risk and Politics from Mannheim",
     "description": "Martin Kandzior works where logistics, risk and politics overlap. Fifteen years in international logistics and finance, based in Mannheim, Germany. Tell me what you need.",
     "locale": "en_GB"
   },
-
   "a11y": {
     "skipLink": "Skip to content",
     "mainNav": "Main navigation",
@@ -18,7 +16,6 @@
     "currentLang": "Current language: English",
     "toTop": "Back to top"
   },
-
   "nav": {
     "expertise": "Expertise",
     "about": "About",
@@ -27,7 +24,6 @@
     "contact": "Contact",
     "cta": "Send enquiry"
   },
-
   "hero": {
     "eyebrow": "Mannheim, Germany",
     "name": "Martin Kandzior",
@@ -37,16 +33,26 @@
     "ctaSecondary": "What I work on",
     "portraitAlt": "Martin Kandzior, smiling, wearing a blue jacket"
   },
-
   "proof": {
     "label": "In numbers",
     "items": [
-      { "value": "15", "suffix": "", "label": "years in logistics and finance, international" },
-      { "value": "350", "suffix": "K USD", "label": "average deal value" },
-      { "value": "50", "suffix": "", "label": "people in teams led and worked in" }
+      {
+        "value": "15",
+        "suffix": "",
+        "label": "years in logistics and finance, international"
+      },
+      {
+        "value": "350",
+        "suffix": "K USD",
+        "label": "average deal value"
+      },
+      {
+        "value": "50",
+        "suffix": "",
+        "label": "people in teams led and worked in"
+      }
     ]
   },
-
   "expertise": {
     "eyebrow": "Expertise",
     "title": "Four fields that rarely meet in one person",
@@ -74,7 +80,6 @@
       }
     ]
   },
-
   "outlook": {
     "eyebrow": "Industry 5.0",
     "quote": "Nobody needs to be afraid.",
@@ -84,7 +89,6 @@
     ],
     "note": "This is a position, not a service."
   },
-
   "about": {
     "eyebrow": "About",
     "title": "Who is writing here",
@@ -96,15 +100,32 @@
     "portraitAlt": "Martin Kandzior in front of the Mannheim water tower",
     "portraitCaption": "Mannheim, at the water tower"
   },
-
   "social": {
     "eyebrow": "Social",
     "title": "Verifiable, not just claimed",
     "lead": "Everything on this page can be checked elsewhere. Here are the profiles.",
     "tabs": [
-      { "id": "linkedin", "label": "LinkedIn", "handle": "PLATZHALTER: profile URL", "url": "#", "context": "Posts on logistics, risk and economic policy." },
-      { "id": "x", "label": "X", "handle": "PLATZHALTER: profile URL", "url": "#", "context": "Short takes on current developments." },
-      { "id": "facebook", "label": "Facebook", "handle": "PLATZHALTER: profile URL", "url": "#", "context": "Regional matters from Mannheim and the Rhine-Neckar area." }
+      {
+        "id": "linkedin",
+        "label": "LinkedIn",
+        "handle": "in/martin-kandzior",
+        "url": "https://linkedin.com/in/martin-kandzior",
+        "context": "Posts on logistics, risk and economic policy."
+      },
+      {
+        "id": "x",
+        "label": "X",
+        "handle": "@martinkandzior",
+        "url": "https://x.com/martinkandzior",
+        "context": "Short takes on current developments."
+      },
+      {
+        "id": "facebook",
+        "label": "Facebook",
+        "handle": "martin.kandzior",
+        "url": "https://facebook.com/martin.kandzior",
+        "context": "Regional matters from Mannheim and the Rhine-Neckar area."
+      }
     ],
     "consent": {
       "action": "Load posts",
@@ -114,7 +135,6 @@
       "error": "The posts could not be loaded. The direct link to the profile still works."
     }
   },
-
   "events": {
     "eyebrow": "Events",
     "title": "Upcoming events",
@@ -127,15 +147,27 @@
       "error": "The events could not be loaded. The direct link to Ticket Tailor still works."
     }
   },
-
   "contact": {
     "eyebrow": "Contact",
     "title": "Fancy starting something big?",
     "lead": "Two sentences about what you need is plenty. I reply within two working days.",
     "form": {
-      "name": { "label": "Name", "placeholder": "First and last name", "error": "Please enter your name." },
-      "email": { "label": "Email", "placeholder": "name@company.com", "error": "Please enter a complete email address." },
-      "message": { "label": "Your enquiry", "placeholder": "What is this about?", "hint": "Two sentences is plenty.", "error": "Please describe your enquiry briefly." },
+      "name": {
+        "label": "Name",
+        "placeholder": "First and last name",
+        "error": "Please enter your name."
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "name@company.com",
+        "error": "Please enter a complete email address."
+      },
+      "message": {
+        "label": "Your enquiry",
+        "placeholder": "What is this about?",
+        "hint": "Two sentences is plenty.",
+        "error": "Please describe your enquiry briefly."
+      },
       "submit": "Send enquiry",
       "sending": "Sending …",
       "successTitle": "Received.",
@@ -151,7 +183,6 @@
       "profilesLabel": "Profiles"
     }
   },
-
   "footer": {
     "tagline": "Logistics, risk and politics — from Mannheim.",
     "imprint": "Imprint",
@@ -160,14 +191,12 @@
     "privacyPath": "/en/privacy",
     "copyright": "Martin Kandzior"
   },
-
   "legal": {
     "imprintTitle": "Imprint",
     "privacyTitle": "Privacy Policy",
     "authoritative": "This is a translation. The German version is the legally authoritative one.",
     "back": "Back to the homepage"
   },
-
   "notFound": {
     "title": "This page does not exist",
     "body": "The link leads nowhere. The way back to the start might help.",

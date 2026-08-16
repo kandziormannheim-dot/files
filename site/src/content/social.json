@@ -1,0 +1,36 @@
+{
+  "_hinweis": "Eingebettete Beitraege. WICHTIG: X aktualisiert sich selbst, LinkedIn und Facebook NICHT — LinkedIn bietet keine einbettbaren Profil-Feeds (nur einzelne Beitraege), Facebooks Page-Plugin verlangt eine Seite statt eines Profils. Diese beiden Tabs sind handverlesen. PFLEGE: vierteljaehrlich pruefen (naechster Termin: November 2026). Ein eingebetteter Beitrag von vor acht Monaten sagt dem Besucher 'inaktiv' — das Gegenteil dessen, wofuer der Bereich existiert. Einbettungs-Code fuer LinkedIn: Beitrag oeffnen -> Menue -> 'Einbetten' -> src-URL des iframes hierher. Wenn die Pflege nicht stattfindet, in de.json/en.json den Tab auf reine Profilkarte zurueckstufen, indem 'embeds' hier geleert wird.",
+
+  "linkedin": {
+    "profileUrl": "https://linkedin.com/in/martin-kandzior",
+    "embeds": [],
+    "_embeds_beispiel": [
+      {
+        "type": "iframe",
+        "src": "https://www.linkedin.com/embed/feed/update/urn:li:share:BEISPIEL",
+        "title": "LinkedIn-Beitrag von Martin Kandzior",
+        "height": 500,
+        "eingefuegt": "2026-08"
+      }
+    ]
+  },
+
+  "x": {
+    "profileUrl": "https://x.com/martinkandzior",
+    "handle": "@martinkandzior",
+    "embeds": [
+      {
+        "type": "script",
+        "src": "https://platform.twitter.com/widgets.js",
+        "attrs": { "charset": "utf-8" }
+      }
+    ],
+    "_hinweis": "Die Timeline rendert in den vorbereiteten Anker im Slot; widgets.js sucht ihn beim Laden. Selbstaktualisierend, keine Pflege noetig."
+  },
+
+  "facebook": {
+    "profileUrl": "https://facebook.com/martin.kandzior",
+    "embeds": [],
+    "_hinweis": "Facebooks Page-Plugin funktioniert nur mit Seiten, nicht mit Privatprofilen. Solange martin.kandzior ein Profil ist, bleibt dieser Tab eine Profilkarte mit Direktlink — das ist keine Einschraenkung der Seite, sondern eine von Facebook. Falls spaeter eine Facebook-SEITE existiert: Einbettung analog LinkedIn hier eintragen."
+  }
+}

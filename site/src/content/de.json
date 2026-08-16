@@ -1,12 +1,10 @@
 {
   "_hinweis": "ENTWURF. Alle Texte sind von Claude verfasst und muessen von Martin Kandzior geprueft und freigegeben werden, bevor die Seite live geht. Stellen mit PLATZHALTER enthalten Angaben, die noch nicht bestaetigt sind.",
-
   "meta": {
     "title": "Martin Kandzior — Logistik, Risiko und Politik aus Mannheim",
     "description": "Martin Kandzior aus Mannheim arbeitet dort, wo Logistik, Risiko und Politik sich überschneiden. 15 Jahre international in Logistik und Finanzbranche. Schreiben Sie mir Ihr Anliegen.",
     "locale": "de_DE"
   },
-
   "a11y": {
     "skipLink": "Zum Inhalt springen",
     "mainNav": "Hauptnavigation",
@@ -18,7 +16,6 @@
     "currentLang": "Aktuelle Sprache: Deutsch",
     "toTop": "Zum Seitenanfang"
   },
-
   "nav": {
     "expertise": "Expertise",
     "about": "Über mich",
@@ -27,7 +24,6 @@
     "contact": "Kontakt",
     "cta": "Anfrage senden"
   },
-
   "hero": {
     "eyebrow": "Mannheim",
     "name": "Martin Kandzior",
@@ -37,16 +33,26 @@
     "ctaSecondary": "Woran ich arbeite",
     "portraitAlt": "Martin Kandzior, freundlich lächelnd im blauen Sakko"
   },
-
   "proof": {
     "label": "In Zahlen",
     "items": [
-      { "value": "15", "suffix": "", "label": "Jahre Logistik und Finanzbranche, international" },
-      { "value": "350", "suffix": " Tsd. USD", "label": "durchschnittliches Auftragsvolumen" },
-      { "value": "50", "suffix": "", "label": "Mitarbeitende in geführten und begleiteten Teams" }
+      {
+        "value": "15",
+        "suffix": "",
+        "label": "Jahre Logistik und Finanzbranche, international"
+      },
+      {
+        "value": "350",
+        "suffix": " Tsd. USD",
+        "label": "durchschnittliches Auftragsvolumen"
+      },
+      {
+        "value": "50",
+        "suffix": "",
+        "label": "Mitarbeitende in geführten und begleiteten Teams"
+      }
     ]
   },
-
   "expertise": {
     "eyebrow": "Expertise",
     "title": "Vier Felder, die selten in einer Person zusammenkommen",
@@ -74,7 +80,6 @@
       }
     ]
   },
-
   "outlook": {
     "eyebrow": "Industrie 5.0",
     "quote": "Keiner muss Angst haben.",
@@ -84,7 +89,6 @@
     ],
     "note": "Das ist eine Haltung, keine Dienstleistung."
   },
-
   "about": {
     "eyebrow": "Über mich",
     "title": "Wer hier schreibt",
@@ -96,15 +100,32 @@
     "portraitAlt": "Martin Kandzior vor dem Mannheimer Wasserturm",
     "portraitCaption": "Mannheim, am Wasserturm"
   },
-
   "social": {
     "eyebrow": "Social",
     "title": "Nachprüfbar, nicht behauptet",
     "lead": "Was auf dieser Seite steht, können Sie an anderer Stelle überprüfen. Hier sind die Profile.",
     "tabs": [
-      { "id": "linkedin", "label": "LinkedIn", "handle": "PLATZHALTER: Profil-URL", "url": "#", "context": "Beiträge zu Logistik, Risiko und Wirtschaftspolitik." },
-      { "id": "x", "label": "X", "handle": "PLATZHALTER: Profil-URL", "url": "#", "context": "Kurze Einordnungen zu aktuellen Entwicklungen." },
-      { "id": "facebook", "label": "Facebook", "handle": "PLATZHALTER: Profil-URL", "url": "#", "context": "Regionales aus Mannheim und der Metropolregion." }
+      {
+        "id": "linkedin",
+        "label": "LinkedIn",
+        "handle": "in/martin-kandzior",
+        "url": "https://linkedin.com/in/martin-kandzior",
+        "context": "Beiträge zu Logistik, Risiko und Wirtschaftspolitik."
+      },
+      {
+        "id": "x",
+        "label": "X",
+        "handle": "@martinkandzior",
+        "url": "https://x.com/martinkandzior",
+        "context": "Kurze Einordnungen zu aktuellen Entwicklungen."
+      },
+      {
+        "id": "facebook",
+        "label": "Facebook",
+        "handle": "martin.kandzior",
+        "url": "https://facebook.com/martin.kandzior",
+        "context": "Regionales aus Mannheim und der Metropolregion."
+      }
     ],
     "consent": {
       "action": "Beiträge laden",
@@ -114,7 +135,6 @@
       "error": "Die Beiträge ließen sich nicht laden. Der direkte Weg zum Profil funktioniert weiterhin."
     }
   },
-
   "events": {
     "eyebrow": "Events",
     "title": "Kommende Veranstaltungen",
@@ -127,15 +147,27 @@
       "error": "Die Termine ließen sich nicht laden. Der direkte Weg zu Ticket Tailor funktioniert weiterhin."
     }
   },
-
   "contact": {
     "eyebrow": "Kontakt",
     "title": "Lust, was Großes zu starten?",
     "lead": "Zwei Sätze zu Ihrem Anliegen genügen. Ich melde mich innerhalb von zwei Werktagen.",
     "form": {
-      "name": { "label": "Name", "placeholder": "Vor- und Nachname", "error": "Bitte tragen Sie Ihren Namen ein." },
-      "email": { "label": "E-Mail", "placeholder": "name@unternehmen.de", "error": "Bitte geben Sie eine vollständige E-Mail-Adresse an." },
-      "message": { "label": "Ihr Anliegen", "placeholder": "Worum geht es konkret?", "hint": "Zwei Sätze reichen völlig.", "error": "Bitte beschreiben Sie kurz Ihr Anliegen." },
+      "name": {
+        "label": "Name",
+        "placeholder": "Vor- und Nachname",
+        "error": "Bitte tragen Sie Ihren Namen ein."
+      },
+      "email": {
+        "label": "E-Mail",
+        "placeholder": "name@unternehmen.de",
+        "error": "Bitte geben Sie eine vollständige E-Mail-Adresse an."
+      },
+      "message": {
+        "label": "Ihr Anliegen",
+        "placeholder": "Worum geht es konkret?",
+        "hint": "Zwei Sätze reichen völlig.",
+        "error": "Bitte beschreiben Sie kurz Ihr Anliegen."
+      },
       "submit": "Anfrage senden",
       "sending": "Wird gesendet …",
       "successTitle": "Angekommen.",
@@ -151,7 +183,6 @@
       "profilesLabel": "Profile"
     }
   },
-
   "footer": {
     "tagline": "Logistik, Risiko und Politik — aus Mannheim.",
     "imprint": "Impressum",
@@ -160,14 +191,12 @@
     "privacyPath": "/datenschutz",
     "copyright": "Martin Kandzior"
   },
-
   "legal": {
     "imprintTitle": "Impressum",
     "privacyTitle": "Datenschutzerklärung",
     "authoritative": "",
     "back": "Zurück zur Startseite"
   },
-
   "notFound": {
     "title": "Diese Seite gibt es nicht",
     "body": "Der Link führt ins Leere. Vielleicht hilft der Weg zurück zum Anfang.",
