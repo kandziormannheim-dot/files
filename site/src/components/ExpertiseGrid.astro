@@ -1,0 +1,174 @@
+---
+/**
+ * Expertise — vier Arbeitsfelder.
+ *
+ * Die Einleitung ist nicht schmückend, sie ist notwendig: Vier so weit
+ * auseinanderliegende Felder nebeneinander lesen sich sonst als „macht
+ * alles". Erst der Satz darüber macht daraus „bewegt sich in Räumen, die
+ * sich sonst nicht berühren" (Prinzip 2 aus dem Brief).
+ *
+ * Industrie 5.0 steht bewusst NICHT hier, sondern als eigener Block danach:
+ * Das ist eine Haltung, keine Leistung, und beides gehört nicht in dieselbe
+ * Kartenreihe.
+ */
+import { content, type Lang } from "../lib/i18n";
+import PillarIcon from "./PillarIcon.astro";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang).expertise;
+---
+
+<section class="expertise section" id="expertise" aria-labelledby="expertise-heading">
+  <div class="container container--wide">
+    <div class="expertise__intro">
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2 id="expertise-heading" class="expertise__title">{c.title}</h2>
+      <p class="expertise__lead">{c.lead}</p>
+    </div>
+
+    <ul class="expertise__grid" role="list">
+      {
+        c.pillars.map((pillar) => (
+          <li class="pillar">
+            <span class="pillar__icon">
+              <PillarIcon name={pillar.id as "risk" | "ecommerce" | "manda" | "politics"} />
+            </span>
+            <div class="pillar__text">
+              <h3 class="pillar__title">{pillar.title}</h3>
+              <p class="pillar__body">{pillar.body}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .expertise__intro {
+    max-width: var(--max-width-content);
+  }
+
+  .expertise__title {
+    margin-top: var(--space-3);
+    text-wrap: balance;
+  }
+
+  .expertise__lead {
+    margin-top: var(--space-4);
+    color: var(--color-text-secondary);
+  }
+
+  .expertise__grid {
+    display: grid;
+    gap: var(--space-4);
+    margin: var(--space-7) 0 0;
+    padding: 0;
+  }
+
+  .pillar {
+    display: flex;
+    flex-direction: column;
+    /* Kein align-items: flex-start hier. Das ließe Titel und Text auf ihre
+       Inhaltsbreite schrumpfen statt die Karte zu füllen — gemessen 28 statt
+       67 Zeichen pro Zeile. Nur das Icon soll schmal bleiben, und das regelt
+       es unten selbst. */
+    padding: var(--card-padding);
+    background-color: var(--card-bg);
+    border: var(--border-width) solid var(--card-border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    transition:
+      transform var(--duration-normal) var(--easing-out),
+      box-shadow var(--duration-normal) var(--easing-out),
+      border-color var(--duration-normal) var(--easing-out);
+  }
+
+  /* Die Hebung nur dort, wo es einen Zeiger gibt. Auf Berührungsgeräten
+     bleibt der Hover-Zustand nach dem Tippen sonst hängen und die Karte
+     steht dauerhaft angehoben da. */
+  @media (hover: hover) {
+    .pillar:hover {
+      transform: translateY(var(--lift-card));
+      box-shadow: var(--card-shadow-hover);
+      border-color: var(--color-border-strong);
+    }
+  }
+
+  .pillar__icon {
+    display: inline-grid;
+    place-items: center;
+    align-self: flex-start;
+    flex-shrink: 0;
+    width: 54px;
+    height: 54px;
+    margin-bottom: var(--space-4);
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-accent-subtle);
+    color: var(--color-accent);
+  }
+
+  .pillar__title {
+    /* Auf der Kartenbreite bricht ein langer Titel sonst unschön in eine
+       einzelne Silbe auf der zweiten Zeile. */
+    text-wrap: balance;
+  }
+
+  .pillar__body {
+    margin-top: var(--space-3);
+    /* Obergrenze der Zeilenlänge. Ohne sie liefe der Text auf einer breiten
+       einspaltigen Karte auf 90 Zeichen und mehr — das Auge findet dann den
+       Zeilenanfang nicht mehr zuverlässig wieder. */
+    max-width: 62ch;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    color: var(--color-text-secondary);
+  }
+
+  /* Der Rasterbruch folgt der Zeilenlänge, nicht der Bildschirmklasse.
+     Gemessen an dieser Schriftgröße braucht eine Karte etwa 500px Breite,
+     damit der Text auf ungefähr 50 Zeichen je Zeile kommt. Zwei Spalten
+     lohnen sich deshalb erst ab rund 1100px — bei 768px ergäben sie 33
+     Zeichen, und ein Absatz wird dann zur Schlagzeilenspalte.
+
+     TASKS.md sah 4 / 2 / 1 vor. Vier nebeneinander ergeben gemessen 28
+     Zeichen; das war eine Annahme über das Raster, keine über den Text. */
+  @media (min-width: 600px) {
+    .expertise__grid {
+      gap: var(--space-5);
+    }
+
+    /* Einspaltig, aber breit: Das Icon rückt neben den Text, damit die
+       Karte nicht als halbleere Fläche dasteht. */
+    .pillar {
+      flex-direction: row;
+      gap: var(--space-5);
+    }
+
+    .pillar__icon {
+      margin-bottom: 0;
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .expertise__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-6);
+    }
+
+    /* Zurück zur stehenden Karte: In zwei Spalten ist die Breite knapp, und
+       das Icon oben lässt dem Text die volle Kartenbreite. */
+    .pillar {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .pillar__icon {
+      margin-bottom: var(--space-4);
+    }
+  }
+</style>

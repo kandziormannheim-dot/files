@@ -42,7 +42,7 @@
     "label": "In Zahlen",
     "items": [
       { "value": "15", "suffix": "", "label": "Jahre Logistik und Finanzbranche, international" },
-      { "value": "Mio.", "suffix": " USD", "label": "Volumen verkaufter Lösungen und Dienstleistungen" },
+      { "value": "350", "suffix": " Tsd. USD", "label": "durchschnittliches Auftragsvolumen" },
       { "value": "50", "suffix": "", "label": "Mitarbeitende in geführten und begleiteten Teams" }
     ]
   },
@@ -89,7 +89,7 @@
     "eyebrow": "Über mich",
     "title": "Wer hier schreibt",
     "paragraphs": [
-      "Ich bin seit 15 Jahren in der Logistik und der Finanzbranche zu Hause, überwiegend international. In dieser Zeit habe ich Organisationen und Projekte von Grund auf aufgebaut, Lösungen und Dienstleistungen im Wert von mehreren Millionen US-Dollar verkauft — bei einem durchschnittlichen Auftragsvolumen von rund 350.000 US-Dollar — und in Teams mit bis zu 50 Menschen gearbeitet und Verantwortung getragen.",
+      "Ich bin seit 15 Jahren in der Logistik und der Finanzbranche zu Hause, überwiegend international. In dieser Zeit habe ich Organisationen und Projekte von Grund auf aufgebaut, Lösungen und Dienstleistungen im Wert von mehreren Millionen US-Dollar verkauft und in Teams mit bis zu 50 Menschen gearbeitet und Verantwortung getragen.",
       "Mein Zuhause ist Mannheim. Von hier aus arbeite ich an Themen, die selten an einer Stadtgrenze haltmachen: Lieferketten, Absicherung, Unternehmenskäufe, Standortpolitik.",
       "Was mich interessiert, sind die Stellen, an denen zwei Welten aufeinandertreffen und niemand beide Sprachen spricht. Da bin ich am nützlichsten."
     ],

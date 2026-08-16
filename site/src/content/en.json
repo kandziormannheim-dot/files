@@ -42,7 +42,7 @@
     "label": "In numbers",
     "items": [
       { "value": "15", "suffix": "", "label": "years in logistics and finance, international" },
-      { "value": "M", "suffix": " USD", "label": "in solutions and services sold" },
+      { "value": "350", "suffix": "K USD", "label": "average deal value" },
       { "value": "50", "suffix": "", "label": "people in teams led and worked in" }
     ]
   },
@@ -89,7 +89,7 @@
     "eyebrow": "About",
     "title": "Who is writing here",
     "paragraphs": [
-      "I have spent fifteen years in logistics and finance, mostly international. In that time I have built organisations and projects from the ground up, sold solutions and services worth several million US dollars — at an average deal value of around 350,000 US dollars — and worked in and carried responsibility for teams of up to fifty people.",
+      "I have spent fifteen years in logistics and finance, mostly international. In that time I have built organisations and projects from the ground up, sold solutions and services worth several million US dollars, and worked in and carried responsibility for teams of up to fifty people.",
       "Mannheim is home. From here I work on subjects that rarely stop at a city boundary: supply chains, risk cover, acquisitions, location policy.",
       "What interests me are the places where two worlds meet and nobody speaks both languages. That is where I am most useful."
     ],

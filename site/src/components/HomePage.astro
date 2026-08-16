@@ -9,7 +9,7 @@
  * die nächste Frage im Kopf des Besuchers:
  *   #hero      Wer ist das?           ✔ Aufgabe C1
  *   #proof     Kann der was?          ✔ Aufgabe C2
- *   #expertise Woran arbeitet er?     → C3
+ *   #expertise Woran arbeitet er?     ✔ Aufgabe C3
  *   #outlook   Wo steht er?           → C4
  *   #about     Wer ist er wirklich?   → C5
  *   #social    Stimmt das auch?       → I2
@@ -19,6 +19,7 @@
 import Header from "./Header.astro";
 import Hero from "./Hero.astro";
 import StatsBand from "./StatsBand.astro";
+import ExpertiseGrid from "./ExpertiseGrid.astro";
 import { type Lang } from "../lib/i18n";
 
 export interface Props {
@@ -33,4 +34,5 @@ const { lang } = Astro.props;
 <main id="main">
   <Hero lang={lang} />
   <StatsBand lang={lang} />
+  <ExpertiseGrid lang={lang} />
 </main>
