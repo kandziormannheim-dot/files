@@ -1,9 +1,21 @@
 # Claude Code Skills
 
-Dieses Repo hat die Skill-Bibliothek [alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills)
-als Claude-Code-Marketplace registriert. Die Konfiguration liegt in [`settings.json`](settings.json)
-und greift automatisch in jeder Claude-Code-Session auf diesem Repo — es ist keine
-manuelle Installation pro Rechner nötig.
+Skills für dieses Repo, auf zwei Wegen installiert:
+
+1. **[Marketplace](#1-marketplace-alirezarezvaniclaude-skills)** — 314 Skills aus
+   `alirezarezvani/claude-skills`, per Konfiguration referenziert.
+2. **[Vendored](#2-vendored-web-design)** — `web-design`, direkt ins Repo kopiert.
+
+Beides greift automatisch in jeder Claude-Code-Session auf diesem Repo; eine manuelle
+Installation pro Rechner ist nicht nötig.
+
+---
+
+# 1. Marketplace: alirezarezvani/claude-skills
+
+Die Skill-Bibliothek [alirezarezvani/claude-skills](https://github.com/alirezarezvani/claude-skills)
+ist als Claude-Code-Marketplace registriert. Die Konfiguration liegt in
+[`settings.json`](settings.json).
 
 Die Skills werden **nicht** ins Repo kopiert. Claude Code klont den Marketplace bei
 Bedarf selbst nach `~/.claude/`, wodurch Updates über `/plugin update` laufen und das
@@ -67,3 +79,64 @@ claude plugin marketplace update claude-code-skills # Marketplace-Cache auffrisc
 `loop-library` besitzt im Upstream-Repo keinen Marketplace-Eintrag und ist daher nicht
 über `/plugin install` verfügbar. Der Skill muss bei Bedarf manuell aus dem
 Upstream-Repo kopiert werden.
+
+---
+
+# 2. Vendored: web-design
+
+Liegt unter [`skills/web-design/`](skills/web-design/) und wird von Claude Code als
+Projekt-Skill automatisch gefunden.
+
+**Quelle:** [xiaopu-ai/web-design](https://github.com/xiaopu-ai/web-design), MIT,
+Commit `22a4f482cc4caa2394391c0c31ff0aefd1908774` (2026-06-25).
+Die `README.md` im Upstream nennt noch den alten Pfad `KAOPU-XiaoPu/web-design` — das
+Konto wurde umbenannt, der Inhalt ist derselbe.
+
+## Warum kopiert statt referenziert
+
+Das Repo enthält nur eine einzelne `SKILL.md` ohne `plugin.json` oder
+`marketplace.json`. Damit gibt es keinen Marketplace-Weg wie bei den Skills oben; der
+Upstream dokumentiert selbst nur `git clone`. Kopieren ins Repo ist hier die einzige
+Variante, die versioniert ist und ohne Setup pro Rechner auskommt.
+
+## Was der Skill tut
+
+Zweistufiger Workflow für Web-Design: erst eine `DESIGN.md`-Spezifikation (Farbe,
+Typografie, Komponenten, Layout, Motion, Responsive, Accessibility), nach deiner
+Bestätigung dann der Code dazu. Eingabe wahlweise PRD, Referenz-URL, Screenshot oder
+Stichworte. Zielgruppe sind Landing Pages, Portfolios, Produkt- und SaaS-Seiten — nicht
+Backend oder Datenbank.
+
+Enthalten sind 56 Design-System-Referenzen (Stripe, Linear, Vercel, Apple, …), eine
+Motion- und Interaction-Library sowie eine Quality-Checklist.
+
+## Mitgelieferte Skripte
+
+`skills/web-design/scripts/` enthält drei Python-Skripte, die Claude bei Bedarf ausführt:
+
+| Skript | Zweck | Netzwerk |
+| --- | --- | --- |
+| `crawl_website.py` | Playwright-Crawler: rendert eine Referenz-URL, screenshottet, extrahiert Tokens | ja, benötigt Playwright |
+| `extract_design_tokens.py` | Zieht Design-Tokens aus HTML/CSS; lädt verlinkte Stylesheets nach | ja |
+| `fetch_unsplash_images.py` | Baut Unsplash-URLs aus einer kuratierten Liste für Platzhalterbilder | nein |
+
+Alle drei laufen nur gegen URLs, die du selbst vorgibst.
+
+## Nicht kopiert
+
+Der Ordner `docs/` des Upstream-Repos (~1,5 MB, Demo-Landingpage mit Bildern für
+GitHub Pages) fehlt bewusst. `SKILL.md` referenziert ausschließlich `references/` und
+`scripts/` — die Demo wird für den Betrieb nicht gebraucht.
+
+## Aktualisieren
+
+Vendored Code bekommt keine Updates über `/plugin update`. Für eine neue Version:
+
+```bash
+git clone --depth 1 https://github.com/xiaopu-ai/web-design /tmp/web-design
+rm -rf .claude/skills/web-design
+mkdir -p .claude/skills/web-design
+cp /tmp/web-design/SKILL.md /tmp/web-design/LICENSE .claude/skills/web-design/
+cp -r /tmp/web-design/references /tmp/web-design/scripts .claude/skills/web-design/
+claude plugin validate .claude
+```
