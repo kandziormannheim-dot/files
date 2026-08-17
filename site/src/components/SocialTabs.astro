@@ -38,7 +38,15 @@ type Beitrag = { datum: string; text: string; url: string };
 
 const daten = social as unknown as Record<
   string,
-  { profileUrl: string; handle?: string; embeds: Einbettung[] }
+  {
+    profileUrl: string;
+    handle?: string;
+    embeds: Einbettung[];
+    /** Wer die Einbettung tatsächlich ausliefert (z. B. ein Widget-Dienst
+        wie SociableKIT). Der Einwilligungstext muss den ECHTEN Empfänger
+        der IP-Adresse nennen, nicht die Plattform, deren Inhalte er zeigt. */
+    provider?: string;
+  }
 >;
 
 const beitraege = socialPosts as unknown as Record<string, { posts?: Beitrag[] }>;
@@ -56,6 +64,12 @@ const tabs = c.tabs.map((tab) => ({
   embeds: daten[tab.id]?.embeds ?? [],
   posts: beitraege[tab.id]?.posts ?? [],
   profileUrl: daten[tab.id]?.profileUrl ?? tab.url,
+  /* Vorab ersetzt: Liefert ein Widget-Dienst die Einbettung, nennt der
+     Einwilligungstext ihn (und die Plattform), nicht nur die Plattform. */
+  notice: c.consent.notice.replace(
+    "{platform}",
+    daten[tab.id]?.provider ? `${daten[tab.id].provider} (${tab.label})` : tab.label,
+  ),
 }));
 ---
 
@@ -100,7 +114,7 @@ const tabs = c.tabs.map((tab) => ({
               id={`social-${tab.id}`}
               platform={tab.label}
               context={tab.context}
-              notice={c.consent.notice}
+              notice={tab.notice}
               action={c.consent.action}
               direct={c.consent.direct}
               directUrl={tab.profileUrl}

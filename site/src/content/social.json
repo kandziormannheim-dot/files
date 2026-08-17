@@ -1,5 +1,6 @@
 {
   "_hinweis": "Eingebettete Beitraege. WICHTIG: X aktualisiert sich selbst, LinkedIn und Facebook NICHT — LinkedIn bietet keine einbettbaren Profil-Feeds (nur einzelne Beitraege), Facebooks Page-Plugin verlangt eine Seite statt eines Profils. Diese beiden Tabs sind handverlesen. PFLEGE: vierteljaehrlich pruefen (naechster Termin: November 2026). Ein eingebetteter Beitrag von vor acht Monaten sagt dem Besucher 'inaktiv' — das Gegenteil dessen, wofuer der Bereich existiert. Einbettungs-Code fuer LinkedIn: Beitrag oeffnen -> Menue -> 'Einbetten' -> src-URL des iframes hierher. Wenn die Pflege nicht stattfindet, in de.json/en.json den Tab auf reine Profilkarte zurueckstufen, indem 'embeds' hier geleert wird.",
+  "_LOESUNG_FEED": "So betten 'die anderen' Profil-Feeds ein: ueber einen Feed-Widget-Dienst, der LinkedIn/Facebook serverseitig ausliest und einen fertigen iframe liefert. EINRICHTUNG (je Kanal ~5 Min, einmalig): 1) Konto bei einem Dienst anlegen — z. B. SociableKIT (Widgets 'LinkedIn Profile Posts' und 'Facebook Page Posts', Gratis-Stufe vorhanden), Alternativen: Elfsight, Tagembed, RSS.app. 2) Widget anlegen, Profil-URL verbinden, im Widget-Design 'Dark' waehlen (passt zum Neon-Design). 3) Die iframe-Embed-URL kopieren (bei SociableKIT: https://widgets.sociablekit.com/<widget-typ>/iframe/<WIDGET_ID>) und unten in 'embeds' des Kanals eintragen (Muster: _embeds_widget_beispiel); zusaetzlich 'provider' auf den Dienstnamen setzen — der Einwilligungstext nennt dann den echten Empfaenger der IP-Adresse (DSGVO). 4) VOR Livegang: Dienst + AV-Vertrag in der Datenschutzerklaerung ergaenzen (Anwaltspruefung steht ohnehin an). Die Zwei-Klick-Einwilligung bleibt davor — ohne Klick keine Anfrage an den Dienst.",
   "linkedin": {
     "profileUrl": "https://linkedin.com/in/martin-kandzior",
     "embeds": [],
@@ -12,7 +13,16 @@
         "eingefuegt": "2026-08"
       }
     ],
-    "_hinweis": "Zwei Wege: (1) SOFORT — Beitrags-Karten in social-posts.json (eigenes HTML, keine Fremdanfrage). (2) Echte iframes: LinkedIn bettet nur EINZELNE Beitraege ein (kein Profil-Feed) — Beitrag oeffnen -> ... -> 'Einbetten' -> src des iframes in 'embeds' eintragen (Muster in _embeds_beispiel). Gefuellte 'embeds' haben Vorrang vor den Karten."
+    "_hinweis": "Zwei Wege: (1) SOFORT — Beitrags-Karten in social-posts.json (eigenes HTML, keine Fremdanfrage). (2) Echte iframes: LinkedIn bettet nur EINZELNE Beitraege ein (kein Profil-Feed) — Beitrag oeffnen -> ... -> 'Einbetten' -> src des iframes in 'embeds' eintragen (Muster in _embeds_beispiel). Gefuellte 'embeds' haben Vorrang vor den Karten.",
+    "_embeds_widget_beispiel": [
+      {
+        "type": "iframe",
+        "src": "https://widgets.sociablekit.com/linkedin-profile-posts/iframe/WIDGET_ID_HIER",
+        "title": "LinkedIn-Beiträge von Martin Kandzior",
+        "height": 620
+      }
+    ],
+    "_provider_beispiel": "SociableKIT"
   },
   "x": {
     "profileUrl": "https://x.com/martinkandzior",
@@ -39,6 +49,15 @@
         "title": "Facebook-Beitrag von Martin Kandzior",
         "height": 500
       }
-    ]
+    ],
+    "_embeds_widget_beispiel": [
+      {
+        "type": "iframe",
+        "src": "https://widgets.sociablekit.com/facebook-page-posts/iframe/WIDGET_ID_HIER",
+        "title": "Facebook-Beiträge von Martin Kandzior",
+        "height": 620
+      }
+    ],
+    "_provider_beispiel": "SociableKIT"
   }
 }

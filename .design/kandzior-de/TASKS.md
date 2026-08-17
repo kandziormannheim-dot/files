@@ -189,3 +189,20 @@ Die Lösung fährt zweigleisig:
   social.json (_embeds_beispiel). Gefüllte embeds übernehmen automatisch.
 - [ ] **S-3 — Inhalte eintragen:** wartet auf Beitragstexte + Links vom
   Auftraggeber (posts derzeit leer → Tabs zeigen die Profilkarte).
+
+## Feed-Einbettung über Widget-Dienst (2026-08-17)
+
+„Andere schaffen es auch" — ja, über Feed-Widget-Dienste (SociableKIT,
+Elfsight, Tagembed, RSS.app), die die Plattformen serverseitig auslesen
+und einen iframe liefern. Die Seite ist dafür fertig verdrahtet:
+
+- [x] **W-1 — Verdrahtung:** iframe-Muster je Kanal in social.json
+  (_embeds_widget_beispiel), `provider`-Feld → der Einwilligungstext
+  nennt den ECHTEN Empfänger der IP („SociableKIT (LinkedIn)"), nicht
+  nur die Plattform. Belegt: iframe-Embed läuft durch den Zwei-Klick-
+  Mount (widgettest). _socialtabs, consent, contact._
+- [ ] **W-2 — Widget anlegen (Auftraggeber, ~5 Min je Kanal):** Konto
+  beim Dienst, Widget „LinkedIn Profile Posts" / „Facebook Page Posts"
+  mit dunklem Design, iframe-URL + WIDGET_ID in social.json eintragen.
+- [ ] **W-3 — VOR Livegang:** Dienst + AV-Vertrag in der Datenschutz-
+  erklärung ergänzen (liegt ohnehin bei der Anwaltsprüfung).
