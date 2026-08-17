@@ -203,7 +203,8 @@ und einen iframe liefern. Die Seite ist dafür fertig verdrahtet:
   Mount (widgettest). _socialtabs, consent, contact._
 - [x] **W-2a — LinkedIn-Widget AKTIV:** SociableKIT 25706175 in
   social.json eingetragen; socialtabs prüft Quelle und Anbieternennung.
-- [ ] **W-2b — Facebook-Widget:** wartet auf Widget-URL („Facebook Page
-  Posts") aus dem SociableKIT-Konto des Auftraggebers.
+- [x] **W-2b — Facebook-Widget AKTIV:** SociableKIT 25706182 (Typ
+  „Facebook Profile" — funktioniert auch für Profile) in social.json;
+  socialtabs prüft Quelle und Anbieternennung.
 - [ ] **W-3 — VOR Livegang:** Dienst + AV-Vertrag in der Datenschutz-
   erklärung ergänzen (liegt ohnehin bei der Anwaltsprüfung).

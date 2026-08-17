@@ -145,16 +145,27 @@ const ok = (c, m) => {
   ok(x.dnt === "true", "X-Timeline mit Do-Not-Track-Attribut");
   ok(x.direkt === "https://x.com/martinkandzior", `X-Direktlink -> ${x.direkt}`);
 
-  // Facebook: Profilkarte
+  // Facebook: Feed ueber SociableKIT-Widget ('Facebook Profile' — der Typ,
+  // der auch fuer Profile funktioniert) -> ConsentEmbed mit Anbieternennung
   const fb = await p.evaluate(() => {
     const panel = document.querySelector("#panel-facebook");
     return {
-      karte: Boolean(panel.querySelector(".social__card")),
-      link: panel.querySelector("a")?.getAttribute("href"),
+      ladeknopf: Boolean(panel.querySelector("[data-consent-load]")),
+      hinweis: panel.querySelector(".consent__notice")?.textContent ?? "",
+      embed: panel.querySelector("[data-consent]")?.dataset.embed ?? "",
+      direkt: panel.querySelector(".consent__direct")?.getAttribute("href"),
     };
   });
-  ok(fb.karte, "Facebook zeigt Profilkarte (Page-Plugin braucht eine Seite)");
-  ok(fb.link === "https://facebook.com/martin.kandzior", `Facebook-Link -> ${fb.link}`);
+  ok(fb.ladeknopf, "Facebook nutzt die Einwilligungs-Vorschau (Widget-Feed)");
+  ok(
+    /SociableKIT \(Facebook\)/.test(fb.hinweis),
+    `Einwilligungstext nennt den Dienst -> "${fb.hinweis.trim().slice(0, 70)}…"`,
+  );
+  ok(
+    fb.embed.includes("widgets.sociablekit.com/facebook-profile/iframe/25706182"),
+    "Widget-Quelle ist das eingetragene SociableKIT-iframe",
+  );
+  ok(fb.direkt === "https://facebook.com/martin.kandzior", `Facebook-Direktlink -> ${fb.direkt}`);
   await p.close();
 }
 

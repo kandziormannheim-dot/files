@@ -48,8 +48,15 @@
   },
   "facebook": {
     "profileUrl": "https://facebook.com/martin.kandzior",
-    "embeds": [],
-    "_hinweis": "Zwei Wege: (1) SOFORT — Beitrags-Karten in social-posts.json (eigenes HTML, keine Fremdanfrage). (2) Echte iframes: Facebooks PAGE-Plugin verlangt eine Seite, aber OEFFENTLICHE Einzelbeitraege auch von Profilen lassen sich per plugins/post.php einbetten — Muster in _embeds_beispiel; Beitrags-URL muss oeffentlich sichtbar sein (Weltkugel-Symbol am Beitrag).",
+    "embeds": [
+      {
+        "type": "iframe",
+        "src": "https://widgets.sociablekit.com/facebook-profile/iframe/25706182",
+        "title": "Facebook-Beiträge von Martin Kandzior",
+        "height": 620
+      }
+    ],
+    "_hinweis": "AKTIV: Feed ueber SociableKIT-Widget 25706182 (Typ 'Facebook Profile' — funktioniert fuer Profile; Zwei-Klick, Einwilligungstext nennt SociableKIT). Gratis-Stufe: Aktualisierung ~alle 24h, kleines Branding. VOR Livegang: SociableKIT + AV-Vertrag in die Datenschutzerklaerung. Rueckfallebene: 'embeds' leeren -> Beitrags-Karten (social-posts.json) bzw. Profilkarte.",
     "_embeds_beispiel": [
       {
         "type": "iframe",
@@ -66,6 +73,7 @@
         "height": 620
       }
     ],
-    "_provider_beispiel": "SociableKIT"
+    "_provider_beispiel": "SociableKIT",
+    "provider": "SociableKIT"
   }
 }
