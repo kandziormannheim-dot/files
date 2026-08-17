@@ -56,15 +56,24 @@ html = re.sub(
     html,
 )
 
-# --- Tubes-Bibliothek als data-URI in den dynamischen Import --------------
-# Die Vorschau hat keinen Server: Der Import von /vendor/tubes1.min.js
-# wuerde ins Leere laufen und der Effekt fehlte. Als data-URI funktioniert
-# der dynamische Import ohne jede Netzanfrage (774 KB -> ~1 MB Base64;
-# das Artifact-Limit von 16 MB ist weit entfernt).
+# --- Tubes-Bibliothek inline ----------------------------------------------
+# Die Vorschau hat keinen Server, und die CSP des Artifact-Viewers laesst
+# auch keine Skript-Importe aus data:-URLs zu. Die Bibliothek wird deshalb
+# als gewoehnliches Inline-Modul eingebettet: Ihr export wird zu einer
+# window-Zuweisung, und die Hero-Logik nimmt window.__TubesCursor, wenn
+# es existiert (der Zweig ist in Hero.astro angelegt).
 tubes = DIST / "vendor/tubes1.min.js"
+TUBES_INLINE = ""
 if tubes.exists():
-    uri = "data:text/javascript;base64," + base64.b64encode(tubes.read_bytes()).decode()
-    html = html.replace('"/vendor/tubes1.min.js"', '"' + uri + '"')
+    quelle = tubes.read_text()
+    EXPORT = "export{oB as default};"
+    if EXPORT not in quelle:
+        raise SystemExit(
+            "tubes1.min.js: erwartete Export-Signatur fehlt — Paket "
+            "aktualisiert? Assembler an den neuen Bezeichner anpassen."
+        )
+    quelle = quelle.replace(EXPORT, "window.__TubesCursor=oB;")
+    TUBES_INLINE = '<script type="module">' + quelle + "</script>\n"
 
 # --- Bilder als data-URIs -------------------------------------------------
 html = re.sub(
@@ -131,6 +140,7 @@ fragment = (
     + head.strip()
     + toast_css
     + "\n"
+    + TUBES_INLINE
     + body.strip()
     + "\n"
     + toast_js

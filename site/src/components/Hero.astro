@@ -308,10 +308,17 @@ const c = content(lang).hero;
       if (app || laedt || !darf()) return;
       laedt = true;
       try {
-        // Indirektion über die Variable: Der Bundler soll die Datei NICHT
-        // einpacken — sie liegt bewusst unangetastet unter /vendor.
+        // Zwei Bezugswege: In der Browservorschau (Artifact) liegt die
+        // Fabrik inline unter window.__TubesCursor — die dortige CSP
+        // erlaubt keine Importe aus data:-URLs. Auf der echten Seite
+        // kommt sie per dynamischem Import aus /vendor; die Indirektion
+        // über die Variable hält den Bundler davon ab, die Datei
+        // einzupacken.
         const pfad = "/vendor/tubes1.min.js";
-        const mod = await import(/* @vite-ignore */ pfad);
+        const inline = (window as unknown as { __TubesCursor?: unknown }).__TubesCursor;
+        const mod = inline
+          ? { default: inline as (c: HTMLCanvasElement, o: unknown) => TubesApp }
+          : await import(/* @vite-ignore */ pfad);
         app = mod.default(canvas, {
           tubes: {
             // Die Farben der Vorlage — identisch mit der Neon-Skala in den Tokens.
