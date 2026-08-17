@@ -32,11 +32,18 @@ const c = content(lang).expertise;
 
     <ul class="expertise__grid" role="list">
       {
-        c.pillars.map((pillar) => (
+        c.pillars.map((pillar, i) => (
           <li class="pillar">
-            <span class="pillar__icon">
-              <PillarIcon name={pillar.id as "risk" | "ecommerce" | "manda" | "politics"} />
-            </span>
+            <div class="pillar__head">
+              <span class="pillar__icon">
+                <PillarIcon name={pillar.id as "risk" | "ecommerce" | "manda" | "politics"} />
+              </span>
+              {/* Nummern-Folio: die vier Felder als gezählte Sammlung —
+                  Katalog-Anmutung, nicht Aufzählung. */}
+              <span class="pillar__num" aria-hidden="true">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+            </div>
             <div class="pillar__text">
               <h3 class="pillar__title">{pillar.title}</h3>
               <p class="pillar__body">{pillar.body}</p>
@@ -71,6 +78,7 @@ const c = content(lang).expertise;
   }
 
   .pillar {
+    position: relative;
     display: flex;
     flex-direction: column;
     /* Kein align-items: flex-start hier. Das ließe Titel und Text auf ihre
@@ -82,10 +90,40 @@ const c = content(lang).expertise;
     border: var(--border-width) solid var(--card-border);
     border-radius: var(--card-radius);
     box-shadow: var(--card-shadow);
+    /* Die Verlaufs-Oberkante ragt sonst über die Rundung hinaus. */
+    overflow: hidden;
     transition:
       transform var(--duration-normal) var(--easing-out),
       box-shadow var(--duration-normal) var(--easing-out),
       border-color var(--duration-normal) var(--easing-out);
+  }
+
+  /* Signatur der Sammlung: eine feine Verlaufskante in den Röhrenfarben
+     am oberen Rand jeder Karte — ruhig im Grundzustand, kräftiger im Hover. */
+  .pillar::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: var(--rule-strong);
+    background: var(--gradient-neon);
+    opacity: 0.45;
+    transition: opacity var(--duration-normal) var(--easing-out);
+  }
+
+  .pillar__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .pillar__num {
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-sm);
+    letter-spacing: var(--letter-spacing-wider);
+    color: var(--color-text-tertiary);
+    transition: color var(--duration-normal) var(--easing-out);
   }
 
   /* Neon: Die Kante wechselt auf die Marke, die Karte hebt leicht und
@@ -99,22 +137,32 @@ const c = content(lang).expertise;
       transform: translateY(var(--lift-card));
     }
 
+    .pillar:hover::before {
+      opacity: 1;
+    }
+
     .pillar:hover .pillar__icon {
       background-color: var(--color-accent-quiet);
+    }
+
+    .pillar:hover .pillar__num {
+      color: var(--color-accent);
     }
   }
 
   .pillar__icon {
     display: inline-grid;
     place-items: center;
-    align-self: flex-start;
     flex-shrink: 0;
-    width: 54px;
-    height: 54px;
-    margin-bottom: var(--space-4);
+    width: 56px;
+    height: 56px;
     border-radius: var(--radius-md);
-    background-color: var(--color-bg-accent-subtle);
+    background: var(--gradient-neon-soft);
+    border: var(--border-width) solid var(--color-border-primary);
     color: var(--color-accent);
+    transition:
+      background-color var(--duration-normal) var(--easing-out),
+      border-color var(--duration-normal) var(--easing-out);
   }
 
   .pillar__title {

@@ -155,3 +155,19 @@ jeder Aufgabe: die genannten Suiten grün.
   67,3 KB · axe 0 Verstöße (5 Kombinationen) · CLS 0,0017. OG-Bild v3.
 - [x] **N-9 — Vorschau:** Tubes als data-URI im dynamischen Import
   (Artifact hat keinen Server; 1,4 MB, null Netzanfragen), republished.
+
+## Feinschliff v3.1 (2026-08-17)
+
+- [x] **F3-1 — Säulen exklusiver:** Nummern-Folio 01–04 (Mono, Hover →
+  Marke), Verlaufs-Oberkante in den Röhrenfarben (0,45 → 1 im Hover),
+  Icon-Kacheln 56px mit Verlaufsfläche und Haarlinie. _expertise._
+- [x] **F3-2 — Events-Knopf (Ticket Tailor):** Kopfzeile ≥1024px sekundär
+  neben dem CTA (extern, noopener, Pfeil-Ikone); mobiles Menü als halbe
+  Zeile neben der Anfrage (320px nachgemessen, kein Querscroll). Ziel
+  aus events.json (boxOfficeUrl). _verify, footer._
+- [x] **F3-3 — Social-Einbettungen:** X-Timeline (Zwei-Klick, rendert als
+  iframe mit den letzten Beiträgen) auf data-theme=dark. LinkedIn: kein
+  Profil-Feed-Embed seitens LinkedIn — Struktur wartet auf Einbett-URLs
+  einzelner Beiträge (social.json, dokumentiert); Facebook: Page-Plugin
+  verlangt eine SEITE, martin.kandzior ist ein Profil → Profilkarte
+  bleibt. _socialtabs, consent, contact (0 Fremdanfragen ohne Klick)._

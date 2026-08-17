@@ -71,6 +71,25 @@ const navItems = [
       </div>
       <ThemeToggle lang={lang} />
       {
+        /* Ticket Tailor ist ein externes Ziel und deshalb ein Knopf, kein
+           Navigationspunkt: Die Ankerpunkte bewegen sich auf der Seite,
+           dieser verlässt sie. Sekundär, damit die eine Primäraktion
+           (Anfrage) die Hierarchie behält. */
+        !minimal && (
+          <a
+            class="button button--secondary button--sm header__events"
+            href={events.boxOfficeUrl}
+            target="_blank"
+            rel="noopener"
+          >
+            {c.nav.events}
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M5.5 10.5 10.5 5.5M6.2 5.5h4.3v4.3" />
+            </svg>
+          </a>
+        )
+      }
+      {
         !minimal && (
           <a class="button button--primary button--sm header__cta" href="#contact">
             {c.nav.cta}
@@ -129,6 +148,17 @@ const navItems = [
 
         <div class="menu__foot container">
           <LanguageToggle lang={lang} />
+          <a
+            class="button button--secondary menu__events"
+            href={events.boxOfficeUrl}
+            target="_blank"
+            rel="noopener"
+          >
+            {c.nav.events}
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M5.5 10.5 10.5 5.5M6.2 5.5h4.3v4.3" />
+            </svg>
+          </a>
           <a class="button button--primary menu__cta" href="#contact" data-menu-link>
             {c.nav.cta}
           </a>
@@ -201,8 +231,20 @@ const navItems = [
     display: none;
   }
 
-  .header__cta {
+  .header__cta,
+  .header__events {
     display: none;
+  }
+
+  .header__events svg,
+  .menu__events svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .header__burger {
@@ -281,6 +323,13 @@ const navItems = [
   }
 
   @media (min-width: 1024px) {
+    /* Der Events-Knopf ist immer sichtbar — er ist Navigation zu einem
+       externen Ziel, kein zweiter Aufruf. */
+    .header__events {
+      display: inline-flex;
+      margin-left: var(--space-2);
+    }
+
     /* Der CTA taucht erst auf, wenn der Hero verlassen ist. Vorher wäre er
        ein zweiter Aufruf neben dem im Hero — und damit keiner mehr. */
     .header__cta {
@@ -394,19 +443,27 @@ const navItems = [
     color: var(--color-accent-fill);
   }
 
+  /* Erste Zeile der Fußleiste: Sprachumschalter. Zweite Zeile: Events und
+     Anfrage nebeneinander, je halbe Breite — auf 320px nachgemessen. */
   .menu__foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-4);
+    align-items: center;
     padding-block: var(--space-6);
     border-top: var(--border-width) solid var(--color-border-primary);
     flex-shrink: 0;
   }
 
+  .menu__foot > :global(.lang) {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .menu__events,
   .menu__cta {
-    flex: 1;
-    max-width: 60%;
+    min-width: 0;
+    padding-inline: var(--space-3);
   }
 
   @media (min-width: 768px) {
