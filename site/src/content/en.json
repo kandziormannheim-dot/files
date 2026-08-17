@@ -134,7 +134,9 @@
       "direct": "Go straight to the profile",
       "loading": "Loading …",
       "error": "The posts could not be loaded. The direct link to the profile still works."
-    }
+    },
+    "postsLabel": "Latest posts",
+    "postsOpen": "View post on {platform}"
   },
   "events": {
     "eyebrow": "Events",

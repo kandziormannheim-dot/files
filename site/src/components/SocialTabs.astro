@@ -8,16 +8,20 @@
  * Echtes ARIA-Tab-Muster: Pfeiltasten wechseln, Home/Ende springen, nur der
  * aktive Tab liegt in der Tab-Reihenfolge (roving tabindex).
  *
- * Je Tab entscheidet social.json, was er zeigt:
- * - Mit Einbettungen → ConsentEmbed (Zwei-Klick, aus I1).
- * - Ohne Einbettungen → Profilkarte mit Direktlink. Ein Lade-Knopf, hinter
- *   dem nichts liegt, wäre ein leeres Versprechen. Aktuell betrifft das
- *   LinkedIn (Beiträge werden handverlesen nachgetragen) und Facebook
- *   (das Page-Plugin verlangt eine Seite, kein Privatprofil).
+ * Je Tab entscheidet die Datenlage, was er zeigt — in dieser Reihenfolge:
+ * 1. Einbettungen (social.json) → ConsentEmbed (Zwei-Klick, aus I1).
+ * 2. Beitrags-Karten (social-posts.json) → selbst gehostete Karten mit
+ *    Wortlaut, Datum und Link zum Original. Die Lösung für Kanäle ohne
+ *    einbettbaren Feed: LinkedIn bettet nur Einzelbeiträge ein, Facebooks
+ *    Page-Plugin verlangt eine Seite statt eines Profils. Eigenes HTML vom
+ *    eigenen Server — keine Fremdanfrage, keine Einwilligung nötig.
+ * 3. Sonst → Profilkarte mit Direktlink. Ein Lade-Knopf, hinter dem nichts
+ *    liegt, wäre ein leeres Versprechen.
  */
 import { content, type Lang } from "../lib/i18n";
 import ConsentEmbed from "./ConsentEmbed.astro";
 import social from "../content/social.json";
+import socialPosts from "../content/social-posts.json";
 
 export interface Props {
   lang: Lang;
@@ -30,14 +34,27 @@ type Einbettung =
   | { type: "script"; src: string; attrs?: Record<string, string> }
   | { type: "iframe"; src: string; title: string; height?: number };
 
+type Beitrag = { datum: string; text: string; url: string };
+
 const daten = social as unknown as Record<
   string,
   { profileUrl: string; handle?: string; embeds: Einbettung[] }
 >;
 
+const beitraege = socialPosts as unknown as Record<string, { posts?: Beitrag[] }>;
+
+/* Zur Bauzeit formatiert — deterministisch, kein Client-JS. */
+const datumAnzeige = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString(lang === "de" ? "de-DE" : "en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
 const tabs = c.tabs.map((tab) => ({
   ...tab,
   embeds: daten[tab.id]?.embeds ?? [],
+  posts: beitraege[tab.id]?.posts ?? [],
   profileUrl: daten[tab.id]?.profileUrl ?? tab.url,
 }));
 ---
@@ -104,6 +121,40 @@ const tabs = c.tabs.map((tab) => ({
                 </a>
               )}
             </ConsentEmbed>
+          ) : tab.posts.length > 0 ? (
+            <div class="social__posts">
+              <p class="social__posts-label">{c.postsLabel}</p>
+              <ul class="social__post-list" role="list">
+                {tab.posts.map((post) => (
+                  <li class="social__post">
+                    <p class="social__post-date">{datumAnzeige(post.datum)}</p>
+                    <p class="social__post-text">{post.text}</p>
+                    <a
+                      class="social__post-link"
+                      href={post.url}
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      {c.postsOpen.replace("{platform}", tab.label)}
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M5.5 10.5 10.5 5.5M6.2 5.5h4.3v4.3" />
+                      </svg>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <a
+                class="button button--secondary button--sm social__posts-profile"
+                href={tab.profileUrl}
+                target="_blank"
+                rel="me noopener"
+              >
+                {c.consent.direct}
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M5.5 10.5 10.5 5.5M6.2 5.5h4.3v4.3" />
+                </svg>
+              </a>
+            </div>
           ) : (
             <div class="social__card">
               <p class="social__handle">{tab.handle}</p>
@@ -224,6 +275,97 @@ const tabs = c.tabs.map((tab) => ({
     stroke-width: 1.6;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+
+  /* --- Beitrags-Karten: selbst gehosteter Wortlaut mit Quelle -------------
+     Dieselbe Formsprache wie die Säulen: Karte mit Verlaufs-Oberkante,
+     Mono-Datum als Folio-Zeile, Link zum Original. */
+  .social__posts-label {
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    margin-bottom: var(--space-4);
+  }
+
+  .social__post-list {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (min-width: 768px) {
+    .social__post-list {
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    }
+  }
+
+  .social__post {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--card-padding);
+    background-color: var(--card-bg);
+    border: var(--border-width) solid var(--card-border);
+    border-radius: var(--card-radius);
+  }
+
+  .social__post::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: var(--rule-strong);
+    background: var(--gradient-neon);
+    opacity: 0.45;
+  }
+
+  .social__post-date {
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+  }
+
+  .social__post-text {
+    color: var(--color-text-primary);
+    max-width: 52ch;
+  }
+
+  .social__post-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    font-family: var(--font-family-body);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-link);
+    text-decoration: none;
+  }
+
+  .social__post-link:hover {
+    color: var(--color-text-link-hover);
+  }
+
+  .social__post-link svg,
+  .social__posts-profile svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .social__posts-profile {
+    margin-top: var(--space-5);
   }
 </style>
 

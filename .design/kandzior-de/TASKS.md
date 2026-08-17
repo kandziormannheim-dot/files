@@ -171,3 +171,21 @@ jeder Aufgabe: die genannten Suiten grün.
   einzelner Beiträge (social.json, dokumentiert); Facebook: Page-Plugin
   verlangt eine SEITE, martin.kandzior ist ein Profil → Profilkarte
   bleibt. _socialtabs, consent, contact (0 Fremdanfragen ohne Klick)._
+
+## Social-Lösung LinkedIn/Facebook (2026-08-17)
+
+Plattform-Realität: LinkedIn bettet keine Profil-Feeds ein (nur einzelne
+Beiträge), Facebooks Page-Plugin verlangt eine Seite statt eines Profils.
+Die Lösung fährt zweigleisig:
+
+- [x] **S-1 — Beitrags-Karten (sofort einsatzbereit):** social-posts.json
+  → selbst gehostete Karten je Kanal (Wortlaut, Mono-Datum,
+  Verlaufskante wie die Säulen, Link zum Original + Profilknopf). Null
+  Fremdanfragen, keine Einwilligung nötig; Vorrang-Kaskade je Tab:
+  embeds > posts > Profilkarte. _socialtabs, contact._
+- [x] **S-2 — Echte iframe-Pfade dokumentiert:** LinkedIn embed/feed/
+  update (Beitrag → „Einbetten"), Facebook plugins/post.php für
+  ÖFFENTLICHE Einzelbeiträge auch von Profilen — Muster je Kanal in
+  social.json (_embeds_beispiel). Gefüllte embeds übernehmen automatisch.
+- [ ] **S-3 — Inhalte eintragen:** wartet auf Beitragstexte + Links vom
+  Auftraggeber (posts derzeit leer → Tabs zeigen die Profilkarte).

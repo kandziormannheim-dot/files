@@ -1,0 +1,25 @@
+{
+  "_hinweis": "Selbst gehostete Beitrags-Karten für Kanäle ohne einbettbaren Feed (LinkedIn, Facebook). Die Karten sind eigenes HTML vom eigenen Server — keine Fremdanfrage, keine Einwilligung nötig, volle Gestaltung im Seitendesign. PFLEGE: neue Beiträge OBEN eintragen, zwei bis drei je Kanal genügen; ältere unten löschen. 'text' ist der Anfang des Beitrags (zwei bis vier Sätze, WÖRTLICH — nichts paraphrasieren), 'url' der Link zum Original, 'datum' als JJJJ-MM-TT. VORRANG: Sobald in social.json 'embeds' für einen Kanal gefüllt ist (echte iframes), zeigt der Tab die Einbettung statt der Karten.",
+
+  "linkedin": {
+    "posts": [],
+    "_posts_beispiel": [
+      {
+        "datum": "2026-08-01",
+        "text": "Wörtlicher Anfang des Beitrags, zwei bis vier Sätze …",
+        "url": "https://www.linkedin.com/feed/update/urn:li:activity:BEISPIEL/"
+      }
+    ]
+  },
+
+  "facebook": {
+    "posts": [],
+    "_posts_beispiel": [
+      {
+        "datum": "2026-08-01",
+        "text": "Wörtlicher Anfang des Beitrags …",
+        "url": "https://www.facebook.com/martin.kandzior/posts/BEISPIEL"
+      }
+    ]
+  }
+}

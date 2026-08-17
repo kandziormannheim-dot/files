@@ -134,7 +134,9 @@
       "direct": "Direkt zum Profil",
       "loading": "Wird geladen …",
       "error": "Die Beiträge ließen sich nicht laden. Der direkte Weg zum Profil funktioniert weiterhin."
-    }
+    },
+    "postsLabel": "Neueste Beiträge",
+    "postsOpen": "Beitrag auf {platform} ansehen"
   },
   "events": {
     "eyebrow": "Events",

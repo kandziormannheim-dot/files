@@ -12,7 +12,7 @@
         "eingefuegt": "2026-08"
       }
     ],
-    "_hinweis": "GEWUENSCHT (2026-08-17): letzte Beitraege als iframe. LinkedIn bietet keinen Profil-Feed-Embed — es braucht die Einbett-URLs einzelner Beitraege: Beitrag oeffnen -> ... -> 'Einbetten' -> src des iframes in 'embeds' eintragen (Muster in _embeds_beispiel). Sobald hier Eintraege stehen, zeigt der Tab die Zwei-Klick-Einbettung automatisch."
+    "_hinweis": "Zwei Wege: (1) SOFORT — Beitrags-Karten in social-posts.json (eigenes HTML, keine Fremdanfrage). (2) Echte iframes: LinkedIn bettet nur EINZELNE Beitraege ein (kein Profil-Feed) — Beitrag oeffnen -> ... -> 'Einbetten' -> src des iframes in 'embeds' eintragen (Muster in _embeds_beispiel). Gefuellte 'embeds' haben Vorrang vor den Karten."
   },
   "x": {
     "profileUrl": "https://x.com/martinkandzior",
@@ -31,6 +31,14 @@
   "facebook": {
     "profileUrl": "https://facebook.com/martin.kandzior",
     "embeds": [],
-    "_hinweis": "Facebooks Page-Plugin funktioniert nur mit Seiten, nicht mit Privatprofilen. Solange martin.kandzior ein Profil ist, bleibt dieser Tab eine Profilkarte mit Direktlink — das ist keine Einschraenkung der Seite, sondern eine von Facebook. Falls spaeter eine Facebook-SEITE existiert: Einbettung analog LinkedIn hier eintragen."
+    "_hinweis": "Zwei Wege: (1) SOFORT — Beitrags-Karten in social-posts.json (eigenes HTML, keine Fremdanfrage). (2) Echte iframes: Facebooks PAGE-Plugin verlangt eine Seite, aber OEFFENTLICHE Einzelbeitraege auch von Profilen lassen sich per plugins/post.php einbetten — Muster in _embeds_beispiel; Beitrags-URL muss oeffentlich sichtbar sein (Weltkugel-Symbol am Beitrag).",
+    "_embeds_beispiel": [
+      {
+        "type": "iframe",
+        "src": "https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fmartin.kandzior%2Fposts%2FBEISPIEL&show_text=true&width=500",
+        "title": "Facebook-Beitrag von Martin Kandzior",
+        "height": 500
+      }
+    ]
   }
 }
