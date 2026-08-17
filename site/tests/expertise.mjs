@@ -72,23 +72,34 @@ for (const [w, erwartet] of [
   await p.addStyleTag({ content: "html{scroll-behavior:auto !important}" });
   const karte = p.locator(".pillar").first();
   await karte.scrollIntoViewIfNeeded();
-  const vorher = await karte.evaluate((el) => getComputedStyle(el).transform);
+  const vorher = await karte.evaluate((el) => ({
+    transform: getComputedStyle(el).transform,
+    kante: getComputedStyle(el).borderTopColor,
+  }));
   await karte.hover();
-  // Auf den ENDWERT warten, nicht darauf, dass sich ueberhaupt etwas regt:
-  // "nicht mehr none" trifft schon im ersten Frame der Animation zu, wenn die
-  // Verschiebung noch bei 0 liegt.
+  // Redesign v2 (Swiss): Hover bewegt nichts — die Kante wechselt auf die
+  // Marke. Auf den Endwert warten, nicht auf die erste Regung.
   await p
     .waitForFunction(
       () =>
-        /matrix\(1, 0, 0, 1, 0, -4(\.\d+)?\)/.test(
-          getComputedStyle(document.querySelector(".pillar")).transform,
-        ),
+        getComputedStyle(document.querySelector(".pillar")).borderTopColor ===
+        "rgb(161, 98, 7)",
       { timeout: 4000 },
     )
     .catch(() => {});
-  const nachher = await karte.evaluate((el) => getComputedStyle(el).transform);
-  ok(vorher === "none", `Ruhezustand ohne Verschiebung -> ${vorher}`);
-  ok(/matrix.*-4\)$/.test(nachher), `Hebung um 4px bei Hover -> ${nachher}`);
+  const nachher = await karte.evaluate((el) => ({
+    transform: getComputedStyle(el).transform,
+    kante: getComputedStyle(el).borderTopColor,
+  }));
+  ok(vorher.transform === "none", `Ruhezustand ohne Verschiebung -> ${vorher.transform}`);
+  ok(
+    nachher.transform === "none",
+    `Hover bewegt nichts (Swiss) -> ${nachher.transform}`,
+  );
+  ok(
+    nachher.kante === "rgb(161, 98, 7)" && vorher.kante !== nachher.kante,
+    `Kante wechselt auf die Marke -> ${vorher.kante} -> ${nachher.kante}`,
+  );
   await p.close();
 }
 

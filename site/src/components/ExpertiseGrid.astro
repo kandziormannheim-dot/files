@@ -88,14 +88,16 @@ const c = content(lang).expertise;
       border-color var(--duration-normal) var(--easing-out);
   }
 
-  /* Die Hebung nur dort, wo es einen Zeiger gibt. Auf Berührungsgeräten
-     bleibt der Hover-Zustand nach dem Tippen sonst hängen und die Karte
-     steht dauerhaft angehoben da. */
+  /* Swiss: Hover bewegt nichts. Die Kante wechselt auf die Marke, die
+     Icon-Fläche zieht nach. Nur bei Zeigergeräten — auf Berührungsgeräten
+     bliebe der Zustand nach dem Tippen hängen. */
   @media (hover: hover) {
     .pillar:hover {
-      transform: translateY(var(--lift-card));
-      box-shadow: var(--card-shadow-hover);
-      border-color: var(--color-border-strong);
+      border-color: var(--color-accent);
+    }
+
+    .pillar:hover .pillar__icon {
+      background-color: var(--color-accent-quiet);
     }
   }
 

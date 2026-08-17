@@ -23,11 +23,11 @@ ok(anfragen.length === 0, `Netzanfragen: ${anfragen.length ? anfragen.slice(0,3)
 const schrift = await p.evaluate(async () => {
   await document.fonts.ready;
   return {
-    pjs: document.fonts.check('700 32px "Plus Jakarta Sans"'),
-    bvp: document.fonts.check('400 17px "Be Vietnam Pro"'),
+    pjs: document.fonts.check('600 32px "EB Garamond"'),
+    bvp: document.fonts.check('400 17px "Lato"'),
   };
 });
-ok(schrift.pjs && schrift.bvp, `Schriften aus Daten-URIs geladen -> PJS:${schrift.pjs} BVP:${schrift.bvp}`);
+ok(schrift.pjs && schrift.bvp, `Schriften aus Daten-URIs geladen -> EBG:${schrift.pjs} Lato:${schrift.bvp}`);
 
 const bereiche = await p.$$eval('main > section', els => els.map(e => e.id));
 ok(bereiche.join(',') === 'hero,proof,expertise,outlook,about,social,contact', `alle Bereiche -> ${bereiche.join(' → ')}`);

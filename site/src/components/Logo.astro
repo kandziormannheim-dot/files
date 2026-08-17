@@ -73,11 +73,15 @@ const Tag = href ? "a" : "span";
   /* Ersatzfassung: gesperrte Versalien, wie die Wortmarke im Original.
      Der Vorname steht zurückgenommen, der Nachname trägt — beim Googeln
      nach „Kandzior" ist er das, woran wiedererkannt wird. */
+  /* Masthead: Garamond-Versalien wie ein Zeitungskopf. Auf Mobil eine
+     Stufe kleiner — die gesperrte Marke plus Umschalter plus Burger muss
+     in 320px passen (gemessen: 17px sprengen die Zeile um 15px). */
   .logo__wordmark {
     display: inline-flex;
     align-items: baseline;
     gap: 0.45em;
     font-family: var(--font-family-display);
+    font-weight: var(--font-weight-semibold);
     font-size: var(--font-size-sm);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-wider);

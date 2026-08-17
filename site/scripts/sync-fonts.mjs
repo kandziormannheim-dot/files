@@ -4,9 +4,14 @@
  * Einwilligung keine Anfrage an Google stellt — Begründung in
  * src/styles/fonts.css.
  *
+ * Redesign v2 (Swiss/Editorial): EB Garamond (variable, Display) + Lato
+ * (statisch 400/700, Fließtext). Lato existiert nicht in 500/600 — Gewichte
+ * dazwischen würden synthetisch gerendert und sind deshalb im Token-System
+ * auf 400/700 beschränkt.
+ *
  * Nur nötig, wenn die fontsource-Pakete aktualisiert wurden.
  */
-import { copyFileSync, mkdirSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,22 +19,25 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
 const out = resolve(root, "public/fonts");
 
-const pjs = resolve(root, "node_modules/@fontsource-variable/plus-jakarta-sans/files");
-const bvp = resolve(root, "node_modules/@fontsource/be-vietnam-pro/files");
-
-/** Be Vietnam Pro wird bewusst auf 400 und 600 beschränkt — siehe fonts.css. */
-const weights = [400, 600];
+const ebg = resolve(root, "node_modules/@fontsource-variable/eb-garamond/files");
+const lato = resolve(root, "node_modules/@fontsource/lato/files");
 
 const files = [
-  [`${pjs}/plus-jakarta-sans-latin-wght-normal.woff2`, "plus-jakarta-sans-latin.woff2"],
-  [`${pjs}/plus-jakarta-sans-latin-ext-wght-normal.woff2`, "plus-jakarta-sans-latin-ext.woff2"],
-  ...weights.flatMap((w) => [
-    [`${bvp}/be-vietnam-pro-latin-${w}-normal.woff2`, `be-vietnam-pro-latin-${w}.woff2`],
-    [`${bvp}/be-vietnam-pro-latin-ext-${w}-normal.woff2`, `be-vietnam-pro-latin-ext-${w}.woff2`],
+  [`${ebg}/eb-garamond-latin-wght-normal.woff2`, "eb-garamond-latin.woff2"],
+  [`${ebg}/eb-garamond-latin-ext-wght-normal.woff2`, "eb-garamond-latin-ext.woff2"],
+  ...[400, 700].flatMap((w) => [
+    [`${lato}/lato-latin-${w}-normal.woff2`, `lato-latin-${w}.woff2`],
+    [`${lato}/lato-latin-ext-${w}-normal.woff2`, `lato-latin-ext-${w}.woff2`],
   ]),
 ];
 
 mkdirSync(out, { recursive: true });
+
+// Alte Familien entfernen, damit keine toten Dateien mit ausgeliefert werden.
+for (const alt of readdirSync(out)) {
+  if (/^(plus-jakarta-sans|be-vietnam-pro)/.test(alt)) unlinkSync(resolve(out, alt));
+}
+
 for (const [from, name] of files) {
   copyFileSync(from, resolve(out, name));
 }

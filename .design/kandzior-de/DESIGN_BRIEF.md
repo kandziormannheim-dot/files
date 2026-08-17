@@ -49,6 +49,9 @@ Der ganze Rest der Seite existiert, um diesen letzten Schritt wahrscheinlicher z
 
 ## Aesthetic Direction
 
+> **Ersetzt durch v2** — siehe „Aesthetic Direction v2 (Redesign 2026-08)" am
+> Ende dieses Dokuments. Dieser Abschnitt bleibt als Historie erhalten.
+
 - **Philosophy**: **Scandinavian Functionalism** — skandinavische Wärme auf einem Rams-Raster. Klare Struktur, großzügige Weißräume, weiche Tiefe statt harter Schatten, ein einziger funktionaler Akzent. Die geometrische Präzision kommt aus dem Logo, die Wärme aus dem Portrait.
 - **Tone**: Ruhig, erwachsen, zugewandt. Ein Mensch, der zuhört, bevor er verkauft. Nicht laut, nicht bescheiden.
 - **Reference points**: Stripe (Ruhe und Hierarchie), Linear (Präzision im Detail), Basecamp/37signals (Direktheit im Text), die Portrait-Seiten guter Anwaltskanzleien (Seriosität ohne Steifheit).
@@ -232,3 +235,33 @@ Empfehlung: **Beides nutzen, an verschiedenen Stellen.** Im Hero das freigestell
 Entschieden waren Plus Jakarta Sans, Inter und Be Vietnam Pro. Drei Schriftfamilien auf einer einzelnen Seite erzeugen keine Hierarchie, sondern Unruhe — und laden drei Schriftpakete statt zwei. Inter ist zudem die am häufigsten verwendete Schrift im Web und trägt keine Handschrift.
 
 Empfehlung: **Plus Jakarta Sans** für Überschriften — geometrisch, mit der gleichen konstruierten Anmutung wie das MK-Monogramm — und **Be Vietnam Pro** für Fließtext: ruhiger, gut ausgebauter Schnittsatz, saubere deutsche Umlaute. **Inter entfällt.** Zwei Familien, klare Rollen, halbe Ladezeit. Verbindlich festgelegt in Phase 4.
+
+
+---
+
+## Aesthetic Direction v2 (Redesign 2026-08)
+
+Auf Wunsch des Auftraggebers unter Einsatz der Skills `frontend-design` und
+`ui-ux-pro-max` neu gerichtet. Struktur, Inhalte und IA blieben unverändert —
+gewechselt hat ausschließlich das visuelle Gewand.
+
+- **Philosophy**: **Swiss Modernism 2.0 + Editorial** — DB-Stil
+  `swiss-modernism-2-0` (einziger von 88 mit „professional services" im
+  Einsatzgebiet) als Fundament: strenges Raster, Linien statt Schatten,
+  Flachheit, eckige Formen, EIN Akzent. Darüber `editorial-grid-magazine`
+  als Layer: Folio-Label mit Regel-Linie (alle Sektionen), Pull-Quote
+  (#outlook), Drop Cap und Print-Bildunterschrift (#about) — Autorität
+  statt Landingpage.
+- **Farbwelt**: DB-Palette „Banking/Traditional Finance" — Navy `#0f172a`
+  bleibt exakt, Akzent **Gold `#a16207`** (yellow-700) statt Teal. Gold
+  trägt 4,92:1 auf Weiß und darf damit — anders als das Teal — selbst Text,
+  Link und Knopffüllung sein. Dunkles Theme: gold-600 als Textakzent
+  (gedeckt), gold-500 für Füllungen. Warnfarbe wurde orange, damit Status
+  nie wie Marke aussieht.
+- **Typografie**: DB-Paarung „Legal Professional" — **EB Garamond**
+  (variable, Display) + **Lato** (400/700, Fließtext; 500/600 existieren in
+  Lato nicht) + ui-monospace als Label-Ebene. Selbst gehostet, Initialladung
+  ≈ 89 KB.
+- **Tone**: unverändert. **Anti-references**: unverändert gültig.
+- Alle Kontraste neu gerechnet (Tabelle im Kopf von DESIGN_TOKENS.css);
+  zwölf Prüfsuiten grün, axe WCAG 2.2 AA ohne Verstöße, Startseite 176,7 KB.

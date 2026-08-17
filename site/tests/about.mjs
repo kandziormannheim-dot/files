@@ -61,11 +61,13 @@ for (const theme of ["light", "dark"]) {
       schatten: cs.boxShadow !== "none",
     };
   });
+  // Redesign v2 (Swiss): Die Print-Kante ist eckig und flach — die
+  // Haarlinie traegt allein, ein Schatten waere ein Stilbruch.
   ok(
-    parseFloat(kante.rahmenbreite) > 0 && kante.radius !== "0px",
-    `${theme}: Kante definiert — Rahmen ${kante.rahmenbreite} ${kante.rahmenfarbe}, Radius ${kante.radius}`,
+    parseFloat(kante.rahmenbreite) > 0 && kante.radius === "0px",
+    `${theme}: Print-Kante — Haarlinie ${kante.rahmenbreite} ${kante.rahmenfarbe}, eckig`,
   );
-  ok(kante.schatten, `${theme}: Schatten vorhanden`);
+  ok(!kante.schatten, `${theme}: kein Schatten (Swiss-Flachheit)`);
   await p.close();
 }
 

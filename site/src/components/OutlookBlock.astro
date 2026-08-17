@@ -69,18 +69,21 @@ const c = content(lang).outlook;
 
   .outlook__quote {
     margin: 0;
-    /* Der Strich macht aus dem Satz sichtbar ein Zitat — die Haltung einer
-       Person, nicht eine Überschrift der Seite. */
-    border-left: 3px solid var(--color-accent);
+    /* Pull-Quote (Editorial): Der kraeftige Strich macht aus dem Satz
+       sichtbar ein Zitat — die Haltung einer Person, nicht eine Ueberschrift
+       der Seite. */
+    border-left: var(--pull-quote-rule) solid var(--color-accent);
     padding-left: var(--space-5);
   }
 
   .outlook__quote p {
+    /* Garamond 600 statt fett: Ein Serif-Zitat traegt ueber Groesse und
+       Form, nicht ueber Fettung. */
     font-family: var(--font-family-display);
     font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-extra);
+    font-weight: var(--font-weight-semibold);
     line-height: var(--line-height-tight);
-    letter-spacing: var(--letter-spacing-tighter);
+    letter-spacing: var(--letter-spacing-tight);
     text-wrap: balance;
   }
 

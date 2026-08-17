@@ -1,6 +1,6 @@
 ---
 /**
- * Portrait mit Teal-Schein.
+ * Portrait mit Gold-Schein.
  *
  * Liegt die Bilddatei im Projekt, wird sie verwendet. Fehlt sie, erscheint
  * eine erkennbare Platzhalterfläche im richtigen Seitenverhältnis — die
@@ -9,7 +9,7 @@
  *
  * PLATZHALTER: Beide Bilder fehlen noch.
  *   public/assets/portrait-freigestellt.png  — Hero, ohne Hintergrund,
- *       damit der Teal-Schein hinter der Person liegen kann. PNG mit
+ *       damit der Gold-Schein hinter der Person liegen kann. PNG mit
  *       Transparenz, nicht JPG.
  *   public/assets/portrait-wasserturm.jpg    — Über mich, vollständig,
  *       mit dem Mannheimer Wasserturm.
@@ -105,17 +105,22 @@ const exists = existsSync(resolve(process.cwd(), `public${file.src}`));
 
   .portrait--full .portrait__image,
   .portrait--full .portrait__placeholder {
+    /* Print-Kante: eckig, flach, von einer Haarlinie definiert — kein
+       Schatten (Swiss-Flachheit). Die Linie traegt in beiden Themes. */
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-lg);
-    /* Der Schatten allein trägt die Kante nur auf heller Fläche. Im dunklen
-       Theme steht ein dunkles Foto sonst randlos im dunklen Grund. Die
-       Haarlinie definiert sie in beiden Themes. */
     border: var(--border-width) solid var(--color-border-primary);
   }
 
+  /* Bildunterschrift im Print-Stil: Haarlinie, Mono, Versalien — die
+     Editorial-Meta-Ebene. */
   .portrait__caption {
     margin-top: var(--space-3);
-    font-size: var(--font-size-sm);
+    padding-top: var(--space-2);
+    border-top: var(--border-width) solid var(--color-border-primary);
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
     color: var(--color-text-tertiary);
   }
 

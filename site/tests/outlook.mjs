@@ -56,6 +56,8 @@ for (const theme of ["light", "dark"]) {
       schatten: cs.boxShadow,
       kartenRadius: ks.borderRadius,
       kartenSchatten: ks.boxShadow,
+      kartenRahmen: ks.borderTopWidth,
+      blockRahmenLR: cs.borderLeftWidth,
       breite: Math.round(abschnitt.getBoundingClientRect().width),
       fenster: window.innerWidth,
       zitatGroesse: parseFloat(getComputedStyle(zitat).fontSize),
@@ -79,7 +81,13 @@ for (const theme of ["light", "dark"]) {
   ok(m.flaeche !== m.kartenflaeche, `Fläche unterscheidet sich von der Karte (${m.flaeche} vs ${m.kartenflaeche})`);
   ok(m.flaeche !== m.seitenflaeche, `Fläche unterscheidet sich von der Seite (${m.seitenflaeche})`);
   ok(m.radius === "0px" && m.schatten === "none", `keine Karteneigenschaften: Radius ${m.radius}, Schatten ${m.schatten}`);
-  ok(m.kartenRadius !== "0px" && m.kartenSchatten !== "none", `Karten haben sie weiterhin: Radius ${m.kartenRadius}`);
+  // Redesign v2 (Swiss): Karten sind absichtlich eckig und flach — die
+  // Abgrenzung traegt jetzt die RAHMENLINIE: Karten haben eine, der
+  // Haltungsblock laeuft randlos ueber die volle Breite.
+  ok(
+    parseFloat(m.kartenRahmen) > 0 && m.blockRahmenLR === "0px",
+    `Abgrenzung ueber die Linie: Karte ${m.kartenRahmen}, Block seitlich ${m.blockRahmenLR}`,
+  );
   ok(m.breite === m.fenster, `volle Breite ${m.breite}px von ${m.fenster}px`);
   ok(m.zitatGroesse > m.titelGroesse * 1.5, `Zitat ${m.zitatGroesse}px deutlich größer als Kartentitel ${m.titelGroesse}px`);
   ok(parseFloat(m.strich) >= 3, `Zitatstrich vorhanden (${m.strich})`);

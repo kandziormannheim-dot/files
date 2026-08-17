@@ -84,14 +84,16 @@ const isCountable = (value: string) => /^\d+$/.test(value);
     line-height: 1;
     letter-spacing: var(--letter-spacing-tighter);
     color: var(--color-text-primary);
-    /* Ziffern in gleicher Breite: Beim Hochzählen springt die Zeile sonst
-       bei jedem Wechsel, weil die 1 schmaler ist als die 8. */
-    font-variant-numeric: tabular-nums;
+    /* lining-nums: EB Garamond führt sonst Mediävalziffern mit Unterlängen.
+       tabular-nums: Beim Hochzählen springt die Zeile sonst bei jedem
+       Wechsel, weil die 1 schmaler ist als die 8. */
+    font-variant-numeric: lining-nums tabular-nums;
   }
 
   .proof__suffix {
-    font-size: 0.42em;
-    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-family-label);
+    font-size: 0.34em;
+    font-weight: var(--font-weight-bold);
     letter-spacing: var(--letter-spacing-wide);
     /* text-link statt accent: Bei 0.42em der Zahlengroesse liegt das Suffix
        auf schmalen Bildschirmen unter der Grossschrift-Grenze, und dort gilt

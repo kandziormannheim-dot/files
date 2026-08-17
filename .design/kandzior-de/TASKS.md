@@ -68,3 +68,36 @@ Datum: 2026-08-16
 | I4 | E-Mail-Adresse, Formular-Endpunkt | Schnittstelle bleibt austauschbar, Absenden protokolliert in die Konsole |
 | P1 | Ladungsfähige Anschrift | Gliederung mit `PLATZHALTER:`-Markierungen |
 | C2 | Exakte Zahl direkt geführter Mitarbeitender | Vorsichtige Formulierung „Teams bis 50" |
+
+
+---
+
+## Redesign v2 (Swiss/Editorial, 2026-08)
+
+Neues Gewand bei unveränderter Struktur — Richtung vom Auftraggeber gewählt
+aus DB-belegten Kandidaten (ui-ux-pro-max) unter den frontend-design-
+Philosophien. Fertig-Kriterium jeder Aufgabe: die genannten Suiten grün.
+
+- [x] **R2-1 — Schriften:** EB Garamond (variable) + Lato 400/700 selbst
+  gehostet, Preloads umgestellt, alte Familien entfernt. _polish (<120 KB)._
+- [x] **R2-2 — Kontrast-Matrix Gold:** vollständig gerechnet; gold-700 trägt
+  4,92:1 auf Weiß; einziger Fehlwert gold-700 auf slate-100 → gold-800.
+- [x] **R2-3 — Token-Rewrite:** Gold-Skala statt Teal, Radien 0, Schatten →
+  Linien, Serif-Typo-Register, Label-Ebene (Mono), Warnfarbe orange.
+- [x] **R2-4 — Komponenten-Formwechsel:** Folio-Eyebrow, flache Knöpfe mit
+  Invert-Hover, Karten-Hover über die Kante, eckige Toggles/Tabs mit
+  Unterkante, Masthead-Logo, Print-Portraitkante. _expertise, verify._
+- [x] **R2-5 — Editorial-Layer:** Pull-Quote (#outlook), Drop Cap +
+  Print-Caption (#about), Serif-Zahlen mit lining-nums (#proof). _outlook,
+  about, stats._
+- [x] **R2-6 — Suiten-Anpassung:** expertise (Kante statt Hebung),
+  previewcheck (neue Familien), outlook/about (v2-Formsprache); übrige neun
+  unverändert grün.
+- [x] **R2-7 — OG-Bild v2:** Garamond + Gold, Mono-Folio-Zeile.
+- [x] **R2-8 — Regressionslauf:** alle zwölf Suiten grün; axe 0 Verstöße über
+  fünf Kombinationen; 176,7 KB gesamt, Schriften 88,8 KB; CLS 0,0017.
+- [x] **R2-9 — Doku:** Brief-Addendum „Aesthetic Direction v2",
+  Token-Kopfkommentar, dieser Block.
+
+Behobene Regression aus dem Umbau: Masthead-Wortmarke sprengte 320 px um
+15 px (17 px-Stufe ohne Mobil-Staffel) — auf 14 px/Mobil zurückgeführt.

@@ -30,6 +30,9 @@
 }
 
 html {
+  /* Kein synthetisches Kursiv: Es ist kein Italic-Schnitt geladen, und ein
+     schräg gestelltes Garamond sähe billig aus. */
+  font-synthesis-style: none;
   /* Sprünge der Ankernavigation laufen weich, außer bei Bewegungsreduktion.
      scroll-padding hält die Zielüberschrift unter der klebenden Kopfzeile. */
   scroll-behavior: smooth;
@@ -147,7 +150,8 @@ a:hover {
 
 strong,
 b {
-  font-weight: var(--font-weight-semibold);
+  /* Lato besitzt kein 600 — 700 ist das echte Halbfett dieser Familie. */
+  font-weight: var(--font-weight-bold);
 }
 
 small {
@@ -211,14 +215,25 @@ small {
   line-height: var(--line-height-relaxed);
 }
 
-/* Versalien-Label — greift die gesperrte Wortmarke MARTIN KANDZIOR auf */
+/* Folio-Label (Editorial): Mono-Versalien mit vorlaufender Regel-Linie —
+   die Print-Meta-Ebene. Wirkt in allen Sektionen mit diesem einen Baustein. */
 .eyebrow {
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
   letter-spacing: var(--letter-spacing-wider);
   text-transform: uppercase;
   color: var(--color-text-secondary);
+}
+
+.eyebrow::before {
+  content: "";
+  width: var(--space-6);
+  height: var(--rule-strong);
+  background-color: var(--color-accent);
 }
 
 .visually-hidden {
@@ -276,7 +291,7 @@ small {
   min-width: var(--target-min);
   padding-inline: var(--button-padding-x);
   border-radius: var(--button-radius);
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-body);
   font-size: var(--button-font-size);
   font-weight: var(--button-font-weight);
   line-height: 1;
@@ -293,20 +308,15 @@ small {
 .button--primary {
   background-color: var(--color-accent-fill);
   color: var(--color-text-on-accent);
-  box-shadow: var(--shadow-sm);
 }
 
 .button--primary:hover {
   background-color: var(--color-accent-fill-hover);
   color: var(--color-text-on-accent);
-  box-shadow: var(--shadow-md);
-  transform: translateY(var(--lift-button));
 }
 
 .button--primary:active {
   background-color: var(--color-accent-fill-active);
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
 }
 
 .button--secondary {
@@ -315,15 +325,12 @@ small {
   border: var(--border-width) solid var(--color-border-strong);
 }
 
+/* Swiss-Blocklogik: Der Umriss-Knopf invertiert im Hover zur vollen Fläche —
+   Kante wird Block, keine Bewegung. */
 .button--secondary:hover {
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-primary);
+  background-color: var(--color-text-primary);
+  color: var(--color-bg-primary);
   border-color: var(--color-text-primary);
-  transform: translateY(var(--lift-button));
-}
-
-.button--secondary:active {
-  transform: translateY(0);
 }
 
 .button--sm {
@@ -354,12 +361,11 @@ small {
     border-color var(--duration-normal) var(--easing-out);
 }
 
-/* Hebung bei Zeigergerät UND bei Tastaturfokus — nicht nur bei Hover.
-   Eine Karte, die nur auf die Maus reagiert, ist für die Tastatur unsichtbar. */
+/* Swiss: Hover bewegt nichts — die Kante wechselt auf die Marke. Gilt bei
+   Zeigergerät UND Tastaturfokus, sonst ist die Karte für die Tastatur stumm. */
 .card--interactive:hover,
 .card--interactive:focus-within {
-  transform: translateY(var(--lift-card));
-  box-shadow: var(--card-shadow-hover);
+  border-color: var(--color-accent);
 }
 
 /* --- Formularelemente ------------------------------------------------------ */
@@ -371,9 +377,9 @@ small {
 }
 
 .field__label {
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-body);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
 }
 

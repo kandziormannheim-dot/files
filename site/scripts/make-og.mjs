@@ -11,15 +11,15 @@ const fonts = resolve(here, "../../../../home/user/files/site/public/fonts");
 
 const html = `<!doctype html><html><head><style>
   @font-face {
-    font-family: "Plus Jakarta Sans";
-    src: url("http://127.0.0.1:4321/fonts/plus-jakarta-sans-latin.woff2") format("woff2-variations");
+    font-family: "EB Garamond";
+    src: url("http://127.0.0.1:4321/fonts/eb-garamond-latin.woff2") format("woff2-variations");
     font-weight: 200 800;
   }
   * { margin: 0; box-sizing: border-box; }
   body {
     width: 1200px; height: 630px;
     background: #0f172a;
-    font-family: "Plus Jakarta Sans", sans-serif;
+    font-family: "EB Garamond", serif;
     display: flex; flex-direction: column; justify-content: space-between;
     padding: 72px 84px;
     position: relative; overflow: hidden;
@@ -27,19 +27,20 @@ const html = `<!doctype html><html><head><style>
   .glow {
     position: absolute; right: -220px; top: -220px;
     width: 640px; height: 640px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(13,148,136,.35) 0%, rgba(13,148,136,.12) 45%, transparent 70%);
+    background: radial-gradient(circle, rgba(202,138,4,.30) 0%, rgba(202,138,4,.10) 45%, transparent 70%);
   }
   .mark {
-    font-size: 26px; font-weight: 400; letter-spacing: .16em;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 24px; font-weight: 400; letter-spacing: .16em;
     color: #94a3b8; text-transform: uppercase;
   }
   .mark b { font-weight: 700; color: #f8fafc; }
-  .name { font-size: 96px; font-weight: 800; letter-spacing: -0.03em; color: #f8fafc; line-height: 1.05; }
-  .line { width: 96px; height: 5px; background: #2dd4bf; border-radius: 3px; margin: 36px 0; }
-  .positioning { font-size: 40px; font-weight: 600; letter-spacing: -0.015em; color: #cbd5e1; max-width: 20ch; line-height: 1.3; }
+  .name { font-size: 96px; font-weight: 700; letter-spacing: -0.01em; color: #f8fafc; line-height: 1.05; }
+  .line { width: 96px; height: 5px; background: #eab308; border-radius: 0; margin: 36px 0; }
+  .positioning { font-size: 40px; font-weight: 500; letter-spacing: 0; color: #cbd5e1; max-width: 20ch; line-height: 1.3; }
   .foot { display: flex; justify-content: space-between; align-items: baseline; }
-  .city { font-size: 26px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #2dd4bf; }
-  .domain { font-size: 26px; font-weight: 600; color: #64748b; }
+  .city { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #eab308; }
+  .domain { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 24px; font-weight: 400; color: #64748b; }
 </style></head><body>
   <div class="glow"></div>
   <div class="mark">Martin <b>Kandzior</b></div>
