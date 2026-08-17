@@ -56,6 +56,16 @@ html = re.sub(
     html,
 )
 
+# --- Tubes-Bibliothek als data-URI in den dynamischen Import --------------
+# Die Vorschau hat keinen Server: Der Import von /vendor/tubes1.min.js
+# wuerde ins Leere laufen und der Effekt fehlte. Als data-URI funktioniert
+# der dynamische Import ohne jede Netzanfrage (774 KB -> ~1 MB Base64;
+# das Artifact-Limit von 16 MB ist weit entfernt).
+tubes = DIST / "vendor/tubes1.min.js"
+if tubes.exists():
+    uri = "data:text/javascript;base64," + base64.b64encode(tubes.read_bytes()).decode()
+    html = html.replace('"/vendor/tubes1.min.js"', '"' + uri + '"')
+
 # --- Bilder als data-URIs -------------------------------------------------
 html = re.sub(
     r'src="(/assets/[^"]+\.(?:webp|png|jpg|svg))"',

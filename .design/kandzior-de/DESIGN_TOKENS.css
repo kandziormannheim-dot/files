@@ -1,54 +1,60 @@
 /* ==========================================================================
-   kandzior.de — Design Tokens (v2, Redesign 2026-08)
-   Phase 4 des Designer-Flows; v2 im Redesign auf Basis von DESIGN_BRIEF.md
-   („Aesthetic Direction v2") und der ui-ux-pro-max-Datenbank.
+   kandzior.de — Design Tokens (v3, „Neon Flow", 2026-08)
+   Phase 4 des Designer-Flows; v3 nach ausdrücklicher Vorgabe des
+   Auftraggebers: das Design der 21st.dev-Komponente „neon-flow"
+   (TubesBackground) — nachtschwarzer Grund, leuchtende Neonfarben,
+   cursorgetriebene Leuchtröhren im Hero.
 
-   PHILOSOPHIE: Swiss Modernism 2.0 + Editorial
-   Fundament: DB-Stil `swiss-modernism-2-0` (einziger von 88 mit
-   „professional services" im Einsatzgebiet) unter der frontend-design-
-   Philosophie „Swiss/International Typographic": das Raster ist heilig,
-   Linien statt Schatten, Flachheit als Prinzip, EIN Akzent.
-   Darüber ein Editorial-Layer (`editorial-grid-magazine`): Display-Serif,
-   Pull-Quote, Drop Cap, Print-Meta — Autorität statt Landingpage.
+   PHILOSOPHIE: Neon / Dark-first
+   Dunkel ist nicht mehr die Zweitfassung, sondern DAS Design. Die helle
+   Fassung bleibt als bewusste Alternative über den Umschalter erreichbar
+   (Lesbarkeitspräferenz), wird aber NICHT mehr aus der Systemeinstellung
+   abgeleitet — wer die Seite aufruft, sieht Neon auf Schwarz.
+   Tiefe entsteht durch GLÜHEN (Glow), nicht durch Materialschatten.
+   Karten sind dunkles Glas mit Haarlinie; Hover verstärkt das Leuchten.
 
-   FARBWELT: DB-Palette „Banking/Traditional Finance"
-   Navy #0f172a bleibt exakt die Marke. Der Akzent ist GOLD #a16207
-   (= Tailwind yellow-700; DB-Notiz „Trust navy + premium gold").
-   Das frühere Teal hatte keinen Beleg in den 192 DB-Paletten — Gold hat ihn,
-   und es kann mehr: 4.92:1 auf Weiß heißt, die Markenfarbe darf selbst
-   Text, Link und Knopffüllung sein. Ein Ersatzton ist nicht mehr nötig.
+   FARBWELT: aus der Komponente selbst
+   Röhren:  #f967fb (Pink) · #6958d5 (Violett) · #53bc28 (Grün)
+   Lichter: #83f36e · #fe8a2e · #ff008a · #60aed5
+   PINK ist der Leitakzent (7.95:1 auf dem Grund — trägt Text, Link und
+   Knopf selbst). Violett ist Fläche/Verlauf/Großgrafik (3.76:1 — als
+   Text nur die aufgehellte Stufe #8b7ce8). Grün ist Erfolgs-/Drittfarbe.
 
-   TYPOGRAFIE: DB-Paarung „Legal Professional"
-   EB Garamond (variable 400–800) für Überschriften und Editorial-Elemente,
-   Lato (400/700 — 500/600 EXISTIEREN in Lato nicht!) für Fließtext,
-   ui-monospace als Label-Ebene (Folio, Eyebrows, Suffixe — 0 KB).
+   TYPOGRAFIE
+   Space Grotesk (variable 300–700) für Überschriften — geometrisch,
+   technisch, passend zur Neon-Ästhetik. Lato (400/700) bleibt Fließtext.
+   ui-monospace bleibt Label-Ebene. Selbst gehostet, kein Google-Link.
 
    ABGELEITETE REGELN
-   1. Farbe ist Information. Genau ein Akzent — Gold. Nichts anderes ist bunt.
-   2. Tiefe entsteht durch LINIEN, nicht durch Schatten. Karten sind flach
-      und eckig; Hover wechselt Farbe/Kante, nie die Position.
-   3. Bewegung bestätigt eine Zustandsänderung. Sie unterhält nicht.
+   1. Genau EIN Leitakzent (Pink). Violett und Grün sind Begleiter mit
+      festen Rollen (Fläche/Verlauf bzw. Erfolg) — nie gleichzeitig laut.
+   2. Tiefe = Licht. Schatten sind Glows in Akzentfarbe, keine grauen
+      Materialschatten.
+   3. Bewegung darf hier unterhalten (Tubes-Hero) — aber ausschließlich
+      auf Zeigergeräten und niemals unter Bewegungsreduktion.
    4. Jeder Wert steht genau einmal hier. Komponenten hartkodieren nichts.
 
    QUELLE DER WAHRHEIT
-   Diese Datei ist die bearbeitete Fassung. `npm run sync:tokens` kopiert sie
-   nach site/src/styles/tokens.css. Änderungen passieren hier.
+   Diese Datei ist die bearbeitete Fassung. `npm run sync:tokens` kopiert
+   sie nach site/src/styles/tokens.css. Änderungen passieren hier.
 
    KONTRASTE (gerechnet, WCAG-2.2-Relativluminanz — nicht geschätzt)
-   HELL   gold-700 auf Weiß            4.92:1  ✔ Text/Link/Knopf
-          gold-700 auf slate-50        4.71:1  ✔
-          gold-700 auf slate-100       4.49:1  ✘ → dort gold-800 (6.25:1)
-          gold-700 auf gold-50         4.76:1  ✔ (getönte Fläche)
-          slate-500 auf gold-50        4.60:1  ✔ (knappster Wert der Seite)
-          Weiß auf gold-700 (Knopf)    4.92:1  ✔
-   DUNKEL gold-600 auf slate-900       6.08:1  ✔ Textakzent (gedeckt)
-          gold-600 auf Karte slate-800 4.98:1  ✔
-          gold-500 auf slate-900       9.31:1  ✔ Hover/Füllung
-          slate-900 auf gold-500       9.31:1  ✔ Knopf
-          gold-600 auf getönter Fläche 5.50:1  ✔
-          gold-500 auf slate-950      10.52:1  ✔ Footer
-   STATUS Warnung = orange-700/400 (5.18/7.89) — bewusst NICHT amber:
-          amber-700 wäre vom Markengold optisch nicht unterscheidbar.
+   DUNKEL (Standard, Grund #08080f · Karte #111120 · Feld #1a1a2e)
+          Text #f4f4f8              18.2 / 17.0 / 15.6  ✔
+          Sekundär #c3c3d9          11.5 / 10.8 /  9.9  ✔
+          Tertiär #a1a1bd            7.9 /  7.4 /  6.8  ✔
+          PINK #f967fb               8.0 /  7.4 /  6.8  ✔ Text/Link/Knopf
+          Violett #6958d5            3.8 /  3.5 /  3.2  ✔ nur groß/grafisch
+          Violett-Text #8b7ce8       5.8 /  5.5 /  5.0  ✔
+          Grün #53bc28               8.2 /  7.6 /  7.0  ✔
+          Cyan #60aed5 (Info)        8.1 /  7.6 /  6.9  ✔
+          Knopf: #08080f auf Pink    8.0                 ✔ (Weiß fiele durch: 2.5)
+   HELL   fuchsia-700 auf Weiß       6.32  ✔ Text/Link/Knopf (Weiß darauf 6.32)
+          fuchsia-700 auf slate-100  5.77  ✔ (kein Sonderton nötig)
+          fuchsia-600 auf Weiß       4.71  ✔ nur groß/grafisch eingesetzt
+          violet-700 auf Weiß        7.10  ✔ Zweitakzent
+   STATUS dunkel: rot-400 7.2 · grün-400 11.5 · orange-400 8.8 — alle ✔
+          hell:   rot-700 · grün-700 (5.0) · orange-700 — wie v2 ✔
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -56,35 +62,45 @@
    -------------------------------------------------------------------------- */
 
 :root {
-  /* Neutral — kühles Slate, verankert im Nachtblau der Marke */
+  /* Nacht — Violett-Schwarz-Skala, der Grund der Neonwelt */
+  --night-950: #050509;
+  --night-900: #08080f;   /* GRUND */
+  --night-850: #0d0d18;
+  --night-800: #111120;   /* Karte */
+  --night-700: #1a1a2e;   /* Feld, ruhende Tabs */
+  --night-600: #26263c;
+  --night-500: #3a3a55;   /* dekorative Haarlinie */
+  --night-400: #55557a;
+
+  /* Grau-Text auf Nacht */
+  --ink-50:  #f4f4f8;
+  --ink-200: #c3c3d9;
+  --ink-400: #a1a1bd;
+  --ink-500: #8f8fac;
+
+  /* Neon — direkt aus der TubesBackground-Konfiguration */
+  --neon-pink:        #f967fb;  /* LEITAKZENT */
+  --neon-pink-bright: #fb8dfc;
+  --neon-pink-deep:   #e93df2;
+  --neon-violet:      #6958d5;  /* Fläche/Verlauf/Großgrafik */
+  --neon-violet-text: #8b7ce8;  /* Violett in Textgröße */
+  --neon-green:       #53bc28;
+  --neon-green-bright:#6ee63f;
+  --neon-cyan:        #60aed5;
+
+  /* Helle Fassung (Toggle-Option): Neon auf Weiß braucht dunklere Stufen */
   --slate-50:  #f8fafc;
   --slate-100: #f1f5f9;
   --slate-200: #e2e8f0;
-  --slate-300: #cbd5e1;
-  --slate-400: #94a3b8;
   --slate-500: #64748b;
   --slate-600: #475569;
-  --slate-700: #334155;
-  --slate-800: #1e293b;
-  --slate-900: #0f172a;  /* MARKE — Nachtblau */
-  --slate-950: #020617;
+  --slate-900: #0f172a;
+  --fuchsia-600: #c026d3;
+  --fuchsia-700: #a21caf;
+  --fuchsia-800: #86198f;
+  --violet-700:  #6d28d9;
 
-  /* Akzent — Gold (Tailwind-yellow-Skala). Der einzige bunte Ton. */
-  --gold-50:  #fefce8;
-  --gold-100: #fef9c3;
-  --gold-200: #fef08a;
-  --gold-300: #fde047;
-  --gold-400: #facc15;
-  --gold-500: #eab308;
-  --gold-600: #ca8a04;
-  --gold-700: #a16207;  /* MARKE — Gold („Trust navy + premium gold") */
-  --gold-800: #854d0e;
-  --gold-900: #713f12;
-  --gold-950: #422006;
-
-  /* Status — ausschließlich für Formularrückmeldungen.
-     Warnung ist ORANGE, nicht amber: amber-700 (#b45309) läge so nah am
-     Markengold, dass Status und Marke verschwimmen. */
+  /* Status */
   --red-400:    #f87171;
   --red-700:    #b91c1c;
   --green-400:  #4ade80;
@@ -93,209 +109,161 @@
   --orange-700: #c2410c;
 
   --white: #ffffff;
+
+  /* Verläufe — die Röhrenfarben als Fläche */
+  --gradient-neon: linear-gradient(120deg, var(--neon-pink) 0%, var(--neon-violet) 55%, var(--neon-cyan) 100%);
+  --gradient-neon-soft: linear-gradient(120deg, rgb(249 103 251 / 0.16), rgb(105 88 213 / 0.16));
 }
 
 /* --------------------------------------------------------------------------
-   2. SEMANTISCH — HELL (Standard)
+   2. SEMANTISCH — DUNKEL (Standard!)
+   v3 dreht die Logik: :root ist die Nachtfassung. Die Systemeinstellung
+   wird bewusst NICHT befragt — das Design ist dunkel; Hell ist eine
+   ausdrückliche Wahl über den Umschalter ([data-theme="light"] unten).
    -------------------------------------------------------------------------- */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
   /* Flächen */
-  --color-bg-primary:      var(--white);
-  --color-bg-secondary:    var(--slate-50);    /* Bandsektionen */
-  --color-bg-tertiary:     var(--slate-100);   /* Eingabefelder, ruhende Tabs */
-  --color-bg-inverse:      var(--slate-900);
-  --color-bg-accent-subtle: var(--gold-50);    /* getönte Fläche (Outlook) */
+  --color-bg-primary:      var(--night-900);
+  --color-bg-secondary:    var(--night-800);   /* Bandsektionen, Karten */
+  --color-bg-tertiary:     var(--night-700);   /* Eingabefelder, ruhende Tabs */
+  --color-bg-inverse:      var(--ink-50);
+  --color-bg-accent-subtle: rgb(105 88 213 / 0.13);  /* getönte Fläche (Outlook) */
 
   /* Text */
+  --color-text-primary:    var(--ink-50);
+  --color-text-secondary:  var(--ink-200);
+  --color-text-tertiary:   var(--ink-400);
+  --color-text-inverse:    var(--night-900);
+  --color-text-link:       var(--neon-pink);
+  --color-text-link-hover: var(--neon-pink-bright);
+  --color-text-on-accent:  var(--night-900);   /* Weiß auf Pink fiele durch (2.5) */
+  --color-text-link-on-tertiary: var(--neon-pink);  /* 6.8:1 — trägt überall */
+
+  /* Rahmen */
+  --color-border-primary:   var(--night-600);
+  --color-border-secondary: var(--night-800);
+  --color-border-strong:    var(--ink-500);    /* Eingabefelder — 5.4:1 */
+  --color-border-focus:     var(--neon-pink);
+
+  /* Akzent */
+  --color-accent:             var(--neon-pink);
+  --color-accent-fill:        var(--neon-pink);
+  --color-accent-fill-hover:  var(--neon-pink-bright);
+  --color-accent-fill-active: var(--neon-pink-deep);
+  --color-accent-quiet:       rgb(249 103 251 / 0.14);
+
+  /* Status */
+  --color-status-success: var(--green-400);
+  --color-status-warning: var(--orange-400);
+  --color-status-error:   var(--red-400);
+  --color-status-info:    var(--neon-cyan);
+
+  /* Overlay */
+  --color-surface-overlay: rgb(5 5 9 / 0.78);
+
+  /* Glühen statt Schatten: Tiefe ist Licht. Die grauen Reststufen bleiben
+     für Overlay/Menü (dort braucht es Abhebung ohne Farbe). */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+  --shadow-md: 0 2px 8px rgb(0 0 0 / 0.55);
+  --shadow-lg: 0 6px 18px rgb(0 0 0 / 0.6);
+  --shadow-xl: 0 10px 28px rgb(0 0 0 / 0.65);
+  --shadow-focus: 0 0 0 3px rgb(249 103 251 / 0.35);
+  --glow-accent:       0 0 24px rgb(249 103 251 / 0.28);
+  --glow-accent-quiet: 0 0 16px rgb(105 88 213 / 0.22);
+
+  /* Bildbehandlung im Hero — Neon-Schein hinter dem runden Portrait */
+  --portrait-glow: radial-gradient(
+    60% 60% at 50% 45%,
+    rgb(249 103 251 / 0.22) 0%,
+    rgb(105 88 213 / 0.14) 45%,
+    transparent 72%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   3. SEMANTISCH — HELL (nur über den Umschalter)
+   Keine Umkehrung, sondern eigene Abstimmung: Fuchsia-700 trägt Text,
+   Link und Knopf (6.32:1); Violett-700 ist der Zweitakzent. Kein
+   prefers-color-scheme-Zwilling mehr — Hell ist ausschließlich Wahl.
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg-primary:      var(--white);
+  --color-bg-secondary:    var(--slate-50);
+  --color-bg-tertiary:     var(--slate-100);
+  --color-bg-inverse:      var(--slate-900);
+  --color-bg-accent-subtle: rgb(109 40 217 / 0.07);
+
   --color-text-primary:    var(--slate-900);
   --color-text-secondary:  var(--slate-600);
   --color-text-tertiary:   var(--slate-500);
   --color-text-inverse:    var(--slate-50);
-  --color-text-link:       var(--gold-700);
-  --color-text-link-hover: var(--gold-800);
-  --color-text-on-accent:  var(--white);
-  /* Auf bg-tertiary (slate-100) fällt gold-700 auf 4.49:1 — dort gilt: */
-  --color-text-link-on-tertiary: var(--gold-800);
+  --color-text-link:       var(--fuchsia-700);
+  --color-text-link-hover: var(--fuchsia-800);
+  --color-text-on-accent:  var(--white);       /* 6.32:1 auf fuchsia-700 */
+  --color-text-link-on-tertiary: var(--fuchsia-700);  /* 5.77:1 — trägt */
 
-  /* Rahmen — im Swiss-Register tragen Linien die Struktur */
   --color-border-primary:   var(--slate-200);
   --color-border-secondary: var(--slate-100);
-  --color-border-strong:    var(--slate-500);  /* Eingabefelder — 4.76:1 */
-  --color-border-focus:     var(--gold-700);
+  --color-border-strong:    var(--slate-500);
+  --color-border-focus:     var(--fuchsia-600);
 
-  /* Akzent — die Marke trägt selbst (4.92:1), kein Ersatzton mehr nötig */
-  --color-accent:             var(--gold-700);
-  --color-accent-fill:        var(--gold-700);
-  --color-accent-fill-hover:  var(--gold-800);
-  --color-accent-fill-active: var(--gold-900);
-  --color-accent-quiet:       var(--gold-100);
+  --color-accent:             var(--fuchsia-700);
+  --color-accent-fill:        var(--fuchsia-700);
+  --color-accent-fill-hover:  var(--fuchsia-800);
+  --color-accent-fill-active: var(--fuchsia-800);
+  --color-accent-quiet:       rgb(192 38 211 / 0.10);
 
-  /* Status */
   --color-status-success: var(--green-700);
   --color-status-warning: var(--orange-700);
   --color-status-error:   var(--red-700);
-  --color-status-info:    var(--gold-700);
+  --color-status-info:    var(--violet-700);
 
-  /* Overlay */
   --color-surface-overlay: rgb(15 23 42 / 0.55);
 
-  /* Schatten — Swiss: Flachheit. Karten und Knöpfe sind schattenlos
-     (--card-shadow unten = none). Diese vier Reststufen existieren nur für
-     Elemente, die ohne jede Abhebung unlesbar würden: Skip-Link im Fokus,
-     mobiles Menü. Bewusst flacher als in v1. */
-  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
-  --shadow-md: 0 2px 6px rgb(15 23 42 / 0.07);
-  --shadow-lg: 0 4px 12px rgb(15 23 42 / 0.10);
-  --shadow-xl: 0 8px 20px rgb(15 23 42 / 0.12);
-  --shadow-focus: 0 0 0 3px rgb(161 98 7 / 0.30);
-
-  /* Bildbehandlung im Hero */
-  --portrait-glow: radial-gradient(
-    60% 60% at 50% 45%,
-    rgb(161 98 7 / 0.14) 0%,
-    rgb(161 98 7 / 0.05) 45%,
-    transparent 72%
-  );
-}
-
-/* --------------------------------------------------------------------------
-   3. SEMANTISCH — DUNKEL
-   Keine Umkehrung, sondern eigene Abstimmung. Textakzent ist gold-600 —
-   gedecktes Ocker (6.08:1), NICHT gold-400: Leuchtgelb auf Nachtblau wäre
-   Warnschild, nicht Marke. gold-500 nur für Füllungen und Footer.
-   JEDE Änderung hier gehört auch in den prefers-color-scheme-Zwilling unten.
-   -------------------------------------------------------------------------- */
-
-[data-theme="dark"] {
-  color-scheme: dark;
-
-  --color-bg-primary:       var(--slate-900);
-  --color-bg-secondary:     var(--slate-800);
-  --color-bg-tertiary:      var(--slate-700);
-  --color-bg-inverse:       var(--slate-50);
-  --color-bg-accent-subtle: rgb(161 98 7 / 0.12);
-
-  --color-text-primary:    var(--slate-200);
-  --color-text-secondary:  var(--slate-300);
-  --color-text-tertiary:   var(--slate-400);
-  --color-text-inverse:    var(--slate-900);
-  --color-text-link:       var(--gold-600);
-  --color-text-link-hover: var(--gold-500);
-  --color-text-on-accent:  var(--slate-900);
-  --color-text-link-on-tertiary: var(--gold-500);
-
-  --color-border-primary:   var(--slate-700);
-  --color-border-secondary: var(--slate-800);
-  --color-border-strong:    var(--slate-500);
-  --color-border-focus:     var(--gold-400);
-
-  --color-accent:             var(--gold-600);
-  --color-accent-fill:        var(--gold-500);
-  --color-accent-fill-hover:  var(--gold-400);
-  --color-accent-fill-active: var(--gold-600);
-  --color-accent-quiet:       rgb(161 98 7 / 0.18);
-
-  --color-status-success: var(--green-400);
-  --color-status-warning: var(--orange-400);
-  --color-status-error:   var(--red-400);
-  --color-status-info:    var(--gold-600);
-
-  --color-surface-overlay: rgb(2 6 23 / 0.72);
-
-  --shadow-sm: 0 1px 2px rgb(2 6 23 / 0.35);
-  --shadow-md: 0 2px 6px rgb(2 6 23 / 0.45);
-  --shadow-lg: 0 4px 12px rgb(2 6 23 / 0.55);
-  --shadow-xl: 0 8px 20px rgb(2 6 23 / 0.60);
-  --shadow-focus: 0 0 0 3px rgb(250 204 21 / 0.35);
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-md: 0 2px 8px rgb(15 23 42 / 0.08);
+  --shadow-lg: 0 6px 18px rgb(15 23 42 / 0.11);
+  --shadow-xl: 0 10px 28px rgb(15 23 42 / 0.13);
+  --shadow-focus: 0 0 0 3px rgb(192 38 211 / 0.30);
+  --glow-accent:       0 0 24px rgb(192 38 211 / 0.16);
+  --glow-accent-quiet: 0 0 16px rgb(109 40 217 / 0.12);
 
   --portrait-glow: radial-gradient(
     60% 60% at 50% 45%,
-    rgb(202 138 4 / 0.20) 0%,
-    rgb(202 138 4 / 0.07) 45%,
+    rgb(192 38 211 / 0.12) 0%,
+    rgb(109 40 217 / 0.06) 45%,
     transparent 72%
   );
-}
-
-/* Systemvorgabe — greift nur, wenn der Nutzer nicht ausdrücklich Hell gewählt hat */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --color-bg-primary:       var(--slate-900);
-    --color-bg-secondary:     var(--slate-800);
-    --color-bg-tertiary:      var(--slate-700);
-    --color-bg-inverse:       var(--slate-50);
-    --color-bg-accent-subtle: rgb(161 98 7 / 0.12);
-
-    --color-text-primary:    var(--slate-200);
-    --color-text-secondary:  var(--slate-300);
-    --color-text-tertiary:   var(--slate-400);
-    --color-text-inverse:    var(--slate-900);
-    --color-text-link:       var(--gold-600);
-    --color-text-link-hover: var(--gold-500);
-    --color-text-on-accent:  var(--slate-900);
-    --color-text-link-on-tertiary: var(--gold-500);
-
-    --color-border-primary:   var(--slate-700);
-    --color-border-secondary: var(--slate-800);
-    --color-border-strong:    var(--slate-500);
-    --color-border-focus:     var(--gold-400);
-
-    --color-accent:             var(--gold-600);
-    --color-accent-fill:        var(--gold-500);
-    --color-accent-fill-hover:  var(--gold-400);
-    --color-accent-fill-active: var(--gold-600);
-    --color-accent-quiet:       rgb(161 98 7 / 0.18);
-
-    --color-status-success: var(--green-400);
-    --color-status-warning: var(--orange-400);
-    --color-status-error:   var(--red-400);
-    --color-status-info:    var(--gold-600);
-
-    --color-surface-overlay: rgb(2 6 23 / 0.72);
-
-    --shadow-sm: 0 1px 2px rgb(2 6 23 / 0.35);
-    --shadow-md: 0 2px 6px rgb(2 6 23 / 0.45);
-    --shadow-lg: 0 4px 12px rgb(2 6 23 / 0.55);
-    --shadow-xl: 0 8px 20px rgb(2 6 23 / 0.60);
-    --shadow-focus: 0 0 0 3px rgb(250 204 21 / 0.35);
-
-    --portrait-glow: radial-gradient(
-      60% 60% at 50% 45%,
-      rgb(202 138 4 / 0.20) 0%,
-      rgb(202 138 4 / 0.07) 45%,
-      transparent 72%
-    );
-  }
 }
 
 /* --------------------------------------------------------------------------
    4. TYPOGRAFIE
 
    Drei Rollen:
-   - EB Garamond (variable 400–800): Überschriften, Zitate, Drop Cap.
-     Verträgt KEIN enges Letterspacing — die alten −0.03em sind entschärft.
+   - Space Grotesk (variable 300–700): Überschriften, Zahlen, Zitate.
+     Geometrisch-technisch; verträgt enges Spacing (−0.02em).
    - Lato (400/700): Fließtext, Knöpfe, Formulare. 500/600 existieren in
      Lato nicht; wer „halbfett" braucht, nimmt 700.
-   - ui-monospace (Systemschrift, 0 KB): Label-Ebene — Eyebrows/Folio,
-     Bildunterschriften, Zahlensuffixe. Der Editorial-„Print-Meta"-Layer.
+   - ui-monospace (Systemschrift, 0 KB): Label-Ebene — Eyebrows,
+     Bildunterschriften, Zahlensuffixe, der Interaktionshinweis im Hero.
 
    Selbst gehostet (site/src/styles/fonts.css) — kein Google-Fonts-Link.
    Grundgröße bleibt 17px (Zielperson Mitte 40, Telefon zwischen Terminen).
    -------------------------------------------------------------------------- */
 
 :root {
-  --font-family-display: "EB Garamond", Georgia, "Times New Roman", serif;
+  --font-family-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-family-body:    "Lato", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-family-label:   ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
   --font-family-mono:    var(--font-family-label);
 
-  /* Fließende Skala zwischen 375px und 1280px Viewport-Breite.
-     Serif trägt bei gleicher Größe optisch kleiner — die Stufen sind
-     gegenüber v1 eine Idee größer gesetzt. */
+  /* Fließende Skala zwischen 375px und 1280px Viewport-Breite. */
   --font-size-xs:   0.75rem;                                  /* 12px */
   --font-size-sm:   0.875rem;                                 /* 14px */
   --font-size-base: 1.0625rem;                                /* 17px — Fließtext */
@@ -307,28 +275,27 @@
   --font-size-4xl:  clamp(2.875rem, 1.70rem + 4.1vw, 4.625rem);   /* 46 → 74 — Hero */
 
   --font-weight-normal:   400;
-  --font-weight-medium:   500;   /* nur EB Garamond (variable) */
-  --font-weight-semibold: 600;   /* nur EB Garamond (variable) */
+  --font-weight-medium:   500;   /* Space Grotesk (variable) */
+  --font-weight-semibold: 600;   /* Space Grotesk (variable) */
   --font-weight-bold:     700;
-  /* v1 hatte 800 — im Serif-Register wirkt 800 plump; Hero und Zahlen
-     laufen auf 700. */
   --font-weight-extra:    700;
 
-  --line-height-tight:   1.08;   /* Serif-Hero verträgt engere Führung */
+  --line-height-tight:   1.05;   /* Grotesk-Hero verträgt enge Führung */
   --line-height-snug:    1.2;
   --line-height-normal:  1.55;
   --line-height-relaxed: 1.7;
 
-  /* Garamond verträgt kein −0.03em — die Serifen verhaken sich. */
-  --letter-spacing-tighter: -0.015em;
-  --letter-spacing-tight:   -0.005em;
+  /* Space Grotesk ist geometrisch — enger als beim Serif, lockerer als
+     die alten −0.03em (die Ligaturfallen bleiben). */
+  --letter-spacing-tighter: -0.02em;
+  --letter-spacing-tight:   -0.01em;
   --letter-spacing-normal:  0;
   --letter-spacing-wide:    0.08em;
   --letter-spacing-wider:   0.14em;   /* Versalien-/Folio-Label */
 }
 
 /* --------------------------------------------------------------------------
-   5. ABSTAND — 8px-Basiseinheit (Swiss: „--base-unit: 8px"), Skala wie v1
+   5. ABSTAND — 8px-Basiseinheit, Skala unverändert
    -------------------------------------------------------------------------- */
 
 :root {
@@ -353,9 +320,7 @@
 /* --------------------------------------------------------------------------
    6. LAYOUT
 
-   RADIEN: Swiss ist eckig. Alle Stufen stehen auf 0 — die Tokens bleiben
-   erhalten, damit Komponenten unverändert weiterlesen. --radius-full bleibt
-   ausschließlich für das runde Hero-Portrait bestehen.
+   RADIEN: zurück aus dem Swiss-Eckigen — Neon-Glas ist gerundet.
    -------------------------------------------------------------------------- */
 
 :root {
@@ -366,30 +331,29 @@
 
   --gutter: clamp(1.25rem, 0.6rem + 2.6vw, 2.5rem);
 
-  --radius-sm:   0;
-  --radius-md:   0;
-  --radius-lg:   0;
-  --radius-xl:   0;
-  --radius-full: 9999px; /* NUR Hero-Portrait */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
 
   --border-width:        1px;
   --border-width-strong: 2px;
   --focus-ring-width:    3px;
   --focus-ring-offset:   2px;
 
-  /* Editorial-Strukturelemente */
-  --rule-strong: 2px;      /* kräftige Regel-Linie (Swiss-Struktur) */
-  --pull-quote-rule: 4px;  /* Gold-Strich am Blockzitat */
-  --drop-cap-size: 3.4em;  /* Initiale in „Über mich" */
+  /* Strukturelemente (Label-Regel am Eyebrow, Strich am Blockzitat) */
+  --rule-strong: 2px;
+  --pull-quote-rule: 4px;
+  --drop-cap-size: 3.4em;  /* ungenutzt seit v3 — Token bleibt lesbar */
 }
 
 /* --------------------------------------------------------------------------
    7. BEWEGUNG
 
-   Bewegung bestätigt Zustandsänderungen. Im Swiss-Register bewegt sich
-   nichts räumlich: Hover wechselt Farbe und Kante, nie die Position —
-   beide Lift-Werte stehen auf 0. Die Ruhebewegung des Portraits bleibt
-   (Editorial-verträglich, unter Bewegungsreduktion vollständig aus).
+   v3 erlaubt Unterhaltung — aber nur im Hero (Tubes, nur Zeigergeräte)
+   und niemals unter Bewegungsreduktion. Karten/Knöpfe heben wieder
+   leicht (Glow + Lift bestätigen den Zustand).
    -------------------------------------------------------------------------- */
 
 :root {
@@ -403,8 +367,8 @@
   --easing-in:      cubic-bezier(0.4, 0, 1, 1);
   --easing-out:     cubic-bezier(0, 0, 0.2, 1);
 
-  --lift-card:   0px;
-  --lift-button: 0px;
+  --lift-card:   -4px;
+  --lift-button: -2px;
   --float-distance: 10px;
   --float-duration: 7s;
 }
@@ -441,13 +405,13 @@
 :root {
   --target-min: 44px;
 
-  /* Kopfzeile */
+  /* Kopfzeile — dunkles Glas */
   --header-height:            72px;
   --header-height-scrolled:   60px;
-  --header-bg:                rgb(255 255 255 / 0.86);
-  --header-blur:              12px;
+  --header-bg:                rgb(8 8 15 / 0.82);
+  --header-blur:              16px;
 
-  /* Knopf — eckig, Lato 700, keine Hebung */
+  /* Knopf — gerundet, Lato 700, leichte Hebung + Glow */
   --button-height:       48px;
   --button-height-sm:    44px;   /* nie unter dem Berührungsziel */
   --button-padding-x:    var(--space-5);
@@ -462,20 +426,20 @@
   --input-border:     var(--color-border-strong);
   --textarea-min-height: 140px;
 
-  /* Karte — flach und eckig; Struktur trägt die Linie, nicht der Schatten */
+  /* Karte — dunkles Glas: Fläche + Haarlinie; Hover verstärkt das Licht */
   --card-padding:    var(--space-6);
   --card-radius:     var(--radius-lg);
-  --card-bg:         var(--color-bg-primary);
+  --card-bg:         var(--color-bg-secondary);
   --card-border:     var(--color-border-primary);
   --card-shadow:       none;
-  --card-shadow-hover: none;
+  --card-shadow-hover: var(--glow-accent-quiet);
 
-  /* Tab-Leiste (Social) — eckige Registerkarten */
+  /* Tab-Leiste (Social) */
   --tab-height:        44px;
-  --tab-radius:        0;
+  --tab-radius:        var(--radius-sm);
   --tab-bg-active:     var(--color-accent-quiet);
 
-  /* Zahlenband — Serif-Ziffern (mit lining-nums in der Komponente) */
+  /* Zahlenband — Grotesk-Ziffern (tabular in der Komponente) */
   --stat-value-size:   clamp(2.375rem, 1.6rem + 2.7vw, 3.375rem);
   --stat-value-weight: var(--font-weight-semibold);
 
@@ -484,33 +448,30 @@
   --consent-bg:         var(--color-bg-secondary);
   --consent-border:     var(--color-border-primary);
 
-  /* Fußzeile — in BEIDEN Themes dunkel (Begründung wie v1) */
-  --footer-bg:      var(--slate-900);
-  --footer-text:    var(--slate-300);
+  /* Fußzeile — tiefste Nachtstufe, Neon-Akzent */
+  --footer-bg:      var(--night-950);
+  --footer-text:    var(--ink-200);
   --footer-strong:  var(--white);
-  --footer-muted:   var(--slate-400);
-  --footer-border:  rgb(255 255 255 / 0.14);
-  --footer-accent:  var(--gold-500);
+  --footer-muted:   var(--ink-400);
+  --footer-border:  rgb(255 255 255 / 0.12);
+  --footer-accent:  var(--neon-pink);
+
+  /* Tubes-Hero (Canvas-Ebene) */
+  --hero-canvas-opacity: 0.9;
 }
 
-[data-theme="dark"] {
-  --header-bg: rgb(15 23 42 / 0.86);
-  --card-bg:   var(--color-bg-secondary);
-  --footer-bg:     var(--slate-950);
-  --footer-border: rgb(255 255 255 / 0.10);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --header-bg: rgb(15 23 42 / 0.86);
-    --card-bg:   var(--color-bg-secondary);
-    --footer-bg:     var(--slate-950);
-    --footer-border: rgb(255 255 255 / 0.10);
-  }
+[data-theme="light"] {
+  --header-bg: rgb(255 255 255 / 0.86);
+  --card-bg:   var(--color-bg-primary);
+  --footer-bg:     var(--slate-900);
+  --footer-border: rgb(255 255 255 / 0.14);
+  --footer-accent: var(--fuchsia-600);
 }
 
 /* --------------------------------------------------------------------------
    11. BEWEGUNGSREDUKTION — vollständig aus, nicht abgeschwächt.
+   Der Tubes-Hero prüft dieselbe Abfrage zusätzlich in JS und lädt dann
+   gar nicht erst.
    -------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {

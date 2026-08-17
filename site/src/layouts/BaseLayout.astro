@@ -134,7 +134,7 @@ const person = personSchema
     }
     <link
       rel="preload"
-      href="/fonts/eb-garamond-latin.woff2"
+      href="/fonts/space-grotesk-latin.woff2"
       as="font"
       type="font/woff2"
       crossorigin
@@ -147,8 +147,8 @@ const person = personSchema
       crossorigin
     />
 
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    {/* v3 ist dark-first: Die Seite ist unabhängig von der Systemeinstellung dunkel. */}
+    <meta name="theme-color" content="#08080f" />
 
     {/* Vorschau beim Teilen — Messenger, LinkedIn, X. */}
     <meta property="og:type" content="website" />

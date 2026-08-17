@@ -30,8 +30,8 @@
 }
 
 html {
-  /* Kein synthetisches Kursiv: Es ist kein Italic-Schnitt geladen, und ein
-     schräg gestelltes Garamond sähe billig aus. */
+  /* Kein synthetisches Kursiv: Es ist kein Italic-Schnitt geladen — der
+     Browser soll die Grotesk nicht schräg stellen. */
   font-synthesis-style: none;
   /* Sprünge der Ankernavigation laufen weich, außer bei Bewegungsreduktion.
      scroll-padding hält die Zielüberschrift unter der klebenden Kopfzeile. */
@@ -310,13 +310,18 @@ small {
   color: var(--color-text-on-accent);
 }
 
+/* Neon: Der Zustandswechsel ist Licht — der Knopf glüht auf und hebt
+   minimal (Lift steht unter Bewegungsreduktion auf 0). */
 .button--primary:hover {
   background-color: var(--color-accent-fill-hover);
   color: var(--color-text-on-accent);
+  box-shadow: var(--glow-accent);
+  transform: translateY(var(--lift-button));
 }
 
 .button--primary:active {
   background-color: var(--color-accent-fill-active);
+  transform: translateY(0);
 }
 
 .button--secondary {
@@ -325,12 +330,12 @@ small {
   border: var(--border-width) solid var(--color-border-strong);
 }
 
-/* Swiss-Blocklogik: Der Umriss-Knopf invertiert im Hover zur vollen Fläche —
-   Kante wird Block, keine Bewegung. */
 .button--secondary:hover {
-  background-color: var(--color-text-primary);
-  color: var(--color-bg-primary);
-  border-color: var(--color-text-primary);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-quiet);
+  box-shadow: var(--glow-accent-quiet);
+  transform: translateY(var(--lift-button));
 }
 
 .button--sm {
@@ -361,11 +366,14 @@ small {
     border-color var(--duration-normal) var(--easing-out);
 }
 
-/* Swiss: Hover bewegt nichts — die Kante wechselt auf die Marke. Gilt bei
-   Zeigergerät UND Tastaturfokus, sonst ist die Karte für die Tastatur stumm. */
+/* Neon: Die Kante wechselt auf die Marke und die Karte glüht auf — Tiefe
+   ist Licht. Gilt bei Zeigergerät UND Tastaturfokus, sonst ist die Karte
+   für die Tastatur stumm. */
 .card--interactive:hover,
 .card--interactive:focus-within {
   border-color: var(--color-accent);
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(var(--lift-card));
 }
 
 /* --- Formularelemente ------------------------------------------------------ */

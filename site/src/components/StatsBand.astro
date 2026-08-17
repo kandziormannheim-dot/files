@@ -84,7 +84,7 @@ const isCountable = (value: string) => /^\d+$/.test(value);
     line-height: 1;
     letter-spacing: var(--letter-spacing-tighter);
     color: var(--color-text-primary);
-    /* lining-nums: EB Garamond führt sonst Mediävalziffern mit Unterlängen.
+    /* lining-nums: schadet bei Space Grotesk nicht und schuetzt bei Fallbacks.
        tabular-nums: Beim Hochzählen springt die Zeile sonst bei jedem
        Wechsel, weil die 1 schmaler ist als die 8. */
     font-variant-numeric: lining-nums tabular-nums;

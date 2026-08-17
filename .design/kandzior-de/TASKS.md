@@ -120,3 +120,38 @@ Hero zeigt das volle Foto in runder Maske.
   footer (logo__family → logo__mark); alle zwölf grün, CLS 0,0000.
 - [x] **B-5 — Vorschau:** Assembler als site/scripts/make-vorschau.py ins
   Repo übernommen (Bilder + Maske als data-URIs); Artifact republished.
+
+## Redesign v3 — „Neon Flow" (2026-08-17)
+
+Vorgabe: 21st.dev-Komponente `neon-flow` (TubesBackground). Fertig-Kriterium
+jeder Aufgabe: die genannten Suiten grün.
+
+- [x] **N-1 — Effekt vendoren + belegen:** tubes1.min.js aus npm
+  (threejs-components@0.0.19, ISC; three.js MIT einkompiliert) nach
+  public/vendor; Standalone-Beleg headless: WebGPU verliert das Device
+  (SwiftShader), WebGL-Fallback rendert — Suiten testen mit
+  --disable-features=WebGPU.
+- [x] **N-2 — Kontrastmatrix Neon:** Pink 7,95:1 trägt selbst (dunkle
+  Schrift auf Pink-Knopf — Weiß fiele mit 2,5:1 durch); Violett nur
+  groß/grafisch (3,76:1), Textstufe #8b7ce8; hell fuchsia-700 6,32:1.
+- [x] **N-3 — Tokens v3:** dark-first (:root = Nacht, hell nur per
+  Umschalter, kein prefers-Zwilling mehr), Radien zurück, Glow-Tokens,
+  ThemeToggle/theme-color entsprechend. _verify, footer._
+- [x] **N-4 — Schriften:** Space Grotesk variable statt EB Garamond;
+  Preloads/fonts.css/sync-fonts; 67,3 KB geladen. _polish._
+- [x] **N-5 — Tubes-Hero:** Canvas hinter dem Inhalt; Laden erst bei
+  erster Zeigerbewegung (774 KB nie im Budgetpfad), nie bei Touch/
+  Bewegungsreduktion/hellem Theme (dispose beim Wechsel); Klick mischt
+  Farben; Mono-Hinweiszeile erscheint erst mit aktivem Effekt. _hero,
+  polish (Budget ohne Zeiger)._
+- [x] **N-6 — Komponenten:** Glas-Karten mit Glow+Lift, Neon-Knöpfe,
+  Drop Cap entfernt (dadurch Zeilenlänge 82 → about-Prosa auf 64ch),
+  Outlook-Fußnote sekundär (4,25:1-Fund von axe), Styleguide-Texte v3.
+  _expertise, about, outlook._
+- [x] **N-7 — Suiten:** verify (Grund/Trennkante), expertise (Pink +
+  4px-Lift + Glow), about (20px-Rundung), previewcheck (Grotesk,
+  dark-first-Toggle). Alle zwölf grün.
+- [x] **N-8 — Endzahlen:** 195,5 KB Startseite (ohne Zeiger) · Schriften
+  67,3 KB · axe 0 Verstöße (5 Kombinationen) · CLS 0,0017. OG-Bild v3.
+- [x] **N-9 — Vorschau:** Tubes als data-URI im dynamischen Import
+  (Artifact hat keinen Server; 1,4 MB, null Netzanfragen), republished.

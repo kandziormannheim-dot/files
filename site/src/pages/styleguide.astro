@@ -30,10 +30,10 @@ const surfaces = [
 ] as const;
 
 const textTones = [
-  ["--color-text-primary", "text-primary", "Fließtext", "17.85:1 hell · 14.48:1 dunkel"],
-  ["--color-text-secondary", "text-secondary", "Zurückgenommen", "7.58:1 hell · 12.02:1 dunkel"],
-  ["--color-text-tertiary", "text-tertiary", "Platzhalter", "4.76:1 hell · 6.96:1 dunkel"],
-  ["--color-text-link", "text-link", "Link und Akzenttext (Gold)", "4.92:1 hell · 6.08:1 dunkel"],
+  ["--color-text-primary", "text-primary", "Fließtext", "18.2:1 dunkel · 17.85:1 hell"],
+  ["--color-text-secondary", "text-secondary", "Zurückgenommen", "11.5:1 dunkel · 7.58:1 hell"],
+  ["--color-text-tertiary", "text-tertiary", "Platzhalter", "7.9:1 dunkel · 4.76:1 hell"],
+  ["--color-text-link", "text-link", "Link und Akzenttext (Neon-Pink)", "7.95:1 dunkel · 6.32:1 hell"],
 ] as const;
 
 const shadows = ["--shadow-sm", "--shadow-md", "--shadow-lg", "--shadow-xl"] as const;
@@ -48,7 +48,7 @@ const radii = ["--radius-sm", "--radius-md", "--radius-lg", "--radius-xl"] as co
 
 <BaseLayout
   title="Musterseite"
-  description="Nachweis des Token-Systems v2 (Swiss/Editorial): Typografie, Farben, Komponenten in beiden Themes."
+  description="Nachweis des Token-Systems v3 (Neon Flow): Typografie, Farben, Komponenten in beiden Themes."
   noIndex={true}
 >
   <header class="sg-header">
@@ -56,7 +56,7 @@ const radii = ["--radius-sm", "--radius-md", "--radius-lg", "--radius-xl"] as co
       <p class="eyebrow">kandzior.de · Phase 4</p>
       <h1>Musterseite</h1>
       <p class="prose sg-lead">
-        Swiss Modernism 2.0 + Editorial (v2). Jeder Wert unten stammt aus
+        Neon Flow (v3, dark-first). Jeder Wert unten stammt aus
         <code>DESIGN_TOKENS.css</code> — nichts ist hartkodiert. Der Schalter
         rechts wechselt das Theme; jede Fläche muss in beiden bestehen.
       </p>
@@ -123,12 +123,14 @@ const radii = ["--radius-sm", "--radius-md", "--radius-lg", "--radius-xl"] as co
       <div class="sg-callout">
         <h3>Die Markenfarbe trägt selbst</h3>
         <p>
-          <strong style="color: var(--color-accent);">#a16207</strong> (Gold,
-          yellow-700) erreicht 4,92:1 auf Weiß — anders als das frühere Teal
-          darf die Marke damit direkt Text, Link und Knopffüllung sein. Auf
-          <code>bg-tertiary</code> (slate-100) fällt sie auf 4,49:1; dort gilt
-          <code>gold-800</code>. Im dunklen Theme trägt <code>gold-600</code>
-          den Text (6,08:1), <code>gold-500</code> die Füllungen.
+          <strong style="color: var(--color-accent);">#f967fb</strong>
+          (Neon-Pink, aus der Röhren-Konfiguration der Vorlage) erreicht
+          7,95:1 auf dem Nachtgrund — die Marke darf direkt Text, Link und
+          Knopffüllung sein; auf der Füllung steht dunkle Schrift (Weiß
+          fiele mit 2,5:1 durch). Violett <code>#6958d5</code> ist mit
+          3,76:1 nur groß/grafisch zulässig; in Textgröße gilt
+          <code>#8b7ce8</code>. Im hellen Theme trägt
+          <code>fuchsia-700</code> (6,32:1).
         </p>
         <p class="sg-accent-demo">So groß ist sie zulässig.</p>
       </div>
@@ -186,9 +188,9 @@ const radii = ["--radius-sm", "--radius-md", "--radius-lg", "--radius-xl"] as co
       <div class="container">
         <h2 id="t-card">Karten und Tiefe</h2>
         <p class="prose sg-note">
-          Swiss: Flachheit ist das Prinzip. Karten sind eckig und schattenlos;
-          Struktur tragen die Linien. Der Hover wechselt die Kante auf die
-          Marke — bei Hover <em>und</em> Tastaturfokus, ohne Bewegung.
+          Neon: Tiefe ist Licht. Karten sind dunkles Glas mit Haarlinie;
+          der Hover wechselt die Kante auf die Marke, hebt leicht und lässt
+          die Karte glühen — bei Hover <em>und</em> Tastaturfokus.
         </p>
         <div class="sg-grid sg-grid--cards">
           <article class="card card--interactive">

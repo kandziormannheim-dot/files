@@ -265,3 +265,34 @@ gewechselt hat ausschließlich das visuelle Gewand.
 - **Tone**: unverändert. **Anti-references**: unverändert gültig.
 - Alle Kontraste neu gerechnet (Tabelle im Kopf von DESIGN_TOKENS.css);
   zwölf Prüfsuiten grün, axe WCAG 2.2 AA ohne Verstöße, Startseite 176,7 KB.
+
+---
+
+## Addendum: Aesthetic Direction v3 — „Neon Flow" (2026-08-17)
+
+Ausdrückliche Vorgabe des Auftraggebers: das Design der 21st.dev-Komponente
+`neon-flow` (TubesBackground, threejs-components) — nachtschwarzer Grund,
+Neonfarben, cursorgetriebene Leuchtröhren. Die Direction v2 (Swiss/Gold)
+ist damit abgelöst; Struktur, Inhalte, Zweisprachigkeit und die
+Grill-Me-Leitplanken (Agnostik, eine Primäraktion, keine Fremdanfragen)
+gelten unverändert.
+
+**Übersetzung der Vorlage in die Seite:**
+- **Farbwelt aus der Komponente:** Röhren #f967fb/#6958d5/#53bc28 —
+  Pink ist Leitakzent (7,95:1, trägt Text/Link/Knopf mit dunkler Schrift),
+  Violett nur Fläche/Großgrafik, Grün Status. Hell (nur Umschalter):
+  fuchsia-700. **Dark-first:** dunkel ist Standard, Systemeinstellung wird
+  nicht mehr befragt.
+- **Effekt DSGVO-fest:** tubes1.min.js (three.js einkompiliert, ISC/MIT)
+  selbst gehostet unter /vendor — der CDN-Import der Vorlage wäre genau
+  die Fremdanfrage, die diese Seite ausschließt.
+- **Performance-fest:** 774 KB laden erst bei der ersten Zeigerbewegung —
+  cursorgetrieben heißt: ohne Zeiger gibt es nichts zu zeigen. Nie auf
+  Berührungsgeräten, nie unter Bewegungsreduktion, nie im hellen Theme
+  (die Bibliothek zeichnet auf Schwarz). Klick auf leere Heroflächen
+  mischt die Farben (wie die Vorlage), WebGPU mit WebGL-Fallback.
+- **Typo:** Space Grotesk (variable, Display) + Lato (Body). Formsprache:
+  Radien zurück (6–20px), Tiefe = Glow statt Schatten, Karten heben 4px.
+- **React/Tailwind der Vorlage:** bewusst NICHT übernommen — der Wrapper
+  ist eine dünne Hülle um eine Canvas; die Seite bleibt statisch und
+  framework-frei (Begründung im Brief oben unverändert gültig).

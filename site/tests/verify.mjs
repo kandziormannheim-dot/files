@@ -55,7 +55,7 @@ for (const [path, lang, expect] of [
   const early = await p.evaluate(() => document.documentElement.getAttribute("data-theme"));
   ok(early === "dark", `Theme vor dem Rendern gesetzt -> ${early}`);
   const bg = await p.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  ok(bg === "rgb(15, 23, 42)", `Grundflaeche dunkel -> ${bg}`);
+  ok(bg === "rgb(8, 8, 15)", `Grundflaeche dunkel -> ${bg}`);
   await p.click("[data-theme-toggle]");
   const after = await p.evaluate(() => document.documentElement.getAttribute("data-theme"));
   const stored = await p.evaluate(() => localStorage.getItem("theme"));
@@ -92,7 +92,8 @@ for (const [path, lang, expect] of [
   );
   ok(before === "false" && after === "true", `Klebe-Zustand ${before} -> ${after}`);
   ok(hBefore === 72 && hAfter === 60, `Hoehe ${hBefore}px -> ${hAfter}px`);
-  ok(border === "rgb(226, 232, 240)", `Trennkante erscheint -> ${border}`);
+  // v3 dark-first: border-primary ist night-600.
+  ok(border === "rgb(38, 38, 60)", `Trennkante erscheint -> ${border}`);
   await p.close();
 }
 

@@ -60,8 +60,10 @@ const c = content(lang).about;
   .about__prose {
     /* Lesebreite, nicht Spaltenbreite. Der Text ist der längste
        zusammenhängende der Seite und der einzige, der wirklich gelesen
-       statt überflogen wird. */
-    max-width: var(--max-width-content);
+       statt überflogen wird. Eine Stufe unter der globalen Lesebreite:
+       Ohne die Drop-Cap-Initiale (v2) stieg der Schnitt auf 82 Zeichen
+       je Zeile — 64ch bringt ihn zurück in den Lesebereich. */
+    max-width: 64ch;
     margin-top: var(--space-5);
   }
 
@@ -69,18 +71,8 @@ const c = content(lang).about;
     margin-top: var(--space-4);
   }
 
-  /* Drop Cap (Editorial): Initiale des ersten Absatzes in Garamond.
-     Marke als Farbe ist zulaessig — gold-700 traegt 4.92:1 auf Weiss. */
-  .about__prose > p:first-child::first-letter {
-    float: left;
-    font-family: var(--font-family-display);
-    font-size: var(--drop-cap-size);
-    font-weight: var(--font-weight-semibold);
-    line-height: 0.8;
-    padding-right: var(--space-2);
-    padding-top: var(--space-1);
-    color: var(--color-accent);
-  }
+  /* v3: kein Drop Cap mehr — die Serif-Initiale war ein Editorial-Element
+     des v2-Registers und passt nicht zur Grotesk-Neon-Formsprache. */
 
   @media (min-width: 768px) {
     .about__media {

@@ -1,0 +1,3 @@
+tubes1.min.js aus dem npm-Paket threejs-components@0.0.19 (ISC),
+enthaelt three.js r180 (MIT). Selbst gehostet, damit keine CDN-Anfrage
+entsteht (DSGVO — gleiche Logik wie bei den Schriften).

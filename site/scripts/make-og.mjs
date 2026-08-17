@@ -1,7 +1,7 @@
 // Erzeugt das Open-Graph-Vorschaubild (1200x630) aus den Design-Tokens der
-// Seite — Nachtblau, Teal-Akzent, Plus Jakarta Sans. Kein Foto: Das Portrait
-// liegt noch nicht vor, und eine saubere typografische Karte altert besser
-// als ein schlecht beschnittenes Bild.
+// Seite — v3 „Neon Flow": Nachtgrund, Neon-Pink/Violett, Space Grotesk.
+// Eine saubere typografische Karte altert besser als ein schlecht
+// beschnittenes Foto.
 import { chromium } from "playwright";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -11,15 +11,15 @@ const fonts = resolve(here, "../../../../home/user/files/site/public/fonts");
 
 const html = `<!doctype html><html><head><style>
   @font-face {
-    font-family: "EB Garamond";
-    src: url("http://127.0.0.1:4321/fonts/eb-garamond-latin.woff2") format("woff2-variations");
-    font-weight: 200 800;
+    font-family: "Space Grotesk";
+    src: url("http://127.0.0.1:4321/fonts/space-grotesk-latin.woff2") format("woff2-variations");
+    font-weight: 300 700;
   }
   * { margin: 0; box-sizing: border-box; }
   body {
     width: 1200px; height: 630px;
-    background: #0f172a;
-    font-family: "EB Garamond", serif;
+    background: #08080f;
+    font-family: "Space Grotesk", sans-serif;
     display: flex; flex-direction: column; justify-content: space-between;
     padding: 72px 84px;
     position: relative; overflow: hidden;
@@ -27,22 +27,27 @@ const html = `<!doctype html><html><head><style>
   .glow {
     position: absolute; right: -220px; top: -220px;
     width: 640px; height: 640px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(202,138,4,.30) 0%, rgba(202,138,4,.10) 45%, transparent 70%);
+    background: radial-gradient(circle, rgba(249,103,251,.28) 0%, rgba(105,88,213,.14) 45%, transparent 70%);
+  }
+  .glow2 {
+    position: absolute; left: -260px; bottom: -300px;
+    width: 700px; height: 700px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(105,88,213,.22) 0%, rgba(105,88,213,.08) 45%, transparent 70%);
   }
   .mark {
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     font-size: 24px; font-weight: 400; letter-spacing: .16em;
-    color: #94a3b8; text-transform: uppercase;
+    color: #a1a1bd; text-transform: uppercase;
   }
-  .mark b { font-weight: 700; color: #f8fafc; }
-  .name { font-size: 96px; font-weight: 700; letter-spacing: -0.01em; color: #f8fafc; line-height: 1.05; }
-  .line { width: 96px; height: 5px; background: #eab308; border-radius: 0; margin: 36px 0; }
-  .positioning { font-size: 40px; font-weight: 500; letter-spacing: 0; color: #cbd5e1; max-width: 20ch; line-height: 1.3; }
+  .mark b { font-weight: 700; color: #f4f4f8; }
+  .name { font-size: 96px; font-weight: 700; letter-spacing: -0.02em; color: #f4f4f8; line-height: 1.02; }
+  .line { width: 120px; height: 5px; background: linear-gradient(90deg, #f967fb, #6958d5); border-radius: 3px; margin: 36px 0; }
+  .positioning { font-size: 40px; font-weight: 500; letter-spacing: 0; color: #c3c3d9; max-width: 20ch; line-height: 1.3; }
   .foot { display: flex; justify-content: space-between; align-items: baseline; }
-  .city { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #eab308; }
-  .domain { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 24px; font-weight: 400; color: #64748b; }
+  .city { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #f967fb; }
+  .domain { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 24px; font-weight: 400; color: #8f8fac; }
 </style></head><body>
-  <div class="glow"></div>
+  <div class="glow"></div>\n  <div class="glow2"></div>
   <div class="mark">Martin <b>Kandzior</b></div>
   <div>
     <div class="name">Logistik, Risiko<br>und Politik.</div>

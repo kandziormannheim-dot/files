@@ -23,23 +23,28 @@ ok(anfragen.length === 0, `Netzanfragen: ${anfragen.length ? anfragen.slice(0,3)
 const schrift = await p.evaluate(async () => {
   await document.fonts.ready;
   return {
-    pjs: document.fonts.check('600 32px "EB Garamond"'),
+    pjs: document.fonts.check('600 32px "Space Grotesk"'),
     bvp: document.fonts.check('400 17px "Lato"'),
   };
 });
-ok(schrift.pjs && schrift.bvp, `Schriften aus Daten-URIs geladen -> EBG:${schrift.pjs} Lato:${schrift.bvp}`);
+ok(schrift.pjs && schrift.bvp, `Schriften aus Daten-URIs geladen -> Grotesk:${schrift.pjs} Lato:${schrift.bvp}`);
 
 const bereiche = await p.$$eval('main > section', els => els.map(e => e.id));
 ok(bereiche.join(',') === 'hero,proof,expertise,outlook,about,social,contact', `alle Bereiche -> ${bereiche.join(' → ')}`);
 
-// Theme-Umschalter funktioniert in der Vorschau
+// Theme-Umschalter funktioniert in der Vorschau. v3 ist dark-first:
+// Ohne Attribut ist die Seite dunkel, der erste Klick fuehrt zu hell.
+const vorher = await p.evaluate(() => getComputedStyle(document.body).backgroundColor);
 await p.click('[data-theme-toggle]');
 // Attribut statt Farbe: Die Flaeche wechselt mit 250ms Uebergang, das
 // Attribut sofort.
 const attr = await p.getAttribute('html', 'data-theme');
 await p.waitForTimeout(350);
-const dunkel = await p.evaluate(() => getComputedStyle(document.body).backgroundColor);
-ok(attr === 'dark' && dunkel === 'rgb(15, 23, 42)', `Theme-Umschalter wirkt -> ${attr}, ${dunkel}`);
+const hell = await p.evaluate(() => getComputedStyle(document.body).backgroundColor);
+ok(
+  vorher === 'rgb(8, 8, 15)' && attr === 'light' && hell === 'rgb(255, 255, 255)',
+  `Theme-Umschalter wirkt -> Start ${vorher}, Klick -> ${attr}, ${hell}`,
+);
 await p.click('[data-theme-toggle]');
 
 // Tabs funktionieren

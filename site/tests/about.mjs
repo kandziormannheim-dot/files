@@ -61,13 +61,13 @@ for (const theme of ["light", "dark"]) {
       schatten: cs.boxShadow !== "none",
     };
   });
-  // Redesign v2 (Swiss): Die Print-Kante ist eckig und flach — die
-  // Haarlinie traegt allein, ein Schatten waere ein Stilbruch.
+  // Redesign v3 (Neon): Haarlinie plus Token-Rundung (radius-xl = 20px).
+  // Das Foto glueht nicht — Glow ist fuer interaktive Flaechen reserviert.
   ok(
-    parseFloat(kante.rahmenbreite) > 0 && kante.radius === "0px",
-    `${theme}: Print-Kante — Haarlinie ${kante.rahmenbreite} ${kante.rahmenfarbe}, eckig`,
+    parseFloat(kante.rahmenbreite) > 0 && kante.radius === "20px",
+    `${theme}: Bildkante — Haarlinie ${kante.rahmenbreite} ${kante.rahmenfarbe}, gerundet ${kante.radius}`,
   );
-  ok(!kante.schatten, `${theme}: kein Schatten (Swiss-Flachheit)`);
+  ok(!kante.schatten, `${theme}: kein Glow auf dem Foto`);
   await p.close();
 }
 

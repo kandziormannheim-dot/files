@@ -88,12 +88,15 @@ const c = content(lang).expertise;
       border-color var(--duration-normal) var(--easing-out);
   }
 
-  /* Swiss: Hover bewegt nichts. Die Kante wechselt auf die Marke, die
-     Icon-Fläche zieht nach. Nur bei Zeigergeräten — auf Berührungsgeräten
-     bliebe der Zustand nach dem Tippen hängen. */
+  /* Neon: Die Kante wechselt auf die Marke, die Karte hebt leicht und
+     glüht auf; die Icon-Fläche zieht nach. Nur bei Zeigergeräten — auf
+     Berührungsgeräten bliebe der Zustand nach dem Tippen hängen. Der Lift
+     steht unter Bewegungsreduktion auf 0. */
   @media (hover: hover) {
     .pillar:hover {
       border-color: var(--color-accent);
+      box-shadow: var(--card-shadow-hover);
+      transform: translateY(var(--lift-card));
     }
 
     .pillar:hover .pillar__icon {

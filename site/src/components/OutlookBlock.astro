@@ -77,8 +77,8 @@ const c = content(lang).outlook;
   }
 
   .outlook__quote p {
-    /* Garamond 600 statt fett: Ein Serif-Zitat traegt ueber Groesse und
-       Form, nicht ueber Fettung. */
+    /* Grotesk 600 statt fett: Das Zitat traegt ueber Groesse und Form,
+       nicht ueber Fettung. */
     font-family: var(--font-family-display);
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
@@ -100,7 +100,9 @@ const c = content(lang).outlook;
     padding-top: var(--space-4);
     border-top: var(--border-width) solid var(--color-border-primary);
     font-size: var(--font-size-sm);
-    color: var(--color-text-tertiary);
+    /* Sekundär statt tertiär: Auf der getönten Fläche fiel die
+       Tertiärfarbe im hellen Theme auf 4,25:1 — gemessen, nicht geschätzt. */
+    color: var(--color-text-secondary);
   }
 
   @media (min-width: 768px) {

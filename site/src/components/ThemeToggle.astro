@@ -82,44 +82,35 @@ const t = content(lang).a11y;
 
   /* Gezeigt wird, wohin der Klick führt — nicht, was gerade gilt.
      Im hellen Theme steht der Mond: „hier geht es nach dunkel". */
+  /* v3 ist dark-first: ohne Attribut ist die Seite dunkel — die Sonne
+     zeigt das erreichbare Ziel. Nur die ausdrückliche Hell-Wahl dreht um. */
   .theme-toggle__icon--sun {
-    opacity: 0;
-    transform: rotate(-45deg) scale(0.7);
+    opacity: 1;
+    transform: rotate(0) scale(1);
   }
 
   .theme-toggle__icon--moon {
-    opacity: 1;
-    transform: rotate(0) scale(1);
-  }
-
-  :global([data-theme="dark"]) .theme-toggle__icon--sun {
-    opacity: 1;
-    transform: rotate(0) scale(1);
-  }
-
-  :global([data-theme="dark"]) .theme-toggle__icon--moon {
     opacity: 0;
     transform: rotate(45deg) scale(0.7);
   }
 
-  @media (prefers-color-scheme: dark) {
-    :global(:root:not([data-theme="light"])) .theme-toggle__icon--sun {
-      opacity: 1;
-      transform: rotate(0) scale(1);
-    }
+  :global([data-theme="light"]) .theme-toggle__icon--sun {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+  }
 
-    :global(:root:not([data-theme="light"])) .theme-toggle__icon--moon {
-      opacity: 0;
-      transform: rotate(45deg) scale(0.7);
-    }
+  :global([data-theme="light"]) .theme-toggle__icon--moon {
+    opacity: 1;
+    transform: rotate(0) scale(1);
   }
 </style>
 
 <script>
   function currentTheme(): "light" | "dark" {
+    // v3: Dunkel ist der Standard. Die Systemeinstellung wird nicht mehr
+    // befragt — nur die ausdrückliche Wahl (Attribut) zählt.
     const set = document.documentElement.getAttribute("data-theme");
-    if (set === "light" || set === "dark") return set;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return set === "light" ? "light" : "dark";
   }
 
   function syncLabels() {
@@ -147,9 +138,4 @@ const t = content(lang).a11y;
   });
 
   syncLabels();
-
-  // Ändert sich die Systemvorgabe, folgt ihr nur, wer nie selbst geschaltet hat.
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-    if (!document.documentElement.hasAttribute("data-theme")) syncLabels();
-  });
 </script>
