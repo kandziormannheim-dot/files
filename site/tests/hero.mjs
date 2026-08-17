@@ -82,13 +82,23 @@ for (const [motion, sollLaufen] of [
   await p.close();
 }
 
-// --- Platzhalter ist als Bild angekuendigt -------------------------------
+// --- Das echte Portrait: beschrieben, geladen, rund maskiert -------------
 {
   const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
   await p.goto(B + "/", { waitUntil: "networkidle" });
-  const label = await p.getAttribute(".portrait__placeholder", "aria-label");
-  const role = await p.getAttribute(".portrait__placeholder", "role");
-  ok(role === "img" && !!label, `Platzhalter traegt role="img" und Beschreibung -> "${label}"`);
+  const bild = await p.evaluate(() => {
+    const el = document.querySelector(".portrait--cutout .portrait__image");
+    return (
+      el && {
+        alt: el.getAttribute("alt"),
+        geladen: el.naturalWidth > 0,
+        rund: getComputedStyle(el).borderRadius,
+      }
+    );
+  });
+  ok(!!bild && !!bild.alt, `Portrait trägt Alt-Text -> "${bild && bild.alt}"`);
+  ok(!!bild && bild.geladen, "Portraitdatei wird geladen");
+  ok(!!bild && bild.rund === "9999px", `runde Maske -> ${bild && bild.rund}`);
   await p.close();
 }
 

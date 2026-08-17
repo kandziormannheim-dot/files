@@ -7,12 +7,9 @@
  * Komposition stimmt dadurch schon jetzt, und der spätere Austausch ist ein
  * Dateikopiervorgang ohne Codeänderung.
  *
- * PLATZHALTER: Beide Bilder fehlen noch.
- *   public/assets/portrait-freigestellt.png  — Hero, ohne Hintergrund,
- *       damit der Gold-Schein hinter der Person liegen kann. PNG mit
- *       Transparenz, nicht JPG.
- *   public/assets/portrait-wasserturm.jpg    — Über mich, vollständig,
- *       mit dem Mannheimer Wasserturm.
+ * Der Hero zeigt das volle Foto in runder Maske (kein Freisteller
+ * vorhanden) — der Wasserturm bleibt dadurch als Mannheim-Verweis im
+ * Bild, und der Gold-Schein liegt als Ring hinter dem Kreis.
  */
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -37,8 +34,8 @@ const {
 } = Astro.props;
 
 const files = {
-  cutout: { src: "/assets/portrait-freigestellt.png", ratio: "3 / 4" },
-  full: { src: "/assets/portrait-wasserturm.jpg", ratio: "2 / 3" },
+  cutout: { src: "/assets/portrait-hero.webp", ratio: "1 / 1" },
+  full: { src: "/assets/portrait-wasserturm.webp", ratio: "2 / 3" },
 } as const;
 
 const file = files[variant];
@@ -84,12 +81,12 @@ const exists = existsSync(resolve(process.cwd(), `public${file.src}`));
     max-width: 380px;
   }
 
-  /* Der Schein liegt HINTER der freigestellten Person und ist größer als
-     sie — er soll wie Licht wirken, das von hinten kommt, nicht wie ein
-     Rahmen um das Bild. */
+  /* Der Schein liegt HINTER dem runden Bild und ist größer als es — er
+     soll wie Licht wirken, das von hinten kommt, nicht wie ein Rahmen.
+     Symmetrisch, weil das Bild jetzt ein Kreis ist. */
   .portrait__glow {
     position: absolute;
-    inset: -18% -12% -8%;
+    inset: -12%;
     background: var(--portrait-glow);
     border-radius: var(--radius-full);
     pointer-events: none;
@@ -101,6 +98,13 @@ const exists = existsSync(resolve(process.cwd(), `public${file.src}`));
     width: 100%;
     aspect-ratio: var(--portrait-ratio);
     object-fit: cover;
+  }
+
+  /* Volles Foto in runder Maske — die einzige Rundung im Swiss-Layout,
+     zusammen mit dem Schein dahinter bewusst als Ausnahme gesetzt. */
+  .portrait--cutout .portrait__image,
+  .portrait--cutout .portrait__placeholder {
+    border-radius: var(--radius-full);
   }
 
   .portrait--full .portrait__image,

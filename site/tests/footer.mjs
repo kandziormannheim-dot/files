@@ -41,13 +41,15 @@ for (const theme of ["light", "dark"]) {
 
   const f = await p.evaluate(() => {
     const fu = document.querySelector(".footer");
-    const logo = document.querySelector(".footer__logo .logo__family");
+    // Die Marke ist eine currentColor-Fläche unter einer Maske — sichtbar
+    // ist ihre backgroundColor, nicht eine Textfarbe.
+    const logo = document.querySelector(".footer__logo .logo__mark");
     const link = document.querySelector(".footer__link");
     const tag = document.querySelector(".footer__tagline");
     return {
       flaeche: getComputedStyle(fu).backgroundColor,
       seite: getComputedStyle(document.body).backgroundColor,
-      logofarbe: getComputedStyle(logo).color,
+      logofarbe: getComputedStyle(logo).backgroundColor,
       linkfarbe: getComputedStyle(link).color,
       tagfarbe: getComputedStyle(tag).color,
       breite: Math.round(fu.getBoundingClientRect().width),
@@ -61,9 +63,9 @@ for (const theme of ["light", "dark"]) {
 
   // Das Logo in der Kopfzeile darf die Umkehrung NICHT mitbekommen.
   const kopf = await p.evaluate(() => {
-    const el = document.querySelector(".header .logo__family");
+    const el = document.querySelector(".header .logo__mark");
     return {
-      farbe: getComputedStyle(el).color,
+      farbe: getComputedStyle(el).backgroundColor,
       erwartet: getComputedStyle(document.body).color,
     };
   });

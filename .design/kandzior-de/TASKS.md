@@ -101,3 +101,22 @@ Philosophien. Fertig-Kriterium jeder Aufgabe: die genannten Suiten grün.
 
 Behobene Regression aus dem Umbau: Masthead-Wortmarke sprengte 320 px um
 15 px (17 px-Stufe ohne Mobil-Staffel) — auf 14 px/Mobil zurückgeführt.
+
+## Bilder & Logo (2026-08-17)
+
+Die Originale kamen als eingebettete Bilder an und wurden aus dem
+Sitzungsprotokoll extrahiert (Base64). Kein Freisteller vorhanden →
+Hero zeigt das volle Foto in runder Maske.
+
+- [x] **B-1 — Aufbereitung:** Hero-Gesichtsausschnitt 800×800 WebP (30 KB),
+  Wasserturm-Portrait 760 px WebP (65 KB), Logo auf Inhalt beschnitten als
+  Alpha-PNG (10 KB) für die CSS-Maske. Startseite 216,5 KB — im Budget.
+- [x] **B-2 — Portrait.astro:** cutout = rundes maskiertes Foto (1/1),
+  full = Wasserturm mit Print-Caption; Platzhalterpfad bleibt als
+  Rückfallebene. _hero, about._
+- [x] **B-3 — Logo.astro:** Marke als CSS-Maske über currentColor-Fläche —
+  erbt Theme- und Footer-Farbe aus einer Datei. _footer._
+- [x] **B-4 — Suiten:** hero (Platzhalter → echtes Bild, runde Maske),
+  footer (logo__family → logo__mark); alle zwölf grün, CLS 0,0000.
+- [x] **B-5 — Vorschau:** Assembler als site/scripts/make-vorschau.py ins
+  Repo übernommen (Bilder + Maske als data-URIs); Artifact republished.
