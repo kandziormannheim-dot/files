@@ -201,8 +201,9 @@ und einen iframe liefern. Die Seite ist dafür fertig verdrahtet:
   nennt den ECHTEN Empfänger der IP („SociableKIT (LinkedIn)"), nicht
   nur die Plattform. Belegt: iframe-Embed läuft durch den Zwei-Klick-
   Mount (widgettest). _socialtabs, consent, contact._
-- [ ] **W-2 — Widget anlegen (Auftraggeber, ~5 Min je Kanal):** Konto
-  beim Dienst, Widget „LinkedIn Profile Posts" / „Facebook Page Posts"
-  mit dunklem Design, iframe-URL + WIDGET_ID in social.json eintragen.
+- [x] **W-2a — LinkedIn-Widget AKTIV:** SociableKIT 25706175 in
+  social.json eingetragen; socialtabs prüft Quelle und Anbieternennung.
+- [ ] **W-2b — Facebook-Widget:** wartet auf Widget-URL („Facebook Page
+  Posts") aus dem SociableKIT-Konto des Auftraggebers.
 - [ ] **W-3 — VOR Livegang:** Dienst + AV-Vertrag in der Datenschutz-
   erklärung ergänzen (liegt ohnehin bei der Anwaltsprüfung).

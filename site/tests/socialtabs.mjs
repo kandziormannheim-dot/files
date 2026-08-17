@@ -104,17 +104,28 @@ const ok = (c, m) => {
   const p = await b.newPage({ viewport: { width: 1280, height: 1000 } });
   await p.goto(B + "/", { waitUntil: "networkidle" });
 
-  // LinkedIn: aktuell ohne Einbettungen -> Profilkarte, KEIN Lade-Knopf
+  // LinkedIn: Feed ueber SociableKIT-Widget -> ConsentEmbed, und der
+  // Einwilligungstext nennt den ECHTEN Empfaenger der IP (den Dienst),
+  // nicht nur die Plattform.
   const li = await p.evaluate(() => {
     const panel = document.querySelector("#panel-linkedin");
     return {
-      karte: Boolean(panel.querySelector(".social__card")),
       ladeknopf: Boolean(panel.querySelector("[data-consent-load]")),
-      link: panel.querySelector("a")?.getAttribute("href"),
+      hinweis: panel.querySelector(".consent__notice")?.textContent ?? "",
+      embed: panel.querySelector("[data-consent]")?.dataset.embed ?? "",
+      direkt: panel.querySelector(".consent__direct")?.getAttribute("href"),
     };
   });
-  ok(li.karte && !li.ladeknopf, "LinkedIn ohne Einbettungen zeigt Profilkarte statt Lade-Knopf");
-  ok(li.link === "https://linkedin.com/in/martin-kandzior", `LinkedIn-Link -> ${li.link}`);
+  ok(li.ladeknopf, "LinkedIn nutzt die Einwilligungs-Vorschau (Widget-Feed)");
+  ok(
+    /SociableKIT \(LinkedIn\)/.test(li.hinweis),
+    `Einwilligungstext nennt den Dienst -> "${li.hinweis.trim().slice(0, 70)}…"`,
+  );
+  ok(
+    li.embed.includes("widgets.sociablekit.com/linkedin-profile-posts/iframe/25706175"),
+    "Widget-Quelle ist das eingetragene SociableKIT-iframe",
+  );
+  ok(li.direkt === "https://linkedin.com/in/martin-kandzior", `LinkedIn-Direktlink -> ${li.direkt}`);
 
   // X: Einbettung vorhanden -> ConsentEmbed mit vorbereitetem Anker
   const x = await p.evaluate(() => {

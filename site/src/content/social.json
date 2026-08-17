@@ -3,7 +3,14 @@
   "_LOESUNG_FEED": "So betten 'die anderen' Profil-Feeds ein: ueber einen Feed-Widget-Dienst, der LinkedIn/Facebook serverseitig ausliest und einen fertigen iframe liefert. EINRICHTUNG (je Kanal ~5 Min, einmalig): 1) Konto bei einem Dienst anlegen — z. B. SociableKIT (Widgets 'LinkedIn Profile Posts' und 'Facebook Page Posts', Gratis-Stufe vorhanden), Alternativen: Elfsight, Tagembed, RSS.app. 2) Widget anlegen, Profil-URL verbinden, im Widget-Design 'Dark' waehlen (passt zum Neon-Design). 3) Die iframe-Embed-URL kopieren (bei SociableKIT: https://widgets.sociablekit.com/<widget-typ>/iframe/<WIDGET_ID>) und unten in 'embeds' des Kanals eintragen (Muster: _embeds_widget_beispiel); zusaetzlich 'provider' auf den Dienstnamen setzen — der Einwilligungstext nennt dann den echten Empfaenger der IP-Adresse (DSGVO). 4) VOR Livegang: Dienst + AV-Vertrag in der Datenschutzerklaerung ergaenzen (Anwaltspruefung steht ohnehin an). Die Zwei-Klick-Einwilligung bleibt davor — ohne Klick keine Anfrage an den Dienst.",
   "linkedin": {
     "profileUrl": "https://linkedin.com/in/martin-kandzior",
-    "embeds": [],
+    "embeds": [
+      {
+        "type": "iframe",
+        "src": "https://widgets.sociablekit.com/linkedin-profile-posts/iframe/25706175",
+        "title": "LinkedIn-Beiträge von Martin Kandzior",
+        "height": 620
+      }
+    ],
     "_embeds_beispiel": [
       {
         "type": "iframe",
@@ -13,7 +20,7 @@
         "eingefuegt": "2026-08"
       }
     ],
-    "_hinweis": "Zwei Wege: (1) SOFORT — Beitrags-Karten in social-posts.json (eigenes HTML, keine Fremdanfrage). (2) Echte iframes: LinkedIn bettet nur EINZELNE Beitraege ein (kein Profil-Feed) — Beitrag oeffnen -> ... -> 'Einbetten' -> src des iframes in 'embeds' eintragen (Muster in _embeds_beispiel). Gefuellte 'embeds' haben Vorrang vor den Karten.",
+    "_hinweis": "AKTIV: Feed ueber SociableKIT-Widget 25706175 (Zwei-Klick; der Einwilligungstext nennt SociableKIT als Empfaenger). Gratis-Stufe: Aktualisierung ~alle 24h, kleines Branding — Bezahlstufe entfernt beides. VOR Livegang: SociableKIT + AV-Vertrag in die Datenschutzerklaerung (Anwaltspruefung). Die Beitrags-Karten (social-posts.json) bleiben als Rueckfallebene erhalten, falls das Widget abbestellt wird: einfach 'embeds' hier leeren.",
     "_embeds_widget_beispiel": [
       {
         "type": "iframe",
@@ -22,7 +29,8 @@
         "height": 620
       }
     ],
-    "_provider_beispiel": "SociableKIT"
+    "_provider_beispiel": "SociableKIT",
+    "provider": "SociableKIT"
   },
   "x": {
     "profileUrl": "https://x.com/martinkandzior",
