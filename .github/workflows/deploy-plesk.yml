@@ -172,17 +172,24 @@ jobs:
           # Explizites FTPS; das FTP-Zertifikat ist dasselbe selbstsignierte
           # wie am Panel, daher keine Kettenprüfung möglich — die Verbindung
           # bleibt trotzdem verschlüsselt.
-          L="set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate false; open -u $FTP_USER,$FTP_PASS $HOST;"
+          #
+          # Harte Zeitgrenzen: lftp wiederholt sonst ENDLOS und der erste
+          # Deploy-Versuch hing 20 Minuten stumm bis ins Job-Timeout
+          # (Lauf 32269613101). Lieber schnell scheitern und die Ursache im
+          # Protokoll sehen. prefer-epsv aus: manche Firewalls kennen nur
+          # klassisches PASV.
+          L="set net:timeout 20; set net:max-retries 2; set net:persist-retries 1; set net:reconnect-interval-base 5; set ftp:prefer-epsv false; set ftp:passive-mode true; set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate false; open -u $FTP_USER,$FTP_PASS $HOST;"
           echo "== Was liegt im Webroot? (Blick vor dem Löschen) =="
-          lftp -c "$L cls -l httpdocs/" | head -40 || true
+          timeout 90 lftp -c "$L cls -l httpdocs/" | head -40 \
+            || { echo "::error::Schon das Auflisten scheitert — FTP-Zugang oder Datenkanal (Firewall/Passiv-Ports) prüfen."; exit 1; }
           echo
           FLAGS="--delete --parallel=4 --verbose -x ^\.well-known/"
           if [ "$MODUS" = "trockenlauf" ]; then FLAGS="$FLAGS --dry-run"; fi
           echo "== Übertragung ($MODUS) =="
-          lftp -c "$L mirror -R $FLAGS site/dist/ httpdocs/" | tail -60
+          timeout 480 lftp -c "$L mirror -R $FLAGS site/dist/ httpdocs/" | tail -60
           echo
           echo "== Stand danach =="
-          lftp -c "$L cls -l httpdocs/" | head -30 || true
+          timeout 90 lftp -c "$L cls -l httpdocs/" | head -30 || true
 
       - name: FTP-Benutzer wieder entfernen
         if: always() && steps.ftp.outputs.user != ''
