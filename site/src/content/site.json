@@ -1,6 +1,8 @@
 {
-  "_hinweis": "Zentrale Konfiguration. Das Formular sendet an 'formEndpoint' — seit dem Livegang (2026-08-19) an das PHP-Skript public/api/kontakt.php auf dem eigenen Plesk/Hetzner-Server: kein Drittanbieter, Daten bleiben in Deutschland. Ein LEERER Wert schaltet zurueck in den SIMULATIONSMODUS (Konsole statt Versand) — nur fuer lokale Entwicklung gedacht. VORAUSSETZUNG auf dem Server: Die Absenderadresse in kontakt.php (formular@kandzior.de) muss auf der Domain existieren oder als erlaubter Absender konfiguriert sein.",
+  "_hinweis": "Zentrale Konfiguration. Das Formular sendet an 'formEndpoint'. Der Endpunkt liegt als PHP-Skript im Build (public/api/kontakt.php) und wird mit deployt; Empfaenger und Zugangsdaten stehen in einer Datei EINE EBENE OBERHALB des Webroots, damit der Deploy sie nicht ueberschreibt und sie nicht oeffentlich liegt. Einrichtung: docs/kontakt/README.md. Ist 'formEndpoint' leer, laeuft wieder der SIMULATIONSMODUS: die Anfrage landet nur in der Browser-Konsole. Selbsttest nach dem Deploy: curl https://kandzior.de/api/kontakt.php — kommt JSON zurueck, laeuft PHP; kommt Quelltext, fehlt die PHP-Anbindung im Webserver.",
+
   "formEndpoint": "/api/kontakt.php",
+
   "contactEmail": "mail@kandzior.de",
   "contactPhone": "+49 176 10 20 20 30"
 }

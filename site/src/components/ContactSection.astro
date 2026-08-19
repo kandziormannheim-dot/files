@@ -17,9 +17,14 @@
  *   wird still „Erfolg" gezeigt — ein Bot bekommt keine Rückmeldung, die ihm
  *   beim Lernen hilft.
  *
- * Der Endpunkt kommt aus site.json und ist austauschbar. Solange er leer ist,
- * läuft der SIMULATIONSMODUS (Konsole) — die Livegang-Checkliste erzwingt,
- * dass das vor Veröffentlichung ersetzt wird.
+ * Der Endpunkt kommt aus site.json und ist austauschbar; voreingestellt ist
+ * das mitgelieferte PHP-Skript unter /api/kontakt.php. Ist der Wert leer,
+ * läuft ersatzweise der SIMULATIONSMODUS (Konsole).
+ *
+ * Erfolg wird nur gemeldet, wenn die Antwort `{"ok":true}` enthält. Ein
+ * blanker HTTP 200 genügt nicht: liefert der Webserver das PHP-Skript
+ * versehentlich als Text aus, käme auch dann 200 zurück — und die Anfrage
+ * wäre still verloren, statt den Ausweichweg per E-Mail zu zeigen.
  */
 import { content, fill, type Lang } from "../lib/i18n";
 import site from "../content/site.json";
@@ -402,6 +407,12 @@ const f = c.form;
             body: JSON.stringify(daten),
           });
           if (!antwort.ok) throw new Error(`HTTP ${antwort.status}`);
+          // Der Rumpf entscheidet, nicht der Statuscode. Liefert der Server
+          // das PHP-Skript versehentlich als Text aus, kommt ebenfalls ein
+          // 200 zurück — dann wäre die Anfrage still verloren, und genau das
+          // darf nicht passieren.
+          const rumpf = await antwort.json().catch(() => null);
+          if (!rumpf || rumpf.ok !== true) throw new Error("Antwort ohne ok");
         }
         zeigeErfolg();
       } catch {
