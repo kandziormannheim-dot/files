@@ -229,7 +229,8 @@ for (const [w, erwartet] of [
   const werte = await p.$$eval(".proof__value", (els) =>
     els.map((e) => e.textContent.replace(/\s+/g, " ").trim()),
   );
-  ok(werte[1].includes("350"), `mittlere Zahl ist jetzt 350 -> ${JSON.stringify(werte)}`);
+  // Bandinhalt seit den Text-PRs vom 2026-08-19: 15+ / 300+ / 1.000+.
+  ok(werte[1].includes("300"), `mittlere Zahl ist jetzt 300 -> ${JSON.stringify(werte)}`);
   const bio = await p.evaluate(() => document.body.textContent);
   ok(!/durchschnittlichen Auftragsvolumen/.test(bio), "ADV steht nicht doppelt im Text");
   await p.close();

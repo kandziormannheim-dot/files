@@ -136,7 +136,7 @@ document.querySelectorAll('[data-preview-intern]').forEach((a) => {
 """
 
 fragment = (
-    "<title>kandzior.de — Vorschau</title>\n"
+    "<title>kandzior.de — Neon-Vorschau</title>\n"
     + head.strip()
     + toast_css
     + "\n"

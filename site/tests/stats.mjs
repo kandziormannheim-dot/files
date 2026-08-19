@@ -82,11 +82,13 @@ const ok = (c, m) => {
   // die laufende Ziffer gar nicht.
   const baum = await p.locator("#proof").ariaSnapshot();
   console.log("     Zugaenglichkeitsbaum:\n" + baum.split("\n").map((z) => "       " + z).join("\n"));
+  // Bandinhalt seit den Text-PRs vom 2026-08-19: 15+ / 300+ / 1.000+.
   const fuenfzehnen = (baum.match(/\b15\b/g) ?? []).length;
-  const fuenfziger = (baum.match(/\b50\b/g) ?? []).length;
+  const dreihunderter = (baum.match(/\b300\b/g) ?? []).length;
+  const tausender = (baum.match(/\b1\.000\b/g) ?? []).length;
   ok(
-    fuenfzehnen === 1 && fuenfziger === 1,
-    `jede Zahl genau einmal im Zugaenglichkeitsbaum -> 15: ${fuenfzehnen}x, 50: ${fuenfziger}x`,
+    fuenfzehnen === 1 && dreihunderter === 1 && tausender === 1,
+    `jede Zahl genau einmal im Zugaenglichkeitsbaum -> 15: ${fuenfzehnen}x, 300: ${dreihunderter}x, 1.000: ${tausender}x`,
   );
   await p.close();
 }
