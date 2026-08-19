@@ -85,23 +85,33 @@ jobs:
         run: |
           set -euo pipefail
           api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
-          cli() { # Plesk-CLI über das API-Gateway; Ausgabe roh zurückgeben.
+          # Plesk-CLI über das API-Gateway. Antwortet das Gateway nicht mit
+          # JSON (auf manchen Installationen deaktiviert), zeigen wir die
+          # Rohantwort, statt an jq zu sterben — die Bestandsaufnahme ist
+          # Anschauung, kein Torwächter (gelernt aus Lauf 32268461258).
+          cli() {
             local cmd=$1; shift
-            local params; params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
-            api -X POST -H 'Content-Type: application/json' \
-              -d "{\"cmd\":\"$cmd\",\"params\":$params}" "$PLESK/api/v2/cli/commands"
+            local params antwort
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            antwort=$(api -X POST -H 'Content-Type: application/json' \
+              -d "{\"cmd\":\"$cmd\",\"params\":$params}" "$PLESK/api/v2/cli/commands" || true)
+            if echo "$antwort" | jq -e . >/dev/null 2>&1; then
+              echo "$antwort" | jq -r '.stdout // .stderr // empty'
+            else
+              echo "(Gateway ohne JSON-Antwort) ${antwort:0:300}"
+            fi
           }
           echo "== Domains =="
           api "$PLESK/api/v2/domains" | jq -r '.[] | "\(.id)\t\(.name)\t\(.hosting_type // "?")"'
           echo
           echo "== Site-Info $DOMAIN =="
-          cli site --info "$DOMAIN" | jq -r '.stdout // .stderr' | sed -n '1,25p'
+          cli site --info "$DOMAIN" | sed -n '1,25p'
           echo
           echo "== Zertifikate der Domain =="
-          cli certificate --list "-domain" "$DOMAIN" | jq -r '.stdout // .stderr' | sed -n '1,10p'
+          cli certificate --list "-domain" "$DOMAIN" | sed -n '1,10p'
           echo
           echo "== Mailkonten (für den Formularversand) =="
-          cli mail --list | jq -r '.stdout // .stderr' | sed -n '1,15p'
+          cli mail --list | sed -n '1,15p'
           echo
           echo "== Vorhandene FTP-Benutzer =="
           api "$PLESK/api/v2/ftpusers" | jq -r '.[] | "\(.name)\thome=\(.home // "?")"'
