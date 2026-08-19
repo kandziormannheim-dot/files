@@ -1,12 +1,13 @@
 # Claude Code Skills
 
-Insgesamt **340 Skills** aus drei Quellen:
+Insgesamt **355 Skills** aus vier Quellen:
 
 | # | Quelle | Skills | Always-on | Weg |
 | --- | --- | ---: | ---: | --- |
 | [1](#1-marketplace-alirezarezvaniclaude-skills) | `alirezarezvani/claude-skills` | 314 | ~60.300 | Marketplace |
 | [2](#2-vendored-web-design) | `xiaopu-ai/web-design` | 1 | — | ins Repo kopiert |
 | [3](#3-marketplace-mattpocockskills) | `mattpocock/skills` | 25 | ~1.600 | Marketplace |
+| [4](#4-vendored-designer-skills) | designer-skills + claudekit (gemischt) | 15 | — | ins Repo kopiert |
 
 Alles greift automatisch in jeder Claude-Code-Session auf diesem Repo; eine manuelle
 Installation pro Rechner ist nicht nötig.
@@ -202,18 +203,73 @@ nachgereicht.
 
 ---
 
+# 4. Vendored: designer-skills
+
+15 Skills unter [`skills/`](skills/), im Zuge von PR #3 zusammen mit der Astro-Site
+hinzugekommen. Anders als die Marketplace-Quellen liegen sie als Dateien im Repo und
+bekommen keine Updates über `/plugin update`.
+
+## Herkunft ist gemischt
+
+Der PR beschreibt sie als „eight designer-skills" — tatsächlich sind es 15 aus
+mindestens zwei Projekten. Abgeglichen mit dem Upstream-Repo:
+
+| Skills | Herkunft | Beleg |
+| --- | --- | --- |
+| `brief-to-tasks`, `design-brief`, `design-flow`, `design-review`, `design-tokens`, `frontend-design`, `grill-me`, `information-architecture` | [julianoczkowski/designer-skills](https://github.com/julianoczkowski/designer-skills) | Namen decken sich exakt mit den 8 Skills des Upstream-Repos |
+| `banner-design`, `brand`, `design`, `design-system`, `slides`, `ui-styling` | claudekit | `metadata.author: claudekit` im Frontmatter |
+| `ui-ux-pro-max` | unbekannt | keine Autor- oder Lizenzangabe im Frontmatter |
+
+## Fehlende Lizenzangaben
+
+Sechs der claudekit-Skills tragen `license: MIT` im Frontmatter, aber **keiner der 15
+hat eine LICENSE-Datei** — im Gegensatz zu `web-design` (Quelle 2), wo Lizenz und
+Quell-Commit festgehalten sind. Für `ui-ux-pro-max` fehlt jede Lizenzangabe.
+
+Wer die Skills weitergibt oder das Repo öffentlich macht, sollte das nachziehen:
+Upstream-Commit und Lizenz je Herkunft festhalten, so wie es bei Quelle 2 gemacht ist.
+
+---
+
 # Namenskollisionen
 
-Zwei Skill-Namen kommen in mehr als einem Plugin vor:
+Geprüft über alle 339 Plugin-Skills und alle 16 Projekt-Skills hinweg. Es gibt vier
+Dopplungen, in drei verschiedenen Konstellationen.
+
+## Projekt-Skill gegen Plugin-Skill
+
+| Name | Projekt (`skills/`) | Plugin |
+| --- | --- | --- |
+| `design-system` | Quelle 4, claudekit-Teil | `markdown-html-skills@claude-code-skills` |
+| `grill-me` | Quelle 4, designer-skills-Teil | `mattpocock-skills@mattpocock` |
+
+Diese beiden sind die unangenehmeren: Projekt-Skills liegen als Dateien im Repo,
+Plugin-Skills kommen aus dem Marketplace-Cache. Welcher gewinnt, hängt an der
+Auflösungsreihenfolge von Claude Code und nicht an einer Einstellung in diesem Repo.
+
+Inhaltlich sind es **verschiedene Skills mit gleichem Namen**, nicht zwei Versionen
+desselben:
+
+- `design-system` — Quelle 4 baut Design-Tokens und Komponenten-Specs;
+  `markdown-html-skills` meint den Onboarding-Wizard für die Markdown-zu-HTML-Konverter.
+- `grill-me` — Quelle 4 interviewt dich zu einem Design oder Plan;
+  `mattpocock-skills` grillt einen technischen Plan gegen den Engineering-Kanon.
+
+Wenn du gezielt eine der beiden Varianten brauchst, ist der Name allein nicht mehr
+eindeutig. Zwei Auswege: das ungewollte Plugin in [`settings.json`](settings.json) auf
+`false` setzen, oder den Projekt-Skill unter `skills/` umbenennen (Ordnername **und**
+`name:` im Frontmatter) — Letzteres hält beide verfügbar.
+
+## Plugin gegen Plugin
 
 | Name | Plugins |
 | --- | --- |
 | `handoff` | `handoff-productivity@claude-code-skills`, `mattpocock-skills@mattpocock` |
 | `research` | `research-orchestrator@claude-code-skills`, `mattpocock-skills@mattpocock` |
 
-Zusätzlich bringt `mattpocock-skills` ein `code-review` mit, das namensgleich zum
-eingebauten `/code-review` von Claude Code ist.
+Hier reicht es, das ungewollte Plugin in `settings.json` auf `false` zu setzen.
 
-Bei gleichem Namen ist nicht garantiert, welcher Skill anspringt. Wenn es stört, das
-jeweils ungewollte Plugin in `settings.json` auf `false` setzen — geprüft wurde das über
-alle installierten Plugins hinweg, weitere Kollisionen gibt es nicht.
+## Gegen einen eingebauten Skill
+
+`mattpocock-skills` bringt ein `code-review` mit, das namensgleich zum eingebauten
+`/code-review` von Claude Code ist.
