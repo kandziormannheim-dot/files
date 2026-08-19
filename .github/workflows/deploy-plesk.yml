@@ -164,13 +164,23 @@ jobs:
           # und Lauf 7 scheiterte genau daran (leises stderr, s.u.).
           SSH_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
           echo "::add-mask::$SSH_PASS"
-          ANTWORT=$(api -X POST -H 'Content-Type: application/json' \
-            -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update-web-hosting",$d,"-passwd",$p]}')" \
-            "$PLESK/api/v2/cli/site/call")
-          # code UND stderr zeigen — ".stdout // .stderr" verschluckt bei
-          # leerem stdout die eigentliche Fehlermeldung (Lauf 7).
-          echo "$ANTWORT" | jq -c '{code, stdout: (.stdout // "")[:200], stderr: (.stderr // "")[:300]}'
-          echo "$ANTWORT" | jq -e '.code == 0' >/dev/null \
+          # Der richtige Befehl unterscheidet sich je Plesk-Fassung —
+          # Lauf 8: „Unknown command: --update-web-hosting". Deshalb eine
+          # Versuchskette; code UND stderr werden gezeigt (".stdout //
+          # .stderr" verschluckte in Lauf 7 die Fehlermeldung).
+          setzen() {
+            local util=$1
+            api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update",$d,"-passwd",$p]}')" \
+              "$PLESK/api/v2/cli/$util/call"
+          }
+          OK=""
+          for util in site subscription; do
+            ANTWORT=$(setzen "$util")
+            echo "[$util] $(echo "$ANTWORT" | jq -c '{code, stdout: (.stdout // "")[:200], stderr: (.stderr // "")[:300]}')"
+            if echo "$ANTWORT" | jq -e '.code == 0' >/dev/null; then OK=ja; break; fi
+          done
+          [ "$OK" = ja ] \
             || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
           echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
           echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
