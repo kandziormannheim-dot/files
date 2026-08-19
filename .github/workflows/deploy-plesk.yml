@@ -141,78 +141,59 @@ jobs:
           test -f dist/api/kontakt.php || { echo "::error::dist/api/kontakt.php fehlt"; exit 1; }
           du -sh dist
 
-      - name: FTP-Benutzer für diesen Lauf anlegen
+      - name: Zugang für diesen Lauf vorbereiten (SSH statt FTP)
         if: inputs.modus != 'erkunden'
-        id: ftp
+        id: ssh
         env:
           PW: ${{ inputs.plesk_passwort }}
           PIN: ${{ steps.pin.outputs.pin }}
         run: |
           set -euo pipefail
-          FTP_USER="deploy-ci-$RANDOM"
-          FTP_PASS=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)A9x
-          echo "::add-mask::$FTP_PASS"
-          BODY=$(jq -n --arg n "$FTP_USER" --arg p "$FTP_PASS" --arg d "$DOMAIN" \
-            '{name:$n, password:$p, home:"/", parent_domain:{name:$d}}')
-          ANTWORT=$(curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" -X POST \
-            -H 'Content-Type: application/json' -d "$BODY" "$PLESK/api/v2/ftpusers")
-          echo "$ANTWORT" | jq .
-          echo "$ANTWORT" | jq -e '.name? // empty' >/dev/null \
-            || { echo "::error::FTP-Benutzer konnte nicht angelegt werden."; exit 1; }
-          echo "user=$FTP_USER" >> "$GITHUB_OUTPUT"
-          echo "pass=$FTP_PASS" >> "$GITHUB_OUTPUT"
+          # FTP scheiterte an gefilterten Passiv-Datenports (Lauf 6); Port 22
+          # ist offen und der Systembenutzer der Domain hat /bin/bash. Also:
+          # Passwort des Systembenutzers je Lauf neu setzen (CLI-Gateway) und
+          # per rsync über SSH übertragen. Das alte Passwort ist danach
+          # ungültig — wer es braucht, setzt in Plesk jederzeit ein neues.
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          INFO=$(api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--info","'"$DOMAIN"'"]}' "$PLESK/api/v2/cli/site/call")
+          SYSUSER=$(echo "$INFO" | jq -r '.stdout' | sed -n 's/^FTP Login:[[:space:]]*//p' | head -1)
+          [ -n "$SYSUSER" ] || { echo "::error::Systembenutzer nicht ermittelbar."; exit 1; }
+          echo "Systembenutzer: $SYSUSER"
+          SSH_PASS=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)A9x
+          echo "::add-mask::$SSH_PASS"
+          ANTWORT=$(api -X POST -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update-web-hosting",$d,"-passwd",$p]}')" \
+            "$PLESK/api/v2/cli/site/call")
+          echo "$ANTWORT" | jq -r '.stdout // .stderr // .' | head -3
+          echo "$ANTWORT" | jq -e '.code == 0' >/dev/null \
+            || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
+          echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
+          echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
 
-      - name: Webroot ansehen, dann übertragen
+      - name: Webroot ansehen, dann übertragen (rsync über SSH)
         if: inputs.modus != 'erkunden'
         env:
-          FTP_USER: ${{ steps.ftp.outputs.user }}
-          FTP_PASS: ${{ steps.ftp.outputs.pass }}
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
         run: |
           set -euo pipefail
-          sudo apt-get install -y -q lftp >/dev/null
+          sudo apt-get install -y -q sshpass >/dev/null
           HOST=${PLESK#https://}; HOST=${HOST%:8443}
-          # Explizites FTPS; das FTP-Zertifikat ist dasselbe selbstsignierte
-          # wie am Panel, daher keine Kettenprüfung möglich — die Verbindung
-          # bleibt trotzdem verschlüsselt.
-          #
-          # Harte Zeitgrenzen: lftp wiederholt sonst ENDLOS und der erste
-          # Deploy-Versuch hing 20 Minuten stumm bis ins Job-Timeout
-          # (Lauf 32269613101). Lieber schnell scheitern und die Ursache im
-          # Protokoll sehen. prefer-epsv aus: manche Firewalls kennen nur
-          # klassisches PASV.
-          L="set net:timeout 20; set net:max-retries 2; set net:persist-retries 1; set net:reconnect-interval-base 5; set ftp:prefer-epsv false; set ftp:passive-mode true; set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate false; open -u $FTP_USER,$FTP_PASS $HOST;"
-          # Erst die Ports befragen: Lauf 5 scheiterte VÖLLIG stumm — das
-          # unterscheidet „Port zu" von „TLS/Anmeldung kaputt".
-          echo "== Erreichbarkeit der Übertragungswege =="
-          for p in 21 990 22; do
-            if timeout 6 bash -c "</dev/tcp/$HOST/$p" 2>/dev/null; then
-              echo "Port $p: offen"
-            else
-              echo "Port $p: zu oder gefiltert"
-            fi
-          done
-          echo
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
           echo "== Was liegt im Webroot? (Blick vor dem Löschen) =="
-          timeout 90 lftp -d -c "$L cls -l httpdocs/" 2>&1 | tail -40 \
-            || { echo "::error::Schon das Auflisten scheitert — FTP-Zugang oder Datenkanal (Firewall/Passiv-Ports) prüfen."; exit 1; }
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" 'ls -la httpdocs/ | head -40' \
+            || { echo "::error::SSH-Anmeldung oder Auflisten scheitert."; exit 1; }
           echo
-          FLAGS="--delete --parallel=4 --verbose -x ^\.well-known/"
-          if [ "$MODUS" = "trockenlauf" ]; then FLAGS="$FLAGS --dry-run"; fi
+          FLAGS="-az --delete --exclude=.well-known"
+          if [ "$MODUS" = "trockenlauf" ]; then FLAGS="$FLAGS --dry-run -v"; fi
           echo "== Übertragung ($MODUS) =="
-          timeout 480 lftp -c "$L mirror -R $FLAGS site/dist/ httpdocs/" | tail -60
+          timeout 480 sshpass -p "$SSH_PASS" rsync $FLAGS \
+            -e "ssh $SSHOPTS" \
+            --itemize-changes site/dist/ "$SSH_USER@$HOST:httpdocs/" | tail -60
           echo
           echo "== Stand danach =="
-          timeout 90 lftp -c "$L cls -l httpdocs/" | head -30 || true
-
-      - name: FTP-Benutzer wieder entfernen
-        if: always() && steps.ftp.outputs.user != ''
-        env:
-          PW: ${{ inputs.plesk_passwort }}
-          PIN: ${{ steps.pin.outputs.pin }}
-          FTP_USER: ${{ steps.ftp.outputs.user }}
-        run: |
-          curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" -X DELETE \
-            "$PLESK/api/v2/ftpusers/$FTP_USER" | jq . || true
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" 'ls -la httpdocs/ | head -30' || true
 
       - name: Ergebnis prüfen
         if: inputs.modus == 'deploy'
