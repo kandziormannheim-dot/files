@@ -222,3 +222,19 @@ Ersetzt die frühere Vorgabe „M&A & AI trennen" aus dem Grill Me.
   Raster wie der Satz). expertise erlaubt „KI" jetzt als Kartentitel,
   hält „Industrie 5.0" weiter aus den Karten heraus und prüft die neuen
   Titel in beiden Sprachen. Alle zwölf Suiten grün.
+
+## Sphären-Trennung Wirtschaft/Politik (2026-08-18, Auftraggeber-Entscheid)
+
+„Noch mehr Trennung zwischen Logistik und Politik":
+
+- [x] **T-1 — Zweitakzent-Tokens:** --color-accent-second(-strong/-quiet),
+  Violett aus der Röhren-Palette; dunkel #8b7ce8 Text (5,84:1) /
+  #6958d5 Kante (3,76:1 ≥ 3:1 Grafik), hell violet-700 (7,10:1).
+  Farblogik: Pink = unternehmerische Sphäre, Violett = politische.
+- [x] **T-2 — Expertise in zwei Gruppen:** Mono-Folio-Labels „Wirtschaft"
+  (01–03) und „Politik" (04); Politik-Karte in eigener Reihe mit
+  violetter Kante, Icon-Fläche und Hover; KI-Karte spannt ab 1100px
+  beide Spalten (keine leere Rasterzelle). Nummerierung läuft durch,
+  Positionierung („übersetze zwischen beiden Welten") bleibt.
+- [x] **T-3 — Suite:** expertise prüft Gruppenlabels, eigene Reihe und
+  die Violett-Werte der Politik-Karte. Alle zwölf Suiten grün.

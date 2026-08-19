@@ -161,6 +161,40 @@ for (const [w, erwartet] of [
   // Die Einleitung traegt die Klammer
   const lead = await p.textContent(".expertise__lead");
   ok(lead.length > 60, `Einleitung vorhanden (${lead.length} Zeichen)`);
+
+  // Trennungs-Entscheid (2026-08-18): Wirtschaft und Politik stehen als
+  // beschriftete Gruppen getrennt; die Politik-Karte traegt den violetten
+  // Zweitakzent statt der Roehren-Verlaufskante.
+  const gruppen = await p.$$eval(".expertise__group", (els) =>
+    els.map((e) => e.textContent.trim()),
+  );
+  ok(
+    gruppen.length === 2 && /Politik|Politics/.test(gruppen[1]),
+    `zwei Gruppenlabels -> ${JSON.stringify(gruppen)}`,
+  );
+  const politik = await p.evaluate(() => {
+    const karte = document.querySelector(".pillar--politics");
+    return {
+      inEigenemRaster: Boolean(
+        karte && karte.closest(".expertise__grid--politics"),
+      ),
+      kante: karte
+        ? getComputedStyle(karte, "::before").backgroundColor
+        : null,
+      icon: karte
+        ? getComputedStyle(karte.querySelector(".pillar__icon")).color
+        : null,
+    };
+  });
+  ok(politik.inEigenemRaster, "Politik-Karte steht in eigener Reihe");
+  ok(
+    politik.kante === "rgb(105, 88, 213)",
+    `Politik-Kante ist Violett (Zweitakzent) -> ${politik.kante}`,
+  );
+  ok(
+    politik.icon === "rgb(139, 124, 232)",
+    `Politik-Icon traegt die Text-Stufe des Zweitakzents -> ${politik.icon}`,
+  );
   await p.close();
 }
 

@@ -79,7 +79,9 @@
         "title": "Wirtschaft & Politik",
         "body": "Regulierung, Zölle und Standortpolitik sind für Unternehmen keine Randnotiz. Ich bewege mich in beiden Welten und übersetze zwischen unternehmerischer und politischer Logik."
       }
-    ]
+    ],
+    "groupBusiness": "Wirtschaft",
+    "groupPolitics": "Politik"
   },
   "outlook": {
     "eyebrow": "Industrie 5.0",

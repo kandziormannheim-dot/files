@@ -79,7 +79,9 @@
         "title": "Business & Politics",
         "body": "Regulation, tariffs and location policy are no footnote for a company. I move in both worlds and translate between commercial and political logic."
       }
-    ]
+    ],
+    "groupBusiness": "Business",
+    "groupPolitics": "Politics"
   },
   "outlook": {
     "eyebrow": "Industry 5.0",

@@ -155,6 +155,14 @@
   --color-accent-fill-active: var(--neon-pink-deep);
   --color-accent-quiet:       rgb(249 103 251 / 0.14);
 
+  /* Zweitakzent — die politische Sphäre. Seit dem Trennungs-Entscheid
+     (2026-08-18) trägt Violett die Politik-Gruppe der Expertise: Pink =
+     unternehmerische Welt, Violett = öffentliche. text-Stufe 5.84:1,
+     strong nur für Kanten/Flächen (3.76:1 ≥ 3:1 für Grafik). */
+  --color-accent-second:        var(--neon-violet-text);
+  --color-accent-second-strong: var(--neon-violet);
+  --color-accent-second-quiet:  rgb(105 88 213 / 0.16);
+
   /* Status */
   --color-status-success: var(--green-400);
   --color-status-warning: var(--orange-400);
@@ -218,6 +226,10 @@
   --color-accent-fill-hover:  var(--fuchsia-800);
   --color-accent-fill-active: var(--fuchsia-800);
   --color-accent-quiet:       rgb(192 38 211 / 0.10);
+
+  --color-accent-second:        var(--violet-700);   /* 7.10:1 */
+  --color-accent-second-strong: var(--violet-700);
+  --color-accent-second-quiet:  rgb(109 40 217 / 0.09);
 
   --color-status-success: var(--green-700);
   --color-status-warning: var(--orange-700);

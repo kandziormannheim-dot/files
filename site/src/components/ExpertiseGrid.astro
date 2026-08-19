@@ -20,6 +20,13 @@ export interface Props {
 
 const { lang } = Astro.props;
 const c = content(lang).expertise;
+
+/* Trennungs-Entscheid (2026-08-18): Die unternehmerische und die
+   politische Sphäre stehen als beschriftete Gruppen getrennt — die
+   Politik-Säule bekommt eine eigene Reihe und den violetten Zweitakzent.
+   Die Klammer bleibt die Einleitung; die Nummerierung läuft durch. */
+const wirtschaft = c.pillars.filter((p) => p.id !== "politics");
+const politik = c.pillars.filter((p) => p.id === "politics");
 ---
 
 <section class="expertise section" id="expertise" aria-labelledby="expertise-heading">
@@ -30,9 +37,10 @@ const c = content(lang).expertise;
       <p class="expertise__lead">{c.lead}</p>
     </div>
 
+    <p class="expertise__group">{c.groupBusiness}</p>
     <ul class="expertise__grid" role="list">
       {
-        c.pillars.map((pillar, i) => (
+        wirtschaft.map((pillar, i) => (
           <li class="pillar">
             <div class="pillar__head">
               <span class="pillar__icon">
@@ -42,6 +50,28 @@ const c = content(lang).expertise;
                   Katalog-Anmutung, nicht Aufzählung. */}
               <span class="pillar__num" aria-hidden="true">
                 {String(i + 1).padStart(2, "0")}
+              </span>
+            </div>
+            <div class="pillar__text">
+              <h3 class="pillar__title">{pillar.title}</h3>
+              <p class="pillar__body">{pillar.body}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="expertise__group expertise__group--politics">{c.groupPolitics}</p>
+    <ul class="expertise__grid expertise__grid--politics" role="list">
+      {
+        politik.map((pillar, i) => (
+          <li class="pillar pillar--politics">
+            <div class="pillar__head">
+              <span class="pillar__icon">
+                <PillarIcon name={pillar.id as "risk" | "ecommerce" | "ai" | "politics"} />
+              </span>
+              <span class="pillar__num" aria-hidden="true">
+                {String(wirtschaft.length + i + 1).padStart(2, "0")}
               </span>
             </div>
             <div class="pillar__text">
@@ -70,10 +100,40 @@ const c = content(lang).expertise;
     color: var(--color-text-secondary);
   }
 
+  /* Gruppenlabel: Mono-Folio mit vorlaufender Linie — Wirtschaft trägt
+     die Marke (Pink), Politik den violetten Zweitakzent. Die sichtbare
+     Trennung der beiden Sphären ist Absicht, nicht Dekoration. */
+  .expertise__group {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-7);
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wider);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  .expertise__group::before {
+    content: "";
+    width: var(--space-6);
+    height: var(--rule-strong);
+    background: var(--color-accent);
+  }
+
+  .expertise__group--politics {
+    margin-top: var(--space-8);
+  }
+
+  .expertise__group--politics::before {
+    background: var(--color-accent-second-strong);
+  }
+
   .expertise__grid {
     display: grid;
     gap: var(--space-4);
-    margin: var(--space-7) 0 0;
+    margin: var(--space-4) 0 0;
     padding: 0;
   }
 
@@ -222,6 +282,53 @@ const c = content(lang).expertise;
 
     .pillar__icon {
       margin-bottom: var(--space-4);
+    }
+  }
+
+  /* --- Politik: der violette Zweitakzent trennt die Sphäre sichtbar ------
+     Volle Kante in Violett statt des Röhren-Verlaufs, Icon-Fläche und
+     Hover ziehen nach. Inhaltlich bleibt die Karte die Brücke — optisch
+     steht sie in ihrer eigenen Welt. */
+  .pillar--politics::before {
+    background: var(--color-accent-second-strong);
+    opacity: 0.6;
+  }
+
+  .pillar--politics .pillar__icon {
+    background: var(--color-accent-second-quiet);
+    color: var(--color-accent-second);
+  }
+
+  @media (hover: hover) {
+    .pillar--politics:hover {
+      border-color: var(--color-accent-second);
+      box-shadow: var(--glow-accent-quiet);
+    }
+
+    .pillar--politics:hover .pillar__icon {
+      background-color: var(--color-accent-second-quiet);
+    }
+
+    .pillar--politics:hover .pillar__num {
+      color: var(--color-accent-second);
+    }
+  }
+
+  /* Die Politik-Karte füllt ihre Reihe allein — liegend, damit die volle
+     Breite nicht als halbleere stehende Karte dasteht. Die dritte
+     Wirtschafts-Karte spannt aus demselben Grund über beide Spalten:
+     drei Karten in zwei Spalten ließen sonst eine leere Zelle. */
+  @media (min-width: 1100px) {
+    .expertise__grid > li:nth-child(3),
+    .expertise__grid--politics .pillar {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      gap: var(--space-5);
+    }
+
+    .expertise__grid > li:nth-child(3) .pillar__icon,
+    .expertise__grid--politics .pillar__icon {
+      margin-bottom: 0;
     }
   }
 </style>
