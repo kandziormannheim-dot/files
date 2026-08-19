@@ -2,6 +2,10 @@
 /**
  * Imprint — English translation. The German version (/impressum) is the
  * legally authoritative one; the layout renders that notice automatically.
+ *
+ * Mirrors the shortened German version of 2026-08-19 section for section.
+ * The "Impressum" heading comes from the layout's `title`, so the content
+ * starts with the address.
  */
 import LegalLayout from "../../layouts/LegalLayout.astro";
 import { translatePath } from "../../lib/i18n";
@@ -13,11 +17,10 @@ import { translatePath } from "../../lib/i18n";
   lang="en"
   altPath={translatePath("/en/imprint", "de")}
 >
-  <h2>Information pursuant to § 5 DDG (German Digital Services Act)</h2>
   <address>
     Martin Kandzior<br />
-    Mainzer Landstraße 10<br />
-    60325 Frankfurt am Main<br />
+    Theodor-Heuss-Anlage 12<br />
+    68165 Mannheim<br />
     Germany
   </address>
 
@@ -27,78 +30,12 @@ import { translatePath } from "../../lib/i18n";
     Email: <a href="mailto:mail@kandzior.de">mail@kandzior.de</a>
   </p>
 
-  <h2>VAT identification number</h2>
-  <p>
-    No VAT identification number pursuant to § 27a of the German VAT Act is
-    held.
-  </p>
-
   <h2>Editorially responsible</h2>
-  <p>
-    Responsible for journalistic and editorial content pursuant to § 18 (2)
-    MStV (German State Media Treaty):
-  </p>
-  <address>
-    Martin Kandzior<br />
-    Mainzer Landstraße 10<br />
-    60325 Frankfurt am Main
-  </address>
+  <p>Martin Kandzior</p>
 
-  <h2>Liability for content</h2>
   <p>
-    As a service provider I am responsible for my own content on these pages
-    under general law pursuant to § 7 (1) DDG. Pursuant to §§ 8 to 10 DDG,
-    however, I am not obliged to monitor transmitted or stored third-party
-    information or to investigate circumstances indicating unlawful activity.
-  </p>
-  <p>
-    Obligations to remove or block the use of information under general law
-    remain unaffected. Liability in this respect is only possible from the
-    moment a concrete infringement becomes known. Upon becoming aware of such
-    infringements, I will remove the content concerned without delay.
-  </p>
-
-  <h2>Liability for links</h2>
-  <p>
-    This site contains links to external third-party websites over whose
-    content I have no influence, and for which I therefore cannot accept any
-    responsibility. The respective provider or operator is always responsible
-    for the content of linked pages. Linked pages were checked for possible
-    legal violations at the time of linking; unlawful content was not
-    apparent at that time.
-  </p>
-  <p>
-    Permanent monitoring of linked pages is not reasonable without concrete
-    indications of an infringement. Upon becoming aware of legal violations,
-    I will remove such links without delay.
-  </p>
-
-  <h2>Copyright</h2>
-  <p>
-    Content and works created by the site operator on these pages are subject
-    to German copyright law. Reproduction, editing, distribution and any kind
-    of use outside the limits of copyright require the written consent of the
-    respective author or creator. Downloads and copies of this site are
-    permitted for private, non-commercial use only.
-  </p>
-  <p>
-    Where content on this site was not created by the operator, third-party
-    copyrights are respected and such content is identified as third-party
-    content. Should you nevertheless become aware of a copyright
-    infringement, please notify me; upon becoming aware of infringements, I
-    will remove such content without delay.
-  </p>
-
-  <h2>Consumer dispute resolution</h2>
-  <p>
-    The European Commission provides a platform for online dispute resolution
-    (ODR), available at
-    <a href="https://ec.europa.eu/consumers/odr/" rel="noopener" target="_blank"
-      >https://ec.europa.eu/consumers/odr/</a
-    >.
-  </p>
-  <p>
-    I am neither obliged nor willing to participate in dispute resolution
-    proceedings before a consumer arbitration board (§ 36 VSBG).
+    Source: <a href="https://www.e-recht24.de" rel="noopener" target="_blank"
+      >e-recht24.de</a
+    >
   </p>
 </LegalLayout>
