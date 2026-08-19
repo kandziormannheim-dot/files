@@ -1,0 +1,69 @@
+--- a/worker/core/seo_check.py
++++ b/worker/core/seo_check.py
+@@ -8,8 +8,8 @@
+ This is the preventive layer against Google scaled-content / thin-content
+ penalties: it enforces the things the LLM judge can't guarantee — corpus-wide
+ title/meta uniqueness, a minimum word count, exactly one H1, a correct absolute
+-canonical, and parseable Schema.org JSON-LD. Checks the actual bytes that go
+-live, not the bare article the judge saw.
++canonical, parseable Schema.org JSON-LD, and an indexable robots directive.
++Checks the actual bytes that go live, not the bare article the judge saw.
+ """
+ 
+ from __future__ import annotations
+@@ -29,6 +29,17 @@
+ TITLE_MAX = 70           # chars; empty or absurdly long titles blocked
+ META_MIN = 40            # meta description must be a real sentence, not empty
+ 
++# --- indexability (rule 7) -------------------------------------------------
++# A page that ships with a crawler-blocking robots directive can never rank, and
++# the failure is silent: it deploys fine, Google fetches it, and drops it. The
++# judge never sees the <head>, so this is the only layer that can catch it.
++# We look at the generic 'robots' meta plus the per-crawler overrides Google and
++# Bing honour; a directive on ANY of them is enough to lose the page.
++ROBOTS_META_NAMES = frozenset({"robots", "googlebot", "googlebot-news", "bingbot"})
++# 'none' is shorthand for 'noindex, nofollow'. unavailable_after sets an expiry
++# date after which the page is dropped from the index.
++BLOCKING_ROBOTS_DIRECTIVES = ("noindex", "none", "unavailable_after")
++
+ 
+ class _Extract(HTMLParser):
+     """Pull the SEO-relevant pieces out of the final page."""
+@@ -38,6 +49,7 @@
+         self.title: str = ""
+         self.meta_desc: Optional[str] = None
+         self.canonical: Optional[str] = None
++        self.robots: List[str] = []
+         self.h1_count: int = 0
+         self.ld_blocks: List[str] = []
+         self.article_text: List[str] = []
+@@ -53,6 +65,8 @@
+             self.h1_count += 1
+         elif tag == "meta" and (a.get("name") or "").lower() == "description":
+             self.meta_desc = a.get("content", "")
++        elif tag == "meta" and (a.get("name") or "").lower() in ROBOTS_META_NAMES:
++            self.robots.append(a.get("content", ""))
+         elif tag == "link" and "canonical" in (a.get("rel") or "").lower():
+             self.canonical = a.get("href", "")
+         elif tag == "script" and (a.get("type") or "").lower() == "application/ld+json":
+@@ -160,6 +174,20 @@
+             if not t:
+                 reasons.append(f"JSON-LD block #{i+1} has no @type")
+ 
++        # 7. No crawler-blocking robots directive. Fail-closed on any of them:
++        #    a deployed noindex is invisible in every downstream signal we have
++        #    (deploy succeeds, GSC just reports "Excluded by 'noindex' tag").
++        for content in p.robots:
++            directives = {d.strip().lower() for d in content.split(",")}
++            hit = sorted(
++                d for d in directives
++                if d.startswith(BLOCKING_ROBOTS_DIRECTIVES)
++            )
++            if hit:
++                reasons.append(
++                    f"blocking robots directive in <meta>: {', '.join(hit)}"
++                )
++
+         return (len(reasons) == 0, reasons)
+     except Exception as exc:  # noqa: BLE001 — fail CLOSED
+         log.warning("seo_check raised -> failing closed",
