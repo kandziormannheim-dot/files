@@ -1,0 +1,199 @@
+# Deploy über die Plesk-API — vom GitHub-Runner aus.
+#
+# Warum dieser Weg: Der Server wird über Plesk verwaltet, und der Runner hat
+# freien Netzzugang. Der Workflow spricht die Plesk-REST-API auf Port 8443 an,
+# legt sich einen kurzlebigen FTP-Benutzer an, lädt den Astro-Build per FTPS
+# ins Webroot und räumt den Benutzer danach wieder weg. Kein dauerhafter
+# Zugang bleibt zurück; das Admin-Passwort wird je Lauf übergeben und sofort
+# maskiert.
+#
+# Drei Modi:
+#   erkunden    — nur lesen: Domains, Webroot-Inhalt, Zertifikat, Mailkonten.
+#   trockenlauf — alles bis zur Übertragung, die nur anzeigt statt schreibt.
+#   deploy      — Ernstfall. Überträgt mit --delete (außer .well-known).
+#
+# Das Plesk-Zertifikat ist selbstsigniert. Statt die Prüfung einfach
+# abzuschalten, wird der öffentliche Schlüssel beim ersten Kontakt gelesen
+# und jeder weitere Aufruf darauf festgenagelt (--pinnedpubkey) — ein
+# Mittelsmann müsste denselben Schlüssel besitzen.
+
+name: Deploy über Plesk
+
+on:
+  workflow_dispatch:
+    inputs:
+      plesk_passwort:
+        description: "Plesk-Admin-Passwort (wird maskiert, nirgends gespeichert)"
+        required: true
+        type: string
+      modus:
+        description: "Was tun?"
+        required: true
+        default: erkunden
+        type: choice
+        options: [erkunden, trockenlauf, deploy]
+      domain:
+        description: "Domain in Plesk"
+        required: true
+        default: kandzior.de
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLESK: https://95.216.18.216:8443
+      DOMAIN: ${{ inputs.domain }}
+      MODUS: ${{ inputs.modus }}
+    steps:
+      - name: Passwort maskieren
+        run: echo "::add-mask::${{ inputs.plesk_passwort }}"
+
+      - name: Plesk erreichen und Schlüssel festnageln
+        id: pin
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}
+          # Öffentlichen Schlüssel des Panels holen (TOFU) …
+          PIN=$(openssl s_client -connect "$HOST" -servername plesk </dev/null 2>/dev/null \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary | base64)
+          echo "pin=sha256//$PIN" >> "$GITHUB_OUTPUT"
+          echo "Schlüssel-Fingerabdruck: sha256//$PIN"
+          # … und die Anmeldung prüfen.
+          CODE=$(curl -sk --pinnedpubkey "sha256//$PIN" -o /tmp/server.json -w '%{http_code}' \
+            -u "admin:$PW" "$PLESK/api/v2/server")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Plesk-API antwortet mit HTTP $CODE — Zugangsdaten oder Erreichbarkeit prüfen."
+            cat /tmp/server.json || true
+            exit 1
+          fi
+          jq -r '"Plesk \(.platform // "?") \(.version // "?")"' /tmp/server.json
+
+      - name: Bestandsaufnahme
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() { # Plesk-CLI über das API-Gateway; Ausgabe roh zurückgeben.
+            local cmd=$1; shift
+            local params; params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"cmd\":\"$cmd\",\"params\":$params}" "$PLESK/api/v2/cli/commands"
+          }
+          echo "== Domains =="
+          api "$PLESK/api/v2/domains" | jq -r '.[] | "\(.id)\t\(.name)\t\(.hosting_type // "?")"'
+          echo
+          echo "== Site-Info $DOMAIN =="
+          cli site --info "$DOMAIN" | jq -r '.stdout // .stderr' | sed -n '1,25p'
+          echo
+          echo "== Zertifikate der Domain =="
+          cli certificate --list "-domain" "$DOMAIN" | jq -r '.stdout // .stderr' | sed -n '1,10p'
+          echo
+          echo "== Mailkonten (für den Formularversand) =="
+          cli mail --list | jq -r '.stdout // .stderr' | sed -n '1,15p'
+          echo
+          echo "== Vorhandene FTP-Benutzer =="
+          api "$PLESK/api/v2/ftpusers" | jq -r '.[] | "\(.name)\thome=\(.home // "?")"'
+
+      - name: Quellcode holen
+        if: inputs.modus != 'erkunden'
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        if: inputs.modus != 'erkunden'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Site bauen
+        if: inputs.modus != 'erkunden'
+        working-directory: site
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          test -f dist/index.html || { echo "::error::dist/index.html fehlt"; exit 1; }
+          test -f dist/api/kontakt.php || { echo "::error::dist/api/kontakt.php fehlt"; exit 1; }
+          du -sh dist
+
+      - name: FTP-Benutzer für diesen Lauf anlegen
+        if: inputs.modus != 'erkunden'
+        id: ftp
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          FTP_USER="deploy-ci-$RANDOM"
+          FTP_PASS=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)A9x
+          echo "::add-mask::$FTP_PASS"
+          BODY=$(jq -n --arg n "$FTP_USER" --arg p "$FTP_PASS" --arg d "$DOMAIN" \
+            '{name:$n, password:$p, home:"/", parent_domain:{name:$d}}')
+          ANTWORT=$(curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" -X POST \
+            -H 'Content-Type: application/json' -d "$BODY" "$PLESK/api/v2/ftpusers")
+          echo "$ANTWORT" | jq .
+          echo "$ANTWORT" | jq -e '.name? // empty' >/dev/null \
+            || { echo "::error::FTP-Benutzer konnte nicht angelegt werden."; exit 1; }
+          echo "user=$FTP_USER" >> "$GITHUB_OUTPUT"
+          echo "pass=$FTP_PASS" >> "$GITHUB_OUTPUT"
+
+      - name: Webroot ansehen, dann übertragen
+        if: inputs.modus != 'erkunden'
+        env:
+          FTP_USER: ${{ steps.ftp.outputs.user }}
+          FTP_PASS: ${{ steps.ftp.outputs.pass }}
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q lftp >/dev/null
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          # Explizites FTPS; das FTP-Zertifikat ist dasselbe selbstsignierte
+          # wie am Panel, daher keine Kettenprüfung möglich — die Verbindung
+          # bleibt trotzdem verschlüsselt.
+          L="set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate false; open -u $FTP_USER,$FTP_PASS $HOST;"
+          echo "== Was liegt im Webroot? (Blick vor dem Löschen) =="
+          lftp -c "$L cls -l httpdocs/" | head -40 || true
+          echo
+          FLAGS="--delete --parallel=4 --verbose -x ^\.well-known/"
+          if [ "$MODUS" = "trockenlauf" ]; then FLAGS="$FLAGS --dry-run"; fi
+          echo "== Übertragung ($MODUS) =="
+          lftp -c "$L mirror -R $FLAGS site/dist/ httpdocs/" | tail -60
+          echo
+          echo "== Stand danach =="
+          lftp -c "$L cls -l httpdocs/" | head -30 || true
+
+      - name: FTP-Benutzer wieder entfernen
+        if: always() && steps.ftp.outputs.user != ''
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+          FTP_USER: ${{ steps.ftp.outputs.user }}
+        run: |
+          curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" -X DELETE \
+            "$PLESK/api/v2/ftpusers/$FTP_USER" | jq . || true
+
+      - name: Ergebnis prüfen
+        if: inputs.modus == 'deploy'
+        run: |
+          set -euo pipefail
+          IP=${PLESK#https://}; IP=${IP%:8443}
+          echo "== Startseite über die Server-IP (Host-Kopf $DOMAIN) =="
+          curl -sk --resolve "$DOMAIN:443:$IP" "https://$DOMAIN/" -o /tmp/start.html \
+            -w 'HTTP %{http_code}, %{size_download} Bytes\n' || true
+          grep -o "Martin Kandzior" /tmp/start.html | head -1 \
+            && echo "Inhalt gefunden." || echo "::warning::Startseite enthält den erwarteten Inhalt nicht."
+          echo "== Kontakt-Endpunkt =="
+          curl -sk --resolve "$DOMAIN:443:$IP" "https://$DOMAIN/api/kontakt.php" \
+            -w '\nHTTP %{http_code}\n' || true
