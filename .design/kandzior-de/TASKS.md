@@ -208,3 +208,17 @@ und einen iframe liefern. Die Seite ist dafür fertig verdrahtet:
   socialtabs prüft Quelle und Anbieternennung.
 - [ ] **W-3 — VOR Livegang:** Dienst + AV-Vertrag in der Datenschutz-
   erklärung ergänzen (liegt ohnehin bei der Anwaltsprüfung).
+
+## Säulentausch M&A → KI (2026-08-18, Auftraggeber-Entscheid)
+
+Ersetzt die frühere Vorgabe „M&A & AI trennen" aus dem Grill Me.
+
+- [x] **P-1 — Inhalte DE/EN:** Säule „M&A" → „KI, Robotik &
+  Automatisierung" / „AI, Robotics & Automation" (id ai); Biografie-
+  Aufzählung spiegelt weiter die vier Felder (Unternehmenskäufe →
+  Automatisierung). Abgrenzung bleibt: Industrie 5.0 ist HALTUNG im
+  eigenen Block, die Säule ist LEISTUNG.
+- [x] **P-2 — Icon:** Prozessor mit Anschlüssen (gleicher Strich, gleiches
+  Raster wie der Satz). expertise erlaubt „KI" jetzt als Kartentitel,
+  hält „Industrie 5.0" weiter aus den Karten heraus und prüft die neuen
+  Titel in beiden Sprachen. Alle zwölf Suiten grün.

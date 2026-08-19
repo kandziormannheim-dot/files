@@ -126,9 +126,16 @@ for (const [w, erwartet] of [
 
   const titel = await p.$$eval(".pillar__title", (els) => els.map((e) => e.textContent.trim()));
   ok(titel.length === 4, `vier Säulen -> ${titel.length}`);
+  // Seit dem Säulentausch (M&A -> KI/Robotik/Automatisierung, 2026-08-17)
+  // ist „KI" als Kartentitel legitim — nur die HALTUNG „Industrie 5.0"
+  // darf weiterhin nicht als Leistung unter den Karten stehen.
   ok(
-    !titel.some((t) => /5\.0|KI|Industrie/i.test(t)),
+    !titel.some((t) => /5\.0|Industrie/i.test(t)),
     `Industrie 5.0 steht nicht unter den Karten -> ${JSON.stringify(titel)}`,
+  );
+  ok(
+    titel.some((t) => /KI, Robotik/.test(t)),
+    `KI-Säule vorhanden -> ${JSON.stringify(titel)}`,
   );
 
   const icons = await p.$$eval(".pillar .pillar-icon", (els) =>
@@ -163,7 +170,7 @@ for (const [w, erwartet] of [
   await p.goto(B + "/en/", { waitUntil: "networkidle" });
   const titel = await p.$$eval(".pillar__title", (els) => els.map((e) => e.textContent.trim()));
   ok(
-    titel.includes("Mergers & Acquisitions") && titel.includes("E-Commerce Logistics"),
+    titel.includes("AI, Robotics & Automation") && titel.includes("E-Commerce Logistics"),
     `englische Titel -> ${JSON.stringify(titel)}`,
   );
   await p.close();
