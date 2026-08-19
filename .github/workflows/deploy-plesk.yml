@@ -85,23 +85,26 @@ jobs:
         run: |
           set -euo pipefail
           api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
-          cli() { # Plesk-CLI über das API-Gateway; Ausgabe roh zurückgeben.
+          cli() { # Plesk-CLI über das API-Gateway. Endpunkt: /cli/{befehl}/call.
             local cmd=$1; shift
             local params; params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
-            api -X POST -H 'Content-Type: application/json' \
-              -d "{\"cmd\":\"$cmd\",\"params\":$params}" "$PLESK/api/v2/cli/commands"
+            local roh
+            roh=$(api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call")
+            # stdout des Befehls, sonst stderr, sonst die Rohantwort — nie hart scheitern.
+            echo "$roh" | jq -r '.stdout // .stderr // .' 2>/dev/null || echo "$roh"
           }
           echo "== Domains =="
           api "$PLESK/api/v2/domains" | jq -r '.[] | "\(.id)\t\(.name)\t\(.hosting_type // "?")"'
           echo
           echo "== Site-Info $DOMAIN =="
-          cli site --info "$DOMAIN" | jq -r '.stdout // .stderr' | sed -n '1,25p'
+          cli site --info "$DOMAIN" | sed -n '1,30p'
           echo
           echo "== Zertifikate der Domain =="
-          cli certificate --list "-domain" "$DOMAIN" | jq -r '.stdout // .stderr' | sed -n '1,10p'
+          cli certificate --list "-domain" "$DOMAIN" | sed -n '1,10p'
           echo
           echo "== Mailkonten (für den Formularversand) =="
-          cli mail --list | jq -r '.stdout // .stderr' | sed -n '1,15p'
+          cli mail --list | sed -n '1,20p'
           echo
           echo "== Vorhandene FTP-Benutzer =="
           api "$PLESK/api/v2/ftpusers" | jq -r '.[] | "\(.name)\thome=\(.home // "?")"'
