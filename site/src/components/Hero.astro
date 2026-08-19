@@ -1,0 +1,388 @@
+---
+/**
+ * Hero — die erste Bildschirmhöhe.
+ *
+ * Hier entscheidet sich in wenigen Sekunden, ob weitergelesen wird. Deshalb
+ * gilt eine harte Regel: Auf 375 × 667 muss alles ohne Scrollen sichtbar
+ * sein — Gesicht, Name, Positionierungssatz und der Weg zur Anfrage.
+ *
+ * Aufbau: Auf Mobil steht das Portrait über dem Text, klein und beschnitten.
+ * Ab 1024px wechselt die Anordnung auf zwei Spalten, Text links, Portrait
+ * rechts, und das Portrait wird groß.
+ */
+import { content, type Lang } from "../lib/i18n";
+import Portrait from "./Portrait.astro";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang).hero;
+---
+
+<section class="hero" id="hero">
+  {
+    /* Neon-Flow-Ebene: cursorgetriebene Leuchtröhren (three.js, selbst
+       gehostet unter /vendor — kein CDN, siehe public/vendor/LIESMICH.txt).
+       Geladen wird erst bei der ersten Zeigerbewegung, und nur auf
+       Zeigergeräten ohne Bewegungsreduktion im dunklen Theme — für alle
+       anderen existiert die Ebene nicht und kostet nichts. */
+  }
+  <canvas class="hero__canvas" data-tubes aria-hidden="true"></canvas>
+
+  <div class="container container--wide hero__grid">
+    <div class="hero__portrait">
+      <Portrait variant="cutout" alt={c.portraitAlt} priority />
+    </div>
+
+    <div class="hero__text">
+      <p class="eyebrow hero__eyebrow">{c.eyebrow}</p>
+      <h1 class="hero__name">{c.name}</h1>
+      <p class="hero__positioning">{c.positioning}</p>
+      <p class="hero__lead">{c.lead}</p>
+      <div class="hero__actions">
+        <a class="button button--primary" href="#contact">{c.cta}</a>
+        {
+          /* Bewusst ein stiller Textlink statt eines zweiten Knopfes: Zwei
+             Knöpfe nebeneinander sind zwei Angebote, und dann gibt es keine
+             Hauptaktion mehr. Auf 375px brachen sie außerdem in zwei Reihen
+             um und kosteten allein 60px der knappen ersten Bildschirmhöhe. */
+        }
+        <a class="hero__link" href="#expertise">
+          {c.ctaSecondary}
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 2.5v11M3.5 9.5 8 14l4.5-4.5" />
+          </svg>
+        </a>
+      </div>
+      <p class="hero__tubes-hint" data-tubes-hint hidden>{c.tubesHint}</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    /* Kein 100svh auf Mobil: Auf iOS springt der Wert, wenn die Adresszeile
+       ein- und ausfährt, und der Bereich zuckt beim Scrollen. Stattdessen
+       ist der Inhalt so bemessen, dass er in 667px Höhe passt — nachgemessen,
+       nicht geschätzt. */
+    position: relative;
+    padding-block: var(--space-4) var(--space-5);
+    overflow: hidden;
+  }
+
+  /* Die Röhren-Ebene liegt HINTER dem Inhalt. Klicks auf leere Flächen
+     erreichen sie (Farbwechsel), Links und Knöpfe liegen darüber. Im
+     hellen Theme existiert der Effekt nicht — die Bibliothek zeichnet auf
+     schwarzen Grund. */
+  .hero__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: var(--hero-canvas-opacity);
+    touch-action: none;
+  }
+
+  :global([data-theme="light"]) .hero__canvas {
+    display: none;
+  }
+
+  .hero__grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  /* Interaktionshinweis — erscheint erst, wenn der Effekt wirklich läuft */
+  .hero__tubes-hint {
+    margin-top: var(--space-5);
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Auf Mobil steht das Bild oben, aber klein: Es soll das Gesicht zeigen,
+     nicht die Bildschirmhöhe füllen. Der Satz darunter ist wichtiger.
+     100px statt 120px seit dem Freisteller: Sein 800/1052-Verhältnis ist
+     höher als das alte Quadrat — mit 120px endete der Hero bei 678px und
+     riss die 667px-Grenze (gemessen, hero.mjs). */
+  .hero__portrait {
+    width: 100px;
+    justify-self: start;
+  }
+
+  @media (min-width: 480px) {
+    .hero__portrait {
+      width: 160px;
+    }
+  }
+
+  .hero__eyebrow {
+    margin-bottom: var(--space-3);
+  }
+
+  .hero__name {
+    /* Der Name ist auf Mobil bewusst kleiner als die Hero-Stufe: Er wird
+       ohnehin gesucht und muss nicht schreien. Der Positionierungssatz
+       trägt hier die Aufmerksamkeit. */
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-3);
+  }
+
+  /* Auf der kleinsten Bildschirmhöhe nutzt der Satz die volle Breite und
+     eine Stufe kleinere Schrift. Das spart zwei Zeilen — und zwei Zeilen
+     entscheiden hier darüber, ob der Anfrage-Knopf noch sichtbar ist. */
+  .hero__positioning {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
+    letter-spacing: var(--letter-spacing-tight);
+    text-wrap: balance;
+  }
+
+  .hero__lead {
+    margin-top: var(--space-3);
+    max-width: 46ch;
+    color: var(--color-text-secondary);
+  }
+
+  @media (min-width: 480px) {
+    .hero__positioning {
+      font-size: var(--font-size-xl);
+      max-width: 22ch;
+    }
+
+    .hero__lead {
+      margin-top: var(--space-4);
+    }
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+    margin-top: var(--space-5);
+  }
+
+  .hero__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    /* Volle Zielgröße für den Finger, ohne die Zeile höher zu machen als
+       den Knopf daneben. */
+    min-height: var(--target-min);
+    font-family: var(--font-family-body);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--easing-default);
+  }
+
+  .hero__link svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--duration-normal) var(--easing-out);
+  }
+
+  .hero__link:hover {
+    color: var(--color-text-primary);
+  }
+
+  .hero__link:hover svg {
+    transform: translateY(3px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__link:hover svg {
+      transform: none;
+    }
+  }
+
+  /* --- ab 768px: mehr Luft, Portrait wächst --- */
+  @media (min-width: 768px) {
+    .hero {
+      padding-block: var(--space-7) var(--space-9);
+    }
+
+    .hero__portrait {
+      width: 210px;
+    }
+
+    .hero__name {
+      font-size: var(--font-size-3xl);
+    }
+
+    .hero__positioning {
+      font-size: var(--font-size-2xl);
+      max-width: 24ch;
+    }
+  }
+
+  /* --- ab 1024px: zwei Spalten, Portrait rechts und groß --- */
+  @media (min-width: 1024px) {
+    .hero {
+      display: flex;
+      align-items: center;
+      min-height: calc(100svh - var(--header-height));
+      padding-block: var(--space-8);
+    }
+
+    .hero__grid {
+      width: 100%;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      align-items: center;
+      gap: var(--space-8);
+    }
+
+    /* Die Reihenfolge im Markup ist Portrait, dann Text — auf Mobil steht
+       das Gesicht oben. Auf Desktop wandert es nach rechts, ohne dass sich
+       die Reihenfolge für Tastatur und Vorlesesoftware ändert. */
+    .hero__portrait {
+      grid-column: 2;
+      grid-row: 1;
+      width: 100%;
+      max-width: 400px;
+      justify-self: center;
+    }
+
+    .hero__text {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .hero__name {
+      font-size: var(--font-size-4xl);
+      margin-bottom: var(--space-4);
+    }
+
+    .hero__positioning {
+      font-size: var(--font-size-2xl);
+      max-width: 22ch;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Neon-Flow (TubesBackground): Leuchtröhren folgen dem Cursor.
+   *
+   * Die Bibliothek wiegt 774 KB (three.js einkompiliert) — sie wird deshalb
+   * NICHT mit der Seite geladen, sondern erst bei der ersten Zeigerbewegung:
+   * Der Effekt ist cursorgetrieben, ohne Zeiger gäbe es nichts zu sehen.
+   * Berührungsgeräte, Bewegungsreduktion und das helle Theme laden nie.
+   * Scheitert der Import, fehlt Schmuck — die Seite bleibt vollständig.
+   */
+  interface TubesApp {
+    tubes: {
+      setColors(colors: string[]): void;
+      setLightsColors(colors: string[]): void;
+    };
+    dispose?: () => void;
+  }
+
+  const hero = document.querySelector<HTMLElement>("#hero");
+  const canvas = document.querySelector<HTMLCanvasElement>("[data-tubes]");
+  const hint = document.querySelector<HTMLElement>("[data-tubes-hint]");
+
+  if (hero && canvas) {
+    let app: TubesApp | null = null;
+    let laedt = false;
+
+    const darf = () =>
+      window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      document.documentElement.getAttribute("data-theme") !== "light";
+
+    const start = async () => {
+      if (app || laedt || !darf()) return;
+      laedt = true;
+      try {
+        // Zwei Bezugswege: In der Browservorschau (Artifact) liegt die
+        // Fabrik inline unter window.__TubesCursor — die dortige CSP
+        // erlaubt keine Importe aus data:-URLs. Auf der echten Seite
+        // kommt sie per dynamischem Import aus /vendor; die Indirektion
+        // über die Variable hält den Bundler davon ab, die Datei
+        // einzupacken.
+        const pfad = "/vendor/tubes1.min.js";
+        const inline = (window as unknown as { __TubesCursor?: unknown }).__TubesCursor;
+        const mod = inline
+          ? { default: inline as (c: HTMLCanvasElement, o: unknown) => TubesApp }
+          : await import(/* @vite-ignore */ pfad);
+        app = mod.default(canvas, {
+          tubes: {
+            // Die Farben der Vorlage — identisch mit der Neon-Skala in den Tokens.
+            colors: ["#f967fb", "#53bc28", "#6958d5"],
+            lights: {
+              intensity: 200,
+              colors: ["#83f36e", "#fe8a2e", "#ff008a", "#60aed5"],
+            },
+          },
+        }) as TubesApp;
+        hero.dataset.tubesAktiv = "ja";
+        if (hint) hint.hidden = false;
+      } catch {
+        // Ohne WebGL/WebGPU oder bei blockiertem Import: kein Effekt, kein Fehler.
+      }
+      laedt = false;
+    };
+
+    const beiBewegung = () => {
+      if (app) {
+        window.removeEventListener("pointermove", beiBewegung);
+        return;
+      }
+      void start();
+    };
+    window.addEventListener("pointermove", beiBewegung, { passive: true });
+
+    // Klick auf leere Heroflächen mischt die Farben neu (wie in der Vorlage).
+    // Links, Knöpfe und das Portrait bleiben unberührt.
+    const zufall = (n: number) =>
+      Array.from(
+        { length: n },
+        () =>
+          "#" +
+          Math.floor(Math.random() * 0xffffff)
+            .toString(16)
+            .padStart(6, "0"),
+      );
+
+    hero.addEventListener("click", (e) => {
+      if (!app) return;
+      const ziel = e.target as Element;
+      if (ziel.closest("a, button, input, textarea, img, figure")) return;
+      app.tubes.setColors(zufall(3));
+      app.tubes.setLightsColors(zufall(4));
+    });
+
+    // Wechselt jemand ins helle Theme, wird der Effekt vollständig beendet —
+    // nicht nur versteckt (GPU). Zurück im Dunkel startet ihn die nächste
+    // Zeigerbewegung neu.
+    new MutationObserver(() => {
+      if (app && !darf()) {
+        app.dispose?.();
+        app = null;
+        delete hero.dataset.tubesAktiv;
+        if (hint) hint.hidden = true;
+        window.addEventListener("pointermove", beiBewegung, { passive: true });
+      }
+    }).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+  }
+</script>

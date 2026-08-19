@@ -1,0 +1,19 @@
+---
+/** Startseite, Englisch. */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HomePage from "../../components/HomePage.astro";
+import { content, translatePath } from "../../lib/i18n";
+
+const c = content("en");
+---
+
+<BaseLayout
+  title={c.meta.title}
+  description={c.meta.description}
+  lang="en"
+  altPath={translatePath("/en/", "de")}
+  appendName={false}
+  personSchema={true}
+>
+  <HomePage lang="en" />
+</BaseLayout>

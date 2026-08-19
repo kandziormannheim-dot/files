@@ -1,0 +1,234 @@
+---
+/**
+ * Fußzeile.
+ *
+ * Wiederholt die Primärnavigation bewusst NICHT: Auf einer Einzelseite ist
+ * der Besucher hier unten bereits an allem vorbeigekommen. Eine zweite
+ * Ankerleiste wäre Fläche ohne Aufgabe.
+ *
+ * Was hier steht, steht sonst nirgends: die Profile als letzter Ausweg für
+ * jemanden, der das Formular nicht nutzen will, und die beiden Rechtstexte,
+ * die auf einer deutschen Geschäftsseite Pflicht sind.
+ *
+ * Die Fläche ist in beiden Themes dunkel — Begründung bei den Footer-Tokens
+ * in DESIGN_TOKENS.css.
+ */
+import { content, localePath, type Lang } from "../lib/i18n";
+import LanguageToggle from "./LanguageToggle.astro";
+import Logo from "./Logo.astro";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang);
+const jahr = 2026;
+---
+
+<footer class="footer">
+  <div class="container container--wide">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <Logo href={localePath("/", lang)} class="footer__logo" />
+        <p class="footer__tagline">{c.footer.tagline}</p>
+      </div>
+
+      <nav class="footer__profiles" aria-label={c.contact.info.profilesLabel}>
+        <ul role="list">
+          {
+            c.social.tabs.map((tab) => (
+              <li>
+                <a
+                  class="footer__link"
+                  href={tab.url}
+                  rel="me noopener"
+                  target="_blank"
+                >
+                  {tab.label}
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M5.5 10.5 10.5 5.5M6.2 5.5h4.3v4.3" />
+                  </svg>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__bottom">
+      <p class="footer__copyright">© {jahr} {c.footer.copyright}</p>
+
+      <nav class="footer__legal" aria-label={c.legal.imprintTitle}>
+        <ul role="list">
+          <li>
+            <a class="footer__link" href={c.footer.imprintPath}>{c.footer.imprint}</a>
+          </li>
+          <li>
+            <a class="footer__link" href={c.footer.privacyPath}>{c.footer.privacy}</a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="footer__utility">
+        <LanguageToggle lang={lang} variant="plain" />
+        <a class="footer__top-link" href="#main">
+          {c.a11y.toTop}
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 13.5v-11M3.5 6.5 8 2l4.5 4.5" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background-color: var(--footer-bg);
+    color: var(--footer-text);
+    padding-block: var(--space-8) var(--space-6);
+    border-top: var(--border-width) solid var(--footer-border);
+  }
+
+  .footer__top {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding-bottom: var(--space-6);
+    border-bottom: var(--border-width) solid var(--footer-border);
+  }
+
+  .footer__brand {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: flex-start;
+  }
+
+  /* „Logo invertiert" aus der Vorgabe: Die Wortmarke erbt sonst die
+     Textfarbe des Themes und stünde auf der dunklen Fläche unsichtbar in
+     gleicher Farbe. Gesetzt wird über vererbte Eigenschaften, die die
+     Komponente selbst ausliest — eine Klasse von außen verlöre den
+     Spezifitätsstreit gegen die Stile der Komponente. */
+  .footer__brand {
+    --logo-color: var(--footer-strong);
+    --logo-muted: var(--footer-muted);
+  }
+
+  .footer__tagline {
+    max-width: 34ch;
+    font-size: var(--font-size-sm);
+    color: var(--footer-muted);
+  }
+
+  .footer__profiles ul,
+  .footer__legal ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+    margin: 0;
+    padding: 0;
+  }
+
+  .footer__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--footer-text);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--easing-default);
+  }
+
+  .footer__link:hover {
+    color: var(--footer-accent);
+  }
+
+  .footer__link svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.6;
+  }
+
+  .footer__bottom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-top: var(--space-5);
+  }
+
+  .footer__copyright {
+    font-size: var(--font-size-sm);
+    color: var(--footer-muted);
+  }
+
+  .footer__utility {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family-display);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .footer__top-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    color: var(--footer-muted);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--easing-default);
+  }
+
+  .footer__top-link:hover {
+    color: var(--footer-accent);
+  }
+
+  .footer__top-link svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Der Fokusring aus global.css nutzt die Theme-Farbe und wäre auf der
+     dunklen Fläche im hellen Theme kaum zu sehen. */
+  .footer :global(:focus-visible) {
+    outline-color: var(--footer-accent);
+  }
+
+  @media (min-width: 768px) {
+    .footer__top {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-8);
+    }
+
+    .footer__bottom {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-6);
+    }
+
+    .footer__utility {
+      justify-content: flex-end;
+    }
+  }
+</style>

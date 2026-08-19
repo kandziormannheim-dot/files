@@ -1,0 +1,176 @@
+---
+/**
+ * Sprachumschalter DE / EN.
+ *
+ * Führt auf eine echte URL, nicht auf einen Austausch im Dokument. Grund
+ * steht in INFORMATION_ARCHITECTURE.md: Ein reiner JavaScript-Umschalter
+ * macht eine der beiden Sprachen für Suchmaschinen unsichtbar, und gefunden
+ * zu werden ist die halbe Existenzberechtigung dieser Seite.
+ *
+ * Der aktuelle Anker wird übertragen: Wer bei `#about` wechselt, landet auf
+ * `/en/#about` und nicht wieder ganz oben. Das passiert per JavaScript;
+ * ohne JavaScript führt der Link schlicht auf den Seitenanfang.
+ */
+import {
+  content,
+  languageLabels,
+  languageNames,
+  languages,
+  translatePath,
+  type Lang,
+} from "../lib/i18n";
+
+export interface Props {
+  lang: Lang;
+  /**
+   * `pill` in der Kopfzeile, `plain` in der Fußzeile. Die Pillenform lebt von
+   * den hellen Flächentokens und wirkt auf der dunklen Fußzeile wie ein
+   * Fremdkörper; dort sind zwei schlichte Textlinks richtig.
+   */
+  variant?: "pill" | "plain";
+  class?: string;
+}
+
+const { lang, variant = "pill", class: className } = Astro.props;
+const t = content(lang).a11y;
+const here = Astro.url.pathname;
+---
+
+<div
+  class:list={["lang", `lang--${variant}`, className]}
+  role="group"
+  aria-label={t.langSwitch}
+>
+  {
+    languages.map((code) => {
+      const isCurrent = code === lang;
+      const target = translatePath(here, code);
+      return isCurrent ? (
+        <span class="lang__item lang__item--current" aria-current="true">
+          <span class="visually-hidden">{t.currentLang}</span>
+          <span aria-hidden="true">{languageLabels[code]}</span>
+        </span>
+      ) : (
+        <a
+          class="lang__item"
+          href={target}
+          hreflang={code}
+          lang={code}
+          data-lang-link
+          data-base={target}
+        >
+          <span class="visually-hidden">{languageNames[code]}</span>
+          <span aria-hidden="true">{languageLabels[code]}</span>
+        </a>
+      );
+    })
+  }
+</div>
+
+<style>
+  .lang {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Segment-Umschalter; die Rundung kommt aus den Radius-Tokens. */
+  .lang--pill {
+    gap: 0;
+    border: var(--border-width) solid var(--color-border-primary);
+    background-color: var(--color-bg-tertiary);
+  }
+
+  /* Schlichte Fassung: erbt die Farben ihrer Umgebung, damit sie auf der
+     dunklen Fußzeile ebenso stimmt wie irgendwo sonst. */
+  .lang--plain {
+    gap: var(--space-2);
+  }
+
+  .lang--plain .lang__item {
+    min-width: 0;
+    height: auto;
+    padding: var(--space-2) 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    opacity: 0.7;
+  }
+
+  .lang--plain .lang__item--current {
+    opacity: 1;
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .lang--plain a.lang__item:hover {
+    opacity: 1;
+    background: none;
+  }
+
+  .lang__item {
+    display: inline-grid;
+    place-items: center;
+    min-width: 38px;
+    height: 34px;
+    padding-inline: var(--space-2);
+    border-radius: 0;
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--letter-spacing-wide);
+    text-decoration: none;
+    color: var(--color-text-secondary);
+    transition:
+      color var(--duration-fast) var(--easing-default),
+      background-color var(--duration-fast) var(--easing-default);
+  }
+
+  a.lang__item:hover {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-primary);
+  }
+
+  .lang--pill .lang__item--current {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-primary);
+  }
+
+  .lang--plain .lang__item--current {
+    color: inherit;
+  }
+
+  /* Das Umschaltfeld ist kleiner als 44px — es sitzt aber in der Kopfzeile,
+     die selbst die volle Zielgröße einhält, und beide Schaltflächen liegen
+     nebeneinander ohne Zwischenraum. Auf Berührungsgeräten wächst es.
+     Nur die Pillenform: Die schlichte Fassung bekommt ihre Zielgröße unten
+     über Innenabstand, ohne als Kasten zu erscheinen. */
+  @media (pointer: coarse) {
+    .lang--pill .lang__item {
+      min-width: var(--target-min);
+      height: var(--target-min);
+    }
+
+    .lang--plain .lang__item {
+      padding-block: var(--space-3);
+      min-width: var(--target-min);
+    }
+  }
+</style>
+
+<script>
+  // Anker mitnehmen. Bei jedem Klick neu gelesen, damit die aktuelle
+  // Scrollposition zählt und nicht die beim Laden der Seite.
+  document.querySelectorAll<HTMLAnchorElement>("[data-lang-link]").forEach((link) => {
+    link.addEventListener("click", () => {
+      const base = link.dataset.base ?? link.getAttribute("href") ?? "/";
+      const hash = window.location.hash;
+      link.setAttribute("href", hash ? `${base}${hash}` : base);
+      try {
+        localStorage.setItem("lang", link.getAttribute("hreflang") ?? "de");
+      } catch {
+        // Gesperrter Speicher: Die Wahl gilt nur für diesen Aufruf.
+      }
+    });
+  });
+</script>

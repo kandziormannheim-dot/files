@@ -1,0 +1,81 @@
+---
+/**
+ * Events — kommende Veranstaltungen aus Ticket Tailor.
+ *
+ * Der wichtigste Teil dieses Bereichs ist sein VERSCHWINDEN: Steht kein
+ * Termin an (events.json: "visible": false), rendert weder dieser Abschnitt
+ * noch sein Navigationspunkt (Header.astro liest dieselbe Datei). Eine Seite
+ * ohne Events-Bereich wirkt vollständig; ein Events-Bereich ohne Events
+ * wirkt verlassen. Der Schalter ist eine Datenänderung, kein Codeeingriff.
+ *
+ * Steht er auf sichtbar, gilt dieselbe Zwei-Klick-Regel wie überall: Das
+ * Ticket-Tailor-Skript lädt erst nach ausdrücklichem Klick. Der Direktlink
+ * auf die Box-Office-Seite funktioniert immer — auch wenn das Widget
+ * scheitert, führt ein Weg zum Termin.
+ *
+ * Anmeldung und Bezahlung passieren vollständig bei Ticket Tailor. Diese
+ * Seite speichert nichts und verarbeitet nichts.
+ */
+import { content, type Lang } from "../lib/i18n";
+import ConsentEmbed from "./ConsentEmbed.astro";
+import events from "../content/events.json";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang).events;
+---
+
+{
+  events.visible && (
+    <section class="events section" id="events" aria-labelledby="events-heading">
+      <div class="container container--wide">
+        <p class="eyebrow">{c.eyebrow}</p>
+        <h2 id="events-heading" class="events__title">{c.title}</h2>
+        <p class="events__lead">{c.lead}</p>
+
+        <div class="events__embed">
+          <ConsentEmbed
+            id="events-widget"
+            platform="Ticket Tailor"
+            context={c.lead}
+            notice={c.consent.notice}
+            action={c.consent.action}
+            direct={c.consent.direct}
+            directUrl={events.boxOfficeUrl}
+            loading={c.consent.loading}
+            error={c.consent.error}
+            icon="calendar"
+            embed={{
+              type: "script",
+              src: events.widget.scriptUrl,
+              attrs: {
+                "data-url": events.widget.dataUrl,
+                "data-type": events.widget.dataType,
+              },
+            }}
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .events__title {
+    margin-top: var(--space-3);
+  }
+
+  .events__lead {
+    margin-top: var(--space-4);
+    max-width: var(--max-width-content);
+    color: var(--color-text-secondary);
+  }
+
+  .events__embed {
+    margin-top: var(--space-6);
+    max-width: 960px;
+  }
+</style>

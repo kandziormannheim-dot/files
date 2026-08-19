@@ -1,0 +1,117 @@
+---
+/**
+ * Die Marke: MK-Monogramm mit eingelassenem Namenszug.
+ *
+ * Das Original liegt als Schwarz-auf-Transparent-PNG vor
+ * (`public/assets/logo-mk.png`, auf den Inhalt beschnitten). Es wird als
+ * CSS-Maske über einer `currentColor`-Fläche verwendet — dadurch erbt die
+ * Marke die Textfarbe des Umfelds und trägt in beiden Themes und in der
+ * Fußzeile, ohne dass es mehrere Dateifassungen braucht. Fehlt die Datei,
+ * greift die typografische Ersatzfassung (Wortmarke in Versalien).
+ */
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+export interface Props {
+  /** Als Überschrift auf der Startseite, sonst als Link zur Startseite. */
+  href?: string;
+  class?: string;
+}
+
+const { href, class: className } = Astro.props;
+
+const hasMark = existsSync(resolve(process.cwd(), "public/assets/logo-mk.png"));
+
+const Tag = href ? "a" : "span";
+---
+
+<Tag
+  class:list={["logo", className]}
+  {...href ? { href } : {}}
+  aria-label="Martin Kandzior"
+>
+  {
+    hasMark ? (
+      <span class="logo__mark" aria-hidden="true" />
+    ) : (
+      <span class="logo__wordmark" aria-hidden="true">
+        <span class="logo__given">Martin</span
+        ><span class="logo__family">Kandzior</span>
+      </span>
+    )
+  }
+</Tag>
+
+<style>
+  /* Die Farben kommen über Custom Properties mit Rückfallwert, nicht über
+     Klassen. Eine Klasse von außen (`.footer__logo`) hätte dieselbe
+     Spezifität wie `.logo` hier, und wer gewinnt, entschiede die Reihenfolge
+     der Stylesheets — in der Fußzeile stand das Logo dadurch unsichtbar auf
+     gleichfarbigem Grund. Vererbte Eigenschaften konkurrieren nicht. */
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target-min);
+    color: var(--logo-color, var(--color-text-primary));
+    text-decoration: none;
+  }
+
+  .logo:hover {
+    color: var(--logo-color, var(--color-text-primary));
+  }
+
+  /* Die Maske schneidet die Marke aus einer Farbfläche — currentColor
+     kommt vom .logo darüber (und damit von --logo-color, wo gesetzt).
+     585/234 ist das Seitenverhältnis der beschnittenen Bilddatei. */
+  .logo__mark {
+    display: block;
+    height: var(--logo-height, 34px);
+    aspect-ratio: 585 / 234;
+    background-color: currentColor;
+    -webkit-mask: url("/assets/logo-mk.png") center / contain no-repeat;
+    mask: url("/assets/logo-mk.png") center / contain no-repeat;
+  }
+
+  @media (min-width: 768px) {
+    .logo__mark {
+      height: var(--logo-height, 42px);
+    }
+  }
+
+  /* Ersatz-Wortmarke in gesperrten Versalien. Der Vorname steht
+     zurückgenommen, der Nachname trägt. Auf Mobil eine Stufe
+     kleiner — die gesperrte Marke plus Umschalter plus Burger muss in
+     320px passen (gemessen: 17px sprengen die Zeile um 15px). */
+  .logo__wordmark {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45em;
+    font-family: var(--font-family-display);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-wider);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .logo__given {
+    font-weight: var(--font-weight-normal);
+    color: var(--logo-muted, var(--color-text-secondary));
+    transition: color var(--duration-fast) var(--easing-default);
+  }
+
+  .logo__family {
+    font-weight: var(--font-weight-bold);
+  }
+
+  .logo:hover .logo__given {
+    color: var(--logo-color, var(--color-text-primary));
+  }
+
+  @media (min-width: 768px) {
+    .logo__wordmark {
+      font-size: var(--font-size-base);
+    }
+  }
+</style>

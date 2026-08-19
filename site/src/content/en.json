@@ -1,0 +1,211 @@
+{
+  "_hinweis": "DRAFT. All copy written by Claude and pending review by Martin Kandzior. PLATZHALTER marks unconfirmed details. The German version is the authoritative one for legal texts.",
+  "meta": {
+    "title": "Martin Kandzior — Logistics, Risk and Politics from Mannheim",
+    "description": "Martin Kandzior works where logistics, risk and politics overlap. Fifteen years in international logistics and finance, based in Mannheim, Germany. Tell me what you need.",
+    "locale": "en_GB"
+  },
+  "a11y": {
+    "skipLink": "Skip to content",
+    "mainNav": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "toLight": "Switch to light appearance",
+    "toDark": "Switch to dark appearance",
+    "langSwitch": "Change language",
+    "currentLang": "Current language: English",
+    "toTop": "Back to top"
+  },
+  "nav": {
+    "expertise": "Expertise",
+    "about": "About",
+    "social": "Social",
+    "events": "Events",
+    "contact": "Contact",
+    "cta": "Send enquiry"
+  },
+  "hero": {
+    "eyebrow": "Mannheim, Germany",
+    "name": "Martin Kandzior",
+    "positioning": "I work where logistics, risk and politics overlap.",
+    "lead": "For decision-makers who need the right person for their problem — not the next agency.",
+    "cta": "Send enquiry",
+    "ctaSecondary": "What I work on",
+    "portraitAlt": "Martin Kandzior, smiling, wearing a blue jacket",
+    "tubesHint": "Move to paint · click to shuffle the colors"
+  },
+  "proof": {
+    "label": "In numbers",
+    "items": [
+      {
+        "value": "15",
+        "suffix": "+",
+        "label": "years in logistics and finance, international"
+      },
+      {
+        "value": "350",
+        "suffix": "K USD",
+        "label": "average deal value"
+      },
+      {
+        "value": "50",
+        "suffix": "",
+        "label": "people in teams led and worked in"
+      }
+    ]
+  },
+  "expertise": {
+    "eyebrow": "Expertise",
+    "title": "Four fields that rarely meet in one person",
+    "lead": "Shipping internationally means watching goods, contracts, capital and politics at the same time — and usually finding four different people for it. That is exactly where the value sits.",
+    "pillars": [
+      {
+        "id": "risk",
+        "title": "Logistical Risk Mitigation",
+        "body": "International supply chains rarely break where you expect them to. I make sure goods, contracts and insurance cover line up before the damage happens — not after."
+      },
+      {
+        "id": "ecommerce",
+        "title": "E-Commerce Logistics",
+        "body": "Growth in online retail rarely fails on marketing. It fails on delivery, on returns and on cost per parcel. I build logistics that scales with you instead of holding you back."
+      },
+      {
+        "id": "ai",
+        "title": "AI, Robotics & Automation",
+        "body": "Automation rarely fails on the technology. It fails in the gap between process and people. I bring AI and robotics to where they measurably carry their weight in operations — and say plainly where they don't yet."
+      },
+      {
+        "id": "politics",
+        "title": "Business & Politics",
+        "body": "Regulation, tariffs and location policy are no footnote for a company. I move in both worlds and translate between commercial and political logic.",
+        "meta": "Mittelstands- und Wirtschaftsunion (MIT) — board member, Mannheim & North Baden"
+      }
+    ],
+    "groupBusiness": "Business",
+    "groupPolitics": "Politics"
+  },
+  "outlook": {
+    "eyebrow": "Industry 5.0",
+    "quote": "Nobody needs to be afraid.",
+    "body": [
+      "Automation, artificial intelligence and robotics are changing how Europe produces and delivers. Industry 5.0 means the machine does not replace the human — it works alongside them.",
+      "Investing today is not a decision about cutting jobs. It is a decision about whether your business is still competitive in ten years. I am glad to have that argument — including with people who disagree."
+    ],
+    "note": "This is a position, not a service."
+  },
+  "about": {
+    "eyebrow": "About",
+    "title": "Who is writing here",
+    "paragraphs": [
+      "I have spent fifteen years in logistics and finance, mostly international. In that time I have built organisations and projects from the ground up, sold solutions and services worth several million US dollars, and worked in and carried responsibility for teams of up to fifty people.",
+      "Mannheim is home. From here I work on subjects that rarely stop at a city boundary: supply chains, risk cover, automation, location policy.",
+      "What interests me are the places where two worlds meet and nobody speaks both languages. That is where I am most useful."
+    ],
+    "portraitAlt": "Martin Kandzior in front of the Mannheim water tower",
+    "portraitCaption": "Mannheim, at the water tower"
+  },
+  "social": {
+    "eyebrow": "Social",
+    "title": "Verifiable, not just claimed",
+    "lead": "Everything on this page can be checked elsewhere. Here are the profiles.",
+    "tabs": [
+      {
+        "id": "linkedin",
+        "label": "LinkedIn",
+        "handle": "in/martin-kandzior",
+        "url": "https://linkedin.com/in/martin-kandzior",
+        "context": "Posts on logistics, risk and economic policy."
+      },
+      {
+        "id": "x",
+        "label": "X",
+        "handle": "@martinkandzior",
+        "url": "https://x.com/martinkandzior",
+        "context": "Short takes on current developments."
+      },
+      {
+        "id": "facebook",
+        "label": "Facebook",
+        "handle": "martin.kandzior",
+        "url": "https://facebook.com/martin.kandzior",
+        "context": "Regional matters from Mannheim and the Rhine-Neckar area."
+      }
+    ],
+    "consent": {
+      "action": "Load posts",
+      "notice": "Only when you click does a connection to {platform} open and your IP address travel there. Nothing happens before that.",
+      "direct": "Go straight to the profile",
+      "loading": "Loading …",
+      "error": "The posts could not be loaded. The direct link to the profile still works."
+    },
+    "postsLabel": "Latest posts",
+    "postsOpen": "View post on {platform}"
+  },
+  "events": {
+    "eyebrow": "Events",
+    "title": "Upcoming events",
+    "lead": "Some things are easier to settle in person than through a form.",
+    "consent": {
+      "action": "Load events",
+      "notice": "Only when you click does a connection to Ticket Tailor open and your IP address travel there.",
+      "direct": "All events on Ticket Tailor",
+      "loading": "Loading …",
+      "error": "The events could not be loaded. The direct link to Ticket Tailor still works."
+    }
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Fancy starting something big?",
+    "lead": "Two sentences about what you need is plenty. I reply within two working days.",
+    "form": {
+      "name": {
+        "label": "Name",
+        "placeholder": "First and last name",
+        "error": "Please enter your name."
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "name@company.com",
+        "error": "Please enter a complete email address."
+      },
+      "message": {
+        "label": "Your enquiry",
+        "placeholder": "What is this about?",
+        "hint": "Two sentences is plenty.",
+        "error": "Please describe your enquiry briefly."
+      },
+      "submit": "Send enquiry",
+      "sending": "Sending …",
+      "successTitle": "Received.",
+      "successBody": "I will get back to you within two working days.",
+      "errorTitle": "That did not work.",
+      "errorBody": "Your input is still here. Otherwise write to me directly at {email}."
+    },
+    "info": {
+      "emailLabel": "Email",
+      "email": "mail@kandzior.de",
+      "locationLabel": "Based in",
+      "location": "Mannheim, Rhine-Neckar region, Germany",
+      "profilesLabel": "Profiles"
+    }
+  },
+  "footer": {
+    "tagline": "Logistics, risk and politics — from Mannheim.",
+    "imprint": "Imprint",
+    "imprintPath": "/en/imprint",
+    "privacy": "Privacy",
+    "privacyPath": "/en/privacy",
+    "copyright": "Martin Kandzior"
+  },
+  "legal": {
+    "imprintTitle": "Imprint",
+    "privacyTitle": "Privacy Policy",
+    "authoritative": "This is a translation. The German version is the legally authoritative one.",
+    "back": "Back to the homepage"
+  },
+  "notFound": {
+    "title": "This page does not exist",
+    "body": "The link leads nowhere. The way back to the start might help.",
+    "cta": "Go to the homepage"
+  }
+}

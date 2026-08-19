@@ -1,0 +1,417 @@
+---
+/**
+ * Kontakt — die eine Aktion, für die die ganze Seite existiert.
+ *
+ * Alles an diesem Formular folgt einer Regel aus dem Brief: Die Anfrage darf
+ * niemals verloren gehen. Daraus ergibt sich:
+ *
+ * - Validierung beim VERLASSEN des Feldes, nicht bei jedem Tastendruck.
+ *   Wer noch tippt, wird nicht angeschrien.
+ * - Fehler stehen in Worten unter dem Feld und werden über aria-describedby
+ *   und aria-invalid angekündigt.
+ * - Erfolg ersetzt das Formular durch eine KONKRETE Zusage („innerhalb von
+ *   zwei Werktagen") — ein anonymes „Danke" lässt den Besucher im Ungewissen.
+ * - Fehlschlag erhält alle Eingaben und nennt die E-Mail-Adresse als
+ *   Ausweichweg.
+ * - Honeypot gegen Spam: ein für Menschen unsichtbares Feld. Ist es gefüllt,
+ *   wird still „Erfolg" gezeigt — ein Bot bekommt keine Rückmeldung, die ihm
+ *   beim Lernen hilft.
+ *
+ * Der Endpunkt kommt aus site.json und ist austauschbar. Solange er leer ist,
+ * läuft der SIMULATIONSMODUS (Konsole) — die Livegang-Checkliste erzwingt,
+ * dass das vor Veröffentlichung ersetzt wird.
+ */
+import { content, fill, type Lang } from "../lib/i18n";
+import site from "../content/site.json";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang).contact;
+const f = c.form;
+---
+
+<section class="contact section" id="contact" aria-labelledby="contact-heading">
+  <div class="container container--wide">
+    <div class="contact__intro">
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2 id="contact-heading" class="contact__title">{c.title}</h2>
+      <p class="contact__lead">{c.lead}</p>
+    </div>
+
+    <div class="contact__grid">
+      <form
+        class="contact__form"
+        data-contact-form
+        data-endpoint={site.formEndpoint}
+        novalidate
+      >
+        <div class="field">
+          <label class="field__label" for="cf-name">{f.name.label}</label>
+          <input
+            class="field__control"
+            id="cf-name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            placeholder={f.name.placeholder}
+            required
+            data-error={f.name.error}
+            aria-describedby="cf-name-error"
+          />
+          <p class="field__error" id="cf-name-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="cf-email">{f.email.label}</label>
+          <input
+            class="field__control"
+            id="cf-email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            inputmode="email"
+            placeholder={f.email.placeholder}
+            required
+            data-error={f.email.error}
+            aria-describedby="cf-email-error"
+          />
+          <p class="field__error" id="cf-email-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="cf-message">{f.message.label}</label>
+          <textarea
+            class="field__control"
+            id="cf-message"
+            name="message"
+            placeholder={f.message.placeholder}
+            required
+            data-error={f.message.error}
+            aria-describedby="cf-message-error cf-message-hint"></textarea>
+          <p class="field__hint" id="cf-message-hint">{f.message.hint}</p>
+          <p class="field__error" id="cf-message-error" hidden></p>
+        </div>
+
+        {
+          /* Honeypot. Für Menschen unsichtbar und aus der Tab-Reihenfolge
+             genommen; autocomplete="off", damit kein Browser es gut meinend
+             ausfüllt. Der Feldname klingt absichtlich echt. */
+        }
+        <div class="contact__hp" aria-hidden="true">
+          <label for="cf-company">Firma</label>
+          <input
+            id="cf-company"
+            name="company"
+            type="text"
+            tabindex="-1"
+            autocomplete="off"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="button button--primary contact__submit"
+          data-sending={f.sending}
+        >
+          <span data-submit-label>{f.submit}</span>
+        </button>
+
+        {/* Fehlermeldung des Absendens — Eingaben bleiben stehen. */}
+        <div class="contact__failure" data-form-failure hidden>
+          <p class="contact__failure-title">{f.errorTitle}</p>
+          <p set:html={fill(f.errorBody, {
+            email: `<a href="mailto:${site.contactEmail}">${site.contactEmail}</a>`,
+          })} />
+        </div>
+      </form>
+
+      {/* Erfolg ersetzt das Formular vollständig. */}
+      <div class="contact__success" data-form-success hidden tabindex="-1">
+        <span class="contact__success-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9.2" />
+            <path d="m8 12.4 2.6 2.6 5.4-5.6" />
+          </svg>
+        </span>
+        <p class="contact__success-title">{f.successTitle}</p>
+        <p class="contact__success-body">{f.successBody}</p>
+      </div>
+
+      <aside class="contact__info">
+        <dl class="contact__list">
+          <div class="contact__item">
+            <dt>{c.info.emailLabel}</dt>
+            <dd>
+              <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
+            </dd>
+          </div>
+          <div class="contact__item">
+            <dt>{c.info.locationLabel}</dt>
+            <dd>{c.info.location}</dd>
+          </div>
+          <div class="contact__item">
+            <dt>{c.info.profilesLabel}</dt>
+            <dd class="contact__profiles">
+              {
+                content(lang).social.tabs.map((tab) => (
+                  <a href={tab.url} target="_blank" rel="me noopener">
+                    {tab.label}
+                  </a>
+                ))
+              }
+            </dd>
+          </div>
+        </dl>
+      </aside>
+    </div>
+  </div>
+
+  {/* Statusansagen für Vorlesesoftware. */}
+  <p class="visually-hidden" role="status" aria-live="polite" data-form-status></p>
+</section>
+
+<style>
+  .contact__intro {
+    max-width: var(--max-width-content);
+  }
+
+  .contact__title {
+    margin-top: var(--space-3);
+  }
+
+  .contact__lead {
+    margin-top: var(--space-4);
+    color: var(--color-text-secondary);
+  }
+
+  .contact__grid {
+    display: grid;
+    gap: var(--space-7);
+    margin-top: var(--space-7);
+  }
+
+  .contact__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    max-width: var(--max-width-narrow);
+  }
+
+  /* Honeypot: visuell raus, aber ohne display:none — manche Spam-Skripte
+     überspringen unsichtbare Felder, die sichtbaren füllen sie. */
+  .contact__hp {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .contact__submit {
+    align-self: flex-start;
+    min-width: 200px;
+  }
+
+  .contact__failure {
+    padding: var(--space-4) var(--space-5);
+    border-left: 3px solid var(--color-status-error);
+    background-color: var(--color-bg-secondary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+
+  .contact__failure-title {
+    font-family: var(--font-family-display);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-status-error);
+  }
+
+  .contact__success {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    max-width: var(--max-width-narrow);
+    padding: var(--space-6);
+    background-color: var(--color-bg-accent-subtle);
+    border-radius: var(--card-radius);
+  }
+
+  .contact__success-icon svg {
+    width: 40px;
+    height: 40px;
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .contact__success-title {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .contact__success-body {
+    color: var(--color-text-secondary);
+  }
+
+  .contact__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    margin: 0;
+  }
+
+  .contact__item dt {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+  }
+
+  .contact__item dd {
+    margin: var(--space-1) 0 0;
+  }
+
+  .contact__profiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 1024px) {
+    .contact__grid {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.6fr);
+      gap: var(--space-8);
+      align-items: start;
+    }
+  }
+</style>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>("[data-contact-form]");
+
+  if (form) {
+    const felder = Array.from(
+      form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+        ".field__control[required]",
+      ),
+    );
+    const sendeknopf = form.querySelector<HTMLButtonElement>("[type='submit']")!;
+    const knopftext = form.querySelector<HTMLElement>("[data-submit-label]")!;
+    const fehlschlag = form.querySelector<HTMLElement>("[data-form-failure]")!;
+    const erfolg = document.querySelector<HTMLElement>("[data-form-success]")!;
+    const status = document.querySelector<HTMLElement>("[data-form-status]")!;
+    const ruhetext = knopftext.textContent ?? "";
+
+    const pruefe = (feld: (typeof felder)[number]): boolean => {
+      const wert = feld.value.trim();
+      const gueltig =
+        wert.length > 0 &&
+        (feld.getAttribute("type") !== "email" ||
+          // Bewusst großzügig: etwas@etwas.etwas. Strengere Muster lehnen
+          // echte Adressen ab und retten niemanden.
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(wert));
+
+      const meldung = document.getElementById(`${feld.id}-error`);
+      if (meldung) {
+        meldung.textContent = gueltig ? "" : (feld.dataset.error ?? "");
+        meldung.hidden = gueltig;
+      }
+      feld.setAttribute("aria-invalid", String(!gueltig));
+      return gueltig;
+    };
+
+    // Beim Verlassen des Feldes, nicht beim Tippen. Aber: Wer einen Fehler
+    // korrigiert, sieht die Meldung beim Tippen verschwinden — Bestätigung
+    // sofort, Kritik erst nach dem Verlassen.
+    for (const feld of felder) {
+      feld.addEventListener("blur", () => {
+        if (feld.value.trim().length > 0 || feld.dataset.beruehrt === "ja") {
+          feld.dataset.beruehrt = "ja";
+          pruefe(feld);
+        }
+      });
+      feld.addEventListener("input", () => {
+        if (feld.getAttribute("aria-invalid") === "true") pruefe(feld);
+      });
+    }
+
+    form.addEventListener("submit", async (ereignis) => {
+      ereignis.preventDefault();
+
+      let alleGueltig = true;
+      for (const feld of felder) {
+        feld.dataset.beruehrt = "ja";
+        if (!pruefe(feld)) alleGueltig = false;
+      }
+      if (!alleGueltig) {
+        // Fokus auf das erste fehlerhafte Feld — nicht nur rot markieren.
+        felder.find((f) => f.getAttribute("aria-invalid") === "true")?.focus();
+        return;
+      }
+
+      const zeigeErfolg = () => {
+        form.hidden = true;
+        erfolg.hidden = false;
+        status.textContent = erfolg.textContent ?? "";
+        erfolg.focus();
+      };
+
+      // Honeypot gefüllt: still "Erfolg" zeigen. Ein Bot soll keine
+      // Rückmeldung bekommen, aus der er lernen kann.
+      const falle = form.querySelector<HTMLInputElement>("[name='company']");
+      if (falle && falle.value.length > 0) {
+        zeigeErfolg();
+        return;
+      }
+
+      sendeknopf.disabled = true;
+      const sendetext = sendeknopf.dataset.sending ?? "";
+      knopftext.textContent = sendetext || ruhetext;
+      status.textContent = sendetext;
+      fehlschlag.hidden = true;
+
+      const daten = {
+        name: (form.querySelector<HTMLInputElement>("[name='name']"))!.value.trim(),
+        email: (form.querySelector<HTMLInputElement>("[name='email']"))!.value.trim(),
+        message: (form.querySelector<HTMLTextAreaElement>("[name='message']"))!.value.trim(),
+      };
+
+      const endpunkt = form.dataset.endpoint ?? "";
+
+      try {
+        if (endpunkt === "") {
+          // SIMULATIONSMODUS — Endpunkt noch nicht konfiguriert (site.json).
+          // Die Livegang-Checkliste erzwingt den Austausch.
+          console.warn(
+            "[kandzior.de] Formular im Simulationsmodus — kein Endpunkt konfiguriert. Anfrage:",
+            daten,
+          );
+          await new Promise((fertig) => setTimeout(fertig, 600));
+        } else {
+          const antwort = await fetch(endpunkt, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(daten),
+          });
+          if (!antwort.ok) throw new Error(`HTTP ${antwort.status}`);
+        }
+        zeigeErfolg();
+      } catch {
+        // Eingaben bleiben vollständig erhalten; der Ausweichweg per E-Mail
+        // steht in der Meldung.
+        fehlschlag.hidden = false;
+        status.textContent = fehlschlag.textContent ?? "";
+        sendeknopf.disabled = false;
+        knopftext.textContent = ruhetext;
+      }
+    });
+  }
+</script>

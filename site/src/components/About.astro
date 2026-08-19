@@ -1,0 +1,93 @@
+---
+/**
+ * Über mich.
+ *
+ * Zwei Aufgaben, die dieser Bereich allein trägt:
+ *
+ * 1. Das vollständige Foto mit dem Mannheimer Wasserturm. Im Hero steht die
+ *    freigestellte Person, hier der Ort. So hat jedes der beiden Bilder eine
+ *    eigene Aufgabe, statt sich zu wiederholen.
+ * 2. „Mannheim" im Fließtext. Die Seite wird unter „Martin Kandzior Mannheim"
+ *    gesucht, und das Wort muss dafür im Text stehen, nicht nur im Bild.
+ *
+ * Das Bild steht links, im Hero rechts. Der Wechsel gibt der Seite einen
+ * Rhythmus, statt zweimal dieselbe Anordnung zu zeigen.
+ */
+import { content, type Lang } from "../lib/i18n";
+import Portrait from "./Portrait.astro";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang).about;
+---
+
+<section class="about section" id="about" aria-labelledby="about-heading">
+  <div class="container container--wide about__grid">
+    <div class="about__media">
+      <Portrait variant="full" alt={c.portraitAlt} caption={c.portraitCaption} />
+    </div>
+
+    <div class="about__text">
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2 id="about-heading" class="about__title">{c.title}</h2>
+      <div class="about__prose prose--relaxed">
+        {c.paragraphs.map((absatz) => <p>{absatz}</p>)}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about__grid {
+    display: grid;
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .about__media {
+    /* Auf Mobil bewusst nicht über die volle Breite: Ein hochformatiges Foto
+       in Bildschirmbreite schiebt den Text weit unter die Falz. */
+    max-width: 300px;
+  }
+
+  .about__title {
+    margin-top: var(--space-3);
+  }
+
+  .about__prose {
+    /* Lesebreite, nicht Spaltenbreite. Der Text ist der längste
+       zusammenhängende der Seite und der einzige, der wirklich gelesen
+       statt überflogen wird. Eine Stufe unter der globalen Lesebreite:
+       Ohne die Drop-Cap-Initiale (v2) stieg der Schnitt auf 82 Zeichen
+       je Zeile — 64ch bringt ihn zurück in den Lesebereich. */
+    max-width: 64ch;
+    margin-top: var(--space-5);
+  }
+
+  .about__prose p + p {
+    margin-top: var(--space-4);
+  }
+
+  /* v3: kein Drop Cap mehr — die Serif-Initiale war ein Editorial-Element
+     des v2-Registers und passt nicht zur Grotesk-Neon-Formsprache. */
+
+  @media (min-width: 768px) {
+    .about__media {
+      max-width: 340px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .about__grid {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: var(--space-8);
+    }
+
+    .about__media {
+      max-width: none;
+    }
+  }
+</style>

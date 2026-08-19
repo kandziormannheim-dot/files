@@ -1,0 +1,51 @@
+---
+/**
+ * Startseite — gemeinsamer Rumpf für `/` und `/en/`.
+ *
+ * Beide Sprachrouten sind dünne Hüllen um diese Komponente. Dadurch gibt es
+ * genau eine Stelle, an der die Reihenfolge der Bereiche steht.
+ *
+ * Reihenfolge laut INFORMATION_ARCHITECTURE.md — jede Position beantwortet
+ * die nächste Frage im Kopf des Besuchers:
+ *   #hero      Wer ist das?           ✔ Aufgabe C1
+ *   #proof     Kann der was?          ✔ Aufgabe C2
+ *   #expertise Woran arbeitet er?     ✔ Aufgabe C3
+ *   #outlook   Wo steht er?           → C4
+ *   #about     Wer ist er wirklich?   ✔ Aufgabe C5
+ *   #social    Stimmt das auch?       ✔ Aufgabe I2
+ *   #events    Wo treffe ich ihn?     ✔ Aufgabe I3 (bedingt)
+ *   #contact   Wie erreiche ich ihn?  ✔ Aufgabe I4
+ */
+import Header from "./Header.astro";
+import Hero from "./Hero.astro";
+import StatsBand from "./StatsBand.astro";
+import ExpertiseGrid from "./ExpertiseGrid.astro";
+import OutlookBlock from "./OutlookBlock.astro";
+import About from "./About.astro";
+import Footer from "./Footer.astro";
+import SocialTabs from "./SocialTabs.astro";
+import EventsSection from "./EventsSection.astro";
+import ContactSection from "./ContactSection.astro";
+import { type Lang } from "../lib/i18n";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+---
+
+<Header lang={lang} />
+
+<main id="main">
+  <Hero lang={lang} />
+  <StatsBand lang={lang} />
+  <ExpertiseGrid lang={lang} />
+  <OutlookBlock lang={lang} />
+  <About lang={lang} />
+  <SocialTabs lang={lang} />
+  <EventsSection lang={lang} />
+  <ContactSection lang={lang} />
+</main>
+
+<Footer lang={lang} />

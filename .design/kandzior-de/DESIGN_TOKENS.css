@@ -1,0 +1,501 @@
+/* ==========================================================================
+   kandzior.de — Design Tokens (v3, „Neon Flow", 2026-08)
+   Phase 4 des Designer-Flows; v3 nach ausdrücklicher Vorgabe des
+   Auftraggebers: das Design der 21st.dev-Komponente „neon-flow"
+   (TubesBackground) — nachtschwarzer Grund, leuchtende Neonfarben,
+   cursorgetriebene Leuchtröhren im Hero.
+
+   PHILOSOPHIE: Neon / Dark-first
+   Dunkel ist nicht mehr die Zweitfassung, sondern DAS Design. Die helle
+   Fassung bleibt als bewusste Alternative über den Umschalter erreichbar
+   (Lesbarkeitspräferenz), wird aber NICHT mehr aus der Systemeinstellung
+   abgeleitet — wer die Seite aufruft, sieht Neon auf Schwarz.
+   Tiefe entsteht durch GLÜHEN (Glow), nicht durch Materialschatten.
+   Karten sind dunkles Glas mit Haarlinie; Hover verstärkt das Leuchten.
+
+   FARBWELT: aus der Komponente selbst
+   Röhren:  #f967fb (Pink) · #6958d5 (Violett) · #53bc28 (Grün)
+   Lichter: #83f36e · #fe8a2e · #ff008a · #60aed5
+   PINK ist der Leitakzent (7.95:1 auf dem Grund — trägt Text, Link und
+   Knopf selbst). Violett ist Fläche/Verlauf/Großgrafik (3.76:1 — als
+   Text nur die aufgehellte Stufe #8b7ce8). Grün ist Erfolgs-/Drittfarbe.
+
+   TYPOGRAFIE
+   Space Grotesk (variable 300–700) für Überschriften — geometrisch,
+   technisch, passend zur Neon-Ästhetik. Lato (400/700) bleibt Fließtext.
+   ui-monospace bleibt Label-Ebene. Selbst gehostet, kein Google-Link.
+
+   ABGELEITETE REGELN
+   1. Genau EIN Leitakzent (Pink). Violett und Grün sind Begleiter mit
+      festen Rollen (Fläche/Verlauf bzw. Erfolg) — nie gleichzeitig laut.
+   2. Tiefe = Licht. Schatten sind Glows in Akzentfarbe, keine grauen
+      Materialschatten.
+   3. Bewegung darf hier unterhalten (Tubes-Hero) — aber ausschließlich
+      auf Zeigergeräten und niemals unter Bewegungsreduktion.
+   4. Jeder Wert steht genau einmal hier. Komponenten hartkodieren nichts.
+
+   QUELLE DER WAHRHEIT
+   Diese Datei ist die bearbeitete Fassung. `npm run sync:tokens` kopiert
+   sie nach site/src/styles/tokens.css. Änderungen passieren hier.
+
+   KONTRASTE (gerechnet, WCAG-2.2-Relativluminanz — nicht geschätzt)
+   DUNKEL (Standard, Grund #08080f · Karte #111120 · Feld #1a1a2e)
+          Text #f4f4f8              18.2 / 17.0 / 15.6  ✔
+          Sekundär #c3c3d9          11.5 / 10.8 /  9.9  ✔
+          Tertiär #a1a1bd            7.9 /  7.4 /  6.8  ✔
+          PINK #f967fb               8.0 /  7.4 /  6.8  ✔ Text/Link/Knopf
+          Violett #6958d5            3.8 /  3.5 /  3.2  ✔ nur groß/grafisch
+          Violett-Text #8b7ce8       5.8 /  5.5 /  5.0  ✔
+          Grün #53bc28               8.2 /  7.6 /  7.0  ✔
+          Cyan #60aed5 (Info)        8.1 /  7.6 /  6.9  ✔
+          Knopf: #08080f auf Pink    8.0                 ✔ (Weiß fiele durch: 2.5)
+   HELL   fuchsia-700 auf Weiß       6.32  ✔ Text/Link/Knopf (Weiß darauf 6.32)
+          fuchsia-700 auf slate-100  5.77  ✔ (kein Sonderton nötig)
+          fuchsia-600 auf Weiß       4.71  ✔ nur groß/grafisch eingesetzt
+          violet-700 auf Weiß        7.10  ✔ Zweitakzent
+   STATUS dunkel: rot-400 7.2 · grün-400 11.5 · orange-400 8.8 — alle ✔
+          hell:   rot-700 · grün-700 (5.0) · orange-700 — wie v2 ✔
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. PRIMITIVE — Rohwerte. Niemals direkt in Komponenten verwenden.
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* Nacht — Violett-Schwarz-Skala, der Grund der Neonwelt */
+  --night-950: #050509;
+  --night-900: #08080f;   /* GRUND */
+  --night-850: #0d0d18;
+  --night-800: #111120;   /* Karte */
+  --night-700: #1a1a2e;   /* Feld, ruhende Tabs */
+  --night-600: #26263c;
+  --night-500: #3a3a55;   /* dekorative Haarlinie */
+  --night-400: #55557a;
+
+  /* Grau-Text auf Nacht */
+  --ink-50:  #f4f4f8;
+  --ink-200: #c3c3d9;
+  --ink-400: #a1a1bd;
+  --ink-500: #8f8fac;
+
+  /* Neon — direkt aus der TubesBackground-Konfiguration */
+  --neon-pink:        #f967fb;  /* LEITAKZENT */
+  --neon-pink-bright: #fb8dfc;
+  --neon-pink-deep:   #e93df2;
+  --neon-violet:      #6958d5;  /* Fläche/Verlauf/Großgrafik */
+  --neon-violet-text: #8b7ce8;  /* Violett in Textgröße */
+  --neon-green:       #53bc28;
+  --neon-green-bright:#6ee63f;
+  --neon-cyan:        #60aed5;
+
+  /* Helle Fassung (Toggle-Option): Neon auf Weiß braucht dunklere Stufen */
+  --slate-50:  #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-900: #0f172a;
+  --fuchsia-600: #c026d3;
+  --fuchsia-700: #a21caf;
+  --fuchsia-800: #86198f;
+  --violet-700:  #6d28d9;
+
+  /* Status */
+  --red-400:    #f87171;
+  --red-700:    #b91c1c;
+  --green-400:  #4ade80;
+  --green-700:  #15803d;
+  --orange-400: #fb923c;
+  --orange-700: #c2410c;
+
+  --white: #ffffff;
+
+  /* Verläufe — die Röhrenfarben als Fläche */
+  --gradient-neon: linear-gradient(120deg, var(--neon-pink) 0%, var(--neon-violet) 55%, var(--neon-cyan) 100%);
+  --gradient-neon-soft: linear-gradient(120deg, rgb(249 103 251 / 0.16), rgb(105 88 213 / 0.16));
+}
+
+/* --------------------------------------------------------------------------
+   2. SEMANTISCH — DUNKEL (Standard!)
+   v3 dreht die Logik: :root ist die Nachtfassung. Die Systemeinstellung
+   wird bewusst NICHT befragt — das Design ist dunkel; Hell ist eine
+   ausdrückliche Wahl über den Umschalter ([data-theme="light"] unten).
+   -------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: dark;
+
+  /* Flächen */
+  --color-bg-primary:      var(--night-900);
+  --color-bg-secondary:    var(--night-800);   /* Bandsektionen, Karten */
+  --color-bg-tertiary:     var(--night-700);   /* Eingabefelder, ruhende Tabs */
+  --color-bg-inverse:      var(--ink-50);
+  --color-bg-accent-subtle: rgb(105 88 213 / 0.13);  /* getönte Fläche (Outlook) */
+
+  /* Text */
+  --color-text-primary:    var(--ink-50);
+  --color-text-secondary:  var(--ink-200);
+  --color-text-tertiary:   var(--ink-400);
+  --color-text-inverse:    var(--night-900);
+  --color-text-link:       var(--neon-pink);
+  --color-text-link-hover: var(--neon-pink-bright);
+  --color-text-on-accent:  var(--night-900);   /* Weiß auf Pink fiele durch (2.5) */
+  --color-text-link-on-tertiary: var(--neon-pink);  /* 6.8:1 — trägt überall */
+
+  /* Rahmen */
+  --color-border-primary:   var(--night-600);
+  --color-border-secondary: var(--night-800);
+  --color-border-strong:    var(--ink-500);    /* Eingabefelder — 5.4:1 */
+  --color-border-focus:     var(--neon-pink);
+
+  /* Akzent */
+  --color-accent:             var(--neon-pink);
+  --color-accent-fill:        var(--neon-pink);
+  --color-accent-fill-hover:  var(--neon-pink-bright);
+  --color-accent-fill-active: var(--neon-pink-deep);
+  --color-accent-quiet:       rgb(249 103 251 / 0.14);
+
+  /* Zweitakzent — die politische Sphäre. Seit dem Trennungs-Entscheid
+     (2026-08-18) trägt Violett die Politik-Gruppe der Expertise: Pink =
+     unternehmerische Welt, Violett = öffentliche. text-Stufe 5.84:1,
+     strong nur für Kanten/Flächen (3.76:1 ≥ 3:1 für Grafik). */
+  --color-accent-second:        var(--neon-violet-text);
+  --color-accent-second-strong: var(--neon-violet);
+  --color-accent-second-quiet:  rgb(105 88 213 / 0.16);
+
+  /* Status */
+  --color-status-success: var(--green-400);
+  --color-status-warning: var(--orange-400);
+  --color-status-error:   var(--red-400);
+  --color-status-info:    var(--neon-cyan);
+
+  /* Overlay */
+  --color-surface-overlay: rgb(5 5 9 / 0.78);
+
+  /* Glühen statt Schatten: Tiefe ist Licht. Die grauen Reststufen bleiben
+     für Overlay/Menü (dort braucht es Abhebung ohne Farbe). */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+  --shadow-md: 0 2px 8px rgb(0 0 0 / 0.55);
+  --shadow-lg: 0 6px 18px rgb(0 0 0 / 0.6);
+  --shadow-xl: 0 10px 28px rgb(0 0 0 / 0.65);
+  --shadow-focus: 0 0 0 3px rgb(249 103 251 / 0.35);
+  --glow-accent:       0 0 24px rgb(249 103 251 / 0.28);
+  --glow-accent-quiet: 0 0 16px rgb(105 88 213 / 0.22);
+
+  /* Bildbehandlung im Hero — Neon-Schein hinter dem runden Portrait */
+  --portrait-glow: radial-gradient(
+    60% 60% at 50% 45%,
+    rgb(249 103 251 / 0.22) 0%,
+    rgb(105 88 213 / 0.14) 45%,
+    transparent 72%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   3. SEMANTISCH — HELL (nur über den Umschalter)
+   Keine Umkehrung, sondern eigene Abstimmung: Fuchsia-700 trägt Text,
+   Link und Knopf (6.32:1); Violett-700 ist der Zweitakzent. Kein
+   prefers-color-scheme-Zwilling mehr — Hell ist ausschließlich Wahl.
+   -------------------------------------------------------------------------- */
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg-primary:      var(--white);
+  --color-bg-secondary:    var(--slate-50);
+  --color-bg-tertiary:     var(--slate-100);
+  --color-bg-inverse:      var(--slate-900);
+  --color-bg-accent-subtle: rgb(109 40 217 / 0.07);
+
+  --color-text-primary:    var(--slate-900);
+  --color-text-secondary:  var(--slate-600);
+  --color-text-tertiary:   var(--slate-500);
+  --color-text-inverse:    var(--slate-50);
+  --color-text-link:       var(--fuchsia-700);
+  --color-text-link-hover: var(--fuchsia-800);
+  --color-text-on-accent:  var(--white);       /* 6.32:1 auf fuchsia-700 */
+  --color-text-link-on-tertiary: var(--fuchsia-700);  /* 5.77:1 — trägt */
+
+  --color-border-primary:   var(--slate-200);
+  --color-border-secondary: var(--slate-100);
+  --color-border-strong:    var(--slate-500);
+  --color-border-focus:     var(--fuchsia-600);
+
+  --color-accent:             var(--fuchsia-700);
+  --color-accent-fill:        var(--fuchsia-700);
+  --color-accent-fill-hover:  var(--fuchsia-800);
+  --color-accent-fill-active: var(--fuchsia-800);
+  --color-accent-quiet:       rgb(192 38 211 / 0.10);
+
+  --color-accent-second:        var(--violet-700);   /* 7.10:1 */
+  --color-accent-second-strong: var(--violet-700);
+  --color-accent-second-quiet:  rgb(109 40 217 / 0.09);
+
+  --color-status-success: var(--green-700);
+  --color-status-warning: var(--orange-700);
+  --color-status-error:   var(--red-700);
+  --color-status-info:    var(--violet-700);
+
+  --color-surface-overlay: rgb(15 23 42 / 0.55);
+
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-md: 0 2px 8px rgb(15 23 42 / 0.08);
+  --shadow-lg: 0 6px 18px rgb(15 23 42 / 0.11);
+  --shadow-xl: 0 10px 28px rgb(15 23 42 / 0.13);
+  --shadow-focus: 0 0 0 3px rgb(192 38 211 / 0.30);
+  --glow-accent:       0 0 24px rgb(192 38 211 / 0.16);
+  --glow-accent-quiet: 0 0 16px rgb(109 40 217 / 0.12);
+
+  --portrait-glow: radial-gradient(
+    60% 60% at 50% 45%,
+    rgb(192 38 211 / 0.12) 0%,
+    rgb(109 40 217 / 0.06) 45%,
+    transparent 72%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   4. TYPOGRAFIE
+
+   Drei Rollen:
+   - Space Grotesk (variable 300–700): Überschriften, Zahlen, Zitate.
+     Geometrisch-technisch; verträgt enges Spacing (−0.02em).
+   - Lato (400/700): Fließtext, Knöpfe, Formulare. 500/600 existieren in
+     Lato nicht; wer „halbfett" braucht, nimmt 700.
+   - ui-monospace (Systemschrift, 0 KB): Label-Ebene — Eyebrows,
+     Bildunterschriften, Zahlensuffixe, der Interaktionshinweis im Hero.
+
+   Selbst gehostet (site/src/styles/fonts.css) — kein Google-Fonts-Link.
+   Grundgröße bleibt 17px (Zielperson Mitte 40, Telefon zwischen Terminen).
+   -------------------------------------------------------------------------- */
+
+:root {
+  --font-family-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-family-body:    "Lato", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-label:   ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --font-family-mono:    var(--font-family-label);
+
+  /* Fließende Skala zwischen 375px und 1280px Viewport-Breite. */
+  --font-size-xs:   0.75rem;                                  /* 12px */
+  --font-size-sm:   0.875rem;                                 /* 14px */
+  --font-size-base: 1.0625rem;                                /* 17px — Fließtext */
+  --font-size-md:   1.125rem;                                 /* 18px */
+  --font-size-lg:   clamp(1.375rem, 1.05rem + 1.1vw, 1.625rem);   /* 22 → 26 — Karten-Titel */
+  --font-size-xl:   clamp(1.625rem, 1.20rem + 1.5vw, 2rem);       /* 26 → 32 — Blockzitat */
+  --font-size-2xl:  clamp(2rem,     1.45rem + 1.9vw, 2.625rem);   /* 32 → 42 — Bereichsüberschrift */
+  --font-size-3xl:  clamp(2.375rem, 1.60rem + 2.7vw, 3.375rem);   /* 38 → 54 — große Aussage */
+  --font-size-4xl:  clamp(2.875rem, 1.70rem + 4.1vw, 4.625rem);   /* 46 → 74 — Hero */
+
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;   /* Space Grotesk (variable) */
+  --font-weight-semibold: 600;   /* Space Grotesk (variable) */
+  --font-weight-bold:     700;
+  --font-weight-extra:    700;
+
+  --line-height-tight:   1.05;   /* Grotesk-Hero verträgt enge Führung */
+  --line-height-snug:    1.2;
+  --line-height-normal:  1.55;
+  --line-height-relaxed: 1.7;
+
+  /* Space Grotesk ist geometrisch — enger als beim Serif, lockerer als
+     die alten −0.03em (die Ligaturfallen bleiben). */
+  --letter-spacing-tighter: -0.02em;
+  --letter-spacing-tight:   -0.01em;
+  --letter-spacing-normal:  0;
+  --letter-spacing-wide:    0.08em;
+  --letter-spacing-wider:   0.14em;   /* Versalien-/Folio-Label */
+}
+
+/* --------------------------------------------------------------------------
+   5. ABSTAND — 8px-Basiseinheit, Skala unverändert
+   -------------------------------------------------------------------------- */
+
+:root {
+  --space-0:  0;
+  --space-1:  0.25rem;   /*   4px */
+  --space-2:  0.5rem;    /*   8px */
+  --space-3:  0.75rem;   /*  12px */
+  --space-4:  1rem;      /*  16px */
+  --space-5:  1.5rem;    /*  24px */
+  --space-6:  2rem;      /*  32px */
+  --space-7:  3rem;      /*  48px */
+  --space-8:  4rem;      /*  64px */
+  --space-9:  6rem;      /*  96px */
+  --space-10: 8rem;      /* 128px */
+  --space-11: 12rem;     /* 192px */
+  --space-12: 16rem;     /* 256px */
+
+  --space-section:       clamp(4rem, 2.4rem + 6.8vw, 8rem);
+  --space-section-tight: clamp(2.5rem, 1.6rem + 3.8vw, 4.5rem);
+}
+
+/* --------------------------------------------------------------------------
+   6. LAYOUT
+
+   RADIEN: zurück aus dem Swiss-Eckigen — Neon-Glas ist gerundet.
+   -------------------------------------------------------------------------- */
+
+:root {
+  --max-width-content: 68ch;
+  --max-width-narrow:  42rem;
+  --max-width-wide:    70rem;
+  --max-width-page:    80rem;
+
+  --gutter: clamp(1.25rem, 0.6rem + 2.6vw, 2.5rem);
+
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+
+  --border-width:        1px;
+  --border-width-strong: 2px;
+  --focus-ring-width:    3px;
+  --focus-ring-offset:   2px;
+
+  /* Strukturelemente (Label-Regel am Eyebrow, Strich am Blockzitat) */
+  --rule-strong: 2px;
+  --pull-quote-rule: 4px;
+  --drop-cap-size: 3.4em;  /* ungenutzt seit v3 — Token bleibt lesbar */
+}
+
+/* --------------------------------------------------------------------------
+   7. BEWEGUNG
+
+   v3 erlaubt Unterhaltung — aber nur im Hero (Tubes, nur Zeigergeräte)
+   und niemals unter Bewegungsreduktion. Karten/Knöpfe heben wieder
+   leicht (Glow + Lift bestätigen den Zustand).
+   -------------------------------------------------------------------------- */
+
+:root {
+  --duration-instant: 50ms;
+  --duration-fast:    150ms;
+  --duration-normal:  250ms;
+  --duration-slow:    400ms;
+  --duration-slower:  600ms;
+
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-in:      cubic-bezier(0.4, 0, 1, 1);
+  --easing-out:     cubic-bezier(0, 0, 0.2, 1);
+
+  --lift-card:   -4px;
+  --lift-button: -2px;
+  --float-distance: 10px;
+  --float-duration: 7s;
+}
+
+/* --------------------------------------------------------------------------
+   8. BREAKPOINTS
+   -------------------------------------------------------------------------- */
+
+:root {
+  --breakpoint-sm:  375px;
+  --breakpoint-md:  768px;
+  --breakpoint-lg:  1024px;
+  --breakpoint-xl:  1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* --------------------------------------------------------------------------
+   9. EBENEN
+   -------------------------------------------------------------------------- */
+
+:root {
+  --z-base:      0;
+  --z-raised:    10;
+  --z-sticky:    100;
+  --z-overlay:   200;
+  --z-modal:     300;
+  --z-skip-link: 400;
+}
+
+/* --------------------------------------------------------------------------
+   10. KOMPONENTEN-TOKENS
+   -------------------------------------------------------------------------- */
+
+:root {
+  --target-min: 44px;
+
+  /* Kopfzeile — dunkles Glas */
+  --header-height:            72px;
+  --header-height-scrolled:   60px;
+  --header-bg:                rgb(8 8 15 / 0.82);
+  --header-blur:              16px;
+
+  /* Knopf — gerundet, Lato 700, leichte Hebung + Glow */
+  --button-height:       48px;
+  --button-height-sm:    44px;   /* nie unter dem Berührungsziel */
+  --button-padding-x:    var(--space-5);
+  --button-radius:       var(--radius-md);
+  --button-font-size:    var(--font-size-base);
+  --button-font-weight:  var(--font-weight-bold);
+
+  /* Eingabefeld */
+  --input-height:     52px;
+  --input-padding-x:  var(--space-4);
+  --input-radius:     var(--radius-md);
+  --input-border:     var(--color-border-strong);
+  --textarea-min-height: 140px;
+
+  /* Karte — dunkles Glas: Fläche + Haarlinie; Hover verstärkt das Licht */
+  --card-padding:    var(--space-6);
+  --card-radius:     var(--radius-lg);
+  --card-bg:         var(--color-bg-secondary);
+  --card-border:     var(--color-border-primary);
+  --card-shadow:       none;
+  --card-shadow-hover: var(--glow-accent-quiet);
+
+  /* Tab-Leiste (Social) */
+  --tab-height:        44px;
+  --tab-radius:        var(--radius-sm);
+  --tab-bg-active:     var(--color-accent-quiet);
+
+  /* Zahlenband — Grotesk-Ziffern (tabular in der Komponente) */
+  --stat-value-size:   clamp(2.375rem, 1.6rem + 2.7vw, 3.375rem);
+  --stat-value-weight: var(--font-weight-semibold);
+
+  /* Einwilligungs-Vorschau */
+  --consent-min-height: 320px;
+  --consent-bg:         var(--color-bg-secondary);
+  --consent-border:     var(--color-border-primary);
+
+  /* Fußzeile — tiefste Nachtstufe, Neon-Akzent */
+  --footer-bg:      var(--night-950);
+  --footer-text:    var(--ink-200);
+  --footer-strong:  var(--white);
+  --footer-muted:   var(--ink-400);
+  --footer-border:  rgb(255 255 255 / 0.12);
+  --footer-accent:  var(--neon-pink);
+
+  /* Tubes-Hero (Canvas-Ebene) */
+  --hero-canvas-opacity: 0.9;
+}
+
+[data-theme="light"] {
+  --header-bg: rgb(255 255 255 / 0.86);
+  --card-bg:   var(--color-bg-primary);
+  --footer-bg:     var(--slate-900);
+  --footer-border: rgb(255 255 255 / 0.14);
+  --footer-accent: var(--fuchsia-600);
+}
+
+/* --------------------------------------------------------------------------
+   11. BEWEGUNGSREDUKTION — vollständig aus, nicht abgeschwächt.
+   Der Tubes-Hero prüft dieselbe Abfrage zusätzlich in JS und lädt dann
+   gar nicht erst.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 1ms;
+    --duration-fast:    1ms;
+    --duration-normal:  1ms;
+    --duration-slow:    1ms;
+    --duration-slower:  1ms;
+    --lift-card:        0px;
+    --lift-button:      0px;
+    --float-distance:   0px;
+    --float-duration:   0s;
+  }
+}

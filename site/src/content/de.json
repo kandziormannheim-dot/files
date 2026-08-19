@@ -1,0 +1,211 @@
+{
+  "_hinweis": "ENTWURF. Alle Texte sind von Claude verfasst und muessen von Martin Kandzior geprueft und freigegeben werden, bevor die Seite live geht. Stellen mit PLATZHALTER enthalten Angaben, die noch nicht bestaetigt sind.",
+  "meta": {
+    "title": "Martin Kandzior — Logistik, Risiko und Politik aus Mannheim",
+    "description": "Martin Kandzior aus Mannheim arbeitet dort, wo Logistik, Risiko und Politik sich überschneiden. 15 Jahre international in Logistik und Finanzbranche. Schreiben Sie mir Ihr Anliegen.",
+    "locale": "de_DE"
+  },
+  "a11y": {
+    "skipLink": "Zum Inhalt springen",
+    "mainNav": "Hauptnavigation",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen",
+    "toLight": "Zur hellen Darstellung wechseln",
+    "toDark": "Zur dunklen Darstellung wechseln",
+    "langSwitch": "Sprache wechseln",
+    "currentLang": "Aktuelle Sprache: Deutsch",
+    "toTop": "Zum Seitenanfang"
+  },
+  "nav": {
+    "expertise": "Expertise",
+    "about": "Über mich",
+    "social": "Social",
+    "events": "Events",
+    "contact": "Kontakt",
+    "cta": "Anfrage senden"
+  },
+  "hero": {
+    "eyebrow": "Mannheim",
+    "name": "Martin Kandzior",
+    "positioning": "Ich arbeite dort, wo Logistik, Risiko und Politik sich überschneiden.",
+    "lead": "Für Entscheider, die für ihr Thema den richtigen Menschen brauchen — nicht die nächste Agentur.",
+    "cta": "Anfrage senden",
+    "ctaSecondary": "Woran ich arbeite",
+    "portraitAlt": "Martin Kandzior, freundlich lächelnd im blauen Sakko",
+    "tubesHint": "Bewegen zeichnet · Klicken mischt die Farben neu"
+  },
+  "proof": {
+    "label": "In Zahlen",
+    "items": [
+      {
+        "value": "15",
+        "suffix": "+",
+        "label": "Jahre Logistik und Finanzbranche, international"
+      },
+      {
+        "value": "350",
+        "suffix": " Tsd. USD",
+        "label": "durchschnittliches Auftragsvolumen"
+      },
+      {
+        "value": "50",
+        "suffix": "",
+        "label": "Mitarbeitende in geführten und begleiteten Teams"
+      }
+    ]
+  },
+  "expertise": {
+    "eyebrow": "Expertise",
+    "title": "Vier Felder, die selten in einer Person zusammenkommen",
+    "lead": "Wer international liefert, muss Ware, Verträge, Kapital und Politik gleichzeitig im Blick haben — und findet dafür üblicherweise vier verschiedene Ansprechpartner. Genau darin liegt der Nutzen.",
+    "pillars": [
+      {
+        "id": "risk",
+        "title": "Logistische Risiken absichern",
+        "body": "Internationale Lieferketten reißen selten an der Stelle, an der man es erwartet. Ich sorge dafür, dass Ware, Verträge und Versicherungsschutz zusammenpassen, bevor der Schaden entsteht — nicht danach."
+      },
+      {
+        "id": "ecommerce",
+        "title": "E-Commerce-Logistik",
+        "body": "Wachstum im Onlinehandel scheitert selten am Marketing. Es scheitert an der Zustellung, an der Retoure und an den Kosten pro Sendung. Ich baue Logistik, die mitwächst, statt auszubremsen."
+      },
+      {
+        "id": "ai",
+        "title": "KI, Robotik & Automatisierung",
+        "body": "Automatisierung scheitert selten an der Technik. Sie scheitert an der Stelle zwischen Prozess und Menschen. Ich bringe KI und Robotik dorthin, wo sie im Betrieb messbar tragen — und benenne ehrlich, wo sie es noch nicht tun."
+      },
+      {
+        "id": "politics",
+        "title": "Wirtschaft & Politik",
+        "body": "Regulierung, Zölle und Standortpolitik sind für Unternehmen keine Randnotiz. Ich bewege mich in beiden Welten und übersetze zwischen unternehmerischer und politischer Logik.",
+        "meta": "Mittelstands- und Wirtschaftsunion (MIT) — Vorstand Mannheim & Nordbaden"
+      }
+    ],
+    "groupBusiness": "Wirtschaft",
+    "groupPolitics": "Politik"
+  },
+  "outlook": {
+    "eyebrow": "Industrie 5.0",
+    "quote": "Keiner muss Angst haben.",
+    "body": [
+      "Automatisierung, künstliche Intelligenz und Robotik verändern gerade, wie in Europa produziert und geliefert wird. Industrie 5.0 heißt: Die Maschine ersetzt den Menschen nicht, sie arbeitet mit ihm.",
+      "Wer heute investiert, entscheidet damit nicht über Stellenabbau, sondern darüber, ob sein Betrieb in zehn Jahren noch wettbewerbsfähig ist. Diese Debatte führe ich gern — auch mit Widerspruch."
+    ],
+    "note": "Das ist eine Haltung, keine Dienstleistung."
+  },
+  "about": {
+    "eyebrow": "Über mich",
+    "title": "Wer hier schreibt",
+    "paragraphs": [
+      "Ich bin seit 15 Jahren in der Logistik und der Finanzbranche zu Hause, überwiegend international. In dieser Zeit habe ich Organisationen und Projekte von Grund auf aufgebaut, Lösungen und Dienstleistungen im Wert von mehreren Millionen US-Dollar verkauft und in Teams mit bis zu 50 Menschen gearbeitet und Verantwortung getragen.",
+      "Mein Zuhause ist Mannheim. Von hier aus arbeite ich an Themen, die selten an einer Stadtgrenze haltmachen: Lieferketten, Absicherung, Automatisierung, Standortpolitik.",
+      "Was mich interessiert, sind die Stellen, an denen zwei Welten aufeinandertreffen und niemand beide Sprachen spricht. Da bin ich am nützlichsten."
+    ],
+    "portraitAlt": "Martin Kandzior vor dem Mannheimer Wasserturm",
+    "portraitCaption": "Mannheim, am Wasserturm"
+  },
+  "social": {
+    "eyebrow": "Social",
+    "title": "Nachprüfbar, nicht behauptet",
+    "lead": "Was auf dieser Seite steht, können Sie an anderer Stelle überprüfen. Hier sind die Profile.",
+    "tabs": [
+      {
+        "id": "linkedin",
+        "label": "LinkedIn",
+        "handle": "in/martin-kandzior",
+        "url": "https://linkedin.com/in/martin-kandzior",
+        "context": "Beiträge zu Logistik, Risiko und Wirtschaftspolitik."
+      },
+      {
+        "id": "x",
+        "label": "X",
+        "handle": "@martinkandzior",
+        "url": "https://x.com/martinkandzior",
+        "context": "Kurze Einordnungen zu aktuellen Entwicklungen."
+      },
+      {
+        "id": "facebook",
+        "label": "Facebook",
+        "handle": "martin.kandzior",
+        "url": "https://facebook.com/martin.kandzior",
+        "context": "Regionales aus Mannheim und der Metropolregion."
+      }
+    ],
+    "consent": {
+      "action": "Beiträge laden",
+      "notice": "Erst mit Ihrem Klick wird eine Verbindung zu {platform} aufgebaut und Ihre IP-Adresse dorthin übertragen. Vorher passiert nichts.",
+      "direct": "Direkt zum Profil",
+      "loading": "Wird geladen …",
+      "error": "Die Beiträge ließen sich nicht laden. Der direkte Weg zum Profil funktioniert weiterhin."
+    },
+    "postsLabel": "Neueste Beiträge",
+    "postsOpen": "Beitrag auf {platform} ansehen"
+  },
+  "events": {
+    "eyebrow": "Events",
+    "title": "Kommende Veranstaltungen",
+    "lead": "Manches lässt sich leichter im Gespräch klären als per Formular.",
+    "consent": {
+      "action": "Termine laden",
+      "notice": "Erst mit Ihrem Klick wird eine Verbindung zu Ticket Tailor aufgebaut und Ihre IP-Adresse dorthin übertragen.",
+      "direct": "Alle Termine bei Ticket Tailor",
+      "loading": "Wird geladen …",
+      "error": "Die Termine ließen sich nicht laden. Der direkte Weg zu Ticket Tailor funktioniert weiterhin."
+    }
+  },
+  "contact": {
+    "eyebrow": "Kontakt",
+    "title": "Lust, was Großes zu starten?",
+    "lead": "Zwei Sätze zu Ihrem Anliegen genügen. Ich melde mich innerhalb von zwei Werktagen.",
+    "form": {
+      "name": {
+        "label": "Name",
+        "placeholder": "Vor- und Nachname",
+        "error": "Bitte tragen Sie Ihren Namen ein."
+      },
+      "email": {
+        "label": "E-Mail",
+        "placeholder": "name@unternehmen.de",
+        "error": "Bitte geben Sie eine vollständige E-Mail-Adresse an."
+      },
+      "message": {
+        "label": "Ihr Anliegen",
+        "placeholder": "Worum geht es konkret?",
+        "hint": "Zwei Sätze reichen völlig.",
+        "error": "Bitte beschreiben Sie kurz Ihr Anliegen."
+      },
+      "submit": "Anfrage senden",
+      "sending": "Wird gesendet …",
+      "successTitle": "Angekommen.",
+      "successBody": "Ich melde mich innerhalb von zwei Werktagen bei Ihnen.",
+      "errorTitle": "Das hat nicht geklappt.",
+      "errorBody": "Ihre Eingaben sind noch da. Schreiben Sie mir sonst direkt an {email}."
+    },
+    "info": {
+      "emailLabel": "E-Mail",
+      "email": "mail@kandzior.de",
+      "locationLabel": "Standort",
+      "location": "Mannheim, Metropolregion Rhein-Neckar",
+      "profilesLabel": "Profile"
+    }
+  },
+  "footer": {
+    "tagline": "Logistik, Risiko und Politik — aus Mannheim.",
+    "imprint": "Impressum",
+    "imprintPath": "/impressum",
+    "privacy": "Datenschutz",
+    "privacyPath": "/datenschutz",
+    "copyright": "Martin Kandzior"
+  },
+  "legal": {
+    "imprintTitle": "Impressum",
+    "privacyTitle": "Datenschutzerklärung",
+    "authoritative": "",
+    "back": "Zurück zur Startseite"
+  },
+  "notFound": {
+    "title": "Diese Seite gibt es nicht",
+    "body": "Der Link führt ins Leere. Vielleicht hilft der Weg zurück zum Anfang.",
+    "cta": "Zur Startseite"
+  }
+}

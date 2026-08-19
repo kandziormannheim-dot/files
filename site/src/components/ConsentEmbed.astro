@@ -1,0 +1,383 @@
+---
+/**
+ * Einwilligungs-Vorschau vor einer Einbettung von Drittanbietern.
+ *
+ * DAS PROBLEM
+ * Ein eingebettetes LinkedIn-, X-, Facebook- oder Ticket-Tailor-Widget lädt
+ * beim Seitenaufruf ein fremdes Skript und überträgt dabei die IP-Adresse des
+ * Besuchers an den Anbieter. In Deutschland ist das einwilligungspflichtig —
+ * also Cookie-Banner. Auf einer Seite, deren einziger Zweck 90 Sekunden
+ * Vertrauen sind, ist ein Einwilligungsdialog vor dem ersten Wort das
+ * Gegenteil dessen, was sie erreichen soll.
+ *
+ * DIE LÖSUNG
+ * Zwei Klicks. Zuerst erscheint diese gestaltete Vorschaukarte — reines HTML
+ * vom eigenen Server. Erst der ausdrückliche Klick des Besuchers lädt das
+ * fremde Skript. Ohne Klick verlässt kein Byte den eigenen Server, es gibt
+ * nichts einzuwilligen, und das Banner entfällt ersatzlos.
+ *
+ * Neben dem Knopf steht immer ein direkter Link zum Anbieter. Wer nicht laden
+ * will, kommt trotzdem ans Ziel — das ist der Unterschied zwischen einer
+ * Einwilligung und einer Sperre.
+ *
+ * ZUSTÄNDE: Ruhe → Laden → Geladen, sowie Fehlschlag aus jedem Zustand.
+ */
+export interface Props {
+  /** Eindeutig auf der Seite, verbindet Knopf, Hinweis und Zielbereich. */
+  id: string;
+  /** Name des Anbieters, erscheint in Überschrift und Einwilligungstext. */
+  platform: string;
+  /** Ein Satz dazu, was den Besucher nach dem Laden erwartet. */
+  context: string;
+  /** Einwilligungstext, darf `{platform}` enthalten. */
+  notice: string;
+  /** Beschriftung des Knopfes, z. B. „Beiträge laden". */
+  action: string;
+  /** Beschriftung des Direktlinks. */
+  direct: string;
+  directUrl: string;
+  loading: string;
+  error: string;
+  /**
+   * Was beim Klick geladen wird. Mehrere Einträge sind erlaubt: LinkedIn
+   * bietet keinen einbettbaren Profil-Feed, sondern nur einzelne Beiträge —
+   * ein Tab besteht dort aus zwei bis drei iframes.
+   */
+  embed: Einbettung | Einbettung[];
+  icon?: "embed" | "calendar";
+}
+
+type Einbettung =
+  | { type: "script"; src: string; attrs?: Record<string, string> }
+  | { type: "iframe"; src: string; title: string; height?: number };
+
+const {
+  id,
+  platform,
+  context,
+  notice,
+  action,
+  direct,
+  directUrl,
+  loading,
+  error,
+  embed,
+  icon = "embed",
+} = Astro.props;
+
+const noticeText = notice.replace("{platform}", platform);
+---
+
+<div
+  class="consent"
+  id={id}
+  data-consent
+  data-embed={JSON.stringify(embed)}
+  data-loading={loading}
+  data-error={error}
+  data-state="idle"
+>
+  {/* Vorschau — reines HTML vom eigenen Server, keine Fremdanfrage. */}
+  <div class="consent__preview" data-consent-preview>
+    <span class="consent__icon" aria-hidden="true">
+      {
+        icon === "calendar" ? (
+          <svg viewBox="0 0 24 24">
+            <rect x="3.2" y="5.2" width="17.6" height="15.6" rx="2.4" />
+            <path d="M3.2 10h17.6M8 3.2v4M16 3.2v4" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24">
+            <rect x="2.8" y="4.6" width="18.4" height="14.8" rx="2.4" />
+            <path d="M2.8 8.6h18.4" />
+            <path d="M10 12.4v3.6l3.4-1.8z" />
+          </svg>
+        )
+      }
+    </span>
+
+    <p class="consent__platform">{platform}</p>
+    <p class="consent__context">{context}</p>
+    <p class="consent__notice" id={`${id}-notice`}>{noticeText}</p>
+
+    <div class="consent__actions">
+      <button
+        type="button"
+        class="button button--primary"
+        data-consent-load
+        aria-describedby={`${id}-notice`}
+        aria-controls={`${id}-mount`}
+      >
+        {action}
+      </button>
+      <a class="consent__direct" href={directUrl} target="_blank" rel="noopener">
+        {direct}
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M5.5 10.5 10.5 5.5M6.2 5.5h4.3v4.3" />
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  {
+    /* Zielbereich. Bleibt leer, bis geklickt wurde — mit einer Ausnahme:
+       Über den Slot kann vorbereitetes Markup hineingelegt werden, das der
+       Anbieter erwartet (die X-Timeline etwa rendert in einen Anker, den ihr
+       Skript sucht). Das ist eigenes HTML vom eigenen Server und löst keine
+       Fremdanfrage aus. */
+  }
+  <div
+    class="consent__mount"
+    id={`${id}-mount`}
+    data-consent-mount
+    tabindex="-1"
+    role="region"
+    aria-label={platform}
+  >
+    <slot name="mount" />
+  </div>
+
+  {/* Zustandsmeldungen für Vorlesesoftware. */}
+  <p class="consent__status" data-consent-status role="status" aria-live="polite">
+    <span class="visually-hidden" data-consent-status-text></span>
+  </p>
+</div>
+
+<style>
+  .consent {
+    position: relative;
+  }
+
+  .consent__preview {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    min-height: var(--consent-min-height);
+    padding: var(--card-padding);
+    background-color: var(--consent-bg);
+    border: var(--border-width) solid var(--consent-border);
+    border-radius: var(--card-radius);
+    justify-content: center;
+  }
+
+  .consent[data-state="loaded"] .consent__preview {
+    display: none;
+  }
+
+  .consent[data-state="loading"] .consent__preview {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .consent__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-bg-accent-subtle);
+    color: var(--color-accent);
+  }
+
+  .consent__icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .consent__platform {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+
+  .consent__context {
+    max-width: 46ch;
+    color: var(--color-text-secondary);
+  }
+
+  .consent__notice {
+    max-width: 56ch;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+  }
+
+  .consent__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+    margin-top: var(--space-2);
+  }
+
+  .consent__direct {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-link);
+    text-decoration: none;
+  }
+
+  .consent__direct:hover {
+    color: var(--color-text-link-hover);
+  }
+
+  .consent__direct svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .consent__mount {
+    display: none;
+  }
+
+  .consent[data-state="loading"] .consent__mount,
+  .consent[data-state="loaded"] .consent__mount {
+    display: block;
+  }
+
+  .consent__mount:focus-visible {
+    outline: var(--focus-ring-width) solid var(--color-border-focus);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  /* Sichtbare Fehlermeldung; die Vorschau bleibt daneben stehen, damit der
+     Direktlink erreichbar ist. */
+  .consent__status {
+    margin-top: var(--space-3);
+    font-size: var(--font-size-sm);
+    color: var(--color-status-error);
+  }
+
+  .consent:not([data-state="error"]) .consent__status {
+    display: none;
+  }
+</style>
+
+<script>
+  type Einbettung =
+    | { type: "script"; src: string; attrs?: Record<string, string> }
+    | { type: "iframe"; src: string; title: string; height?: number };
+
+  /** Nach dieser Zeit gilt eine Einbettung als gescheitert. */
+  const GEDULD = 10_000;
+
+  document.querySelectorAll<HTMLElement>("[data-consent]").forEach((wurzel) => {
+    const knopf = wurzel.querySelector<HTMLButtonElement>("[data-consent-load]");
+    const ziel = wurzel.querySelector<HTMLElement>("[data-consent-mount]");
+    const meldung = wurzel.querySelector<HTMLElement>("[data-consent-status]");
+    const meldungstext = wurzel.querySelector<HTMLElement>("[data-consent-status-text]");
+    if (!knopf || !ziel || !meldung || !meldungstext) return;
+
+    // Die Texte stehen als Datenattribute am Wurzelelement. Der erste Entwurf
+    // legte sie in ein <template> — selbstschließend geschrieben, was es in
+    // HTML nicht gibt. Der Parser zog daraufhin dieses <script> mit in das
+    // Template hinein, und Inhalt eines <template> wird nie ausgeführt: ein
+    // Knopf ohne Wirkung, ohne eine einzige Fehlermeldung.
+    const worte = {
+      loading: wurzel.dataset.loading ?? "",
+      error: wurzel.dataset.error ?? "",
+    };
+
+    const setze = (zustand: "idle" | "loading" | "loaded" | "error") => {
+      wurzel.dataset.state = zustand;
+    };
+
+    const scheitern = () => {
+      setze("error");
+      meldung.textContent = worte.error ?? "";
+      knopf.disabled = false;
+    };
+
+    knopf.addEventListener(
+      "click",
+      () => {
+        let konfiguration: Einbettung | Einbettung[];
+        try {
+          konfiguration = JSON.parse(wurzel.dataset.embed ?? "");
+        } catch {
+          scheitern();
+          return;
+        }
+        const teile = Array.isArray(konfiguration) ? konfiguration : [konfiguration];
+        if (teile.length === 0) {
+          scheitern();
+          return;
+        }
+
+        setze("loading");
+        knopf.disabled = true;
+        meldungstext.textContent = worte.loading ?? "";
+
+        // Erfolg, sobald ALLE Teile geladen sind; ein einzelner Fehlschlag
+        // bricht das Ganze ab. Halb geladene Tabs sähen kaputt aus.
+        let offen = teile.length;
+        let erledigt = false;
+        const geschafft = () => {
+          if (erledigt) return;
+          offen -= 1;
+          if (offen > 0) return;
+          erledigt = true;
+          window.clearTimeout(wecker);
+          setze("loaded");
+          meldungstext.textContent = "";
+          // Fokus in den neuen Inhalt: Wer per Tastatur geladen hat, steht
+          // sonst auf einem Knopf, den es nicht mehr gibt.
+          ziel.focus();
+        };
+        const misslungen = () => {
+          if (erledigt) return;
+          erledigt = true;
+          window.clearTimeout(wecker);
+          scheitern();
+        };
+
+        // Ein Widget, das lädt, aber nichts rendert, meldet sich nie zurück.
+        const wecker = window.setTimeout(misslungen, GEDULD);
+
+        for (const teil of teile) {
+          if (teil.type === "iframe") {
+            const rahmen = document.createElement("iframe");
+            rahmen.src = teil.src;
+            rahmen.title = teil.title;
+            rahmen.loading = "lazy";
+            rahmen.style.width = "100%";
+            rahmen.style.border = "0";
+            if (teil.height) rahmen.style.height = `${teil.height}px`;
+            rahmen.addEventListener("load", geschafft);
+            rahmen.addEventListener("error", misslungen);
+            ziel.appendChild(rahmen);
+          } else {
+            const skript = document.createElement("script");
+            skript.src = teil.src;
+            skript.async = true;
+            for (const [name, wert] of Object.entries(teil.attrs ?? {})) {
+              skript.setAttribute(name, wert);
+            }
+            skript.addEventListener("load", geschafft);
+            skript.addEventListener("error", misslungen);
+            // In den Zielbereich hängen, nicht in den Kopf: Die Widgets der
+            // Anbieter rendern an die Stelle ihres eigenen Skript-Elements.
+            ziel.appendChild(skript);
+          }
+        }
+      },
+      { once: false },
+    );
+  });
+</script>

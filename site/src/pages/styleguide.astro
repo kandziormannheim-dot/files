@@ -1,0 +1,502 @@
+---
+/**
+ * Musterseite — Nachweis, dass das Token-System aus Phase 4 trägt.
+ *
+ * Zeigt jede Typo-Stufe, jede semantische Farbe, beide Knopf-Varianten, alle
+ * Formularzustände, Karten und Schattenebenen. Nicht Teil der öffentlichen
+ * Seite: von Suchmaschinen ausgenommen und nicht verlinkt.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ConsentEmbed from "../components/ConsentEmbed.astro";
+
+const typeScale = [
+  ["--font-size-4xl", "4xl", "Hero", "Martin Kandzior"],
+  ["--font-size-3xl", "3xl", "Große Aussage", "Keiner muss Angst haben."],
+  ["--font-size-2xl", "2xl", "Bereichsüberschrift", "Expertise"],
+  ["--font-size-xl", "xl", "Blockzitat", "Logistik, Risiko und Politik"],
+  ["--font-size-lg", "lg", "Karten-Titel", "E-Commerce-Logistik"],
+  ["--font-size-md", "md", "Hervorgehoben", "Ein Satz mit Nachdruck."],
+  ["--font-size-base", "base", "Fließtext (17px)", "Der Grundtext der Seite. Größer als üblich, weil die Zielperson Mitte 40 ist und zwischen zwei Terminen auf dem Telefon liest."],
+  ["--font-size-sm", "sm", "Label, Bildunterschrift", "Bildunterschrift"],
+  ["--font-size-xs", "xs", "Rechtszeile", "Impressum · Datenschutz"],
+] as const;
+
+const surfaces = [
+  ["--color-bg-primary", "bg-primary", "Grundfläche"],
+  ["--color-bg-secondary", "bg-secondary", "Bandsektion, Karte"],
+  ["--color-bg-tertiary", "bg-tertiary", "Eingabefeld"],
+  ["--color-bg-accent-subtle", "bg-accent-subtle", "Hinweisfläche"],
+  ["--color-bg-inverse", "bg-inverse", "Fußzeile"],
+] as const;
+
+const textTones = [
+  ["--color-text-primary", "text-primary", "Fließtext", "18.2:1 dunkel · 17.85:1 hell"],
+  ["--color-text-secondary", "text-secondary", "Zurückgenommen", "11.5:1 dunkel · 7.58:1 hell"],
+  ["--color-text-tertiary", "text-tertiary", "Platzhalter", "7.9:1 dunkel · 4.76:1 hell"],
+  ["--color-text-link", "text-link", "Link und Akzenttext (Neon-Pink)", "7.95:1 dunkel · 6.32:1 hell"],
+] as const;
+
+const shadows = ["--shadow-sm", "--shadow-md", "--shadow-lg", "--shadow-xl"] as const;
+
+const spacing = [
+  "--space-1", "--space-2", "--space-3", "--space-4", "--space-5",
+  "--space-6", "--space-7", "--space-8", "--space-9",
+] as const;
+
+const radii = ["--radius-sm", "--radius-md", "--radius-lg", "--radius-xl"] as const;
+---
+
+<BaseLayout
+  title="Musterseite"
+  description="Nachweis des Token-Systems v3 (Neon Flow): Typografie, Farben, Komponenten in beiden Themes."
+  noIndex={true}
+>
+  <header class="sg-header">
+    <div class="container">
+      <p class="eyebrow">kandzior.de · Phase 4</p>
+      <h1>Musterseite</h1>
+      <p class="prose sg-lead">
+        Neon Flow (v3, dark-first). Jeder Wert unten stammt aus
+        <code>DESIGN_TOKENS.css</code> — nichts ist hartkodiert. Der Schalter
+        rechts wechselt das Theme; jede Fläche muss in beiden bestehen.
+      </p>
+      <button type="button" id="theme-demo" class="button button--secondary button--sm">
+        Theme wechseln
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Typografie -->
+    <section class="section container" aria-labelledby="t-type">
+      <h2 id="t-type">Typografie</h2>
+      <p class="prose sg-note">
+        Plus Jakarta Sans für Überschriften, Be Vietnam Pro für Fließtext.
+        Selbst gehostet, 48 KB für Deutsch und Englisch.
+      </p>
+      <div class="sg-stack">
+        {typeScale.map(([token, name, role, sample]) => (
+          <div class="sg-row">
+            <div class="sg-meta">
+              <code>{name}</code>
+              <span>{role}</span>
+            </div>
+            <p class="sg-sample" style={`font-size: var(${token});`}>{sample}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Flächen -->
+    <section class="section section--banded" aria-labelledby="t-surface">
+      <div class="container">
+        <h2 id="t-surface">Flächen</h2>
+        <div class="sg-grid">
+          {surfaces.map(([token, name, role]) => (
+            <div class="sg-swatch">
+              <div class="sg-swatch__chip" style={`background: var(${token});`}></div>
+              <code>{name}</code>
+              <span>{role}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Text und Akzent -->
+    <section class="section container" aria-labelledby="t-text">
+      <h2 id="t-text">Text und Akzent</h2>
+      <div class="sg-stack">
+        {textTones.map(([token, name, role, ratio]) => (
+          <div class="sg-row">
+            <div class="sg-meta">
+              <code>{name}</code>
+              <span>{ratio}</span>
+            </div>
+            <p class="sg-sample sg-sample--body" style={`color: var(${token});`}>
+              {role} — Lieferketten absichern, bevor sie reißen.
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div class="sg-callout">
+        <h3>Die Markenfarbe trägt selbst</h3>
+        <p>
+          <strong style="color: var(--color-accent);">#f967fb</strong>
+          (Neon-Pink, aus der Röhren-Konfiguration der Vorlage) erreicht
+          7,95:1 auf dem Nachtgrund — die Marke darf direkt Text, Link und
+          Knopffüllung sein; auf der Füllung steht dunkle Schrift (Weiß
+          fiele mit 2,5:1 durch). Violett <code>#6958d5</code> ist mit
+          3,76:1 nur groß/grafisch zulässig; in Textgröße gilt
+          <code>#8b7ce8</code>. Im hellen Theme trägt
+          <code>fuchsia-700</code> (6,32:1).
+        </p>
+        <p class="sg-accent-demo">So groß ist sie zulässig.</p>
+      </div>
+    </section>
+
+    <!-- Knöpfe -->
+    <section class="section section--banded" aria-labelledby="t-button">
+      <div class="container">
+        <h2 id="t-button">Knöpfe</h2>
+        <p class="prose sg-note">
+          Zwei Varianten. Pro Bildschirmhöhe existiert genau eine primäre —
+          sonst gibt es keine Hierarchie mehr.
+        </p>
+        <div class="sg-inline">
+          <button class="button button--primary">Anfrage senden</button>
+          <button class="button button--secondary">Mehr erfahren</button>
+          <button class="button button--primary button--sm">Klein</button>
+          <button class="button button--primary" disabled>Gesperrt</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Formular -->
+    <section class="section container" aria-labelledby="t-form">
+      <h2 id="t-form">Formularzustände</h2>
+      <div class="sg-form">
+        <div class="field">
+          <label class="field__label" for="d-name">Name</label>
+          <input class="field__control" id="d-name" type="text" placeholder="Vor- und Nachname" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="d-mail">E-Mail</label>
+          <input
+            class="field__control"
+            id="d-mail"
+            type="email"
+            value="keine-adresse"
+            aria-invalid="true"
+            aria-describedby="d-mail-err"
+          />
+          <p class="field__error" id="d-mail-err">
+            Bitte eine vollständige E-Mail-Adresse angeben.
+          </p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="d-msg">Ihr Anliegen</label>
+          <textarea class="field__control" id="d-msg" placeholder="Zwei Sätze genügen."></textarea>
+          <p class="field__hint">Worum geht es konkret?</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Karten und Schatten -->
+    <section class="section section--banded" aria-labelledby="t-card">
+      <div class="container">
+        <h2 id="t-card">Karten und Tiefe</h2>
+        <p class="prose sg-note">
+          Neon: Tiefe ist Licht. Karten sind dunkles Glas mit Haarlinie;
+          der Hover wechselt die Kante auf die Marke, hebt leicht und lässt
+          die Karte glühen — bei Hover <em>und</em> Tastaturfokus.
+        </p>
+        <div class="sg-grid sg-grid--cards">
+          <article class="card card--interactive">
+            <h3>Logistische Risiken</h3>
+            <p>Hebung um 4px. Tabulator hierher, der Effekt ist derselbe.</p>
+            <p><a href="#t-card">Fokussierbarer Link</a></p>
+          </article>
+          <article class="card card--interactive">
+            <h3>E-Commerce-Logistik</h3>
+            <p>Bei Bewegungsreduktion bleibt die Karte ruhig — vollständig, nicht abgeschwächt.</p>
+            <p><a href="#t-card">Fokussierbarer Link</a></p>
+          </article>
+        </div>
+
+        <div class="sg-grid sg-grid--shadows">
+          {shadows.map((token) => (
+            <div class="sg-shadow" style={`box-shadow: var(${token});`}>
+              <code>{token.replace("--shadow-", "")}</code>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Einwilligungs-Vorschau -->
+    <section class="section section--banded" aria-labelledby="t-consent">
+      <div class="container container--wide">
+        <h2 id="t-consent">Einwilligungs-Vorschau</h2>
+        <p class="prose sg-note">
+          Die Karte links lädt ein Skript, die rechte einen iframe. In beiden
+          Fällen geht <strong>vor dem Klick keine einzige Anfrage</strong> an
+          einen fremden Server — das ist der Grund, warum diese Seite ohne
+          Cookie-Banner auskommt. Der Direktlink steht immer daneben:
+          Einwilligung, nicht Sperre.
+        </p>
+        <div class="sg-grid sg-grid--cards">
+          <ConsentEmbed
+            id="demo-script"
+            platform="Ticket Tailor"
+            context="Kommende Veranstaltungen, direkt vom Anbieter."
+            notice="Erst mit Ihrem Klick wird eine Verbindung zu {platform} aufgebaut und Ihre IP-Adresse dorthin übertragen. Vorher passiert nichts."
+            action="Termine laden"
+            direct="Alle Termine bei Ticket Tailor"
+            directUrl="https://buytickets.at/mkevents1"
+            loading="Wird geladen …"
+            error="Die Termine ließen sich nicht laden. Der direkte Weg funktioniert weiterhin."
+            icon="calendar"
+            embed={{
+              type: "script",
+              src: "https://cdn.tickettailor.com/js/widgets/min/widget.js",
+              attrs: {
+                "data-url": "https://www.tickettailor.com/all-tickets/mkevents1/",
+                "data-type": "inline",
+              },
+            }}
+          />
+          <ConsentEmbed
+            id="demo-iframe"
+            platform="LinkedIn"
+            context="Ausgewählte Beiträge zu Logistik, Risiko und Wirtschaftspolitik."
+            notice="Erst mit Ihrem Klick wird eine Verbindung zu {platform} aufgebaut und Ihre IP-Adresse dorthin übertragen. Vorher passiert nichts."
+            action="Beiträge laden"
+            direct="Direkt zum Profil"
+            directUrl="https://www.linkedin.com/"
+            loading="Wird geladen …"
+            error="Die Beiträge ließen sich nicht laden. Der direkte Weg zum Profil funktioniert weiterhin."
+            embed={{
+              type: "iframe",
+              src: "https://www.linkedin.com/embed/feed/update/urn:li:share:0",
+              title: "LinkedIn",
+              height: 420,
+            }}
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Abstand und Radien -->
+    <section class="section container" aria-labelledby="t-space">
+      <h2 id="t-space">Abstand und Rundung</h2>
+      <div class="sg-bars">
+        {spacing.map((token) => (
+          <div class="sg-bar">
+            <div class="sg-bar__fill" style={`width: var(${token});`}></div>
+            <code>{token.replace("--space-", "")}</code>
+          </div>
+        ))}
+      </div>
+      <div class="sg-inline sg-inline--radii">
+        {radii.map((token) => (
+          <div class="sg-radius" style={`border-radius: var(${token});`}>
+            <code>{token.replace("--radius-", "")}</code>
+          </div>
+        ))}
+      </div>
+    </section>
+  </main>
+
+  <footer class="sg-footer">
+    <div class="container">
+      <p class="sg-note">
+        Musterseite, nicht Teil der öffentlichen Website. Von Suchmaschinen
+        ausgenommen und aus keiner Navigation verlinkt.
+      </p>
+    </div>
+  </footer>
+</BaseLayout>
+
+<script>
+  // Nur für die Musterseite. Der echte Umschalter entsteht in Aufgabe F3.
+  document.getElementById("theme-demo")?.addEventListener("click", () => {
+    const root = document.documentElement;
+    const current =
+      root.getAttribute("data-theme") ??
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const next = current === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("theme", next);
+    } catch {
+      /* gesperrter Speicher: Wechsel gilt nur für diese Sitzung */
+    }
+  });
+</script>
+
+<style>
+  .sg-header {
+    padding-block: var(--space-8) var(--space-7);
+    border-bottom: var(--border-width) solid var(--color-border-primary);
+  }
+
+  .sg-header .button {
+    margin-top: var(--space-5);
+  }
+
+  .sg-lead {
+    margin-top: var(--space-4);
+    color: var(--color-text-secondary);
+  }
+
+  .sg-note {
+    margin-top: var(--space-3);
+    color: var(--color-text-secondary);
+  }
+
+  .sg-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    margin-top: var(--space-6);
+  }
+
+  .sg-row {
+    display: grid;
+    gap: var(--space-2);
+    padding-bottom: var(--space-5);
+    border-bottom: var(--border-width) solid var(--color-border-secondary);
+  }
+
+  .sg-meta {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .sg-meta span {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+  }
+
+  .sg-sample {
+    font-family: var(--font-family-display);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-snug);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+
+  .sg-sample--body {
+    font-family: var(--font-family-body);
+    font-weight: var(--font-weight-normal);
+    font-size: var(--font-size-base);
+    letter-spacing: var(--letter-spacing-normal);
+  }
+
+  code {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    padding: 0.15em 0.45em;
+    background-color: var(--color-bg-tertiary);
+    border-radius: var(--radius-sm);
+  }
+
+  .sg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-5);
+    margin-top: var(--space-6);
+  }
+
+  .sg-grid--cards {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .sg-grid--shadows {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    margin-top: var(--space-8);
+  }
+
+  .sg-swatch {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: flex-start;
+  }
+
+  .sg-swatch__chip {
+    width: 100%;
+    height: 84px;
+    border: var(--border-width) solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+  }
+
+  .sg-swatch span {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+  }
+
+  .sg-callout {
+    margin-top: var(--space-7);
+    padding: var(--space-6);
+    background-color: var(--color-bg-accent-subtle);
+    border-radius: var(--radius-lg);
+    max-width: var(--max-width-content);
+  }
+
+  .sg-callout p {
+    margin-top: var(--space-3);
+  }
+
+  .sg-accent-demo {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-accent);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+
+  .sg-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    align-items: center;
+    margin-top: var(--space-6);
+  }
+
+  .sg-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    max-width: var(--max-width-narrow);
+    margin-top: var(--space-6);
+  }
+
+  .sg-shadow {
+    display: grid;
+    place-items: center;
+    height: 96px;
+    background-color: var(--color-bg-primary);
+    border-radius: var(--radius-lg);
+  }
+
+  .sg-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+  }
+
+  .sg-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .sg-bar__fill {
+    height: 14px;
+    background-color: var(--color-accent);
+    border-radius: var(--radius-sm);
+  }
+
+  .sg-inline--radii {
+    margin-top: var(--space-7);
+  }
+
+  .sg-radius {
+    display: grid;
+    place-items: center;
+    width: 104px;
+    height: 104px;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-width-strong) solid var(--color-accent);
+  }
+
+  .sg-footer {
+    padding-block: var(--space-7);
+    border-top: var(--border-width) solid var(--color-border-primary);
+  }
+</style>

@@ -1,0 +1,224 @@
+---
+/**
+ * Portrait mit Neon-Schein.
+ *
+ * Liegt die Bilddatei im Projekt, wird sie verwendet. Fehlt sie, erscheint
+ * eine erkennbare Platzhalterfläche im richtigen Seitenverhältnis — die
+ * Komposition stimmt dadurch schon jetzt, und der spätere Austausch ist ein
+ * Dateikopiervorgang ohne Codeänderung.
+ *
+ * Der Hero zeigt den Freisteller (transparentes WebP, seit 2026-08-19
+ * vorhanden): Die Person steht direkt über dem Neon-Schein, ohne Maske
+ * und ohne Kante — die ursprünglich geplante Komposition.
+ */
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+export interface Props {
+  /** `cutout` = freigestellt mit Schein (Hero), `full` = ganzes Foto (Über mich). */
+  variant: "cutout" | "full";
+  alt: string;
+  /** Nur beim Hero: Bild vorrangig laden, es steht über der Falz. */
+  priority?: boolean;
+  /** Sichtbare Bildunterschrift. */
+  caption?: string;
+  class?: string;
+}
+
+const {
+  variant,
+  alt,
+  priority = false,
+  caption,
+  class: className,
+} = Astro.props;
+
+const files = {
+  /* Seitenverhältnis = echte Pixelmaße der Datei — das reserviert den
+     Platz vor dem Laden exakt und hält den Layoutsprung bei null. */
+  cutout: { src: "/assets/portrait-freigestellt.webp", ratio: "800 / 1052" },
+  full: { src: "/assets/portrait-wasserturm.webp", ratio: "2 / 3" },
+} as const;
+
+const file = files[variant];
+const exists = existsSync(resolve(process.cwd(), `public${file.src}`));
+---
+
+<figure
+  class:list={["portrait", `portrait--${variant}`, className]}
+  style={`--portrait-ratio: ${file.ratio};`}
+>
+  {variant === "cutout" && <span class="portrait__glow" aria-hidden="true" />}
+
+  {
+    exists ? (
+      <img
+        class="portrait__image"
+        src={file.src}
+        alt={alt}
+        loading={priority ? "eager" : "lazy"}
+        fetchpriority={priority ? "high" : "auto"}
+        decoding="async"
+      />
+    ) : (
+      <div class="portrait__placeholder" role="img" aria-label={alt}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8.4" r="4" />
+          <path d="M3.6 21.2a8.4 8.4 0 0 1 16.8 0" />
+        </svg>
+        <span>Portrait folgt</span>
+        <code>{file.src.replace("/assets/", "")}</code>
+      </div>
+    )
+  }
+
+  {caption && <figcaption class="portrait__caption">{caption}</figcaption>}
+</figure>
+
+<style>
+  .portrait {
+    position: relative;
+    margin: 0;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  /* Der Schein liegt HINTER dem runden Bild und ist größer als es — er
+     soll wie Licht wirken, das von hinten kommt, nicht wie ein Rahmen.
+     Symmetrisch, weil das Bild jetzt ein Kreis ist. */
+  .portrait__glow {
+    position: absolute;
+    inset: -12%;
+    background: var(--portrait-glow);
+    border-radius: var(--radius-full);
+    pointer-events: none;
+  }
+
+  .portrait__image,
+  .portrait__placeholder {
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--portrait-ratio);
+    object-fit: cover;
+  }
+
+  /* Freisteller: keine Maske, keine Kante — die Transparenz der Datei
+     ist die Silhouette, der Schein dahinter das Licht. object-fit cover
+     würde bei Transparenz nichts beschneiden, contain ist ehrlicher.
+     Der Verlauf am unteren Rand löst die harte Schnittkante des Fotos
+     auf — die Person endet im Licht, nicht an einer Linie. */
+  .portrait--cutout .portrait__image {
+    object-fit: contain;
+    -webkit-mask-image: linear-gradient(to bottom, #000 84%, transparent 99%);
+    mask-image: linear-gradient(to bottom, #000 84%, transparent 99%);
+  }
+
+  .portrait--full .portrait__image,
+  .portrait--full .portrait__placeholder {
+    /* Ruhige Kante: Haarlinie plus Token-Rundung — die Karte glueht
+       nicht, das Foto soll selbst sprechen. */
+    border-radius: var(--radius-xl);
+    border: var(--border-width) solid var(--color-border-primary);
+  }
+
+  /* Bildunterschrift im Print-Stil: Haarlinie, Mono, Versalien — die
+     Editorial-Meta-Ebene. */
+  .portrait__caption {
+    margin-top: var(--space-3);
+    padding-top: var(--space-2);
+    border-top: var(--border-width) solid var(--color-border-primary);
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Ruhebewegung: langsam, klein, ohne Umkehrpunkt-Ruck. Sie soll auffallen,
+     wenn man hinsieht, und nicht, wenn man liest. */
+  .portrait--cutout .portrait__image,
+  .portrait--cutout .portrait__placeholder {
+    animation: portrait-float var(--float-duration) var(--easing-default) infinite
+      alternate;
+  }
+
+  @keyframes portrait-float {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(calc(-1 * var(--float-distance)));
+    }
+  }
+
+  /* Vollständig aus, nicht abgeschwächt. */
+  @media (prefers-reduced-motion: reduce) {
+    .portrait--cutout .portrait__image,
+    .portrait--cutout .portrait__placeholder {
+      animation: none;
+    }
+  }
+
+  .portrait__placeholder {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: var(--space-2);
+    /* Ohne dies bestimmt die Beschriftung die Mindestbreite der Fläche: Sie
+       wird breiter als vorgesehen und über das Seitenverhältnis auch höher.
+       Der Platzhalter würde damit eine Komposition vortäuschen, die das
+       echte Bild später nicht hat. */
+    min-width: 0;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: var(--border-width-strong) dashed var(--color-border-strong);
+    border-radius: var(--radius-xl);
+    color: var(--color-text-tertiary);
+    text-align: center;
+    padding: var(--space-4);
+  }
+
+  .portrait__placeholder svg {
+    width: 44px;
+    height: 44px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+  }
+
+  .portrait__placeholder span,
+  .portrait__placeholder code {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .portrait__placeholder span {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+  }
+
+  /* Der Dateiname ist eine Notiz für die Entwicklung. Auf schmalen Flächen
+     tritt er zurück, statt die Fläche zu sprengen. */
+  .portrait__placeholder code {
+    display: none;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    /* Kein opacity: Es drueckte die Tertiaerfarbe unter 4.5:1. Auch ein
+       Entwicklungs-Platzhalter muss lesbar sein — gerade der. */
+    color: var(--color-text-secondary);
+  }
+
+  @media (min-width: 1024px) {
+    .portrait__placeholder code {
+      display: block;
+    }
+
+    .portrait__placeholder span {
+      font-size: var(--font-size-sm);
+    }
+  }
+</style>

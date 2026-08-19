@@ -1,0 +1,419 @@
+---
+/**
+ * Social — der externe Beleg.
+ *
+ * Steht laut IA bewusst NACH der Biografie: erst behauptet die Seite etwas,
+ * dann bietet sie den Ort an, wo man es prüfen kann.
+ *
+ * Echtes ARIA-Tab-Muster: Pfeiltasten wechseln, Home/Ende springen, nur der
+ * aktive Tab liegt in der Tab-Reihenfolge (roving tabindex).
+ *
+ * Je Tab entscheidet die Datenlage, was er zeigt — in dieser Reihenfolge:
+ * 1. Einbettungen (social.json) → ConsentEmbed (Zwei-Klick, aus I1).
+ * 2. Beitrags-Karten (social-posts.json) → selbst gehostete Karten mit
+ *    Wortlaut, Datum und Link zum Original. Die Lösung für Kanäle ohne
+ *    einbettbaren Feed: LinkedIn bettet nur Einzelbeiträge ein, Facebooks
+ *    Page-Plugin verlangt eine Seite statt eines Profils. Eigenes HTML vom
+ *    eigenen Server — keine Fremdanfrage, keine Einwilligung nötig.
+ * 3. Sonst → Profilkarte mit Direktlink. Ein Lade-Knopf, hinter dem nichts
+ *    liegt, wäre ein leeres Versprechen.
+ */
+import { content, type Lang } from "../lib/i18n";
+import ConsentEmbed from "./ConsentEmbed.astro";
+import social from "../content/social.json";
+import socialPosts from "../content/social-posts.json";
+
+export interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const c = content(lang).social;
+
+type Einbettung =
+  | { type: "script"; src: string; attrs?: Record<string, string> }
+  | { type: "iframe"; src: string; title: string; height?: number };
+
+type Beitrag = { datum: string; text: string; url: string };
+
+const daten = social as unknown as Record<
+  string,
+  {
+    profileUrl: string;
+    handle?: string;
+    embeds: Einbettung[];
+    /** Wer die Einbettung tatsächlich ausliefert (z. B. ein Widget-Dienst
+        wie SociableKIT). Der Einwilligungstext muss den ECHTEN Empfänger
+        der IP-Adresse nennen, nicht die Plattform, deren Inhalte er zeigt. */
+    provider?: string;
+  }
+>;
+
+const beitraege = socialPosts as unknown as Record<string, { posts?: Beitrag[] }>;
+
+/* Zur Bauzeit formatiert — deterministisch, kein Client-JS. */
+const datumAnzeige = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString(lang === "de" ? "de-DE" : "en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+const tabs = c.tabs.map((tab) => ({
+  ...tab,
+  embeds: daten[tab.id]?.embeds ?? [],
+  posts: beitraege[tab.id]?.posts ?? [],
+  profileUrl: daten[tab.id]?.profileUrl ?? tab.url,
+  /* Vorab ersetzt: Liefert ein Widget-Dienst die Einbettung, nennt der
+     Einwilligungstext ihn (und die Plattform), nicht nur die Plattform. */
+  notice: c.consent.notice.replace(
+    "{platform}",
+    daten[tab.id]?.provider ? `${daten[tab.id].provider} (${tab.label})` : tab.label,
+  ),
+}));
+---
+
+<section class="social section section--banded" id="social" aria-labelledby="social-heading">
+  <div class="container container--wide">
+    <p class="eyebrow">{c.eyebrow}</p>
+    <h2 id="social-heading" class="social__title">{c.title}</h2>
+    <p class="social__lead">{c.lead}</p>
+
+    <div class="social__tablist-wrap">
+      <div class="social__tablist" role="tablist" aria-labelledby="social-heading">
+        {
+          tabs.map((tab, i) => (
+            <button
+              type="button"
+              role="tab"
+              id={`tab-${tab.id}`}
+              class="social__tab"
+              aria-selected={i === 0 ? "true" : "false"}
+              aria-controls={`panel-${tab.id}`}
+              tabindex={i === 0 ? 0 : -1}
+            >
+              {tab.label}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+
+    {
+      tabs.map((tab, i) => (
+        <div
+          role="tabpanel"
+          id={`panel-${tab.id}`}
+          class="social__panel"
+          aria-labelledby={`tab-${tab.id}`}
+          tabindex="0"
+          hidden={i !== 0}
+        >
+          {tab.embeds.length > 0 ? (
+            <ConsentEmbed
+              id={`social-${tab.id}`}
+              platform={tab.label}
+              context={tab.context}
+              notice={tab.notice}
+              action={c.consent.action}
+              direct={c.consent.direct}
+              directUrl={tab.profileUrl}
+              loading={c.consent.loading}
+              error={c.consent.error}
+              embed={tab.embeds}
+            >
+              {tab.id === "x" && (
+                <a
+                  slot="mount"
+                  class="twitter-timeline"
+                  data-height="520"
+                  data-dnt="true"
+                  data-theme="dark"
+                  href={`${tab.profileUrl}?ref_src=twsrc%5Etfw`}
+                >
+                  {tab.handle}
+                </a>
+              )}
+            </ConsentEmbed>
+          ) : tab.posts.length > 0 ? (
+            <div class="social__posts">
+              <p class="social__posts-label">{c.postsLabel}</p>
+              <ul class="social__post-list" role="list">
+                {tab.posts.map((post) => (
+                  <li class="social__post">
+                    <p class="social__post-date">{datumAnzeige(post.datum)}</p>
+                    <p class="social__post-text">{post.text}</p>
+                    <a
+                      class="social__post-link"
+                      href={post.url}
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      {c.postsOpen.replace("{platform}", tab.label)}
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M5.5 10.5 10.5 5.5M6.2 5.5h4.3v4.3" />
+                      </svg>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <a
+                class="button button--secondary button--sm social__posts-profile"
+                href={tab.profileUrl}
+                target="_blank"
+                rel="me noopener"
+              >
+                {c.consent.direct}
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M5.5 10.5 10.5 5.5M6.2 5.5h4.3v4.3" />
+                </svg>
+              </a>
+            </div>
+          ) : (
+            <div class="social__card">
+              <p class="social__handle">{tab.handle}</p>
+              <p class="social__context">{tab.context}</p>
+              <a
+                class="button button--secondary button--sm"
+                href={tab.profileUrl}
+                target="_blank"
+                rel="me noopener"
+              >
+                {c.consent.direct}
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M5.5 10.5 10.5 5.5M6.2 5.5h4.3v4.3" />
+                </svg>
+              </a>
+            </div>
+          )}
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .social__title {
+    margin-top: var(--space-3);
+  }
+
+  .social__lead {
+    margin-top: var(--space-4);
+    max-width: var(--max-width-content);
+    color: var(--color-text-secondary);
+  }
+
+  /* Auf schmalen Bildschirmen scrollt die Leiste horizontal, statt
+     umzubrechen — drei Pillen in zwei Reihen sähen aus wie sechs Knöpfe. */
+  .social__tablist-wrap {
+    margin-top: var(--space-6);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .social__tablist-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Registerkarten: keine Pillenflaeche — die Leiste sitzt auf einer
+     Grundlinie, der aktive Tab traegt eine kraeftige Unterkante in der Marke. */
+  .social__tablist {
+    display: inline-flex;
+    gap: var(--space-2);
+    border-bottom: var(--border-width) solid var(--color-border-primary);
+  }
+
+  .social__tab {
+    min-height: var(--tab-height);
+    min-width: var(--target-min);
+    padding-inline: var(--space-5);
+    border-radius: var(--tab-radius);
+    /* Auf der Grundlinie aufsitzen, damit die aktive Unterkante die Leisten-
+       Linie ueberdeckt statt darunter zu schweben. */
+    margin-bottom: calc(-1 * var(--border-width));
+    border-bottom: var(--rule-strong) solid transparent;
+    font-family: var(--font-family-body);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    transition:
+      color var(--duration-fast) var(--easing-default),
+      border-color var(--duration-fast) var(--easing-default);
+  }
+
+  .social__tab:hover {
+    color: var(--color-text-primary);
+  }
+
+  .social__tab[aria-selected="true"] {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-accent);
+  }
+
+  .social__panel {
+    margin-top: var(--space-5);
+    max-width: 680px;
+  }
+
+  .social__card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    min-height: var(--consent-min-height);
+    justify-content: center;
+    padding: var(--card-padding);
+    background-color: var(--consent-bg);
+    border: var(--border-width) solid var(--consent-border);
+    border-radius: var(--card-radius);
+  }
+
+  .social__handle {
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-tight);
+  }
+
+  .social__context {
+    max-width: 46ch;
+    color: var(--color-text-secondary);
+  }
+
+  .social__card .button svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* --- Beitrags-Karten: selbst gehosteter Wortlaut mit Quelle -------------
+     Dieselbe Formsprache wie die Säulen: Karte mit Verlaufs-Oberkante,
+     Mono-Datum als Folio-Zeile, Link zum Original. */
+  .social__posts-label {
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    margin-bottom: var(--space-4);
+  }
+
+  .social__post-list {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (min-width: 768px) {
+    .social__post-list {
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    }
+  }
+
+  .social__post {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--card-padding);
+    background-color: var(--card-bg);
+    border: var(--border-width) solid var(--card-border);
+    border-radius: var(--card-radius);
+  }
+
+  .social__post::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: var(--rule-strong);
+    background: var(--gradient-neon);
+    opacity: 0.45;
+  }
+
+  .social__post-date {
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+  }
+
+  .social__post-text {
+    color: var(--color-text-primary);
+    max-width: 52ch;
+  }
+
+  .social__post-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    font-family: var(--font-family-body);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-link);
+    text-decoration: none;
+  }
+
+  .social__post-link:hover {
+    color: var(--color-text-link-hover);
+  }
+
+  .social__post-link svg,
+  .social__posts-profile svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .social__posts-profile {
+    margin-top: var(--space-5);
+  }
+</style>
+
+<script>
+  // ARIA-Tab-Muster mit wanderndem tabindex: Tab springt IN die Leiste und
+  // wieder HERAUS, die Pfeiltasten bewegen sich INNERHALB.
+  const leiste = document.querySelector<HTMLElement>(".social__tablist");
+  if (leiste) {
+    const knoepfe = Array.from(leiste.querySelectorAll<HTMLButtonElement>("[role='tab']"));
+
+    const zeige = (aktiv: HTMLButtonElement, fokus = true) => {
+      for (const knopf of knoepfe) {
+        const gewaehlt = knopf === aktiv;
+        knopf.setAttribute("aria-selected", String(gewaehlt));
+        knopf.tabIndex = gewaehlt ? 0 : -1;
+        const feld = document.getElementById(knopf.getAttribute("aria-controls") ?? "");
+        if (feld) feld.hidden = !gewaehlt;
+      }
+      if (fokus) aktiv.focus();
+    };
+
+    knoepfe.forEach((knopf, i) => {
+      knopf.addEventListener("click", () => zeige(knopf, false));
+      knopf.addEventListener("keydown", (e) => {
+        let ziel: number | null = null;
+        if (e.key === "ArrowRight") ziel = (i + 1) % knoepfe.length;
+        else if (e.key === "ArrowLeft") ziel = (i - 1 + knoepfe.length) % knoepfe.length;
+        else if (e.key === "Home") ziel = 0;
+        else if (e.key === "End") ziel = knoepfe.length - 1;
+        if (ziel !== null) {
+          e.preventDefault();
+          zeige(knoepfe[ziel]!);
+        }
+      });
+    });
+  }
+</script>
