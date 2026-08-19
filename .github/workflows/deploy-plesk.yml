@@ -89,12 +89,14 @@ jobs:
           # JSON (auf manchen Installationen deaktiviert), zeigen wir die
           # Rohantwort, statt an jq zu sterben — die Bestandsaufnahme ist
           # Anschauung, kein Torwächter (gelernt aus Lauf 32268461258).
+          # Richtiger Gateway-Pfad ist POST /api/v2/cli/{befehl}/call — der
+          # fruehere POST /cli/commands beantwortete Plesk mit 405 (Lauf 3).
           cli() {
             local cmd=$1; shift
             local params antwort
             params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
             antwort=$(api -X POST -H 'Content-Type: application/json' \
-              -d "{\"cmd\":\"$cmd\",\"params\":$params}" "$PLESK/api/v2/cli/commands" || true)
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call" || true)
             if echo "$antwort" | jq -e . >/dev/null 2>&1; then
               echo "$antwort" | jq -r '.stdout // .stderr // empty'
             else
@@ -179,8 +181,19 @@ jobs:
           # Protokoll sehen. prefer-epsv aus: manche Firewalls kennen nur
           # klassisches PASV.
           L="set net:timeout 20; set net:max-retries 2; set net:persist-retries 1; set net:reconnect-interval-base 5; set ftp:prefer-epsv false; set ftp:passive-mode true; set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate false; open -u $FTP_USER,$FTP_PASS $HOST;"
+          # Erst die Ports befragen: Lauf 5 scheiterte VÖLLIG stumm — das
+          # unterscheidet „Port zu" von „TLS/Anmeldung kaputt".
+          echo "== Erreichbarkeit der Übertragungswege =="
+          for p in 21 990 22; do
+            if timeout 6 bash -c "</dev/tcp/$HOST/$p" 2>/dev/null; then
+              echo "Port $p: offen"
+            else
+              echo "Port $p: zu oder gefiltert"
+            fi
+          done
+          echo
           echo "== Was liegt im Webroot? (Blick vor dem Löschen) =="
-          timeout 90 lftp -c "$L cls -l httpdocs/" | head -40 \
+          timeout 90 lftp -d -c "$L cls -l httpdocs/" 2>&1 | tail -40 \
             || { echo "::error::Schon das Auflisten scheitert — FTP-Zugang oder Datenkanal (Firewall/Passiv-Ports) prüfen."; exit 1; }
           echo
           FLAGS="--delete --parallel=4 --verbose -x ^\.well-known/"
