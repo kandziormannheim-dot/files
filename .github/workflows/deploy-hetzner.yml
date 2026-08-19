@@ -1,0 +1,122 @@
+# Baut die Astro-Site und lädt sie auf den Hetzner-Cloud-Server.
+#
+# Bewusst nur manuell auslösbar: Solange die Portraits fehlen und das
+# Kontaktformular im Simulationsmodus läuft (siehe DESIGN_REVIEW.md, "Must
+# Fix"), darf kein Merge nach main versehentlich live gehen. Sobald diese
+# Punkte erledigt sind, kann hier ein `push`-Trigger ergänzt werden.
+name: Deploy nach Hetzner
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Trockenlauf — zeigt nur, was übertragen würde"
+        type: boolean
+        default: false
+
+# Zwei gleichzeitige Deploys würden sich auf dem Server überschreiben.
+concurrency:
+  group: deploy-hetzner
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Konfiguration prüfen
+        env:
+          HOST: ${{ vars.HETZNER_HOST }}
+          USER: ${{ vars.HETZNER_USER }}
+          ZIEL: ${{ vars.HETZNER_PATH }}
+          KEY: ${{ secrets.HETZNER_SSH_KEY }}
+          KNOWN: ${{ secrets.HETZNER_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          fehlt=""
+          [ -n "$HOST"  ] || fehlt="$fehlt vars.HETZNER_HOST"
+          [ -n "$USER"  ] || fehlt="$fehlt vars.HETZNER_USER"
+          [ -n "$ZIEL"  ] || fehlt="$fehlt vars.HETZNER_PATH"
+          [ -n "$KEY"   ] || fehlt="$fehlt secrets.HETZNER_SSH_KEY"
+          [ -n "$KNOWN" ] || fehlt="$fehlt secrets.HETZNER_KNOWN_HOSTS"
+          if [ -n "$fehlt" ]; then
+            echo "::error::Nicht gesetzt:$fehlt — siehe .github/workflows/README.md"
+            exit 1
+          fi
+          # rsync --delete löscht alles im Zielverzeichnis, was lokal fehlt.
+          # Bei / oder einem zu breiten Pfad wäre das ein Totalschaden.
+          case "$ZIEL" in
+            /|/root|/root/|/home|/home/|/var|/var/|/var/www|/var/www/|/etc*|/usr*)
+              echo "::error::HETZNER_PATH='$ZIEL' ist zu breit für rsync --delete."
+              exit 1 ;;
+            /*) ;;
+            *) echo "::error::HETZNER_PATH muss ein absoluter Pfad sein, ist: '$ZIEL'"
+               exit 1 ;;
+          esac
+          echo "Ziel: $USER@$HOST:$ZIEL"
+
+      # Ganzes Repo, nicht nur site/: `npm run build` ruft sync:tokens auf,
+      # und das liest .design/kandzior-de/DESIGN_TOKENS.css eine Ebene höher.
+      - name: Repo auschecken
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Abhängigkeiten installieren
+        working-directory: site
+        run: npm ci
+
+      - name: Site bauen
+        working-directory: site
+        run: npm run build
+
+      - name: Build-Ergebnis prüfen
+        run: |
+          set -euo pipefail
+          test -f site/dist/index.html \
+            || { echo "::error::site/dist/index.html fehlt — Build unvollständig."; exit 1; }
+          echo "Dateien: $(find site/dist -type f | wc -l), Größe: $(du -sh site/dist | cut -f1)"
+
+      - name: SSH vorbereiten
+        env:
+          KEY: ${{ secrets.HETZNER_SSH_KEY }}
+          KNOWN: ${{ secrets.HETZNER_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY"   > ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key
+          chmod 644 ~/.ssh/known_hosts
+
+      # Kein StrictHostKeyChecking=no: Der Fingerprint kommt aus dem Secret,
+      # sonst wäre der erste Kontakt ungeprüft und damit angreifbar.
+      - name: Übertragen
+        env:
+          HOST: ${{ vars.HETZNER_HOST }}
+          USER: ${{ vars.HETZNER_USER }}
+          ZIEL: ${{ vars.HETZNER_PATH }}
+          TROCKEN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          [ "$TROCKEN" = "true" ] && modus="--dry-run" || modus=""
+          [ -n "$modus" ] && echo "::notice::Trockenlauf — es wird nichts geschrieben."
+          # Schrägstrich hinter dist/ ist Pflicht: sonst landet ein
+          # Unterverzeichnis "dist" im Ziel statt seines Inhalts.
+          rsync -rlptzv --delete $modus \
+            --exclude='.well-known/' \
+            -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts" \
+            site/dist/ "$USER@$HOST:$ZIEL"
+
+      - name: Aufräumen
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
