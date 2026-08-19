@@ -1,7 +1,7 @@
 {
-  "_hinweis": "Zentrale Konfiguration. Das Formular sendet an 'formEndpoint'. Solange der leer ist, laeuft das Absenden im SIMULATIONSMODUS: Die Anfrage wird in die Browser-Konsole protokolliert und dem Besucher als Erfolg angezeigt. VOR DEM LIVEGANG MUSS HIER EIN ECHTER ENDPUNKT STEHEN — sonst verspricht die Seite eine Rueckmeldung auf Anfragen, die nie ankommen. Aufgabe P5/Livegang-Checkliste prueft das. Da das Hosting bei Hetzner liegt (siehe Datenschutzerklaerung), ist ein kleines PHP- oder Node-Skript auf dem eigenen Server der sauberste Weg: keine Drittanbieter, Daten bleiben in Deutschland.",
+  "_hinweis": "Zentrale Konfiguration. Das Formular sendet an 'formEndpoint'. Der Endpunkt liegt als PHP-Skript im Build (public/api/kontakt.php) und wird mit deployt; Empfaenger und Zugangsdaten stehen in einer Datei EINE EBENE OBERHALB des Webroots, damit der Deploy sie nicht ueberschreibt und sie nicht oeffentlich liegt. Einrichtung: docs/kontakt/README.md. Ist 'formEndpoint' leer, laeuft wieder der SIMULATIONSMODUS: die Anfrage landet nur in der Browser-Konsole. Selbsttest nach dem Deploy: curl https://kandzior.de/api/kontakt.php — kommt JSON zurueck, laeuft PHP; kommt Quelltext, fehlt die PHP-Anbindung im Webserver.",
 
-  "formEndpoint": "",
+  "formEndpoint": "/api/kontakt.php",
 
   "contactEmail": "mail@kandzior.de",
   "contactPhone": "+49 176 10 20 20 30"
