@@ -1,0 +1,23 @@
+# kandzior.de — Apache-Feinheiten fuer Plesk-Hosting.
+# Die Seite ist statisch (Astro, build.format directory); PHP laeuft nur
+# fuer /api/kontakt.php.
+
+ErrorDocument 404 /404.html
+
+AddType font/woff2 .woff2
+AddType image/webp .webp
+AddCharset utf-8 .html .css .js .json .svg
+
+<IfModule mod_headers.c>
+  # Schriften und gehashte Bundles aendern sich nie unter gleichem Namen.
+  <FilesMatch "\.woff2$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.(webp|png|svg)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+  Header set X-Content-Type-Options "nosniff"
+</IfModule>

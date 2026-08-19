@@ -154,7 +154,7 @@ const ok = (c, m) => {
   let empfangen = null;
   await p.route("**/api/kontakt", (route) => {
     empfangen = JSON.parse(route.request().postData() ?? "{}");
-    return route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    return route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' });
   });
   await p.goto(B + "/", { waitUntil: "networkidle" });
   await p.addStyleTag({ content: "html{scroll-behavior:auto !important}" });
@@ -226,7 +226,7 @@ const ok = (c, m) => {
   let getroffen = false;
   await p.route("**/api/kontakt", (route) => {
     getroffen = true;
-    return route.fulfill({ status: 200, body: "{}" });
+    return route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' });
   });
   await p.goto(B + "/", { waitUntil: "networkidle" });
   await p.addStyleTag({ content: "html{scroll-behavior:auto !important}" });

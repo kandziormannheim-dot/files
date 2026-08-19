@@ -85,23 +85,35 @@ jobs:
         run: |
           set -euo pipefail
           api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
-          cli() { # Plesk-CLI über das API-Gateway; Ausgabe roh zurückgeben.
+          # Plesk-CLI über das API-Gateway. Antwortet das Gateway nicht mit
+          # JSON (auf manchen Installationen deaktiviert), zeigen wir die
+          # Rohantwort, statt an jq zu sterben — die Bestandsaufnahme ist
+          # Anschauung, kein Torwächter (gelernt aus Lauf 32268461258).
+          # Richtiger Gateway-Pfad ist POST /api/v2/cli/{befehl}/call — der
+          # fruehere POST /cli/commands beantwortete Plesk mit 405 (Lauf 3).
+          cli() {
             local cmd=$1; shift
-            local params; params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
-            api -X POST -H 'Content-Type: application/json' \
-              -d "{\"cmd\":\"$cmd\",\"params\":$params}" "$PLESK/api/v2/cli/commands"
+            local params antwort
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            antwort=$(api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call" || true)
+            if echo "$antwort" | jq -e . >/dev/null 2>&1; then
+              echo "$antwort" | jq -r '.stdout // .stderr // empty'
+            else
+              echo "(Gateway ohne JSON-Antwort) ${antwort:0:300}"
+            fi
           }
           echo "== Domains =="
           api "$PLESK/api/v2/domains" | jq -r '.[] | "\(.id)\t\(.name)\t\(.hosting_type // "?")"'
           echo
           echo "== Site-Info $DOMAIN =="
-          cli site --info "$DOMAIN" | jq -r '.stdout // .stderr' | sed -n '1,25p'
+          cli site --info "$DOMAIN" | sed -n '1,25p'
           echo
           echo "== Zertifikate der Domain =="
-          cli certificate --list "-domain" "$DOMAIN" | jq -r '.stdout // .stderr' | sed -n '1,10p'
+          cli certificate --list "-domain" "$DOMAIN" | sed -n '1,10p'
           echo
           echo "== Mailkonten (für den Formularversand) =="
-          cli mail --list | jq -r '.stdout // .stderr' | sed -n '1,15p'
+          cli mail --list | sed -n '1,15p'
           echo
           echo "== Vorhandene FTP-Benutzer =="
           api "$PLESK/api/v2/ftpusers" | jq -r '.[] | "\(.name)\thome=\(.home // "?")"'
@@ -129,60 +141,73 @@ jobs:
           test -f dist/api/kontakt.php || { echo "::error::dist/api/kontakt.php fehlt"; exit 1; }
           du -sh dist
 
-      - name: FTP-Benutzer für diesen Lauf anlegen
+      - name: Zugang für diesen Lauf vorbereiten (SSH statt FTP)
         if: inputs.modus != 'erkunden'
-        id: ftp
+        id: ssh
         env:
           PW: ${{ inputs.plesk_passwort }}
           PIN: ${{ steps.pin.outputs.pin }}
         run: |
           set -euo pipefail
-          FTP_USER="deploy-ci-$RANDOM"
-          FTP_PASS=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)A9x
-          echo "::add-mask::$FTP_PASS"
-          BODY=$(jq -n --arg n "$FTP_USER" --arg p "$FTP_PASS" --arg d "$DOMAIN" \
-            '{name:$n, password:$p, home:"/", parent_domain:{name:$d}}')
-          ANTWORT=$(curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" -X POST \
-            -H 'Content-Type: application/json' -d "$BODY" "$PLESK/api/v2/ftpusers")
-          echo "$ANTWORT" | jq .
-          echo "$ANTWORT" | jq -e '.name? // empty' >/dev/null \
-            || { echo "::error::FTP-Benutzer konnte nicht angelegt werden."; exit 1; }
-          echo "user=$FTP_USER" >> "$GITHUB_OUTPUT"
-          echo "pass=$FTP_PASS" >> "$GITHUB_OUTPUT"
+          # FTP scheiterte an gefilterten Passiv-Datenports (Lauf 6); Port 22
+          # ist offen und der Systembenutzer der Domain hat /bin/bash. Also:
+          # Passwort des Systembenutzers je Lauf neu setzen (CLI-Gateway) und
+          # per rsync über SSH übertragen. Das alte Passwort ist danach
+          # ungültig — wer es braucht, setzt in Plesk jederzeit ein neues.
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          INFO=$(api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--info","'"$DOMAIN"'"]}' "$PLESK/api/v2/cli/site/call")
+          SYSUSER=$(echo "$INFO" | jq -r '.stdout' | sed -n 's/^FTP Login:[[:space:]]*//p' | head -1)
+          [ -n "$SYSUSER" ] || { echo "::error::Systembenutzer nicht ermittelbar."; exit 1; }
+          echo "Systembenutzer: $SYSUSER"
+          # Sonderzeichen anhängen: Die Plesk-Richtlinie "Stark" verlangt sie,
+          # und Lauf 7 scheiterte genau daran (leises stderr, s.u.).
+          SSH_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$SSH_PASS"
+          # Der richtige Befehl unterscheidet sich je Plesk-Fassung —
+          # Lauf 8: „Unknown command: --update-web-hosting". Deshalb eine
+          # Versuchskette; code UND stderr werden gezeigt (".stdout //
+          # .stderr" verschluckte in Lauf 7 die Fehlermeldung).
+          setzen() {
+            local util=$1
+            api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update",$d,"-passwd",$p]}')" \
+              "$PLESK/api/v2/cli/$util/call"
+          }
+          OK=""
+          for util in site subscription; do
+            ANTWORT=$(setzen "$util")
+            echo "[$util] $(echo "$ANTWORT" | jq -c '{code, stdout: (.stdout // "")[:200], stderr: (.stderr // "")[:300]}')"
+            if echo "$ANTWORT" | jq -e '.code == 0' >/dev/null; then OK=ja; break; fi
+          done
+          [ "$OK" = ja ] \
+            || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
+          echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
+          echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
 
-      - name: Webroot ansehen, dann übertragen
+      - name: Webroot ansehen, dann übertragen (rsync über SSH)
         if: inputs.modus != 'erkunden'
         env:
-          FTP_USER: ${{ steps.ftp.outputs.user }}
-          FTP_PASS: ${{ steps.ftp.outputs.pass }}
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
         run: |
           set -euo pipefail
-          sudo apt-get install -y -q lftp >/dev/null
+          sudo apt-get install -y -q sshpass >/dev/null
           HOST=${PLESK#https://}; HOST=${HOST%:8443}
-          # Explizites FTPS; das FTP-Zertifikat ist dasselbe selbstsignierte
-          # wie am Panel, daher keine Kettenprüfung möglich — die Verbindung
-          # bleibt trotzdem verschlüsselt.
-          L="set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate false; open -u $FTP_USER,$FTP_PASS $HOST;"
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
           echo "== Was liegt im Webroot? (Blick vor dem Löschen) =="
-          lftp -c "$L cls -l httpdocs/" | head -40 || true
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" 'ls -la httpdocs/ | head -40' \
+            || { echo "::error::SSH-Anmeldung oder Auflisten scheitert."; exit 1; }
           echo
-          FLAGS="--delete --parallel=4 --verbose -x ^\.well-known/"
-          if [ "$MODUS" = "trockenlauf" ]; then FLAGS="$FLAGS --dry-run"; fi
+          FLAGS="-az --delete --exclude=.well-known"
+          if [ "$MODUS" = "trockenlauf" ]; then FLAGS="$FLAGS --dry-run -v"; fi
           echo "== Übertragung ($MODUS) =="
-          lftp -c "$L mirror -R $FLAGS site/dist/ httpdocs/" | tail -60
+          timeout 480 sshpass -p "$SSH_PASS" rsync $FLAGS \
+            -e "ssh $SSHOPTS" \
+            --itemize-changes site/dist/ "$SSH_USER@$HOST:httpdocs/" | tail -60
           echo
           echo "== Stand danach =="
-          lftp -c "$L cls -l httpdocs/" | head -30 || true
-
-      - name: FTP-Benutzer wieder entfernen
-        if: always() && steps.ftp.outputs.user != ''
-        env:
-          PW: ${{ inputs.plesk_passwort }}
-          PIN: ${{ steps.pin.outputs.pin }}
-          FTP_USER: ${{ steps.ftp.outputs.user }}
-        run: |
-          curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" -X DELETE \
-            "$PLESK/api/v2/ftpusers/$FTP_USER" | jq . || true
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" 'ls -la httpdocs/ | head -30' || true
 
       - name: Ergebnis prüfen
         if: inputs.modus == 'deploy'
