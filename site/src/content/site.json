@@ -1,8 +1,6 @@
 {
-  "_hinweis": "Zentrale Konfiguration. Das Formular sendet an 'formEndpoint'. Solange der leer ist, laeuft das Absenden im SIMULATIONSMODUS: Die Anfrage wird in die Browser-Konsole protokolliert und dem Besucher als Erfolg angezeigt. VOR DEM LIVEGANG MUSS HIER EIN ECHTER ENDPUNKT STEHEN — sonst verspricht die Seite eine Rueckmeldung auf Anfragen, die nie ankommen. Aufgabe P5/Livegang-Checkliste prueft das. Da das Hosting bei Hetzner liegt (siehe Datenschutzerklaerung), ist ein kleines PHP- oder Node-Skript auf dem eigenen Server der sauberste Weg: keine Drittanbieter, Daten bleiben in Deutschland.",
-
-  "formEndpoint": "",
-
+  "_hinweis": "Zentrale Konfiguration. Das Formular sendet an 'formEndpoint' — seit dem Livegang (2026-08-19) an das PHP-Skript public/api/kontakt.php auf dem eigenen Plesk/Hetzner-Server: kein Drittanbieter, Daten bleiben in Deutschland. Ein LEERER Wert schaltet zurueck in den SIMULATIONSMODUS (Konsole statt Versand) — nur fuer lokale Entwicklung gedacht. VORAUSSETZUNG auf dem Server: Die Absenderadresse in kontakt.php (formular@kandzior.de) muss auf der Domain existieren oder als erlaubter Absender konfiguriert sein.",
+  "formEndpoint": "/api/kontakt.php",
   "contactEmail": "mail@kandzior.de",
   "contactPhone": "+49 176 10 20 20 30"
 }
