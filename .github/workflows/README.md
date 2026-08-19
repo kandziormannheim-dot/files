@@ -97,14 +97,33 @@ im Build, wird **gelöscht**. Das hält den Server sauber, ist aber scharf, wenn
 - `.well-known/` ist von der Löschung ausgenommen, damit Let's Encrypt seine
   ACME-Challenge behält und die Zertifikatserneuerung nicht am Deploy scheitert.
 
+## PHP für das Kontaktformular
+
+Der Deploy überträgt neben der statischen Site eine einzelne PHP-Datei:
+`dist/api/kontakt.php`, den Endpunkt des Kontaktformulars. Sie braucht auf dem
+Server PHP-FPM und eine Konfigurationsdatei **oberhalb** des Webroots — sonst
+liefe sie ins Leere. Beides ist in [`docs/kontakt/README.md`](../../docs/kontakt/README.md)
+beschrieben.
+
+Wichtig für diesen Workflow: Konfiguration und Spool-Verzeichnis liegen
+absichtlich eine Ebene über `HETZNER_PATH`. Läge die Konfiguration im Webroot,
+würde `--delete` sie bei jedem Deploy löschen und das Formular ginge still
+kaputt.
+
 ## Noch kein automatischer Deploy
 
-Ausgelöst wird nur von Hand. Grund steht in `DESIGN_REVIEW.md`: die Portraits
-fehlen (Hero zeigt Platzhalter) und das Kontaktformular läuft im
-Simulationsmodus — Anfragen landen in der Konsole statt beim Empfänger. Ein
-`push`-Trigger würde diesen Zustand bei jedem Merge veröffentlichen.
+Ausgelöst wird nur von Hand. Der ursprüngliche Grund war doppelt: fehlende
+Portraits und das Kontaktformular im Simulationsmodus. Beides ist erledigt —
+die Portraits liegen unter `site/public/assets/` und werden gerendert, und das
+Formular sendet an `/api/kontakt.php`.
 
-Sind beide Punkte erledigt, reicht dieser Zusatz in `deploy-hetzner.yml`:
+Offen bleibt nur noch die Einrichtung auf dem Server: PHP-FPM, die
+Konfigurationsdatei mit den SMTP-Zugangsdaten und ein Selbsttest per `curl`.
+Solange der nicht durchläuft, wäre ein `push`-Trigger verfrüht — er würde eine
+Seite veröffentlichen, deren Formular Rückmeldung verspricht, ohne dass die
+Anfrage ankommt.
+
+Ist das erledigt, reicht dieser Zusatz in `deploy-hetzner.yml`:
 
 ```yaml
 on:

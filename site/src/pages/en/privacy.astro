@@ -426,7 +426,11 @@ import { translatePath } from "../../lib/i18n";
       to answer and handle the respective request. The details entered in the
       input mask (name, email address, message text) are transmitted. The data is
       not passed on to third parties. As an alternative to the form, you can
-      reach me directly by email at any time.
+      reach me directly by email at any time. To protect against automated
+      abuse, the server limits the number of submissions per sender. For this
+      purpose your IP address is stored solely as a non-reversible hash with a
+      daily changing salt and is deleted after one day at the latest; the IP
+      address itself is not retained.
       <strong>Legal bases:</strong> Performance of a contract and pre-contractual
       enquiries (Art. 6 (1) sentence 1 (b) GDPR); legitimate interests (Art. 6
       (1) sentence 1 (f) GDPR).
