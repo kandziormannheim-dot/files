@@ -136,6 +136,14 @@ const c = content(lang);
     margin-top: var(--space-2);
   }
 
+  /* Der Attributionslink des Datenschutz-Generators ist Lizenzbedingung —
+     er bleibt sichtbar, tritt aber typografisch zurück. */
+  .legal__body :global(.seal) {
+    margin-top: var(--space-7);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+  }
+
   .legal__body :global(address) {
     margin-top: var(--space-3);
     font-style: normal;
