@@ -7,7 +7,7 @@ Insgesamt **355 Skills** aus vier Quellen:
 | [1](#1-marketplace-alirezarezvaniclaude-skills) | `alirezarezvani/claude-skills` | 314 | ~60.300 | Marketplace |
 | [2](#2-vendored-web-design) | `xiaopu-ai/web-design` | 1 | — | ins Repo kopiert |
 | [3](#3-marketplace-mattpocockskills) | `mattpocock/skills` | 25 | ~1.600 | Marketplace |
-| [4](#4-vendored-designer-skills) | designer-skills + claudekit (gemischt) | 15 | — | ins Repo kopiert |
+| [4](#4-vendored-designer-skills) | designer-skills + ui-ux-pro-max-skill | 15 | — | ins Repo kopiert |
 
 Alles greift automatisch in jeder Claude-Code-Session auf diesem Repo; eine manuelle
 Installation pro Rechner ist nicht nötig.
@@ -211,23 +211,27 @@ bekommen keine Updates über `/plugin update`.
 
 ## Herkunft ist gemischt
 
-Der PR beschreibt sie als „eight designer-skills" — tatsächlich sind es 15 aus
-mindestens zwei Projekten. Abgeglichen mit dem Upstream-Repo:
+Der PR beschreibt sie als „eight designer-skills" — tatsächlich sind es 15 aus zwei
+Projekten:
 
-| Skills | Herkunft | Beleg |
+| Skills | Upstream | Lizenz |
 | --- | --- | --- |
-| `brief-to-tasks`, `design-brief`, `design-flow`, `design-review`, `design-tokens`, `frontend-design`, `grill-me`, `information-architecture` | [julianoczkowski/designer-skills](https://github.com/julianoczkowski/designer-skills) | Namen decken sich exakt mit den 8 Skills des Upstream-Repos |
-| `banner-design`, `brand`, `design`, `design-system`, `slides`, `ui-styling` | claudekit | `metadata.author: claudekit` im Frontmatter |
-| `ui-ux-pro-max` | unbekannt | keine Autor- oder Lizenzangabe im Frontmatter |
+| `brief-to-tasks`, `design-brief`, `design-flow`, `design-review`, `design-tokens`, `frontend-design`, `grill-me`, `information-architecture` | [julianoczkowski/designer-skills](https://github.com/julianoczkowski/designer-skills) | Apache 2.0 |
+| `banner-design`, `brand`, `design`, `design-system`, `slides`, `ui-styling`, `ui-ux-pro-max` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | MIT |
 
-## Fehlende Lizenzangaben
+Sechs der MIT-Skills tragen `metadata.author: claudekit` im Frontmatter. Das führt in
+die Irre: Im Repo [carlrannaberg/claudekit](https://github.com/carlrannaberg/claudekit)
+liegt keiner von ihnen. Bezogen sind sie aus `ui-ux-pro-max-skill`, wo sechs der sieben
+byte-identisch liegen.
 
-Sechs der claudekit-Skills tragen `license: MIT` im Frontmatter, aber **keiner der 15
-hat eine LICENSE-Datei** — im Gegensatz zu `web-design` (Quelle 2), wo Lizenz und
-Quell-Commit festgehalten sind. Für `ui-ux-pro-max` fehlt jede Lizenzangabe.
+## Lizenzen
 
-Wer die Skills weitergibt oder das Repo öffentlich macht, sollte das nachziehen:
-Upstream-Commit und Lizenz je Herkunft festhalten, so wie es bei Quelle 2 gemacht ist.
+Vollständige Aufstellung samt Quell-Commits und Lizenztexten:
+[`skills/LICENSES.md`](skills/LICENSES.md).
+
+Beide Lizenzen verlangen, dass Lizenz- und Copyright-Hinweise mitwandern; Apache 2.0
+zusätzlich, dass Änderungen an den Dateien gekennzeichnet werden. Die Texte liegen
+unverändert unter [`skills/licenses/`](skills/licenses/).
 
 ---
 
