@@ -82,7 +82,9 @@ for (const [motion, sollLaufen] of [
   await p.close();
 }
 
-// --- Das echte Portrait: beschrieben, geladen, rund maskiert -------------
+// --- Das echte Portrait: beschrieben, geladen, freigestellt --------------
+// Seit 2026-08-19 liegt der Freisteller vor: keine runde Maske mehr —
+// die Transparenz der Datei ist die Silhouette über dem Neon-Schein.
 {
   const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
   await p.goto(B + "/", { waitUntil: "networkidle" });
@@ -92,13 +94,18 @@ for (const [motion, sollLaufen] of [
       el && {
         alt: el.getAttribute("alt"),
         geladen: el.naturalWidth > 0,
+        quelle: el.currentSrc,
         rund: getComputedStyle(el).borderRadius,
       }
     );
   });
   ok(!!bild && !!bild.alt, `Portrait trägt Alt-Text -> "${bild && bild.alt}"`);
   ok(!!bild && bild.geladen, "Portraitdatei wird geladen");
-  ok(!!bild && bild.rund === "9999px", `runde Maske -> ${bild && bild.rund}`);
+  ok(
+    !!bild && bild.quelle.includes("portrait-freigestellt"),
+    `Freisteller ist die Quelle -> ${bild && bild.quelle.split("/").pop()}`,
+  );
+  ok(!!bild && bild.rund === "0px", `keine Maske mehr -> ${bild && bild.rund}`);
   await p.close();
 }
 

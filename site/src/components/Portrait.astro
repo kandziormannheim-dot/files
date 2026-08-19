@@ -7,9 +7,9 @@
  * Komposition stimmt dadurch schon jetzt, und der spätere Austausch ist ein
  * Dateikopiervorgang ohne Codeänderung.
  *
- * Der Hero zeigt das volle Foto in runder Maske (kein Freisteller
- * vorhanden) — der Wasserturm bleibt dadurch als Mannheim-Verweis im
- * Bild, und der Neon-Schein liegt als Ring hinter dem Kreis.
+ * Der Hero zeigt den Freisteller (transparentes WebP, seit 2026-08-19
+ * vorhanden): Die Person steht direkt über dem Neon-Schein, ohne Maske
+ * und ohne Kante — die ursprünglich geplante Komposition.
  */
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -34,7 +34,9 @@ const {
 } = Astro.props;
 
 const files = {
-  cutout: { src: "/assets/portrait-hero.webp", ratio: "1 / 1" },
+  /* Seitenverhältnis = echte Pixelmaße der Datei — das reserviert den
+     Platz vor dem Laden exakt und hält den Layoutsprung bei null. */
+  cutout: { src: "/assets/portrait-freigestellt.webp", ratio: "800 / 1052" },
   full: { src: "/assets/portrait-wasserturm.webp", ratio: "2 / 3" },
 } as const;
 
@@ -100,10 +102,15 @@ const exists = existsSync(resolve(process.cwd(), `public${file.src}`));
     object-fit: cover;
   }
 
-  /* Volles Foto in runder Maske, der Neon-Schein liegt dahinter. */
-  .portrait--cutout .portrait__image,
-  .portrait--cutout .portrait__placeholder {
-    border-radius: var(--radius-full);
+  /* Freisteller: keine Maske, keine Kante — die Transparenz der Datei
+     ist die Silhouette, der Schein dahinter das Licht. object-fit cover
+     würde bei Transparenz nichts beschneiden, contain ist ehrlicher.
+     Der Verlauf am unteren Rand löst die harte Schnittkante des Fotos
+     auf — die Person endet im Licht, nicht an einer Linie. */
+  .portrait--cutout .portrait__image {
+    object-fit: contain;
+    -webkit-mask-image: linear-gradient(to bottom, #000 84%, transparent 99%);
+    mask-image: linear-gradient(to bottom, #000 84%, transparent 99%);
   }
 
   .portrait--full .portrait__image,

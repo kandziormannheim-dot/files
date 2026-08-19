@@ -108,9 +108,12 @@ const c = content(lang).hero;
   }
 
   /* Auf Mobil steht das Bild oben, aber klein: Es soll das Gesicht zeigen,
-     nicht die Bildschirmhöhe füllen. Der Satz darunter ist wichtiger. */
+     nicht die Bildschirmhöhe füllen. Der Satz darunter ist wichtiger.
+     100px statt 120px seit dem Freisteller: Sein 800/1052-Verhältnis ist
+     höher als das alte Quadrat — mit 120px endete der Hero bei 678px und
+     riss die 667px-Grenze (gemessen, hero.mjs). */
   .hero__portrait {
-    width: 120px;
+    width: 100px;
     justify-self: start;
   }
 

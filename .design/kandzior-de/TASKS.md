@@ -247,3 +247,15 @@ Ersetzt die frühere Vorgabe „M&A & AI trennen" aus dem Grill Me.
   der Karte). NUR dort: Biografie und JSON-LD bleiben neutral —
   expertise prüft die Zeile, polish weiter die Schema-Neutralität.
   Leitplanken-Änderung im Brief dokumentiert.
+
+## Freisteller-Hero (2026-08-19)
+
+- [x] **F-1:** Transparentes Portrait angekommen (aus dem Sitzungs-
+  protokoll extrahiert, echtes Alpha belegt: Ecken 0, 44,6 % transparent).
+  Auf Inhalt beschnitten, 800×1052 WebP mit Alpha (111 KB).
+- [x] **F-2:** Hero-Variante auf die ursprünglich geplante Komposition:
+  Freisteller ohne Maske über dem Neon-Schein, Verlaufs-Fade löst die
+  Schnittkante des Fotos auf; runde Maske und portrait-hero.webp
+  entfernt. Regression behoben: 800/1052 statt Quadrat sprengte die
+  667px-Grenze um 11px → Mobilbreite 100px. Startseite 286,5 KB,
+  CLS 0,0019, alle zwölf Suiten grün (hero prüft die neue Quelle).
