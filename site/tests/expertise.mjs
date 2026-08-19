@@ -187,6 +187,18 @@ for (const [w, erwartet] of [
     };
   });
   ok(politik.inEigenemRaster, "Politik-Karte steht in eigener Reihe");
+
+  // Mandats-Zeile (Entscheid 2026-08-18): MIT-Vorstand sichtbar auf der
+  // Karte — und NUR dort: das JSON-LD-Schema bleibt neutral (prueft polish).
+  const mandat = await p.evaluate(
+    () => document.querySelector(".pillar--politics .pillar__mandat")?.textContent ?? "",
+  );
+  ok(
+    /Mittelstands- und Wirtschaftsunion \(MIT\)/.test(mandat) &&
+      /Mannheim/.test(mandat) &&
+      /Nordbaden/.test(mandat),
+    `Mandats-Zeile vorhanden -> "${mandat.trim()}"`,
+  );
   ok(
     politik.kante === "rgb(105, 88, 213)",
     `Politik-Kante ist Violett (Zweitakzent) -> ${politik.kante}`,

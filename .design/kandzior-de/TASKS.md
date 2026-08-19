@@ -238,3 +238,12 @@ Ersetzt die frühere Vorgabe „M&A & AI trennen" aus dem Grill Me.
   Positionierung („übersetze zwischen beiden Welten") bleibt.
 - [x] **T-3 — Suite:** expertise prüft Gruppenlabels, eigene Reihe und
   die Violett-Werte der Politik-Karte. Alle zwölf Suiten grün.
+
+## MIT-Mandats-Zeile (2026-08-18, Auftraggeber-Entscheid)
+
+- [x] **M-1:** Politik-Karte trägt die Zeile „Mittelstands- und
+  Wirtschaftsunion (MIT) — Vorstand Mannheim & Nordbaden" (EN: board
+  member) im Print-Meta-Register (Haarlinie + Mono, Violett 5,46:1 auf
+  der Karte). NUR dort: Biografie und JSON-LD bleiben neutral —
+  expertise prüft die Zeile, polish weiter die Schema-Neutralität.
+  Leitplanken-Änderung im Brief dokumentiert.

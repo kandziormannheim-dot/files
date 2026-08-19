@@ -77,6 +77,15 @@ const politik = c.pillars.filter((p) => p.id === "politics");
             <div class="pillar__text">
               <h3 class="pillar__title">{pillar.title}</h3>
               <p class="pillar__body">{pillar.body}</p>
+              {
+                /* Mandats-Zeile (Auftraggeber-Entscheid 2026-08-18, hebt die
+                   frühere Nicht-nennen-Vorgabe für die MIT auf): sichtbar auf
+                   der Karte, bewusst NICHT im JSON-LD — der Schema-Steckbrief
+                   bleibt neutral, polish wacht darüber. */
+                "meta" in pillar && (
+                  <p class="pillar__mandat">{(pillar as { meta: string }).meta}</p>
+                )
+              }
             </div>
           </li>
         ))
@@ -296,6 +305,19 @@ const politik = c.pillars.filter((p) => p.id === "politics");
 
   .pillar--politics .pillar__icon {
     background: var(--color-accent-second-quiet);
+    color: var(--color-accent-second);
+  }
+
+  /* Mandats-Zeile: Print-Meta-Register (Haarlinie + Mono) im violetten
+     Ton der Sphäre. Keine Versalien — der Eigenname bleibt, wie er ist. */
+  .pillar__mandat {
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: var(--border-width) solid var(--color-border-primary);
+    max-width: 62ch;
+    font-family: var(--font-family-label);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
     color: var(--color-accent-second);
   }
 

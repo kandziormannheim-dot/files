@@ -296,3 +296,18 @@ gelten unverändert.
 - **React/Tailwind der Vorlage:** bewusst NICHT übernommen — der Wrapper
   ist eine dünne Hülle um eine Canvas; die Seite bleibt statisch und
   framework-frei (Begründung im Brief oben unverändert gültig).
+
+---
+
+## Leitplanken-Änderung (2026-08-18): MIT-Nennung
+
+Auftraggeber-Entscheid, hebt die Grill-Me-Vorgabe TEILWEISE auf: Die
+Mittelstands- und Wirtschaftsunion (MIT) wird mit den Vorstandsrollen
+Mannheim & Nordbaden genannt — ausschließlich als Mandats-Zeile auf der
+Politik-Karte der Expertise. WEITER TABU bleiben: Unternehmen (UPS,
+NEOS), CDU als Partei, Amtsbezeichnungen, sowie JEDE Zugehörigkeit im
+JSON-LD-Schema (worksFor/memberOf/affiliation — polish wacht darüber)
+und in der Biografie. Begründung der Begrenzung: Die MIT ist die
+Mittelstandsvereinigung von CDU/CSU — die Nennung ist damit die erste
+parteinahe Angabe der Seite; sie bleibt der politischen Sphäre (violett)
+zugeordnet und färbt nicht auf den unternehmerischen Auftritt ab.
