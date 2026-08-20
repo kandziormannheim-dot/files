@@ -166,28 +166,38 @@ console.log("=== P5: Ladeverhalten ===");
   });
   await p.goto(B + "/", { waitUntil: "networkidle" });
 
-  const gesamt = uebertragen.reduce((s, r) => s + r.bytes, 0);
   const nachTyp = {};
   for (const r of uebertragen) {
-    const typ = r.url.endsWith(".woff2")
-      ? "fonts"
-      : r.url.includes("/_astro/") && r.url.endsWith(".js")
-        ? "js"
-        : r.url.endsWith(".css")
-          ? "css"
-          : r.url === "/" || r.url.endsWith(".html")
-            ? "html"
-            : "sonstiges";
+    const typ = r.url.includes("/vendor/silktide/")
+      ? "consent"
+      : r.url.endsWith(".woff2")
+        ? "fonts"
+        : r.url.includes("/_astro/") && r.url.endsWith(".js")
+          ? "js"
+          : r.url.endsWith(".css")
+            ? "css"
+            : r.url === "/" || r.url.endsWith(".html")
+              ? "html"
+              : "sonstiges";
     nachTyp[typ] = (nachTyp[typ] ?? 0) + r.bytes;
   }
+  // Der Consent-Manager (Silktide, selbst gehostet) ist rechtlich verlangt
+  // und läuft außerhalb des 300-KB-Budgets der eigentlichen Seite — dafür
+  // bekommt er ein eigenes, enges Budget, damit er nicht heimlich wächst.
+  const gesamt =
+    uebertragen.reduce((s, r) => s + r.bytes, 0) - (nachTyp.consent ?? 0);
   console.log(
     "     Gewicht:",
     Object.entries(nachTyp)
       .map(([t, by]) => `${t} ${(by / 1024).toFixed(1)}KB`)
       .join(" · "),
-    `→ gesamt ${(gesamt / 1024).toFixed(1)}KB`,
+    `→ gesamt ohne Consent ${(gesamt / 1024).toFixed(1)}KB`,
   );
   ok(gesamt < 300 * 1024, `Startseite unter 300KB -> ${(gesamt / 1024).toFixed(1)}KB`);
+  ok(
+    (nachTyp.consent ?? 0) > 0 && (nachTyp.consent ?? 0) < 40 * 1024,
+    `Consent-Manager unter 40KB -> ${((nachTyp.consent ?? 0) / 1024).toFixed(1)}KB`,
+  );
   ok((nachTyp.fonts ?? 0) < 120 * 1024, `Schriften unter 120KB -> ${((nachTyp.fonts ?? 0) / 1024).toFixed(1)}KB`);
 
   // Vorabgeladene Schriften muessen exakt die sein, die auch verwendet werden.

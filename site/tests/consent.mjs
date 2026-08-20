@@ -4,6 +4,18 @@ const EXE = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const B = "http://127.0.0.1:4321";
 const U = B + "/styleguide/";
 const b = await chromium.launch({ executablePath: EXE });
+
+// Cookie-Banner (Silktide) vorab quittieren: Sein Backdrop laege sonst ueber
+// der Seite und finge jeden Klick ab. Die Banner-Mechanik selbst prueft
+// verify.mjs in einem eigenen Abschnitt mit unquittierter Seite.
+const _newPage = b.newPage.bind(b);
+b.newPage = async (opts) => {
+  const p = await _newPage(opts);
+  await p.addInitScript(() => {
+    try { localStorage.setItem("stcm.hasConsented", "1"); } catch {}
+  });
+  return p;
+};
 let failed = 0;
 const ok = (c, m) => {
   if (!c) failed++;
