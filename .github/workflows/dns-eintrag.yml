@@ -1,0 +1,126 @@
+# DNS-Eintrag über die Hetzner-DNS-API setzen — für Subdomains wie
+# events.kandzior.de. Die Zone von kandzior.de liegt bei Hetzner (klassische
+# Nameserver ns1.your-server.de u. a.), nicht auf dem Plesk-Server; verwaltet
+# wird sie über die Hetzner-DNS-Konsole (dns.hetzner.com), deren API dieser
+# Workflow spricht. Läuft gefahrlos mehrfach: Ein vorhandener Eintrag wird
+# aktualisiert statt doppelt angelegt.
+#
+# Der API-Token wird je Lauf übergeben, sofort maskiert und nirgends
+# gespeichert — dasselbe Muster wie das Plesk-Passwort der Schwester-Workflows.
+
+name: DNS-Eintrag setzen
+
+on:
+  workflow_dispatch:
+    inputs:
+      dns_token:
+        description: "Hetzner-DNS-API-Token (wird maskiert, nirgends gespeichert)"
+        required: true
+        type: string
+      name:
+        description: "Eintragsname (Subdomain-Teil, z. B. events)"
+        required: true
+        default: events
+        type: string
+      ipv4:
+        description: "A-Eintrag (IPv4)"
+        required: true
+        default: 95.216.18.216
+        type: string
+      ipv6:
+        description: "AAAA-Eintrag (IPv6, leer = keiner)"
+        required: false
+        default: "2a01:4f9:2a:130b::2"
+        type: string
+      domain:
+        description: "Zone (Domain)"
+        required: true
+        default: kandzior.de
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  setzen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      API: https://dns.hetzner.com/api/v1
+      DOMAIN: ${{ inputs.domain }}
+      NAME: ${{ inputs.name }}
+      IPV4: ${{ inputs.ipv4 }}
+      IPV6: ${{ inputs.ipv6 }}
+    steps:
+      - name: Token maskieren
+        run: echo "::add-mask::${{ inputs.dns_token }}"
+
+      - name: Zone finden
+        id: zone
+        env:
+          TOKEN: ${{ inputs.dns_token }}
+        run: |
+          set -euo pipefail
+          api() { curl -sS -H "Auth-API-Token: $TOKEN" "$@"; }
+          ANTWORT=$(api "$API/zones?name=$DOMAIN")
+          ZONE_ID=$(echo "$ANTWORT" | jq -r '.zones[0].id // empty')
+          if [ -z "$ZONE_ID" ]; then
+            echo "::error::Zone $DOMAIN nicht im Konto gefunden. Alle Zonen des Tokens:"
+            api "$API/zones" | jq -r '.zones[]?.name // empty' || true
+            echo "$ANTWORT" | jq -c '{error: (.error // .message // empty)}' || true
+            exit 1
+          fi
+          echo "Zone $DOMAIN -> $ZONE_ID"
+          echo "$ANTWORT" | jq -r '"Nameserver: \(.zones[0].ns | join(", "))"'
+          echo "id=$ZONE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Einträge setzen (anlegen oder aktualisieren)
+        env:
+          TOKEN: ${{ inputs.dns_token }}
+          ZONE_ID: ${{ steps.zone.outputs.id }}
+        run: |
+          set -euo pipefail
+          api() { curl -sS -H "Auth-API-Token: $TOKEN" "$@"; }
+          BESTAND=$(api "$API/records?zone_id=$ZONE_ID")
+
+          setzen() {
+            local typ=$1 wert=$2
+            local vorhanden id
+            vorhanden=$(echo "$BESTAND" | jq -r --arg t "$typ" --arg n "$NAME" \
+              '.records[] | select(.type == $t and .name == $n) | .id' | head -1)
+            if [ -n "$vorhanden" ]; then
+              echo "[$typ] existiert ($vorhanden) — aktualisieren auf $wert"
+              api -X PUT -H 'Content-Type: application/json' \
+                -d "$(jq -n --arg z "$ZONE_ID" --arg t "$typ" --arg n "$NAME" --arg v "$wert" \
+                  '{zone_id:$z, type:$t, name:$n, value:$v, ttl:300}')" \
+                "$API/records/$vorhanden" | jq -c '{record: .record.id, error: (.error // empty)}'
+            else
+              echo "[$typ] anlegen: $NAME -> $wert"
+              api -X POST -H 'Content-Type: application/json' \
+                -d "$(jq -n --arg z "$ZONE_ID" --arg t "$typ" --arg n "$NAME" --arg v "$wert" \
+                  '{zone_id:$z, type:$t, name:$n, value:$v, ttl:300}')" \
+                "$API/records" | jq -c '{record: .record.id, error: (.error // empty)}'
+            fi
+          }
+
+          setzen A "$IPV4"
+          [ -n "$IPV6" ] && setzen AAAA "$IPV6"
+
+          echo "== Kontrolle über die API =="
+          api "$API/records?zone_id=$ZONE_ID" \
+            | jq -r --arg n "$NAME" '.records[] | select(.name == $n) | "\(.type)\t\(.name)\t\(.value)\tttl=\(.ttl)"'
+
+      - name: Autoritative Auflösung prüfen
+        run: |
+          set -euo pipefail
+          SUB="$NAME.$DOMAIN"
+          echo "== Direkt bei den zuständigen Nameservern =="
+          for ns in $(dig +short NS "$DOMAIN"); do
+            echo "[$ns] A:    $(dig +short "@$ns" "$SUB" A | tr '\n' ' ')"
+            echo "[$ns] AAAA: $(dig +short "@$ns" "$SUB" AAAA | tr '\n' ' ')"
+          done
+          ANTWORT=$(dig +short "@$(dig +short NS "$DOMAIN" | head -1)" "$SUB" A | head -1)
+          [ "$ANTWORT" = "$IPV4" ] \
+            || { echo "::error::Autoritative Antwort ist '$ANTWORT' statt $IPV4 — Eintrag noch nicht aktiv."; exit 1; }
+          echo "$SUB ist autoritativ aufgelöst: $ANTWORT"
