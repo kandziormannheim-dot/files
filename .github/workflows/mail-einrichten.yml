@@ -1,0 +1,218 @@
+# Einmalige Einrichtung: Postfach mail@kandzior.de, Weiterleitung an ein
+# Zweitpostfach, und die Konfiguration des Kontaktformulars auf dem Server.
+#
+# Warum als Workflow: Der Server ist nur vom GitHub-Runner aus erreichbar
+# (Sandbox-Egress), und alle Bausteine — Schlüssel-Pinning, CLI-Gateway,
+# SSH-Zugang über frisch gesetztes Systembenutzer-Passwort — sind im
+# Deploy-Workflow erprobt. Läuft gefahrlos mehrfach: ein vorhandenes
+# Postfach wird aktualisiert statt neu angelegt, die Konfigurationsdatei
+# überschrieben.
+#
+# Das Formular braucht kein SMTP-Passwort: Postfach und Empfänger liegen
+# auf demselben Server, transport "mail" stellt lokal zu. Die
+# Konfigurationsdatei enthält nur Adressen und ein Salz.
+
+name: Mail und Formular einrichten
+
+on:
+  workflow_dispatch:
+    inputs:
+      plesk_passwort:
+        description: "Plesk-Admin-Passwort (wird maskiert, nirgends gespeichert)"
+        required: true
+        type: string
+      postfach:
+        description: "Anzulegendes Postfach (Empfänger des Formulars)"
+        required: true
+        default: mail@kandzior.de
+        type: string
+      weiterleitung:
+        description: "Weiterleitungsziel (leer = keine Weiterleitung)"
+        required: false
+        default: nadja.claw@kandzior.de
+        type: string
+      domain:
+        description: "Domain in Plesk"
+        required: true
+        default: kandzior.de
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  einrichten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PLESK: https://95.216.18.216:8443
+      DOMAIN: ${{ inputs.domain }}
+      POSTFACH: ${{ inputs.postfach }}
+      WEITERLEITUNG: ${{ inputs.weiterleitung }}
+    steps:
+      - name: Passwort maskieren
+        run: echo "::add-mask::${{ inputs.plesk_passwort }}"
+
+      - name: Plesk erreichen und Schlüssel festnageln
+        id: pin
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}
+          PIN=$(openssl s_client -connect "$HOST" -servername plesk </dev/null 2>/dev/null \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary | base64)
+          echo "pin=sha256//$PIN" >> "$GITHUB_OUTPUT"
+          echo "Schlüssel-Fingerabdruck: sha256//$PIN"
+          CODE=$(curl -sk --pinnedpubkey "sha256//$PIN" -o /tmp/server.json -w '%{http_code}' \
+            -u "admin:$PW" "$PLESK/api/v2/server")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Plesk-API antwortet mit HTTP $CODE — Zugangsdaten oder Erreichbarkeit prüfen."
+            cat /tmp/server.json || true
+            exit 1
+          fi
+          jq -r '"Plesk \(.platform // "?") \(.version // "?")"' /tmp/server.json
+
+      - name: Postfach anlegen oder aktualisieren
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          # CLI-Gateway wie im Deploy-Workflow: POST /api/v2/cli/{befehl}/call,
+          # Antwort immer als {code,stdout,stderr} zeigen — verschluckte
+          # Fehlermeldungen haben dort zwei Läufe gekostet.
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          zeig() { jq -c '{code, stdout: (.stdout // "")[:300], stderr: (.stderr // "")[:300]}' <<<"$1"; }
+
+          # Postfach-Passwort: nur für Webmail/IMAP-Zugang, das Formular
+          # braucht es nicht. Richtlinienkonform mit Sonderzeichen, maskiert,
+          # nirgends gespeichert — in Plesk jederzeit neu setzbar.
+          MAIL_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$MAIL_PASS"
+
+          echo "== Vorhandene Postfächer =="
+          A=$(cli mail --list)
+          echo "$A" | jq -r '.stdout // empty' | sed -n '1,15p'
+
+          if echo "$A" | jq -r '.stdout // ""' | grep -qi "^ *${POSTFACH%@*}@\|${POSTFACH}"; then
+            echo "== $POSTFACH existiert — Passwort bleibt unangetastet =="
+          else
+            echo "== $POSTFACH anlegen =="
+            A=$(cli mail --create "$POSTFACH" -passwd "$MAIL_PASS" -mailbox true)
+            zeig "$A"
+            echo "$A" | jq -e '.code == 0' >/dev/null \
+              || { echo "::error::Postfach ließ sich nicht anlegen."; exit 1; }
+          fi
+
+          if [ -n "$WEITERLEITUNG" ]; then
+            echo "== Weiterleitung an $WEITERLEITUNG (Kopie bleibt im Postfach) =="
+            A=$(cli mail --update "$POSTFACH" -forwarding true -forwarding-addresses "add:$WEITERLEITUNG")
+            zeig "$A"
+            echo "$A" | jq -e '.code == 0' >/dev/null \
+              || { echo "::error::Weiterleitung ließ sich nicht setzen."; exit 1; }
+          fi
+
+          echo "== Kontrolle =="
+          A=$(cli mail --info "$POSTFACH")
+          echo "$A" | jq -r '.stdout // .stderr // empty' | sed -n '1,20p'
+
+      - name: Zugang für diesen Lauf vorbereiten (SSH)
+        id: ssh
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          # Identisch zum Deploy-Workflow: Systembenutzer ermitteln, dessen
+          # Passwort je Lauf frisch setzen (site --update, sonst subscription).
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          INFO=$(api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--info","'"$DOMAIN"'"]}' "$PLESK/api/v2/cli/site/call")
+          SYSUSER=$(echo "$INFO" | jq -r '.stdout' | sed -n 's/^FTP Login:[[:space:]]*//p' | head -1)
+          [ -n "$SYSUSER" ] || { echo "::error::Systembenutzer nicht ermittelbar."; exit 1; }
+          echo "Systembenutzer: $SYSUSER"
+          SSH_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$SSH_PASS"
+          OK=""
+          for util in site subscription; do
+            ANTWORT=$(api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update",$d,"-passwd",$p]}')" \
+              "$PLESK/api/v2/cli/$util/call")
+            echo "[$util] $(echo "$ANTWORT" | jq -c '{code, stdout: (.stdout // "")[:200], stderr: (.stderr // "")[:300]}')"
+            if echo "$ANTWORT" | jq -e '.code == 0' >/dev/null; then OK=ja; break; fi
+          done
+          [ "$OK" = ja ] \
+            || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
+          echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
+          echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
+
+      - name: Formular-Konfiguration ablegen
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q sshpass >/dev/null
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+
+          # Eine Ebene über dem Webroot (Heimat des Systembenutzers) — genau
+          # dort sucht kontakt.php per dirname(__DIR__, 2). Kein Geheimnis
+          # außer dem Salz: lokale Zustellung braucht keine Zugangsdaten.
+          SALZ=$(openssl rand -hex 32)
+          cat > /tmp/kontakt-config.php <<KONF
+          <?php
+
+          /**
+           * Konfiguration des Kontaktformulars — liegt bewusst OBERHALB des
+           * Webroots (der Deploy überträgt mit --delete). Angelegt vom
+           * Workflow "Mail und Formular einrichten"; erneuter Lauf
+           * überschreibt die Datei samt frischem Salz.
+           */
+          return [
+              'empfaenger' => '$POSTFACH',
+              'absender' => '$POSTFACH',
+              'absenderName' => 'kandzior.de',
+              'transport' => 'mail',
+              'salz' => '$SALZ',
+          ];
+          KONF
+
+          echo "== Konfiguration und Spool-Verzeichnis anlegen =="
+          timeout 60 sshpass -p "$SSH_PASS" scp $SSHOPTS /tmp/kontakt-config.php "$SSH_USER@$HOST:kontakt-config.php"
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" '
+            chmod 600 kontakt-config.php &&
+            mkdir -p spool && chmod 770 spool &&
+            ls -la kontakt-config.php spool'
+
+      - name: Formular prüfen (Selbsttest und Testnachricht)
+        run: |
+          set -euo pipefail
+          IP=${PLESK#https://}; IP=${IP%:8443}
+          echo "== Selbsttest: bereit muss jetzt true sein =="
+          ANTWORT=$(curl -sk --resolve "$DOMAIN:443:$IP" "https://$DOMAIN/api/kontakt.php")
+          echo "$ANTWORT"
+          echo "$ANTWORT" | jq -e '.ok == true and .bereit == true' >/dev/null \
+            || { echo "::error::Formular meldet sich nicht bereit."; exit 1; }
+
+          echo "== Testnachricht absenden (landet in $POSTFACH und beim Weiterleitungsziel) =="
+          CODE=$(curl -sk --resolve "$DOMAIN:443:$IP" -o /tmp/post.json -w '%{http_code}' \
+            -X POST -H 'Content-Type: application/json' \
+            -H "Origin: https://$DOMAIN" \
+            -d '{"name":"Einrichtungs-Test","email":"test@kandzior.de","message":"Testnachricht des Einrichtungs-Workflows. Kommt diese Mail an, ist das Kontaktformular vollständig eingerichtet. Sie darf gelöscht werden."}' \
+            "https://$DOMAIN/api/kontakt.php")
+          cat /tmp/post.json; echo " (HTTP $CODE)"
+          jq -e '.ok == true' /tmp/post.json >/dev/null && [ "$CODE" = "200" ] \
+            || { echo "::error::Versand der Testnachricht scheiterte — Ursache steht im Serverprotokoll (grep kontakt)."; exit 1; }
+          echo "Formular ist scharf: Selbsttest bereit, Testnachricht angenommen."
