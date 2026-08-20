@@ -3,6 +3,18 @@ import { chromium } from "playwright";
 const EXE = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const B = "http://127.0.0.1:4321";
 const b = await chromium.launch({ executablePath: EXE });
+
+// Cookie-Banner (Silktide) vorab quittieren: Sein Backdrop laege sonst ueber
+// der Seite und finge jeden Klick ab. Die Banner-Mechanik selbst prueft
+// verify.mjs in einem eigenen Abschnitt mit unquittierter Seite.
+const _newPage = b.newPage.bind(b);
+b.newPage = async (opts) => {
+  const p = await _newPage(opts);
+  await p.addInitScript(() => {
+    try { localStorage.setItem("stcm.hasConsented", "1"); } catch {}
+  });
+  return p;
+};
 let failed = 0;
 const ok = (c, m) => {
   if (!c) failed++;
@@ -180,6 +192,46 @@ for (const [path, lang, expect] of [
   );
   ok(errs.length === 0, `Skriptfehler: ${errs.length ? errs.join(" | ") : "keine"}`);
   await p.close();
+}
+
+// 9. Cookie-Banner (Silktide): erscheint unquittiert, "Nur notwendige"
+// schliesst ihn, die Wahl wird gemerkt und ueberlebt das Neuladen.
+// Frischer Kontext OHNE den Vorab-Quittungs-Wrapper von oben.
+{
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 800 } });
+  const p = await ctx.newPage();
+  await p.goto(B + "/", { waitUntil: "networkidle" });
+  await p.waitForSelector("#stcm-wrapper .stcm-reject-all", { timeout: 5000 });
+  ok(true, "Banner erscheint beim ersten Besuch");
+  const btnText = await p.textContent("#stcm-wrapper .stcm-reject-all");
+  ok(
+    String(btnText).includes("Nur notwendige"),
+    `Ablehnen-Knopf beschriftet -> "${String(btnText).trim()}"`,
+  );
+  await p.click("#stcm-wrapper .stcm-reject-all");
+  await p.waitForTimeout(300);
+  const zustand = await p.evaluate(() => ({
+    prompt: !!document.querySelector("#stcm-wrapper .stcm-reject-all"),
+    gemerkt: localStorage.getItem("stcm.hasConsented"),
+    statistik: localStorage.getItem("stcm.consent.statistik"),
+  }));
+  ok(!zustand.prompt, "Banner nach 'Nur notwendige' geschlossen");
+  ok(zustand.gemerkt !== null, `Wahl gemerkt -> stcm.hasConsented=${zustand.gemerkt}`);
+  ok(
+    zustand.statistik !== "true",
+    `Statistik nicht eingewilligt -> ${zustand.statistik}`,
+  );
+  await p.reload({ waitUntil: "networkidle" });
+  await p.waitForTimeout(500);
+  const wieder = await p.evaluate(
+    () => !!document.querySelector("#stcm-wrapper .stcm-reject-all"),
+  );
+  ok(!wieder, "Banner bleibt nach Neuladen geschlossen");
+  ok(
+    await p.isVisible("#stcm-icon"),
+    "Cookie-Symbol unten links bleibt erreichbar",
+  );
+  await ctx.close();
 }
 
 await b.close();

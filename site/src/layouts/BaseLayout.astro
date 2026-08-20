@@ -187,6 +187,118 @@ const person = personSchema
         }
       })();
     </script>
+
+    {
+      /* Silktide Consent Manager v2.0.1 — Cookie-Banner. Selbst gehostet
+         unter /vendor/silktide/ statt über jsDelivr: Die Seite lädt weiterhin
+         nichts von Dritten, bevor eine Einwilligung vorliegt, und die
+         Datenschutzerklärung braucht keinen CDN-Anbieter zu nennen.
+
+         Die Farb-Variablen zeigen auf die Design-Tokens der Seite (mit den
+         Original-Hexwerten der Konfiguration als Rückfallwert) — dadurch
+         folgt der Banner auch dem hellen Theme, ohne eigene Pflege.
+
+         Das Skript ist defer geladen; deferred Skripte laufen garantiert vor
+         DOMContentLoaded, deshalb darf der Init-Aufruf auf dieses Ereignis
+         warten, statt das Rendern zu blockieren. Die Wahl landet im
+         localStorage (stcm.hasConsented, stcm.consent.*). */
+    }
+    <link
+      rel="stylesheet"
+      id="silktide-consent-manager-css"
+      href="/vendor/silktide/consent-manager-2.0.1.min.css"
+    />
+    <style
+      id="silktide-consent-manager-overrides"
+      is:inline
+      set:html={`#stcm-wrapper {
+  --boxShadow: -5px 5px 10px 0px #00000012, 0px 0px 50px 0px #0000001a;
+  --fontFamily: var(--font-family-body, Helvetica Neue, Segoe UI, Arial, sans-serif);
+  --primaryColor: var(--color-accent, #F967FB);
+  --backgroundColor: var(--color-bg-secondary, #111120);
+  --textColor: var(--color-text-primary, #f4f4f8);
+  --backdropBackgroundColor: var(--color-surface-overlay, #05050999);
+  --backdropBackgroundBlur: 4px;
+  --iconColor: var(--color-accent, #f967fb);
+  --iconBackgroundColor: var(--color-bg-secondary, #111120);
+}`}
+    />
+    <script
+      is:inline
+      defer
+      src="/vendor/silktide/consent-manager-2.0.1.min.js"></script>
+    <script is:inline>
+      document.addEventListener("DOMContentLoaded", function () {
+        silktideInit();
+        // Die Bibliothek hängt sich als ERSTES Kind in den body. Damit stünde
+        // ihr Dialog vor der Sprungmarke in der Tab-Reihenfolge, und sein
+        // „Cookie-Einstellungen"-Titel würde zur ersten Überschrift jeder
+        // Seite. Beiwerk gehört ans Ende: Inhalt zuerst, Banner danach.
+        var stcm = document.getElementById("stcm-wrapper");
+        if (stcm) document.body.appendChild(stcm);
+      });
+      function silktideInit() {
+        window.silktideConsentManager.init({
+          backdrop: {
+            show: true,
+          },
+          icon: {
+            position: "bottomLeft",
+          },
+          prompt: {
+            position: "bottomRight",
+          },
+          consentTypes: [
+            {
+              id: "notwendig",
+              label: "Notwendig",
+              description:
+                "<p>Diese Cookies sind für den Betrieb der Website erforderlich und lassen sich nicht abschalten. Sie sorgen unter anderem dafür, dass Ihre Datenschutz-Einstellungen gespeichert werden.</p>",
+              required: true,
+            },
+            {
+              id: "statistik",
+              label: "Statistik",
+              description:
+                "<p>Diese Cookies helfen mir zu verstehen, welche Inhalte gelesen werden und wie Sie sich auf der Website bewegen. Die Auswertung erfolgt anonymisiert.</p>",
+              required: false,
+              gtag: "analytics_storage",
+            },
+            {
+              id: "marketing",
+              label: "Marketing",
+              description:
+                "<p>Diese Cookies werden von mir und meinen Partnern genutzt, um Inhalte auch außerhalb dieser Website auszuspielen und die Wirkung von Kampagnen zu messen.</p>",
+              required: false,
+              gtag: ["ad_storage", "ad_user_data", "ad_personalization"],
+            },
+          ],
+          text: {
+            prompt: {
+              description:
+                "<p>Diese Website nutzt Cookies. Notwendige Cookies sind für den Betrieb erforderlich – alles Weitere setze ich nur mit Ihrer Einwilligung. Sie können Ihre Auswahl jederzeit ändern.</p>",
+              acceptAllButtonText: "Alle akzeptieren",
+              acceptAllButtonAccessibleLabel: "Alle Cookies akzeptieren",
+              rejectNonEssentialButtonText: "Nur notwendige",
+              rejectNonEssentialButtonAccessibleLabel:
+                "Alle nicht notwendigen Cookies ablehnen",
+              preferencesButtonText: "Einstellungen",
+              preferencesButtonAccessibleLabel: "Cookie-Einstellungen öffnen",
+            },
+            preferences: {
+              title: "Cookie-Einstellungen",
+              description:
+                "<p>Sie entscheiden, welche Cookies gesetzt werden. Ihre Auswahl gilt für die gesamte Website und lässt sich jederzeit über das Cookie-Symbol unten links anpassen.</p>",
+              saveButtonText: "Auswahl speichern",
+              saveButtonAccessibleLabel: "Cookie-Einstellungen speichern",
+              creditLinkText: "Kostenloses Cookie-Banner",
+              creditLinkAccessibleLabel:
+                "Kostenloses Cookie-Banner von Silktide",
+            },
+          },
+        });
+      }
+    </script>
   </head>
 
   <body>
