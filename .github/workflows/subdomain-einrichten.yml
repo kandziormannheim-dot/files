@@ -71,10 +71,42 @@ jobs:
           fi
           jq -r '"Plesk \(.platform // "?") \(.version // "?")"' /tmp/server.json
 
+      - name: Zugang für diesen Lauf vorbereiten (SSH)
+        id: ssh
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          # Wie im Deploy-Workflow: Systembenutzer ermitteln, Passwort je
+          # Lauf frisch setzen. Gebraucht für die .htaccess-Rückfallebene.
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          INFO=$(api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--info","'"$DOMAIN"'"]}' "$PLESK/api/v2/cli/site/call")
+          SYSUSER=$(echo "$INFO" | jq -r '.stdout' | sed -n 's/^FTP Login:[[:space:]]*//p' | head -1)
+          [ -n "$SYSUSER" ] || { echo "::error::Systembenutzer nicht ermittelbar."; exit 1; }
+          echo "Systembenutzer: $SYSUSER"
+          SSH_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$SSH_PASS"
+          OK=""
+          for util in site subscription; do
+            ANTWORT=$(api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update",$d,"-passwd",$p]}')" \
+              "$PLESK/api/v2/cli/$util/call")
+            echo "[$util] $(echo "$ANTWORT" | jq -c '{code, stdout: (.stdout // "")[:200], stderr: (.stderr // "")[:300]}')"
+            if echo "$ANTWORT" | jq -e '.code == 0' >/dev/null; then OK=ja; break; fi
+          done
+          [ "$OK" = ja ] \
+            || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
+          echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
+          echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
+
       - name: Subdomain als Weiterleitung anlegen oder aktualisieren
         env:
           PW: ${{ inputs.plesk_passwort }}
           PIN: ${{ steps.pin.outputs.pin }}
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
         run: |
           set -euo pipefail
           api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
@@ -86,25 +118,56 @@ jobs:
               -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
           }
           zeig() { jq -c '{code, stdout: (.stdout // "")[:300], stderr: (.stderr // "")[:300]}' <<<"$1"; }
+          gut() { echo "$1" | jq -e '.code == 0' >/dev/null; }
 
+          # std_fwd = normale Umleitung per HTTP-Redirect. Die Alternative
+          # frame_fwd (Ziel im Rahmen, Adresszeile bleibt) bricht auf
+          # Zielseiten mit Frame-Schutz — Ticket Tailor setzt solche Köpfe.
+          #
+          # Die CLI-Flags unterscheiden sich je Plesk-Fassung: Lauf 1
+          # scheiterte an "Unrecognized option: 'hosting-type'" — dieses
+          # Plesk spricht den älteren Dialekt (-hst_type/-target_url).
+          # Deshalb eine Versuchskette, und als letzte Rückfallebene die
+          # physische Subdomain mit .htaccess-Umleitung über SSH.
+          NAME=${SUB%%.*}
           echo "== Gibt es $SUB schon? =="
-          A=$(cli site --info "$SUB")
-          if echo "$A" | jq -e '.code == 0' >/dev/null; then
+          if gut "$(cli site --info "$SUB")"; then
             echo "Existiert — Weiterleitungsziel aktualisieren."
-            A=$(cli site --update "$SUB" -hosting-type std_fwd -fwd-url "$ZIEL")
-            zeig "$A"
-            echo "$A" | jq -e '.code == 0' >/dev/null \
-              || { echo "::error::Aktualisieren der Weiterleitung scheiterte."; exit 1; }
+            AKTION=update
           else
-            echo "Existiert nicht — anlegen (Weiterleitung mit sichtbarer Zieladresse)."
-            # std_fwd = normale Umleitung per HTTP-Redirect. Die Alternative
-            # frame_fwd (Ziel im Rahmen, Adresszeile bleibt) bricht auf
-            # Zielseiten mit Frame-Schutz — Ticket Tailor setzt solche Köpfe.
-            A=$(cli site --create "$SUB" -webspace-name "$DOMAIN" -hosting-type std_fwd -fwd-url "$ZIEL")
-            zeig "$A"
-            echo "$A" | jq -e '.code == 0' >/dev/null \
-              || { echo "::error::Anlegen der Subdomain scheiterte — Antwort oben."; exit 1; }
+            echo "Existiert nicht — anlegen."
+            AKTION=create
           fi
+
+          OK=""
+          for versuch in \
+            "site --$AKTION $SUB -webspace-name $DOMAIN -hst_type std_fwd -target_url $ZIEL" \
+            "site --$AKTION $SUB -webspace-name $DOMAIN -hosting-type std-fwd -fwd-url $ZIEL"; do
+            set -- $versuch
+            echo "[Versuch] $*"
+            A=$(cli "$@")
+            zeig "$A"
+            if gut "$A"; then OK=cli; break; fi
+          done
+
+          if [ -z "$OK" ]; then
+            echo "== Rückfallebene: physische Subdomain + .htaccess-Umleitung =="
+            if ! gut "$(cli site --info "$SUB")"; then
+              A=$(cli subdomain --create "$NAME" -domain "$DOMAIN" -www-root "$NAME")
+              zeig "$A"
+              gut "$A" || { echo "::error::Auch die physische Subdomain ließ sich nicht anlegen."; exit 1; }
+            fi
+            sudo apt-get install -y -q sshpass >/dev/null
+            IP=${PLESK#https://}; IP=${IP%:8443}
+            # 302 statt 301: Das Ziel ist ein Ticket-Link, der sich ändern
+            # kann — eine 301 klebte in Browser-Caches fest.
+            timeout 60 sshpass -p "$SSH_PASS" ssh \
+              -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 \
+              "$SSH_USER@$IP" \
+              "mkdir -p '$NAME' && printf 'RedirectMatch 302 .* %s\n' '$ZIEL' > '$NAME/.htaccess' && cat '$NAME/.htaccess'"
+            OK=htaccess
+          fi
+          echo "Eingerichtet über: $OK"
 
           echo "== Kontrolle =="
           A=$(cli site --info "$SUB")
