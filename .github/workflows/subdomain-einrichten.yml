@@ -196,26 +196,39 @@ jobs:
           # Scheitert die Ausstellung (z. B. weil der DNS-Eintrag noch fehlt),
           # bleibt der Lauf grün — http:// leitet trotzdem schon um, und der
           # Schritt lässt sich nach dem DNS-Eintrag einfach wiederholen.
-          echo "== Öffentliche Auflösung von $SUB =="
-          dig +short "$SUB" A | head -3 || true
+          echo "== Öffentliche Auflösung (Diagnose) =="
+          echo "A $SUB:            $(dig +short "$SUB" A | tr '\n' ' ')"
+          echo "NS $DOMAIN:        $(dig +short NS "$DOMAIN" | tr '\n' ' ')"
+          echo "A *.probe.$DOMAIN: $(dig +short "irgendwas-$RANDOM.$DOMAIN" A | tr '\n' ' ')"
           A=$(cli extension --exec letsencrypt cli.php -d "$SUB")
-          echo "$A" | jq -c '{code, stdout: (.stdout // "")[:400], stderr: (.stderr // "")[:400]}'
+          echo "$A" | jq -r '"code=\(.code)\n--- stdout ---\n\((.stdout // "")[:800])\n--- stderr ---\n\((.stderr // "")[:1500])"'
           echo "$A" | jq -e '.code == 0' >/dev/null \
-            || echo "::warning::Let's Encrypt für $SUB scheiterte — vermutlich fehlt der öffentliche DNS-Eintrag. Nach dem Eintrag diesen Workflow erneut laufen lassen."
+            || echo "::warning::Let's Encrypt für $SUB scheiterte — Diagnose oben. Nach behobener Ursache diesen Workflow erneut laufen lassen."
 
       - name: Weiterleitung prüfen
         run: |
           set -euo pipefail
           IP=${PLESK#https://}; IP=${IP%:8443}
-          echo "== Direkt am Server (Host-Kopf $SUB) =="
-          ANTWORT=$(curl -s -o /dev/null -D - --resolve "$SUB:80:$IP" "http://$SUB/" | tr -d '\r')
-          echo "$ANTWORT" | sed -n '1,8p'
-          echo "$ANTWORT" | grep -qi "^Location: $ZIEL" \
-            || { echo "::error::Weiterleitung antwortet nicht mit dem erwarteten Ziel."; exit 1; }
-          echo "Weiterleitung steht: $SUB -> $ZIEL"
-          echo
-          echo "== HTTPS (nur informativ, hängt am Zertifikat) =="
-          curl -sk -o /dev/null -D - --resolve "$SUB:443:$IP" "https://$SUB/" | tr -d '\r' | sed -n '1,6p' || true
+          # Plesk legt vor die Weiterleitung noch seine eigene
+          # HTTP-auf-HTTPS-Umleitung (301 auf https://SUB/, Lauf 2). Deshalb
+          # zweistufig: Der erste Sprung darf entweder direkt das Ziel nennen
+          # oder auf die HTTPS-Fassung derselben Subdomain zeigen — die muss
+          # dann das Ziel nennen.
+          echo "== HTTP (Host-Kopf $SUB) =="
+          HTTP1=$(curl -s -o /dev/null -D - --resolve "$SUB:80:$IP" "http://$SUB/" | tr -d '\r')
+          echo "$HTTP1" | sed -n '1,8p'
+          echo "== HTTPS =="
+          HTTPS1=$(curl -sk -o /dev/null -D - --resolve "$SUB:443:$IP" "https://$SUB/" | tr -d '\r')
+          echo "$HTTPS1" | sed -n '1,8p'
+          if echo "$HTTP1" | grep -qi "^Location: $ZIEL"; then
+            echo "Weiterleitung steht (direkt): $SUB -> $ZIEL"
+          elif echo "$HTTP1" | grep -qi "^Location: https://$SUB/" \
+            && echo "$HTTPS1" | grep -qi "^Location: $ZIEL"; then
+            echo "Weiterleitung steht (über HTTPS-Zwischensprung): $SUB -> $ZIEL"
+          else
+            echo "::error::Weiterleitung antwortet nicht mit dem erwarteten Ziel."
+            exit 1
+          fi
           echo
           echo "== Öffentliches DNS =="
           AUFGELOEST=$(dig +short "$SUB" A | head -1)
