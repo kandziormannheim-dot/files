@@ -1,0 +1,164 @@
+# Subdomain mit Weiterleitung einrichten — z. B. events.kandzior.de auf die
+# Ticket-Tailor-Seite. Läuft gefahrlos mehrfach: Existiert die Subdomain,
+# wird nur das Weiterleitungsziel aktualisiert.
+#
+# Aufbau wie die Schwester-Workflows (Deploy, Mail): Schlüssel-Pinning,
+# Plesk-CLI-Gateway mit sichtbarem {code,stdout,stderr}, tolerante Schritte
+# für alles, was von außerhalb des Servers abhängt (öffentliches DNS,
+# Let's Encrypt) — die melden Warnungen statt den Lauf zu kippen.
+
+name: Subdomain einrichten
+
+on:
+  workflow_dispatch:
+    inputs:
+      plesk_passwort:
+        description: "Plesk-Admin-Passwort (wird maskiert, nirgends gespeichert)"
+        required: true
+        type: string
+      subdomain:
+        description: "Vollständige Subdomain"
+        required: true
+        default: events.kandzior.de
+        type: string
+      ziel:
+        description: "Weiterleitungsziel (URL)"
+        required: true
+        default: https://buytickets.at/mkevents1
+        type: string
+      domain:
+        description: "Elterndomain in Plesk"
+        required: true
+        default: kandzior.de
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  einrichten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PLESK: https://95.216.18.216:8443
+      DOMAIN: ${{ inputs.domain }}
+      SUB: ${{ inputs.subdomain }}
+      ZIEL: ${{ inputs.ziel }}
+    steps:
+      - name: Passwort maskieren
+        run: echo "::add-mask::${{ inputs.plesk_passwort }}"
+
+      - name: Plesk erreichen und Schlüssel festnageln
+        id: pin
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}
+          PIN=$(openssl s_client -connect "$HOST" -servername plesk </dev/null 2>/dev/null \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary | base64)
+          echo "pin=sha256//$PIN" >> "$GITHUB_OUTPUT"
+          echo "Schlüssel-Fingerabdruck: sha256//$PIN"
+          CODE=$(curl -sk --pinnedpubkey "sha256//$PIN" -o /tmp/server.json -w '%{http_code}' \
+            -u "admin:$PW" "$PLESK/api/v2/server")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Plesk-API antwortet mit HTTP $CODE — Zugangsdaten oder Erreichbarkeit prüfen."
+            cat /tmp/server.json || true
+            exit 1
+          fi
+          jq -r '"Plesk \(.platform // "?") \(.version // "?")"' /tmp/server.json
+
+      - name: Subdomain als Weiterleitung anlegen oder aktualisieren
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          zeig() { jq -c '{code, stdout: (.stdout // "")[:300], stderr: (.stderr // "")[:300]}' <<<"$1"; }
+
+          echo "== Gibt es $SUB schon? =="
+          A=$(cli site --info "$SUB")
+          if echo "$A" | jq -e '.code == 0' >/dev/null; then
+            echo "Existiert — Weiterleitungsziel aktualisieren."
+            A=$(cli site --update "$SUB" -hosting-type std_fwd -fwd-url "$ZIEL")
+            zeig "$A"
+            echo "$A" | jq -e '.code == 0' >/dev/null \
+              || { echo "::error::Aktualisieren der Weiterleitung scheiterte."; exit 1; }
+          else
+            echo "Existiert nicht — anlegen (Weiterleitung mit sichtbarer Zieladresse)."
+            # std_fwd = normale Umleitung per HTTP-Redirect. Die Alternative
+            # frame_fwd (Ziel im Rahmen, Adresszeile bleibt) bricht auf
+            # Zielseiten mit Frame-Schutz — Ticket Tailor setzt solche Köpfe.
+            A=$(cli site --create "$SUB" -webspace-name "$DOMAIN" -hosting-type std_fwd -fwd-url "$ZIEL")
+            zeig "$A"
+            echo "$A" | jq -e '.code == 0' >/dev/null \
+              || { echo "::error::Anlegen der Subdomain scheiterte — Antwort oben."; exit 1; }
+          fi
+
+          echo "== Kontrolle =="
+          A=$(cli site --info "$SUB")
+          echo "$A" | jq -r '.stdout // .stderr // empty' | sed -n '1,20p'
+
+          echo "== DNS-Zone in Plesk (Auszug) =="
+          A=$(cli dns --info "$DOMAIN")
+          echo "$A" | jq -r '.stdout // .stderr // empty' | grep -i "NS \|${SUB%%.*}" | head -10 || true
+
+      - name: Zertifikat für HTTPS versuchen (Let's Encrypt)
+        continue-on-error: true
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          # Let's Encrypt braucht öffentlich auflösendes DNS für die Subdomain.
+          # Scheitert die Ausstellung (z. B. weil der DNS-Eintrag noch fehlt),
+          # bleibt der Lauf grün — http:// leitet trotzdem schon um, und der
+          # Schritt lässt sich nach dem DNS-Eintrag einfach wiederholen.
+          echo "== Öffentliche Auflösung von $SUB =="
+          dig +short "$SUB" A | head -3 || true
+          A=$(cli extension --exec letsencrypt cli.php -d "$SUB")
+          echo "$A" | jq -c '{code, stdout: (.stdout // "")[:400], stderr: (.stderr // "")[:400]}'
+          echo "$A" | jq -e '.code == 0' >/dev/null \
+            || echo "::warning::Let's Encrypt für $SUB scheiterte — vermutlich fehlt der öffentliche DNS-Eintrag. Nach dem Eintrag diesen Workflow erneut laufen lassen."
+
+      - name: Weiterleitung prüfen
+        run: |
+          set -euo pipefail
+          IP=${PLESK#https://}; IP=${IP%:8443}
+          echo "== Direkt am Server (Host-Kopf $SUB) =="
+          ANTWORT=$(curl -s -o /dev/null -D - --resolve "$SUB:80:$IP" "http://$SUB/" | tr -d '\r')
+          echo "$ANTWORT" | sed -n '1,8p'
+          echo "$ANTWORT" | grep -qi "^Location: $ZIEL" \
+            || { echo "::error::Weiterleitung antwortet nicht mit dem erwarteten Ziel."; exit 1; }
+          echo "Weiterleitung steht: $SUB -> $ZIEL"
+          echo
+          echo "== HTTPS (nur informativ, hängt am Zertifikat) =="
+          curl -sk -o /dev/null -D - --resolve "$SUB:443:$IP" "https://$SUB/" | tr -d '\r' | sed -n '1,6p' || true
+          echo
+          echo "== Öffentliches DNS =="
+          AUFGELOEST=$(dig +short "$SUB" A | head -1)
+          if [ -n "$AUFGELOEST" ]; then
+            echo "$SUB löst öffentlich auf $AUFGELOEST auf."
+            [ "$AUFGELOEST" = "$IP" ] || echo "::warning::$SUB zeigt auf $AUFGELOEST statt $IP."
+          else
+            echo "::warning::$SUB löst öffentlich (noch) nicht auf. Falls die DNS-Zone von kandzior.de außerhalb von Plesk liegt, dort einen A-Eintrag '${SUB%%.*}' auf $IP anlegen. Liegt sie in Plesk, kann es schlicht noch dauern."
+          fi
