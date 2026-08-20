@@ -170,6 +170,13 @@ jobs:
           # Eine Ebene über dem Webroot (Heimat des Systembenutzers) — genau
           # dort sucht kontakt.php per dirname(__DIR__, 2). Kein Geheimnis
           # außer dem Salz: lokale Zustellung braucht keine Zugangsdaten.
+          #
+          # SMTP direkt zum lokalen Mailserver (127.0.0.1:25, ohne TLS und
+          # ohne Anmeldung — die Verbindung verlässt den Rechner nie, und
+          # Zustellung an die eigene Domain ist kein Relaying). Der erste
+          # Anlauf über transport "mail" scheiterte: PHPs sendmail-Weg ist
+          # auf diesem Plesk für die Domain-PHP-Umgebung nicht nutzbar
+          # (Lauf 32357511359, "Versand fehlgeschlagen" bei mail()).
           SALZ=$(openssl rand -hex 32)
           cat > /tmp/kontakt-config.php <<KONF
           <?php
@@ -184,7 +191,14 @@ jobs:
               'empfaenger' => '$POSTFACH',
               'absender' => '$POSTFACH',
               'absenderName' => 'kandzior.de',
-              'transport' => 'mail',
+              'transport' => 'smtp',
+              'smtp' => [
+                  'host' => '127.0.0.1',
+                  'port' => 25,
+                  'benutzer' => '',
+                  'passwort' => '',
+                  'verschluesselung' => 'keine',
+              ],
               'salz' => '$SALZ',
           ];
           KONF
@@ -197,14 +211,28 @@ jobs:
             ls -la kontakt-config.php spool'
 
       - name: Formular prüfen (Selbsttest und Testnachricht)
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
         run: |
           set -euo pipefail
           IP=${PLESK#https://}; IP=${IP%:8443}
+          # Bei Fehlschlag die Ursache gleich mitliefern: kontakt.php schreibt
+          # sie ins Fehlerprotokoll des vHosts, das der Systembenutzer lesen
+          # darf — erspart den Blindflug des ersten Laufs.
+          diagnose() {
+            echo "== Diagnose: [kontakt]-Zeilen aus den vHost-Protokollen =="
+            timeout 60 sshpass -p "$SSH_PASS" ssh \
+              -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 \
+              "$SSH_USER@$IP" \
+              'grep -h "\[kontakt\]" logs/*error*log* 2>/dev/null | tail -5; ls logs/ 2>/dev/null | head' \
+              || echo "(Protokolle nicht erreichbar)"
+          }
           echo "== Selbsttest: bereit muss jetzt true sein =="
           ANTWORT=$(curl -sk --resolve "$DOMAIN:443:$IP" "https://$DOMAIN/api/kontakt.php")
           echo "$ANTWORT"
           echo "$ANTWORT" | jq -e '.ok == true and .bereit == true' >/dev/null \
-            || { echo "::error::Formular meldet sich nicht bereit."; exit 1; }
+            || { echo "::error::Formular meldet sich nicht bereit."; diagnose; exit 1; }
 
           echo "== Testnachricht absenden (landet in $POSTFACH und beim Weiterleitungsziel) =="
           CODE=$(curl -sk --resolve "$DOMAIN:443:$IP" -o /tmp/post.json -w '%{http_code}' \
@@ -214,5 +242,5 @@ jobs:
             "https://$DOMAIN/api/kontakt.php")
           cat /tmp/post.json; echo " (HTTP $CODE)"
           jq -e '.ok == true' /tmp/post.json >/dev/null && [ "$CODE" = "200" ] \
-            || { echo "::error::Versand der Testnachricht scheiterte — Ursache steht im Serverprotokoll (grep kontakt)."; exit 1; }
+            || { echo "::error::Versand der Testnachricht scheiterte."; diagnose; exit 1; }
           echo "Formular ist scharf: Selbsttest bereit, Testnachricht angenommen."
