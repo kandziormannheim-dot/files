@@ -1,0 +1,104 @@
+# Ein Postfach anlegen oder sein Passwort setzen — über das Plesk-CLI-Gateway
+# vom GitHub-Runner aus, wie die Schwester-Workflows. Läuft gefahrlos
+# mehrfach: Existiert das Postfach, wird nur das Passwort neu gesetzt.
+#
+# Beide Passwörter (Plesk-Admin und das des Postfachs) werden je Lauf
+# übergeben, sofort maskiert und nirgends gespeichert.
+
+name: Postfach anlegen
+
+on:
+  workflow_dispatch:
+    inputs:
+      plesk_passwort:
+        description: "Plesk-Admin-Passwort (wird maskiert, nirgends gespeichert)"
+        required: true
+        type: string
+      postfach:
+        description: "Vollständige Adresse (z. B. mk@kandzior.de)"
+        required: true
+        type: string
+      mail_passwort:
+        description: "Passwort des Postfachs (wird maskiert, nirgends gespeichert)"
+        required: true
+        type: string
+      weiterleitung:
+        description: "Weiterleitungsziel (leer = keine)"
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  anlegen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PLESK: https://95.216.18.216:8443
+      POSTFACH: ${{ inputs.postfach }}
+      WEITERLEITUNG: ${{ inputs.weiterleitung }}
+    steps:
+      - name: Passwörter maskieren
+        run: |
+          echo "::add-mask::${{ inputs.plesk_passwort }}"
+          echo "::add-mask::${{ inputs.mail_passwort }}"
+
+      - name: Plesk erreichen und Schlüssel festnageln
+        id: pin
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}
+          PIN=$(openssl s_client -connect "$HOST" -servername plesk </dev/null 2>/dev/null \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary | base64)
+          echo "pin=sha256//$PIN" >> "$GITHUB_OUTPUT"
+          CODE=$(curl -sk --pinnedpubkey "sha256//$PIN" -o /tmp/server.json -w '%{http_code}' \
+            -u "admin:$PW" "$PLESK/api/v2/server")
+          [ "$CODE" = "200" ] \
+            || { echo "::error::Plesk-API antwortet mit HTTP $CODE."; cat /tmp/server.json || true; exit 1; }
+          jq -r '"Plesk \(.platform // "?") erreicht."' /tmp/server.json
+
+      - name: Postfach anlegen oder Passwort setzen
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+          MAIL_PASS: ${{ inputs.mail_passwort }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          zeig() { jq -c '{code, stdout: (.stdout // "")[:300], stderr: (.stderr // "")[:300]}' <<<"$1"; }
+
+          if cli mail --info "$POSTFACH" | jq -e '.code == 0' >/dev/null; then
+            echo "== $POSTFACH existiert — Passwort neu setzen =="
+            A=$(cli mail --update "$POSTFACH" -passwd "$MAIL_PASS")
+          else
+            echo "== $POSTFACH anlegen =="
+            A=$(cli mail --create "$POSTFACH" -passwd "$MAIL_PASS" -mailbox true)
+          fi
+          zeig "$A"
+          echo "$A" | jq -e '.code == 0' >/dev/null \
+            || { echo "::error::Postfach ließ sich nicht anlegen/aktualisieren — Antwort oben."; exit 1; }
+
+          if [ -n "$WEITERLEITUNG" ]; then
+            echo "== Weiterleitung an $WEITERLEITUNG (Kopie bleibt im Postfach) =="
+            A=$(cli mail --update "$POSTFACH" -forwarding true -forwarding-addresses "add:$WEITERLEITUNG")
+            zeig "$A"
+            echo "$A" | jq -e '.code == 0' >/dev/null \
+              || { echo "::error::Weiterleitung ließ sich nicht setzen."; exit 1; }
+          fi
+
+          echo "== Kontrolle =="
+          cli mail --info "$POSTFACH" | jq -r '.stdout // .stderr // empty' | sed -n '1,15p'
