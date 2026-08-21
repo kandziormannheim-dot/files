@@ -1,12 +1,16 @@
-# DNS-Eintrag über die Hetzner-DNS-API setzen — für Subdomains wie
-# events.kandzior.de. Die Zone von kandzior.de liegt bei Hetzner (klassische
-# Nameserver ns1.your-server.de u. a.), nicht auf dem Plesk-Server; verwaltet
-# wird sie über die Hetzner-DNS-Konsole (dns.hetzner.com), deren API dieser
-# Workflow spricht. Läuft gefahrlos mehrfach: Ein vorhandener Eintrag wird
+# DNS-Eintrag über die Hetzner-APIs setzen — für Subdomains wie
+# events.kandzior.de. Die Zone von kandzior.de liegt bei Hetzner; verwaltet
+# wurde sie über die Hetzner-DNS-Konsole (dns.hetzner.com), deren Zonen
+# Hetzner seit Ende 2025 in die Cloud Console umzieht. Deshalb spricht der
+# Workflow beide APIs: erst die klassische DNS-API (Auth-API-Token), dann
+# die neue Cloud-API (api.hetzner.cloud, Bearer-Token) — je nachdem, wo die
+# Zone gefunden wird. Läuft gefahrlos mehrfach: Ein vorhandener Eintrag wird
 # aktualisiert statt doppelt angelegt.
 #
 # Der API-Token wird je Lauf übergeben, sofort maskiert und nirgends
 # gespeichert — dasselbe Muster wie das Plesk-Passwort der Schwester-Workflows.
+# Ein Token der alten DNS-Konsole und ein Cloud-Projekt-Token sehen gleich
+# aus (64 Zeichen); der Workflow probiert schlicht beide Türen.
 
 name: DNS-Eintrag setzen
 
@@ -14,7 +18,7 @@ on:
   workflow_dispatch:
     inputs:
       dns_token:
-        description: "Hetzner-DNS-API-Token (leer = Repository-Secret DNS_TOKEN verwenden)"
+        description: "Hetzner-Token: DNS-API-Token oder Cloud-Projekt-Token (leer = Repository-Secret DNS_TOKEN verwenden)"
         required: false
         default: ""
         type: string
@@ -48,7 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      API: https://dns.hetzner.com/api/v1
+      DNS_API: https://dns.hetzner.com/api/v1
+      CLOUD_API: https://api.hetzner.cloud/v1
       DOMAIN: ${{ inputs.domain }}
       NAME: ${{ inputs.name }}
       IPV4: ${{ inputs.ipv4 }}
@@ -64,71 +69,168 @@ jobs:
             || { echo "::error::Kein Token: weder als Eingabe übergeben noch als Repository-Secret DNS_TOKEN hinterlegt (Settings → Secrets and variables → Actions)."; exit 1; }
           echo "::add-mask::$TOKEN"
 
-      - name: Zone finden
+      - name: Zone finden (klassische DNS-API, dann Cloud-API)
         id: zone
         env:
           TOKEN: ${{ inputs.dns_token || secrets.DNS_TOKEN }}
         run: |
           set -euo pipefail
-          api() { curl -sS -H "Auth-API-Token: $TOKEN" "$@"; }
-          ANTWORT=$(api "$API/zones?name=$DOMAIN")
-          ZONE_ID=$(echo "$ANTWORT" | jq -r '.zones[0].id // empty')
-          if [ -z "$ZONE_ID" ]; then
-            echo "::error::Zone $DOMAIN nicht im Konto gefunden. Alle Zonen des Tokens:"
-            api "$API/zones" | jq -r '.zones[]?.name // empty' || true
-            echo "$ANTWORT" | jq -c '{error: (.error // .message // empty)}' || true
-            exit 1
+          frage() { # $1=URL, weitere Argumente an curl; Antwort nach /tmp/antwort.json, HTTP-Code als Rückgabe
+            local url=$1; shift
+            curl -sS -o /tmp/antwort.json -w '%{http_code}' "$@" "$url"
+          }
+          kurz() { head -c 400 /tmp/antwort.json; echo; }
+
+          echo "== Versuch 1: klassische DNS-API (dns.hetzner.com) =="
+          CODE=$(frage "$DNS_API/zones?name=$DOMAIN" -H "Auth-API-Token: $TOKEN" || echo 000)
+          echo "HTTP $CODE"; kurz
+          ZONE_ID=$(jq -r '.zones[0].id // empty' /tmp/antwort.json 2>/dev/null || true)
+          if [ "$CODE" = 200 ] && [ -n "$ZONE_ID" ]; then
+            jq -r '"Nameserver: \(.zones[0].ns // [] | join(", "))"' /tmp/antwort.json || true
+            echo "Zone $DOMAIN -> $ZONE_ID (klassische API)"
+            { echo "api=klassisch"; echo "id=$ZONE_ID"; } >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-          echo "Zone $DOMAIN -> $ZONE_ID"
-          echo "$ANTWORT" | jq -r '"Nameserver: \(.zones[0].ns | join(", "))"'
-          echo "id=$ZONE_ID" >> "$GITHUB_OUTPUT"
+
+          echo "== Versuch 2: Cloud-API (api.hetzner.cloud) =="
+          CODE=$(frage "$CLOUD_API/zones?name=$DOMAIN" -H "Authorization: Bearer $TOKEN" || echo 000)
+          echo "HTTP $CODE"; kurz
+          ZONE_ID=$(jq -r '.zones[0].id // empty' /tmp/antwort.json 2>/dev/null || true)
+          if [ "$CODE" = 200 ] && [ -n "$ZONE_ID" ]; then
+            echo "Zone $DOMAIN -> $ZONE_ID (Cloud-API)"
+            { echo "api=cloud"; echo "id=$ZONE_ID"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "::error::Zone $DOMAIN über keine der beiden APIs gefunden. Diagnose folgt."
+          echo "== Zonen, die der Token in der klassischen API sieht =="
+          frage "$DNS_API/zones" -H "Auth-API-Token: $TOKEN" >/dev/null || true; kurz
+          echo "== Zonen, die der Token in der Cloud-API sieht =="
+          frage "$CLOUD_API/zones" -H "Authorization: Bearer $TOKEN" >/dev/null || true; kurz
+          exit 1
 
       - name: Einträge setzen (anlegen oder aktualisieren)
         env:
           TOKEN: ${{ inputs.dns_token || secrets.DNS_TOKEN }}
           ZONE_ID: ${{ steps.zone.outputs.id }}
+          ZONE_API: ${{ steps.zone.outputs.api }}
         run: |
           set -euo pipefail
-          api() { curl -sS -H "Auth-API-Token: $TOKEN" "$@"; }
-          BESTAND=$(api "$API/records?zone_id=$ZONE_ID")
+
+          if [ "$ZONE_API" = klassisch ]; then
+            api() { curl -sS -H "Auth-API-Token: $TOKEN" "$@"; }
+            BESTAND=$(api "$DNS_API/records?zone_id=$ZONE_ID")
+
+            setzen() {
+              local typ=$1 wert=$2
+              local vorhanden
+              vorhanden=$(echo "$BESTAND" | jq -r --arg t "$typ" --arg n "$NAME" \
+                '.records[] | select(.type == $t and .name == $n) | .id' | head -1)
+              if [ -n "$vorhanden" ]; then
+                echo "[$typ] existiert ($vorhanden) — aktualisieren auf $wert"
+                api -X PUT -H 'Content-Type: application/json' \
+                  -d "$(jq -n --arg z "$ZONE_ID" --arg t "$typ" --arg n "$NAME" --arg v "$wert" \
+                    '{zone_id:$z, type:$t, name:$n, value:$v, ttl:300}')" \
+                  "$DNS_API/records/$vorhanden" | jq -c '{record: .record.id, error: (.error // empty)}'
+              else
+                echo "[$typ] anlegen: $NAME -> $wert"
+                api -X POST -H 'Content-Type: application/json' \
+                  -d "$(jq -n --arg z "$ZONE_ID" --arg t "$typ" --arg n "$NAME" --arg v "$wert" \
+                    '{zone_id:$z, type:$t, name:$n, value:$v, ttl:300}')" \
+                  "$DNS_API/records" | jq -c '{record: .record.id, error: (.error // empty)}'
+              fi
+            }
+
+            setzen A "$IPV4"
+            [ -n "$IPV6" ] && setzen AAAA "$IPV6"
+
+            echo "== Kontrolle über die API =="
+            api "$DNS_API/records?zone_id=$ZONE_ID" \
+              | jq -r --arg n "$NAME" '.records[] | select(.name == $n) | "\(.type)\t\(.name)\t\(.value)\tttl=\(.ttl)"'
+            exit 0
+          fi
+
+          # Cloud-API: Einträge sind RRsets (Name+Typ mit Werteliste). Die
+          # API ist jung und ihre Feldformen variieren zwischen Ständen —
+          # deshalb je Schritt zwei Versuche (records als Objektliste, dann
+          # als Stringliste) und immer die Rohantwort ins Protokoll.
+          api() { # $1=Methode $2=Pfad [$3=JSON-Body]; Antwort in /tmp/antwort.json, Code auf stdout
+            local methode=$1 pfad=$2 body=${3-}
+            if [ -n "$body" ]; then
+              curl -sS -o /tmp/antwort.json -w '%{http_code}' -X "$methode" \
+                -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+                -d "$body" "$CLOUD_API$pfad"
+            else
+              curl -sS -o /tmp/antwort.json -w '%{http_code}' -X "$methode" \
+                -H "Authorization: Bearer $TOKEN" "$CLOUD_API$pfad"
+            fi
+          }
+          kurz() { head -c 500 /tmp/antwort.json; echo; }
 
           setzen() {
             local typ=$1 wert=$2
-            local vorhanden id
-            vorhanden=$(echo "$BESTAND" | jq -r --arg t "$typ" --arg n "$NAME" \
-              '.records[] | select(.type == $t and .name == $n) | .id' | head -1)
-            if [ -n "$vorhanden" ]; then
-              echo "[$typ] existiert ($vorhanden) — aktualisieren auf $wert"
-              api -X PUT -H 'Content-Type: application/json' \
-                -d "$(jq -n --arg z "$ZONE_ID" --arg t "$typ" --arg n "$NAME" --arg v "$wert" \
-                  '{zone_id:$z, type:$t, name:$n, value:$v, ttl:300}')" \
-                "$API/records/$vorhanden" | jq -c '{record: .record.id, error: (.error // empty)}'
+            local objekte strings code
+            objekte=$(jq -n --arg n "$NAME" --arg t "$typ" --arg v "$wert" \
+              '{name:$n, type:$t, ttl:300, records:[{value:$v}]}')
+            strings=$(jq -n --arg n "$NAME" --arg t "$typ" --arg v "$wert" \
+              '{name:$n, type:$t, ttl:300, records:[$v]}')
+
+            code=$(api GET "/zones/$ZONE_ID/rrsets/$NAME/$typ")
+            if [ "$code" = 200 ]; then
+              echo "[$typ] RRset existiert — aktualisieren auf $wert"; kurz
+              code=$(api PUT "/zones/$ZONE_ID/rrsets/$NAME/$typ" \
+                "$(jq -n --arg v "$wert" '{ttl:300, records:[{value:$v}]}')")
+              echo "PUT (Objektliste): HTTP $code"; kurz
+              if [ "$code" -ge 400 ]; then
+                code=$(api PUT "/zones/$ZONE_ID/rrsets/$NAME/$typ" \
+                  "$(jq -n --arg v "$wert" '{ttl:300, records:[$v]}')")
+                echo "PUT (Stringliste): HTTP $code"; kurz
+              fi
+              if [ "$code" -ge 400 ]; then
+                code=$(api POST "/zones/$ZONE_ID/rrsets/$NAME/$typ/actions/set_records" \
+                  "$(jq -n --arg v "$wert" '{records:[{value:$v}]}')")
+                echo "set_records: HTTP $code"; kurz
+              fi
             else
-              echo "[$typ] anlegen: $NAME -> $wert"
-              api -X POST -H 'Content-Type: application/json' \
-                -d "$(jq -n --arg z "$ZONE_ID" --arg t "$typ" --arg n "$NAME" --arg v "$wert" \
-                  '{zone_id:$z, type:$t, name:$n, value:$v, ttl:300}')" \
-                "$API/records" | jq -c '{record: .record.id, error: (.error // empty)}'
+              echo "[$typ] RRset fehlt (HTTP $code) — anlegen: $NAME -> $wert"
+              code=$(api POST "/zones/$ZONE_ID/rrsets" "$objekte")
+              echo "POST (Objektliste): HTTP $code"; kurz
+              if [ "$code" -ge 400 ]; then
+                code=$(api POST "/zones/$ZONE_ID/rrsets" "$strings")
+                echo "POST (Stringliste): HTTP $code"; kurz
+              fi
             fi
+            [ "$code" -lt 400 ] \
+              || { echo "::error::[$typ] Eintrag ließ sich über die Cloud-API nicht setzen (HTTP $code) — Rohantwort siehe oben."; exit 1; }
           }
 
           setzen A "$IPV4"
           [ -n "$IPV6" ] && setzen AAAA "$IPV6"
 
           echo "== Kontrolle über die API =="
-          api "$API/records?zone_id=$ZONE_ID" \
-            | jq -r --arg n "$NAME" '.records[] | select(.name == $n) | "\(.type)\t\(.name)\t\(.value)\tttl=\(.ttl)"'
+          api GET "/zones/$ZONE_ID/rrsets?name=$NAME" >/dev/null || true
+          jq -r '.rrsets[]? | "\(.type)\t\(.name)\t\((.records // []) | map(if type == "object" then .value else . end) | join(" "))\tttl=\(.ttl)"' /tmp/antwort.json \
+            || kurz
 
       - name: Autoritative Auflösung prüfen
         run: |
           set -euo pipefail
           SUB="$NAME.$DOMAIN"
+          # Bis die zuständigen Nameserver einen frisch gesetzten Eintrag
+          # ausliefern, vergehen ein paar Minuten — deshalb geduldig
+          # nachfragen statt beim ersten leeren Blick aufzugeben.
+          NS1=$(dig +short NS "$DOMAIN" | head -1)
+          for versuch in $(seq 1 12); do
+            ANTWORT=$(dig +short "@$NS1" "$SUB" A | head -1)
+            [ "$ANTWORT" = "$IPV4" ] && break
+            echo "[$versuch/12] $NS1 antwortet '${ANTWORT:-—}' — warte 20 s"
+            sleep 20
+          done
           echo "== Direkt bei den zuständigen Nameservern =="
           for ns in $(dig +short NS "$DOMAIN"); do
             echo "[$ns] A:    $(dig +short "@$ns" "$SUB" A | tr '\n' ' ')"
             echo "[$ns] AAAA: $(dig +short "@$ns" "$SUB" AAAA | tr '\n' ' ')"
           done
-          ANTWORT=$(dig +short "@$(dig +short NS "$DOMAIN" | head -1)" "$SUB" A | head -1)
           [ "$ANTWORT" = "$IPV4" ] \
-            || { echo "::error::Autoritative Antwort ist '$ANTWORT' statt $IPV4 — Eintrag noch nicht aktiv."; exit 1; }
+            || { echo "::error::Autoritative Antwort ist '$ANTWORT' statt $IPV4 — Eintrag auch nach 4 Minuten nicht aktiv."; exit 1; }
           echo "$SUB ist autoritativ aufgelöst: $ANTWORT"
