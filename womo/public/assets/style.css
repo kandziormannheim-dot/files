@@ -1,0 +1,239 @@
+/* Womo-Schadensakte — mobil zuerst: Das Formular wird am Fahrzeug auf dem
+   Handy ausgefüllt, große Bedienflächen sind kein Schmuck, sondern Pflicht. */
+
+:root {
+    --tinte: #1d2733;
+    --leise: #5b6774;
+    --linie: #d7dde3;
+    --grund: #f2f4f6;
+    --karte: #ffffff;
+    --akzent: #0b6e4f;
+    --akzent-dunkel: #095940;
+    --warnung-grund: #fff7e0;
+    --warnung-linie: #e2c56a;
+    --fehler: #a4262c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--tinte);
+    background: var(--grund);
+    line-height: 1.5;
+}
+
+.kopf { background: var(--tinte); color: #fff; }
+.kopf-innen {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 0.6rem 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
+.marke { font-weight: 700; }
+.kopf nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; align-items: center; }
+.kopf nav a { color: #dbe3ea; text-decoration: none; padding: 0.4rem 0; }
+.kopf nav a:hover { color: #fff; }
+.kopf .leise { color: #dbe3ea; }
+
+main { max-width: 60rem; margin: 0 auto; padding: 1rem; }
+
+h1 { font-size: 1.5rem; margin: 0.5rem 0 1rem; }
+h2 { font-size: 1.1rem; margin: 0 0 0.75rem; }
+small { color: var(--leise); }
+
+.karte {
+    background: var(--karte);
+    border: 1px solid var(--linie);
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 0 0 1rem;
+}
+.karte.schmal { max-width: 24rem; margin: 3rem auto; }
+.karte.warnung { background: var(--warnung-grund); border-color: var(--warnung-linie); }
+
+.hinweis {
+    background: #e5f3ec;
+    border: 1px solid #9fceba;
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+}
+.fehler { color: var(--fehler); font-weight: 600; }
+
+/* ------------------------------------------------------------- Formulare */
+
+label { display: block; margin: 0 0 0.9rem; font-weight: 600; }
+label small { font-weight: 400; }
+input[type="text"], input[type="password"], input[type="email"],
+input[type="date"], select, textarea {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.65rem 0.7rem;
+    font: inherit;
+    border: 1px solid var(--linie);
+    border-radius: 8px;
+    background: #fff;
+}
+textarea { resize: vertical; }
+input:focus, select:focus, textarea:focus, button:focus-visible {
+    outline: 2px solid var(--akzent);
+    outline-offset: 1px;
+}
+
+.reihe { display: grid; grid-template-columns: 1fr; gap: 0 1rem; }
+@media (min-width: 34rem) { .reihe { grid-template-columns: 1fr 1fr; } }
+
+button {
+    font: inherit;
+    font-weight: 600;
+    padding: 0.75rem 1.2rem;
+    border: 0;
+    border-radius: 8px;
+    background: var(--akzent);
+    color: #fff;
+    cursor: pointer;
+}
+button:hover { background: var(--akzent-dunkel); }
+button.leise {
+    background: none;
+    color: var(--leise);
+    text-decoration: underline;
+    padding: 0.4rem 0.2rem;
+}
+button.leise:hover { color: var(--tinte); }
+button.gefahr { background: var(--fehler); }
+form.inline { display: inline; }
+
+.versteckt {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* ----------------------------------------------------------- Zonenwahl */
+
+.zonen { border: 1px solid var(--linie); border-radius: 10px; padding: 0.75rem; margin: 0 0 0.9rem; }
+.zonen legend { font-weight: 600; padding: 0 0.3rem; }
+.womo-skizze {
+    display: block;
+    width: 100%;
+    max-width: 24rem;
+    margin: 0 auto 0.75rem;
+    color: var(--leise);
+}
+.womo-skizze [data-zone] {
+    fill: #e8edf1;
+    stroke: var(--leise);
+    stroke-width: 1;
+    cursor: pointer;
+}
+.womo-skizze [data-zone]:hover { fill: #cfe7dd; }
+.womo-skizze [data-zone].aktiv { fill: var(--akzent); }
+.womo-skizze text {
+    font-size: 11px;
+    fill: var(--tinte);
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+.zonen-liste {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: 0.4rem;
+}
+.zone { margin: 0; font-weight: 400; }
+.zone input { position: absolute; opacity: 0; }
+.zone span {
+    display: block;
+    text-align: center;
+    padding: 0.55rem 0.4rem;
+    border: 1px solid var(--linie);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+}
+.zone input:checked + span {
+    background: var(--akzent);
+    border-color: var(--akzent);
+    color: #fff;
+    font-weight: 600;
+}
+.zone input:focus-visible + span { outline: 2px solid var(--akzent); outline-offset: 1px; }
+
+/* --------------------------------------------------------- Fotos & Galerie */
+
+.foto-feld input[type="file"] { margin-top: 0.35rem; }
+.foto-vorschau { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 0.9rem; }
+.foto-vorschau img {
+    width: 5.5rem;
+    height: 5.5rem;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--linie);
+}
+.galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.75rem; }
+.galerie figure { margin: 0; }
+.galerie img { width: 100%; border-radius: 8px; border: 1px solid var(--linie); }
+
+/* ------------------------------------------------------------- Tabellen */
+
+.liste { width: 100%; border-collapse: collapse; background: var(--karte); border-radius: 10px; }
+.liste th, .liste td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--linie); }
+.liste th { font-size: 0.85rem; color: var(--leise); }
+@media (max-width: 40rem) {
+    .liste thead { display: none; }
+    .liste tr { display: block; padding: 0.5rem 0; }
+    .liste td { display: block; border: 0; padding: 0.15rem 0.6rem; }
+    .liste tr + tr { border-top: 1px solid var(--linie); }
+}
+
+.filter { margin: 0 0 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.filter a {
+    text-decoration: none;
+    color: var(--tinte);
+    border: 1px solid var(--linie);
+    border-radius: 999px;
+    padding: 0.3rem 0.9rem;
+    background: var(--karte);
+}
+.filter a.aktiv { background: var(--tinte); border-color: var(--tinte); color: #fff; }
+
+.status { border-radius: 999px; padding: 0.1rem 0.6rem; font-size: 0.85rem; white-space: nowrap; }
+.status-offen { background: #fdecec; color: #8f1d22; }
+.status-gemeldet { background: #fff3d6; color: #7a5a00; }
+.status-repariert { background: #e5f3ec; color: #0b5c42; }
+
+code.kopierbar {
+    display: block;
+    padding: 0.6rem;
+    background: var(--grund);
+    border: 1px solid var(--linie);
+    border-radius: 8px;
+    word-break: break-all;
+    user-select: all;
+}
+
+/* --------------------------------------------------------- Unterschriften */
+
+.unterschriften { display: grid; grid-template-columns: 1fr; gap: 1rem; margin: 1rem 0; }
+@media (min-width: 44rem) { .unterschriften { grid-template-columns: 1fr 1fr; } }
+.unterschrift p { margin: 0 0 0.3rem; font-weight: 600; }
+.unterschrift canvas {
+    width: 100%;
+    height: auto;
+    border: 1px dashed var(--leise);
+    border-radius: 8px;
+    background: #fff;
+    touch-action: none; /* Wischen zeichnet, statt zu scrollen */
+}
+
+.aufklappen summary { cursor: pointer; font-weight: 600; padding: 0.3rem 0; }
+.aufklappen[open] summary { margin-bottom: 0.75rem; }
