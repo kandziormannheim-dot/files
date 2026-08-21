@@ -14,8 +14,9 @@ on:
   workflow_dispatch:
     inputs:
       dns_token:
-        description: "Hetzner-DNS-API-Token (wird maskiert, nirgends gespeichert)"
-        required: true
+        description: "Hetzner-DNS-API-Token (leer = Repository-Secret DNS_TOKEN verwenden)"
+        required: false
+        default: ""
         type: string
       name:
         description: "Eintragsname (Subdomain-Teil, z. B. events)"
@@ -53,13 +54,20 @@ jobs:
       IPV4: ${{ inputs.ipv4 }}
       IPV6: ${{ inputs.ipv6 }}
     steps:
-      - name: Token maskieren
-        run: echo "::add-mask::${{ inputs.dns_token }}"
+      - name: Token auflösen und maskieren
+        env:
+          TOKEN: ${{ inputs.dns_token || secrets.DNS_TOKEN }}
+        run: |
+          # Eingabe geht vor; ohne Eingabe zählt das Repository-Secret
+          # DNS_TOKEN — so kann der Lauf auch ohne Tipparbeit starten.
+          [ -n "$TOKEN" ] \
+            || { echo "::error::Kein Token: weder als Eingabe übergeben noch als Repository-Secret DNS_TOKEN hinterlegt (Settings → Secrets and variables → Actions)."; exit 1; }
+          echo "::add-mask::$TOKEN"
 
       - name: Zone finden
         id: zone
         env:
-          TOKEN: ${{ inputs.dns_token }}
+          TOKEN: ${{ inputs.dns_token || secrets.DNS_TOKEN }}
         run: |
           set -euo pipefail
           api() { curl -sS -H "Auth-API-Token: $TOKEN" "$@"; }
@@ -77,7 +85,7 @@ jobs:
 
       - name: Einträge setzen (anlegen oder aktualisieren)
         env:
-          TOKEN: ${{ inputs.dns_token }}
+          TOKEN: ${{ inputs.dns_token || secrets.DNS_TOKEN }}
           ZONE_ID: ${{ steps.zone.outputs.id }}
         run: |
           set -euo pipefail
