@@ -29,12 +29,14 @@ on:
   workflow_dispatch:
     inputs:
       plesk_passwort:
-        description: "Plesk-Admin-Passwort (wird maskiert, nirgends gespeichert)"
-        required: true
+        description: "Plesk-Admin-Passwort (leer = Repository-Secret PLESK_PASSWORT verwenden)"
+        required: false
+        default: ""
         type: string
       womo_admin_passwort:
-        description: "Anmeldepasswort der Womo-App (wird maskiert; nur der Hash landet auf dem Server)"
-        required: true
+        description: "Anmeldepasswort der Womo-App (leer = Repository-Secret WOMO_ADMIN_PASSWORT; nur der Hash landet auf dem Server)"
+        required: false
+        default: ""
         type: string
       subdomain:
         description: "Vollständige Subdomain"
@@ -66,10 +68,20 @@ jobs:
       SUB: ${{ inputs.subdomain }}
       EMPFAENGER: ${{ inputs.empfaenger }}
     steps:
-      - name: Passwörter maskieren
+      - name: Passwörter auflösen und maskieren
+        env:
+          PLESK_PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          WOMO_PW: ${{ inputs.womo_admin_passwort || secrets.WOMO_ADMIN_PASSWORT }}
         run: |
-          echo "::add-mask::${{ inputs.plesk_passwort }}"
-          echo "::add-mask::${{ inputs.womo_admin_passwort }}"
+          # Eingabe geht vor; ohne Eingabe zählen die Repository-Secrets
+          # PLESK_PASSWORT und WOMO_ADMIN_PASSWORT — so kann der Lauf auch
+          # ohne Tipparbeit gestartet werden.
+          [ -n "$PLESK_PW" ] \
+            || { echo "::error::Kein Plesk-Passwort: weder als Eingabe übergeben noch als Repository-Secret PLESK_PASSWORT hinterlegt (Settings → Secrets and variables → Actions)."; exit 1; }
+          [ -n "$WOMO_PW" ] \
+            || { echo "::error::Kein Womo-Anmeldepasswort: weder als Eingabe übergeben noch als Repository-Secret WOMO_ADMIN_PASSWORT hinterlegt."; exit 1; }
+          echo "::add-mask::$PLESK_PW"
+          echo "::add-mask::$WOMO_PW"
 
       - name: Quellcode holen
         uses: actions/checkout@v4
@@ -77,7 +89,7 @@ jobs:
       - name: Plesk erreichen und Schlüssel festnageln
         id: pin
         env:
-          PW: ${{ inputs.plesk_passwort }}
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
         run: |
           set -euo pipefail
           HOST=${PLESK#https://}
@@ -99,7 +111,7 @@ jobs:
       - name: Zugang für diesen Lauf vorbereiten (SSH)
         id: ssh
         env:
-          PW: ${{ inputs.plesk_passwort }}
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
           PIN: ${{ steps.pin.outputs.pin }}
         run: |
           set -euo pipefail
@@ -128,7 +140,7 @@ jobs:
 
       - name: Subdomain anlegen (physisch, Webroot womo-app/public)
         env:
-          PW: ${{ inputs.plesk_passwort }}
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
           PIN: ${{ steps.pin.outputs.pin }}
         run: |
           set -euo pipefail
@@ -191,7 +203,7 @@ jobs:
         env:
           SSH_USER: ${{ steps.ssh.outputs.user }}
           SSH_PASS: ${{ steps.ssh.outputs.pass }}
-          ADMIN_PASS: ${{ inputs.womo_admin_passwort }}
+          ADMIN_PASS: ${{ inputs.womo_admin_passwort || secrets.WOMO_ADMIN_PASSWORT }}
         run: |
           set -euo pipefail
           HOST=${PLESK#https://}; HOST=${HOST%:8443}
@@ -238,7 +250,7 @@ jobs:
       - name: Zertifikat für HTTPS versuchen (Let's Encrypt)
         continue-on-error: true
         env:
-          PW: ${{ inputs.plesk_passwort }}
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
           PIN: ${{ steps.pin.outputs.pin }}
         run: |
           set -euo pipefail
