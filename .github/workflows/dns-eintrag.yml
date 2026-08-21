@@ -216,12 +216,21 @@ jobs:
         run: |
           set -euo pipefail
           SUB="$NAME.$DOMAIN"
+          # Bis die zuständigen Nameserver einen frisch gesetzten Eintrag
+          # ausliefern, vergehen ein paar Minuten — deshalb geduldig
+          # nachfragen statt beim ersten leeren Blick aufzugeben.
+          NS1=$(dig +short NS "$DOMAIN" | head -1)
+          for versuch in $(seq 1 12); do
+            ANTWORT=$(dig +short "@$NS1" "$SUB" A | head -1)
+            [ "$ANTWORT" = "$IPV4" ] && break
+            echo "[$versuch/12] $NS1 antwortet '${ANTWORT:-—}' — warte 20 s"
+            sleep 20
+          done
           echo "== Direkt bei den zuständigen Nameservern =="
           for ns in $(dig +short NS "$DOMAIN"); do
             echo "[$ns] A:    $(dig +short "@$ns" "$SUB" A | tr '\n' ' ')"
             echo "[$ns] AAAA: $(dig +short "@$ns" "$SUB" AAAA | tr '\n' ' ')"
           done
-          ANTWORT=$(dig +short "@$(dig +short NS "$DOMAIN" | head -1)" "$SUB" A | head -1)
           [ "$ANTWORT" = "$IPV4" ] \
-            || { echo "::error::Autoritative Antwort ist '$ANTWORT' statt $IPV4 — Eintrag noch nicht aktiv."; exit 1; }
+            || { echo "::error::Autoritative Antwort ist '$ANTWORT' statt $IPV4 — Eintrag auch nach 4 Minuten nicht aktiv."; exit 1; }
           echo "$SUB ist autoritativ aufgelöst: $ANTWORT"
