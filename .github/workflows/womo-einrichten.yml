@@ -1,0 +1,291 @@
+# Die Womo-Schadensakte (womo/) auf dem Plesk-Server einrichten und
+# deployen — vom GitHub-Runner aus, nach dem Muster der Schwester-Workflows
+# (Schlüssel-Pinning, CLI-Gateway, SSH über frisch gesetztes
+# Systembenutzer-Passwort). Läuft gefahrlos mehrfach: Subdomain und
+# Verzeichnisse werden nur angelegt, wenn sie fehlen; App-Dateien werden
+# aktualisiert; die Konfiguration wird mit dem übergebenen Admin-Passwort
+# und frischem Salz neu geschrieben. Datenbank und Fotos (womo-daten/)
+# bleiben unangetastet.
+#
+# Ablauf auf dem Server (Heimat des Systembenutzers von kandzior.de):
+#
+#   womo-app/public/   ← Webroot der Subdomain (Front-Controller + Assets)
+#   womo-app/src/      ← Anwendungscode, nicht ausgeliefert
+#   womo-config.php    ← Konfiguration, oberhalb jedes Webroots
+#   womo-daten/        ← SQLite, Fotos, Unterschriften, PDFs, Spool
+#
+# Mailversand wie beim Kontaktformular: SMTP an 127.0.0.1:25 ohne TLS und
+# ohne Anmeldung — die Verbindung verlässt den Rechner nie, kein
+# Postfach-Passwort nötig (erprobt in "Mail und Formular einrichten").
+#
+# Voraussetzung: der DNS-Eintrag der Subdomain (Workflow "DNS-Eintrag
+# setzen", Name "womo"). Fehlt er noch, läuft alles bis auf Let's Encrypt
+# trotzdem durch — der Zertifikatsschritt warnt dann und lässt sich nach
+# dem DNS-Eintrag einfach wiederholen.
+
+name: Womo einrichten
+
+on:
+  workflow_dispatch:
+    inputs:
+      plesk_passwort:
+        description: "Plesk-Admin-Passwort (wird maskiert, nirgends gespeichert)"
+        required: true
+        type: string
+      womo_admin_passwort:
+        description: "Anmeldepasswort der Womo-App (wird maskiert; nur der Hash landet auf dem Server)"
+        required: true
+        type: string
+      subdomain:
+        description: "Vollständige Subdomain"
+        required: true
+        default: womo.kandzior.de
+        type: string
+      domain:
+        description: "Elterndomain in Plesk"
+        required: true
+        default: kandzior.de
+        type: string
+      empfaenger:
+        description: "Empfänger der Benachrichtigungen und Protokoll-Kopien"
+        required: true
+        default: mail@kandzior.de
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  einrichten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLESK: https://95.216.18.216:8443
+      DOMAIN: ${{ inputs.domain }}
+      SUB: ${{ inputs.subdomain }}
+      EMPFAENGER: ${{ inputs.empfaenger }}
+    steps:
+      - name: Passwörter maskieren
+        run: |
+          echo "::add-mask::${{ inputs.plesk_passwort }}"
+          echo "::add-mask::${{ inputs.womo_admin_passwort }}"
+
+      - name: Quellcode holen
+        uses: actions/checkout@v4
+
+      - name: Plesk erreichen und Schlüssel festnageln
+        id: pin
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}
+          PIN=$(openssl s_client -connect "$HOST" -servername plesk </dev/null 2>/dev/null \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary | base64)
+          echo "pin=sha256//$PIN" >> "$GITHUB_OUTPUT"
+          echo "Schlüssel-Fingerabdruck: sha256//$PIN"
+          CODE=$(curl -sk --pinnedpubkey "sha256//$PIN" -o /tmp/server.json -w '%{http_code}' \
+            -u "admin:$PW" "$PLESK/api/v2/server")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Plesk-API antwortet mit HTTP $CODE — Zugangsdaten oder Erreichbarkeit prüfen."
+            cat /tmp/server.json || true
+            exit 1
+          fi
+          jq -r '"Plesk \(.platform // "?") \(.version // "?")"' /tmp/server.json
+
+      - name: Zugang für diesen Lauf vorbereiten (SSH)
+        id: ssh
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          # Wie im Deploy-Workflow: Systembenutzer ermitteln, Passwort je
+          # Lauf frisch setzen.
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          INFO=$(api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--info","'"$DOMAIN"'"]}' "$PLESK/api/v2/cli/site/call")
+          SYSUSER=$(echo "$INFO" | jq -r '.stdout' | sed -n 's/^FTP Login:[[:space:]]*//p' | head -1)
+          [ -n "$SYSUSER" ] || { echo "::error::Systembenutzer nicht ermittelbar."; exit 1; }
+          echo "Systembenutzer: $SYSUSER"
+          SSH_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$SSH_PASS"
+          OK=""
+          for util in site subscription; do
+            ANTWORT=$(api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update",$d,"-passwd",$p]}')" \
+              "$PLESK/api/v2/cli/$util/call")
+            echo "[$util] $(echo "$ANTWORT" | jq -c '{code, stdout: (.stdout // "")[:200], stderr: (.stderr // "")[:300]}')"
+            if echo "$ANTWORT" | jq -e '.code == 0' >/dev/null; then OK=ja; break; fi
+          done
+          [ "$OK" = ja ] \
+            || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
+          echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
+          echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
+
+      - name: Subdomain anlegen (physisch, Webroot womo-app/public)
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          zeig() { jq -c '{code, stdout: (.stdout // "")[:300], stderr: (.stderr // "")[:300]}' <<<"$1"; }
+          gut() { echo "$1" | jq -e '.code == 0' >/dev/null; }
+
+          NAME=${SUB%%.*}
+          if gut "$(cli site --info "$SUB")"; then
+            echo "== $SUB existiert schon — Webroot ggf. nachziehen =="
+            A=$(cli subdomain --update "$NAME" -domain "$DOMAIN" -www-root womo-app/public)
+            zeig "$A"
+            gut "$A" || echo "::warning::Webroot ließ sich nicht aktualisieren — falls er nicht auf womo-app/public zeigt, in Plesk prüfen."
+          else
+            echo "== $SUB anlegen =="
+            # Versuchskette wegen der CLI-Dialekte (gelernt im
+            # Subdomain-Workflow): erst mit verschachteltem Webroot, sonst
+            # anlegen und den Webroot nachträglich setzen.
+            A=$(cli subdomain --create "$NAME" -domain "$DOMAIN" -www-root womo-app/public)
+            zeig "$A"
+            if ! gut "$A"; then
+              A=$(cli subdomain --create "$NAME" -domain "$DOMAIN" -www-root "$NAME")
+              zeig "$A"
+              gut "$A" || { echo "::error::Subdomain ließ sich nicht anlegen."; exit 1; }
+              A=$(cli subdomain --update "$NAME" -domain "$DOMAIN" -www-root womo-app/public)
+              zeig "$A"
+              gut "$A" || { echo "::error::Webroot ließ sich nicht auf womo-app/public setzen — die App darf nicht mit src/ im Webroot laufen."; exit 1; }
+            fi
+          fi
+
+          echo "== Kontrolle =="
+          cli site --info "$SUB" | jq -r '.stdout // .stderr // empty' | sed -n '1,20p'
+
+      - name: App-Dateien übertragen (rsync über SSH)
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q sshpass >/dev/null
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          echo "== Zielstruktur anlegen =="
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" \
+            'mkdir -p womo-app/public womo-app/src womo-daten && chmod 700 womo-daten && ls -la womo-app'
+          echo "== public/ und src/ übertragen =="
+          timeout 300 sshpass -p "$SSH_PASS" rsync -az --delete --itemize-changes \
+            -e "ssh $SSHOPTS" womo/public/ "$SSH_USER@$HOST:womo-app/public/" | tail -30
+          timeout 300 sshpass -p "$SSH_PASS" rsync -az --delete --itemize-changes \
+            -e "ssh $SSHOPTS" womo/src/ "$SSH_USER@$HOST:womo-app/src/" | tail -30
+
+      - name: Konfiguration schreiben
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+          ADMIN_PASS: ${{ inputs.womo_admin_passwort }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          HOME_DIR=$(timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" 'pwd')
+          echo "Heimatverzeichnis: $HOME_DIR"
+          HASH=$(php -r 'echo password_hash($argv[1], PASSWORD_DEFAULT);' "$ADMIN_PASS")
+          SALZ=$(openssl rand -hex 32)
+          # Kein Postfach-Passwort: Zustellung über den lokalen Mailserver,
+          # wie beim Kontaktformular erprobt.
+          cat > /tmp/womo-config.php <<KONF
+          <?php
+
+          /**
+           * Konfiguration der Womo-Schadensakte — liegt bewusst OBERHALB der
+           * Webroots. Angelegt vom Workflow "Womo einrichten"; ein erneuter
+           * Lauf überschreibt die Datei (neues Admin-Passwort, frisches Salz),
+           * lässt womo-daten/ aber unangetastet.
+           */
+          return [
+              'fahrzeugName' => 'Wohnmobil',
+              'kennzeichen' => '',
+              'adminPasswortHash' => '$HASH',
+              'daten' => '$HOME_DIR/womo-daten',
+              'empfaenger' => '$EMPFAENGER',
+              'absender' => '$EMPFAENGER',
+              'absenderName' => 'Womo-Schadensakte',
+              'basisUrl' => 'https://$SUB',
+              'transport' => 'smtp',
+              'smtp' => [
+                  'host' => '127.0.0.1',
+                  'port' => 25,
+                  'benutzer' => '',
+                  'passwort' => '',
+                  'verschluesselung' => 'keine',
+              ],
+              'salz' => '$SALZ',
+          ];
+          KONF
+          timeout 60 sshpass -p "$SSH_PASS" scp $SSHOPTS /tmp/womo-config.php "$SSH_USER@$HOST:womo-config.php"
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" \
+            'chmod 600 womo-config.php && ls -la womo-config.php womo-daten'
+
+      - name: Zertifikat für HTTPS versuchen (Let's Encrypt)
+        continue-on-error: true
+        env:
+          PW: ${{ inputs.plesk_passwort }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          echo "== Öffentliche Auflösung (Diagnose) =="
+          echo "A $SUB: $(dig +short "$SUB" A | tr '\n' ' ')"
+          A=$(cli extension --exec letsencrypt cli.php -d "$SUB")
+          echo "$A" | jq -r '"code=\(.code)\n--- stdout ---\n\((.stdout // "")[:800])\n--- stderr ---\n\((.stderr // "")[:1500])"'
+          echo "$A" | jq -e '.code == 0' >/dev/null \
+            || echo "::warning::Let's Encrypt für $SUB scheiterte — meist fehlt nur der DNS-Eintrag (Workflow »DNS-Eintrag setzen«, Name »womo«). Danach diesen Workflow erneut laufen lassen."
+
+      - name: Selbsttest
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          IP=${PLESK#https://}; IP=${IP%:8443}
+          diagnose() {
+            echo "== Diagnose: [womo]-Zeilen aus den vHost-Protokollen =="
+            timeout 60 sshpass -p "$SSH_PASS" ssh \
+              -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 \
+              "$SSH_USER@$IP" \
+              'grep -h "\[womo\]" logs/*error*log* 2>/dev/null | tail -5; ls logs/ 2>/dev/null | head' \
+              || echo "(Protokolle nicht erreichbar)"
+          }
+          echo "== /status: bereit muss true sein =="
+          ANTWORT=$(curl -sk --resolve "$SUB:443:$IP" "https://$SUB/status")
+          echo "$ANTWORT"
+          echo "$ANTWORT" | jq -e '.ok == true and .bereit == true' >/dev/null \
+            || { echo "::error::Die App meldet sich nicht bereit — kommt PHP-Quelltext statt JSON, fehlt die PHP-Anbindung der Subdomain (in Plesk: PHP für $SUB aktivieren)."; diagnose; exit 1; }
+          echo "== / muss zur Anmeldung umleiten =="
+          CODE=$(curl -sk -o /dev/null -w '%{http_code}' --resolve "$SUB:443:$IP" "https://$SUB/")
+          ORT=$(curl -sk -o /dev/null -D - --resolve "$SUB:443:$IP" "https://$SUB/" | tr -d '\r' | sed -n 's/^Location: //p')
+          echo "HTTP $CODE -> $ORT"
+          { [ "$CODE" = "302" ] && [ "$ORT" = "/login" ]; } \
+            || { echo "::error::Startseite leitet nicht zur Anmeldung um — greift die .htaccess nicht (Front-Controller)?"; diagnose; exit 1; }
+          echo "== Stylesheet muss ausgeliefert werden =="
+          CODE=$(curl -sk -o /dev/null -w '%{http_code}' --resolve "$SUB:443:$IP" "https://$SUB/assets/style.css")
+          echo "HTTP $CODE"
+          [ "$CODE" = "200" ] || { echo "::error::Assets werden nicht ausgeliefert."; exit 1; }
+          echo
+          echo "Eingerichtet: https://$SUB steht — Anmeldung mit dem im Workflow gesetzten Admin-Passwort."

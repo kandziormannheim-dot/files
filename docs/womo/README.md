@@ -12,6 +12,33 @@ Fremddienst, Konfiguration außerhalb des Webroots, dieselbe Missbrauchsbremse,
 derselbe SMTP-Versand. Kein Composer, keine Laufzeit-Abhängigkeiten — FPDF
 liegt gebündelt in `womo/src/pdf/`.
 
+## Livegang auf dem Plesk-Server (der kurze Weg)
+
+`kandzior.de` läuft auf dem Plesk-Server `95.216.18.216`; die DNS-Zone liegt
+bei Hetzner DNS. Für genau diese Umgebung gibt es zwei Workflows unter
+Actions — Handarbeit auf dem Server ist nicht nötig:
+
+1. **„DNS-Eintrag setzen"** — Name `womo`, IPs auf Vorgabe lassen,
+   Hetzner-DNS-Token eingeben. Legt A/AAAA für `womo.kandzior.de` an.
+2. **„Womo einrichten"** ([`womo-einrichten.yml`](../../.github/workflows/womo-einrichten.yml)) —
+   Plesk-Admin-Passwort und ein selbstgewähltes Womo-Anmeldepasswort
+   eingeben. Legt die Subdomain physisch an (Webroot `womo-app/public`),
+   überträgt die App, schreibt `womo-config.php` (nur der Passwort-Hash
+   landet auf dem Server, Mailversand über den lokalen Mailserver wie beim
+   Kontaktformular — kein Postfach-Passwort nötig), holt das
+   Let's-Encrypt-Zertifikat und prüft `/status`, Anmelde-Umleitung und
+   Assets. Läuft gefahrlos mehrfach; `womo-daten/` (Datenbank, Fotos, PDFs)
+   bleibt bei jedem Lauf unangetastet.
+
+Scheitert nur der Let's-Encrypt-Schritt, fehlte meist der DNS-Eintrag —
+erst Workflow 1, dann Workflow 2 erneut. Danach: `https://womo.kandzior.de`
+öffnen, mit dem gewählten Passwort anmelden, erste Vermietung anlegen.
+Ein erneuter Lauf von „Womo einrichten" ist zugleich der Deploy-Weg für
+App-Updates und setzt bei Bedarf das Admin-Passwort neu.
+
+Der Rest dieser Anleitung beschreibt die Einrichtung von Hand auf einem
+eigenen nginx-Server — als Referenz und für den Fall eines Serverwechsels.
+
 ## Voraussetzungen
 
 - PHP 8.2+ mit `pdo_sqlite`, `gd` und `mbstring`

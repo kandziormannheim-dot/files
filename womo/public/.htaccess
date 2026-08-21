@@ -1,0 +1,7 @@
+# Front-Controller für Apache (Plesk): Alles, was keine echte Datei ist,
+# geht an index.php — das Gegenstück zur try_files-Regel im nginx-Beispiel
+# in docs/womo/README.md.
+Options -Indexes
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
