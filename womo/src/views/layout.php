@@ -24,9 +24,11 @@ unset($_SESSION['hinweis']);
         <span class="marke">🚐 <?= e($konfig['fahrzeugName']) ?></span>
         <?php if (adminAngemeldet()) { ?>
         <nav>
-            <a href="/">Schadensakte</a>
-            <a href="/schaden/neu">Neuer Schaden</a>
+            <a href="/">Vorgänge</a>
+            <a href="/schaden/neu">Neuer Vorgang</a>
+            <a href="/protokolle">Protokolle</a>
             <a href="/vermietungen">Vermietungen</a>
+            <a href="/fahrzeuge">Fahrzeuge</a>
             <form method="post" action="/logout" class="inline"><?= csrfFeld() ?>
                 <button class="leise" type="submit">Abmelden</button>
             </form>

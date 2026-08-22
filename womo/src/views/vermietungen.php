@@ -38,6 +38,18 @@
                 <input type="date" name="bis" required value="<?= e(saeubern($_POST['bis'] ?? '')) ?>">
             </label>
         </div>
+        <?php if (count($fahrzeuge ?? []) > 1) { ?>
+        <label>Fahrzeug
+            <select name="fahrzeug_id">
+                <?php foreach ($fahrzeuge as $fahrzeug) { ?>
+                <option value="<?= (int) $fahrzeug['id'] ?>"
+                    <?= (int) ($_POST['fahrzeug_id'] ?? 0) === (int) $fahrzeug['id'] ? 'selected' : '' ?>>
+                    <?= e($fahrzeug['name']) ?><?= (string) $fahrzeug['kennzeichen'] !== '' ? ' (' . e($fahrzeug['kennzeichen']) . ')' : '' ?>
+                </option>
+                <?php } ?>
+            </select>
+        </label>
+        <?php } ?>
         <button type="submit">Vermietung anlegen</button>
     </form>
 </section>

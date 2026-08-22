@@ -1,0 +1,154 @@
+# Womo-Diagnose: Mailversand und Serverzustand prüfen — vom GitHub-Runner
+# aus, nach dem Muster der Schwester-Workflows (Schlüssel-Pinning, CLI-
+# Gateway, SSH über frisch gesetztes Systembenutzer-Passwort). Ändert am
+# Server nichts außer dem Systembenutzer-Passwort für diesen Lauf.
+
+name: Womo-Diagnose
+
+on:
+  workflow_dispatch:
+    inputs:
+      plesk_passwort:
+        description: "Plesk-Admin-Passwort (leer = Repository-Secret PLESK_PASSWORT verwenden)"
+        required: false
+        default: ""
+        type: string
+      testempfaenger:
+        description: "Zusätzliche Adresse für den Testversand (leer = nur der konfigurierte Empfänger)"
+        required: false
+        default: ""
+        type: string
+      domain:
+        description: "Elterndomain in Plesk"
+        required: true
+        default: kandzior.de
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PLESK: https://95.216.18.216:8443
+      DOMAIN: ${{ inputs.domain }}
+      TESTEMPFAENGER: ${{ inputs.testempfaenger }}
+    steps:
+      - name: Passwort auflösen und maskieren
+        env:
+          PLESK_PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+        run: |
+          [ -n "$PLESK_PW" ] \
+            || { echo "::error::Kein Plesk-Passwort: weder als Eingabe übergeben noch als Repository-Secret PLESK_PASSWORT hinterlegt."; exit 1; }
+          echo "::add-mask::$PLESK_PW"
+
+      - name: Plesk erreichen und Schlüssel festnageln
+        id: pin
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}
+          PIN=$(openssl s_client -connect "$HOST" -servername plesk </dev/null 2>/dev/null \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary | base64)
+          echo "pin=sha256//$PIN" >> "$GITHUB_OUTPUT"
+          CODE=$(curl -sk --pinnedpubkey "sha256//$PIN" -o /dev/null -w '%{http_code}' \
+            -u "admin:$PW" "$PLESK/api/v2/server")
+          [ "$CODE" = 200 ] || { echo "::error::Plesk-API antwortet mit HTTP $CODE."; exit 1; }
+
+      - name: Postfächer und Aliasse der Domain auflisten
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          echo "== mail --list (Domain $DOMAIN) =="
+          api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--list"]}' "$PLESK/api/v2/cli/mail/call" \
+            | jq -r '.stdout // .stderr' | grep -i "$DOMAIN" || echo "(keine Postfächer für $DOMAIN gefunden)"
+          echo "== Aliasse je Postfach =="
+          for adresse in $(api -X POST -H 'Content-Type: application/json' \
+              -d '{"params":["--list"]}' "$PLESK/api/v2/cli/mail/call" \
+              | jq -r '.stdout // ""' | grep -oiE "[a-z0-9._-]+@$DOMAIN" | sort -u); do
+            echo "--- $adresse"
+            api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg a "$adresse" '{params:["--info",$a]}')" "$PLESK/api/v2/cli/mail/call" \
+              | jq -r '.stdout // .stderr' | sed -n '1,15p'
+          done
+
+      - name: Zugang für diesen Lauf vorbereiten (SSH)
+        id: ssh
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          INFO=$(api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--info","'"$DOMAIN"'"]}' "$PLESK/api/v2/cli/site/call")
+          SYSUSER=$(echo "$INFO" | jq -r '.stdout' | sed -n 's/^FTP Login:[[:space:]]*//p' | head -1)
+          [ -n "$SYSUSER" ] || { echo "::error::Systembenutzer nicht ermittelbar."; exit 1; }
+          SSH_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$SSH_PASS"
+          OK=""
+          for util in site subscription; do
+            ANTWORT=$(api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update",$d,"-passwd",$p]}')" \
+              "$PLESK/api/v2/cli/$util/call")
+            if echo "$ANTWORT" | jq -e '.code == 0' >/dev/null; then OK=ja; break; fi
+          done
+          [ "$OK" = ja ] || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
+          echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
+          echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
+
+      - name: Fehlerprotokoll nach [womo]-Zeilen durchsuchen
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q sshpass >/dev/null
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          timeout 60 sshpass -p "$SSH_PASS" ssh \
+            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$HOST" '
+              echo "== [womo]-Zeilen aus allen error_logs (letzte 40) ==";
+              grep -h "\[womo\]" logs/*error*log* error_log 2>/dev/null | tail -40 || true;
+              echo; echo "== Vorhandene Protokolldateien ==";
+              ls -la logs/ 2>/dev/null | head -15'
+
+      - name: Testversand über den App-Mailer
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          cat > /tmp/mailtest.php <<'SKRIPT'
+          <?php
+          require __DIR__ . '/womo-app/src/bootstrap.php';
+          $konfig = konfigLaden();
+          echo "Konfigurierter Empfänger: {$konfig['empfaenger']}\n";
+          echo "Absender: {$konfig['absender']} | Transport: {$konfig['transport']}";
+          echo " | SMTP {$konfig['smtp']['host']}:{$konfig['smtp']['port']}\n";
+          $ziele = [$konfig['empfaenger']];
+          if (($argv[1] ?? '') !== '') { $ziele[] = $argv[1]; }
+          foreach ($ziele as $ziel) {
+              try {
+                  mailSenden($konfig, [$ziel], 'Womo-Diagnose: Testmail',
+                      "Diese Testmail kommt aus dem Diagnose-Workflow.\nWenn sie ankommt, funktioniert der Versand an: $ziel\n");
+                  echo "OK: $ziel — der Mailserver hat die Mail angenommen\n";
+              } catch (Throwable $e) {
+                  echo "FEHLER: $ziel — " . $e->getMessage() . "\n";
+              }
+          }
+          SKRIPT
+          sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=accept-new /tmp/mailtest.php "$SSH_USER@$HOST:mailtest.php"
+          timeout 120 sshpass -p "$SSH_PASS" ssh \
+            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$HOST" \
+            "php mailtest.php '$TESTEMPFAENGER'; rm -f mailtest.php"

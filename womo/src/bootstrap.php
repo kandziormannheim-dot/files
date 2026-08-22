@@ -104,11 +104,13 @@ function dbOeffnen(array $konfig): PDO
             vermietung_id INTEGER REFERENCES vermietungen(id), -- NULL: eigene Akte oder QR-Meldung
             protokoll_id  INTEGER,                             -- gesetzt, wenn im Protokoll erfasst
             typ           TEXT NOT NULL DEFAULT 'schaden',     -- schaden|werkstattauftrag
+            fahrzeug_id   INTEGER REFERENCES fahrzeuge(id),
             zone          TEXT NOT NULL,
             beschreibung  TEXT NOT NULL,
             status        TEXT NOT NULL DEFAULT 'offen',       -- offen|gemeldet|repariert
             kosten_cent   INTEGER,
             werkstatt     TEXT NOT NULL DEFAULT '',
+            werkstatt_kommentar TEXT NOT NULL DEFAULT '',      -- Rückmeldung der Werkstatt
             verursacher   TEXT NOT NULL DEFAULT '',
             notiz         TEXT NOT NULL DEFAULT '',            -- intern, Mieter sieht sie nie
             quelle        TEXT NOT NULL DEFAULT 'admin',       -- admin|mieter|qr
@@ -117,11 +119,21 @@ function dbOeffnen(array $konfig): PDO
         )
         SQL);
 
-    // Bestehende Datenbanken nachziehen: die Spalte typ kam später dazu
+    // Bestehende Datenbanken nachziehen: diese Spalten kamen später dazu
     // (CREATE TABLE IF NOT EXISTS greift dann nicht mehr).
     $spalten = array_column($db->query('PRAGMA table_info(schaeden)')->fetchAll(), 'name');
-    if (!in_array('typ', $spalten, true)) {
-        $db->exec("ALTER TABLE schaeden ADD COLUMN typ TEXT NOT NULL DEFAULT 'schaden'");
+    foreach ([
+        'typ' => "TEXT NOT NULL DEFAULT 'schaden'",
+        'fahrzeug_id' => 'INTEGER REFERENCES fahrzeuge(id)',
+        'werkstatt_kommentar' => "TEXT NOT NULL DEFAULT ''",
+    ] as $spalte => $art) {
+        if (!in_array($spalte, $spalten, true)) {
+            $db->exec("ALTER TABLE schaeden ADD COLUMN $spalte $art");
+        }
+    }
+    $spalten = array_column($db->query('PRAGMA table_info(vermietungen)')->fetchAll(), 'name');
+    if (!in_array('fahrzeug_id', $spalten, true)) {
+        $db->exec('ALTER TABLE vermietungen ADD COLUMN fahrzeug_id INTEGER REFERENCES fahrzeuge(id)');
     }
 
     $db->exec(<<<'SQL'
@@ -148,6 +160,52 @@ function dbOeffnen(array $konfig): PDO
             abgeschlossen_am       TEXT
         )
         SQL);
+
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS fahrzeuge (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            name          TEXT NOT NULL,
+            kennzeichen   TEXT NOT NULL DEFAULT '',
+            hersteller    TEXT NOT NULL DEFAULT '',
+            modell        TEXT NOT NULL DEFAULT '',
+            fin           TEXT NOT NULL DEFAULT '',
+            erstzulassung TEXT NOT NULL DEFAULT '',   -- Datum JJJJ-MM-TT
+            km_stand      TEXT NOT NULL DEFAULT '',
+            tuev_bis      TEXT NOT NULL DEFAULT '',   -- Datum JJJJ-MM-TT
+            versicherung  TEXT NOT NULL DEFAULT '',
+            notizen       TEXT NOT NULL DEFAULT '',
+            erstellt_am   TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        SQL);
+
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS verlauf (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            schaden_id  INTEGER NOT NULL REFERENCES schaeden(id) ON DELETE CASCADE,
+            text        TEXT NOT NULL,
+            erstellt_am TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        SQL);
+
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS rechnungen (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            schaden_id  INTEGER NOT NULL REFERENCES schaeden(id) ON DELETE CASCADE,
+            datei       TEXT NOT NULL,
+            name        TEXT NOT NULL DEFAULT '',
+            erstellt_am TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        SQL);
+
+    // Erstes Fahrzeug aus der Konfiguration übernehmen und Altbestand
+    // zuordnen — so bleibt alles Bisherige einem Fahrzeug zugeordnet.
+    if ((int) $db->query('SELECT COUNT(*) FROM fahrzeuge')->fetchColumn() === 0) {
+        $db->prepare('INSERT INTO fahrzeuge (name, kennzeichen) VALUES (?, ?)')
+            ->execute([(string) $konfig['fahrzeugName'], (string) $konfig['kennzeichen']]);
+    }
+    $erstes = (int) $db->query('SELECT MIN(id) FROM fahrzeuge')->fetchColumn();
+    $db->exec("UPDATE schaeden SET fahrzeug_id = $erstes WHERE fahrzeug_id IS NULL");
+    $db->exec("UPDATE vermietungen SET fahrzeug_id = $erstes WHERE fahrzeug_id IS NULL");
 
     return $db;
 }

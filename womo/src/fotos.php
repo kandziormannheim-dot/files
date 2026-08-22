@@ -32,16 +32,59 @@ function uploadsEinsammeln(string $feld): array
     $namen = is_array($eintrag['tmp_name']) ? $eintrag['tmp_name'] : [$eintrag['tmp_name']];
     $fehler = is_array($eintrag['error']) ? $eintrag['error'] : [$eintrag['error']];
     $groessen = is_array($eintrag['size']) ? $eintrag['size'] : [$eintrag['size']];
+    $originale = is_array($eintrag['name']) ? $eintrag['name'] : [$eintrag['name']];
 
     $dateien = [];
     foreach ($namen as $i => $tmp) {
         if (($fehler[$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $tmp)) {
             continue;
         }
-        $dateien[] = ['tmp' => (string) $tmp, 'groesse' => (int) ($groessen[$i] ?? 0)];
+        $dateien[] = [
+            'tmp' => (string) $tmp,
+            'groesse' => (int) ($groessen[$i] ?? 0),
+            'name' => (string) ($originale[$i] ?? ''),
+        ];
     }
 
     return array_slice($dateien, 0, FOTOS_JE_SCHADEN);
+}
+
+/**
+ * Eine Rechnung (PDF oder Bild) in den Rechnungsordner übernehmen. Anders
+ * als Fotos werden PDFs unverändert abgelegt — geprüft wird der echte
+ * Dateityp, nicht die Endung. Liefert [gespeicherter Name, Anzeigename]
+ * oder null bei unlesbarer Datei.
+ *
+ * @param array{tmp: string, groesse: int, name: string} $datei
+ * @return array{0: string, 1: string}|null
+ */
+function rechnungUebernehmen(array $konfig, array $datei): ?array
+{
+    if ($datei['groesse'] <= 0 || $datei['groesse'] > FOTO_MAX_BYTES) {
+        return null;
+    }
+
+    $mime = (string) (new finfo(FILEINFO_MIME_TYPE))->file($datei['tmp']);
+    $endung = [
+        'application/pdf' => 'pdf',
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ][$mime] ?? null;
+    if ($endung === null) {
+        return null;
+    }
+
+    $name = 'rechnung-' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(8)) . '.' . $endung;
+    $ziel = datenPfad($konfig, 'rechnungen') . '/' . $name;
+    if (!move_uploaded_file($datei['tmp'], $ziel)) {
+        return null;
+    }
+    chmod($ziel, 0640);
+
+    $anzeige = trim(preg_replace('/[^\p{L}\p{N} ._()-]/u', '', basename($datei['name'])) ?? '');
+
+    return [$name, $anzeige !== '' ? mb_substr($anzeige, 0, 120) : $name];
 }
 
 /**
