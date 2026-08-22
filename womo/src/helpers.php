@@ -142,18 +142,37 @@ function begrenzungPruefen(array $konfig, string $zweck): bool
     return true;
 }
 
-/** Die festen Fahrzeugzonen; Schlüssel wandern in die Datenbank. */
+/**
+ * Die festen Fahrzeugzonen und Systeme; Schlüssel wandern in die Datenbank.
+ * 'gruppe' teilt die Auswahl in Karosserie/Außen und Innenraum & Technik.
+ */
 function zonen(): array
 {
     return [
-        'front' => ['de' => 'Front', 'en' => 'Front'],
-        'heck' => ['de' => 'Heck', 'en' => 'Rear'],
-        'links' => ['de' => 'Seite links', 'en' => 'Left side'],
-        'rechts' => ['de' => 'Seite rechts', 'en' => 'Right side'],
-        'dach' => ['de' => 'Dach', 'en' => 'Roof'],
-        'innenraum' => ['de' => 'Innenraum', 'en' => 'Interior'],
-        'unterboden' => ['de' => 'Unterboden', 'en' => 'Underbody'],
-        'sonstiges' => ['de' => 'Sonstiges', 'en' => 'Other'],
+        'front' => ['de' => 'Front', 'en' => 'Front', 'gruppe' => 'karosserie'],
+        'heck' => ['de' => 'Heck', 'en' => 'Rear', 'gruppe' => 'karosserie'],
+        'links' => ['de' => 'Seite links', 'en' => 'Left side', 'gruppe' => 'karosserie'],
+        'rechts' => ['de' => 'Seite rechts', 'en' => 'Right side', 'gruppe' => 'karosserie'],
+        'dach' => ['de' => 'Dach', 'en' => 'Roof', 'gruppe' => 'karosserie'],
+        'unterboden' => ['de' => 'Unterboden', 'en' => 'Underbody', 'gruppe' => 'karosserie'],
+        'abbauteile' => ['de' => 'Abbauteile außen', 'en' => 'Exterior attachments', 'gruppe' => 'karosserie'],
+        'innenraum' => ['de' => 'Innenraum', 'en' => 'Interior', 'gruppe' => 'technik'],
+        'elektronik' => ['de' => 'Elektronik', 'en' => 'Electronics', 'gruppe' => 'technik'],
+        'heizung' => ['de' => 'Heizung', 'en' => 'Heating', 'gruppe' => 'technik'],
+        'wasser' => ['de' => 'Wasser (Frischwasser)', 'en' => 'Water (fresh water)', 'gruppe' => 'technik'],
+        'grauwasser' => ['de' => 'Grauwasser', 'en' => 'Grey water', 'gruppe' => 'technik'],
+        'schwarzwasser' => ['de' => 'Schwarzwasser', 'en' => 'Black water', 'gruppe' => 'technik'],
+        'internet' => ['de' => 'Internet (Starlink/LTE)', 'en' => 'Internet (Starlink/LTE)', 'gruppe' => 'technik'],
+        'sonstiges' => ['de' => 'Sonstiges', 'en' => 'Other', 'gruppe' => 'karosserie'],
+    ];
+}
+
+/** Die beiden Zonengruppen mit Anzeigenamen. */
+function zonenGruppen(): array
+{
+    return [
+        'karosserie' => ['de' => 'Karosserie / Außen', 'en' => 'Body / exterior'],
+        'technik' => ['de' => 'Innenraum & Technik', 'en' => 'Interior & systems'],
     ];
 }
 
@@ -161,6 +180,29 @@ function zonen(): array
 function zonenName(string $zone, string $sprache = 'de'): string
 {
     return zonen()[$zone][$sprache === 'en' ? 'en' : 'de'] ?? $zone;
+}
+
+/** Die Vorgangsarten: klassischer Schaden oder Werkstattauftrag (z. B. Nachrüstung). */
+function typen(): array
+{
+    return [
+        'schaden' => ['de' => 'Schaden', 'en' => 'Damage'],
+        'werkstattauftrag' => ['de' => 'Werkstattauftrag', 'en' => 'Workshop order'],
+    ];
+}
+
+/** Anzeigename einer Vorgangsart. */
+function typName(string $typ, string $sprache = 'de'): string
+{
+    return typen()[$typ][$sprache === 'en' ? 'en' : 'de'] ?? $typ;
+}
+
+/** Vorgangsnummer aus Jahr der Erfassung und laufender Nummer, z. B. V-2026-0012. */
+function vorgangsnummer(int $id, ?string $erstelltAm = null): string
+{
+    $jahr = substr((string) $erstelltAm, 0, 4);
+
+    return 'V-' . (preg_match('/^\d{4}$/', $jahr) ? $jahr . '-' : '') . sprintf('%04d', $id);
 }
 
 /** Schadensstatus-Anzeigenamen. */

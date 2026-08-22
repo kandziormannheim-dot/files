@@ -1,5 +1,8 @@
 <?php $neu = $schaden === null; $sprache = 'de'; ?>
-<h1><?= $neu ? 'Neuen Schaden anlegen' : 'Schaden bearbeiten' ?></h1>
+<?php $gewaehlterTyp = $schaden['typ'] ?? (array_key_exists($_POST['typ'] ?? '', typen()) ? (string) $_POST['typ'] : 'schaden'); ?>
+<h1><?= $neu
+    ? 'Neuen Vorgang anlegen'
+    : e(vorgangsnummer((int) $schaden['id'], (string) $schaden['erstellt_am'])) . ' bearbeiten' ?></h1>
 
 <?php foreach ($fehler as $meldung) { ?>
 <p class="fehler"><?= e($meldung) ?></p>
@@ -8,6 +11,17 @@
 <form method="post" enctype="multipart/form-data" class="karte"
       action="<?= $neu ? '/schaden/neu' : '/schaden/' . (int) $schaden['id'] ?>">
     <?= csrfFeld() ?>
+
+    <label>Art des Vorgangs
+        <select name="typ" id="vorgangstyp">
+            <?php foreach (typen() as $typSchluessel => $typNamen) { ?>
+            <option value="<?= e($typSchluessel) ?>"
+                <?= $gewaehlterTyp === $typSchluessel ? 'selected' : '' ?>>
+                <?= e($typNamen['de']) ?><?= $typSchluessel === 'werkstattauftrag' ? ' (z. B. Nachrüstung)' : '' ?>
+            </option>
+            <?php } ?>
+        </select>
+    </label>
 
     <?php $gewaehlteZone = $schaden['zone'] ?? saeubern($_POST['zone'] ?? ''); ?>
     <?php require __DIR__ . '/_zonen.php'; ?>
@@ -62,14 +76,31 @@
         <textarea name="notiz" rows="2" maxlength="2000"><?= e($schaden['notiz'] ?? '') ?></textarea>
     </label>
 
-    <label class="foto-feld"><?= $neu ? 'Fotos (Pflicht, bis zu ' . FOTOS_JE_SCHADEN . ')' : 'Weitere Fotos anhängen' ?>
+    <label class="foto-feld"><?= $neu
+            ? 'Fotos (bei Schäden Pflicht, bis zu ' . FOTOS_JE_SCHADEN . ')'
+            : 'Weitere Fotos anhängen' ?>
         <input type="file" name="fotos[]" accept="image/*" capture="environment" multiple
-            <?= $neu ? 'required' : '' ?>>
+            <?= $neu && $gewaehlterTyp === 'schaden' ? 'required' : '' ?>>
     </label>
     <div class="foto-vorschau"></div>
 
-    <button type="submit"><?= $neu ? 'Schaden anlegen' : 'Speichern' ?></button>
+    <button type="submit"><?= $neu ? 'Vorgang anlegen' : 'Speichern' ?></button>
 </form>
+
+<?php if ($neu) { ?>
+<script>
+// Foto-Pflicht hängt an der Vorgangsart: für einen Werkstattauftrag
+// (etwa eine geplante Nachrüstung) gibt es oft noch kein Foto.
+(function () {
+    var typ = document.getElementById('vorgangstyp');
+    var fotos = document.querySelector('.foto-feld input[type="file"]');
+    if (!typ || !fotos) { return; }
+    function abgleichen() { fotos.required = typ.value === 'schaden'; }
+    typ.addEventListener('change', abgleichen);
+    abgleichen();
+})();
+</script>
+<?php } ?>
 
 <?php if (!$neu) { ?>
     <?php if ($schaden['fotos'] !== []) { ?>
