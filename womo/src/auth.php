@@ -79,6 +79,9 @@ function schadenFuerMieterSichtbar(array $schaden, array $vermietung): bool
         return true;
     }
 
-    return in_array($schaden['status'], ['offen', 'gemeldet'], true)
+    // Werkstattaufträge (etwa Nachrüstungen) sind interne Vorgänge, keine
+    // Vorschäden — sie gehen den Mieter nichts an.
+    return ($schaden['typ'] ?? 'schaden') === 'schaden'
+        && in_array($schaden['status'], ['offen', 'gemeldet'], true)
         && $schaden['erstellt_am'] <= ($vermietung['bis'] . ' 23:59:59');
 }

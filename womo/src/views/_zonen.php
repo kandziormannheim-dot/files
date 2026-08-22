@@ -28,8 +28,11 @@ $gewaehlteZone = $gewaehlteZone ?? '';
         <text x="193" y="69">I</text>
         <text x="260" y="69">F</text>
     </svg>
+    <?php foreach (zonenGruppen() as $gruppe => $gruppenNamen) { ?>
+    <p class="zonen-gruppe"><?= e($gruppenNamen[$sprache === 'en' ? 'en' : 'de']) ?></p>
     <div class="zonen-liste">
         <?php foreach (zonen() as $schluessel => $namen) { ?>
+            <?php if ($namen['gruppe'] !== $gruppe) { continue; } ?>
         <label class="zone">
             <input type="radio" name="zone" value="<?= e($schluessel) ?>"
                 <?= $gewaehlteZone === $schluessel ? 'checked' : '' ?> required>
@@ -37,4 +40,5 @@ $gewaehlteZone = $gewaehlteZone ?? '';
         </label>
         <?php } ?>
     </div>
+    <?php } ?>
 </fieldset>

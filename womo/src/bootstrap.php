@@ -103,6 +103,7 @@ function dbOeffnen(array $konfig): PDO
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             vermietung_id INTEGER REFERENCES vermietungen(id), -- NULL: eigene Akte oder QR-Meldung
             protokoll_id  INTEGER,                             -- gesetzt, wenn im Protokoll erfasst
+            typ           TEXT NOT NULL DEFAULT 'schaden',     -- schaden|werkstattauftrag
             zone          TEXT NOT NULL,
             beschreibung  TEXT NOT NULL,
             status        TEXT NOT NULL DEFAULT 'offen',       -- offen|gemeldet|repariert
@@ -115,6 +116,13 @@ function dbOeffnen(array $konfig): PDO
             aktualisiert_am TEXT NOT NULL DEFAULT (datetime('now'))
         )
         SQL);
+
+    // Bestehende Datenbanken nachziehen: die Spalte typ kam später dazu
+    // (CREATE TABLE IF NOT EXISTS greift dann nicht mehr).
+    $spalten = array_column($db->query('PRAGMA table_info(schaeden)')->fetchAll(), 'name');
+    if (!in_array('typ', $spalten, true)) {
+        $db->exec("ALTER TABLE schaeden ADD COLUMN typ TEXT NOT NULL DEFAULT 'schaden'");
+    }
 
     $db->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS fotos (

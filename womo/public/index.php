@@ -360,19 +360,43 @@ if ($methode === 'POST') {
 if ($pfad === '/') {
     $filterStatus = in_array($_GET['status'] ?? '', ['offen', 'gemeldet', 'repariert'], true)
         ? (string) $_GET['status'] : '';
+    $filterTyp = array_key_exists($_GET['typ'] ?? '', typen()) ? (string) $_GET['typ'] : '';
+    $filterBereich = array_key_exists($_GET['bereich'] ?? '', zonenGruppen())
+        ? (string) $_GET['bereich'] : '';
 
     $sql = 'SELECT s.*, v.name AS mieter_name,
                    (SELECT COUNT(*) FROM fotos f WHERE f.schaden_id = s.id) AS foto_anzahl
             FROM schaeden s LEFT JOIN vermietungen v ON v.id = s.vermietung_id';
+    $bedingungen = [];
     $werte = [];
     if ($filterStatus !== '') {
-        $sql .= ' WHERE s.status = ?';
+        $bedingungen[] = 's.status = ?';
         $werte[] = $filterStatus;
+    }
+    if ($filterTyp !== '') {
+        $bedingungen[] = 's.typ = ?';
+        $werte[] = $filterTyp;
+    }
+    if ($filterBereich !== '') {
+        $bereichZonen = array_keys(array_filter(
+            zonen(),
+            static fn (array $z): bool => $z['gruppe'] === $filterBereich
+        ));
+        $bedingungen[] = 's.zone IN (' . implode(',', array_fill(0, count($bereichZonen), '?')) . ')';
+        $werte = array_merge($werte, $bereichZonen);
+    }
+    if ($bedingungen !== []) {
+        $sql .= ' WHERE ' . implode(' AND ', $bedingungen);
     }
     $sql .= ' ORDER BY s.erstellt_am DESC';
     $abfrage = $db->prepare($sql);
     $abfrage->execute($werte);
     $schaeden = $abfrage->fetchAll();
+
+    $kostenSumme = 0;
+    foreach ($schaeden as $schaden) {
+        $kostenSumme += (int) ($schaden['kosten_cent'] ?? 0);
+    }
 
     $unzugeordnet = $db->query(
         "SELECT * FROM schaeden WHERE vermietung_id IS NULL AND quelle = 'qr' AND status = 'gemeldet'
@@ -390,6 +414,9 @@ if ($pfad === '/') {
         'schaeden' => $schaeden,
         'unzugeordnet' => $unzugeordnet,
         'filterStatus' => $filterStatus,
+        'filterTyp' => $filterTyp,
+        'filterBereich' => $filterBereich,
+        'kostenSumme' => $kostenSumme,
         'loeschFaellig' => $faellig->fetchAll(),
     ]);
 }
@@ -402,6 +429,7 @@ if ($pfad === '/schaden/neu') {
     )->fetchAll();
 
     if ($methode === 'POST') {
+        $typ = array_key_exists($_POST['typ'] ?? '', typen()) ? (string) $_POST['typ'] : 'schaden';
         $zone = saeubern($_POST['zone'] ?? '');
         $beschreibung = saeubern($_POST['beschreibung'] ?? '');
         $fehler = [];
@@ -409,9 +437,11 @@ if ($pfad === '/schaden/neu') {
             $fehler[] = 'Bitte eine Stelle am Fahrzeug wählen.';
         }
         if (mb_strlen($beschreibung) < 5) {
-            $fehler[] = 'Bitte den Schaden beschreiben (mindestens 5 Zeichen).';
+            $fehler[] = 'Bitte den Vorgang beschreiben (mindestens 5 Zeichen).';
         }
-        if (uploadsEinsammeln('fotos') === []) {
+        // Foto-Pflicht nur bei Schäden — ein Werkstattauftrag (etwa eine
+        // Nachrüstung) hat oft noch nichts zu fotografieren.
+        if ($typ === 'schaden' && uploadsEinsammeln('fotos') === []) {
             $fehler[] = 'Mindestens ein Foto ist Pflicht.';
         }
         if ($fehler === []) {
@@ -420,10 +450,11 @@ if ($pfad === '/schaden/neu') {
                 ? (string) $_POST['status'] : 'offen';
             $db->prepare(
                 'INSERT INTO schaeden
-                     (vermietung_id, zone, beschreibung, status, kosten_cent, werkstatt, verursacher, notiz, quelle)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, \'admin\')'
+                     (vermietung_id, typ, zone, beschreibung, status, kosten_cent, werkstatt, verursacher, notiz, quelle)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, \'admin\')'
             )->execute([
                 $vermietungId,
+                $typ,
                 $zone,
                 $beschreibung,
                 $status,
@@ -433,12 +464,12 @@ if ($pfad === '/schaden/neu') {
                 saeubern($_POST['notiz'] ?? ''),
             ]);
             $schadenId = (int) $db->lastInsertId();
-            if (fotosSpeichern($db, $konfig, $schadenId, 'fotos') === 0) {
+            if (fotosSpeichern($db, $konfig, $schadenId, 'fotos') === 0 && $typ === 'schaden') {
                 $db->prepare('DELETE FROM schaeden WHERE id = ?')->execute([$schadenId]);
                 $fehler[] = 'Kein Foto war lesbar (JPEG/PNG/WebP, höchstens '
                     . (int) (FOTO_MAX_BYTES / 1048576) . ' MB).';
             } else {
-                hinweisSetzen('Schaden angelegt.');
+                hinweisSetzen('Vorgang angelegt.');
                 umleiten('/schaden/' . $schadenId);
             }
         }
@@ -486,6 +517,8 @@ if (preg_match('#^/schaden/(\d+)$#', $pfad, $treffer)) {
         }
 
         // Speichern: Felder übernehmen, neue Fotos anhängen.
+        $typ = array_key_exists($_POST['typ'] ?? '', typen())
+            ? (string) $_POST['typ'] : (string) $schaden['typ'];
         $zone = saeubern($_POST['zone'] ?? '');
         $beschreibung = saeubern($_POST['beschreibung'] ?? '');
         $fehler = [];
@@ -493,18 +526,19 @@ if (preg_match('#^/schaden/(\d+)$#', $pfad, $treffer)) {
             $fehler[] = 'Bitte eine Stelle am Fahrzeug wählen.';
         }
         if (mb_strlen($beschreibung) < 5) {
-            $fehler[] = 'Bitte den Schaden beschreiben (mindestens 5 Zeichen).';
+            $fehler[] = 'Bitte den Vorgang beschreiben (mindestens 5 Zeichen).';
         }
         if ($fehler === []) {
             $status = in_array($_POST['status'] ?? '', ['offen', 'gemeldet', 'repariert'], true)
                 ? (string) $_POST['status'] : (string) $schaden['status'];
             $db->prepare(
-                "UPDATE schaeden SET vermietung_id = ?, zone = ?, beschreibung = ?, status = ?,
+                "UPDATE schaeden SET vermietung_id = ?, typ = ?, zone = ?, beschreibung = ?, status = ?,
                      kosten_cent = ?, werkstatt = ?, verursacher = ?, notiz = ?,
                      aktualisiert_am = datetime('now')
                  WHERE id = ?"
             )->execute([
                 (int) ($_POST['vermietung_id'] ?? 0) ?: null,
+                $typ,
                 $zone,
                 $beschreibung,
                 $status,
@@ -702,6 +736,7 @@ function protokollVorschaeden(PDO $db, array $protokoll): array
     $abfrage = $db->prepare(
         "SELECT * FROM schaeden
          WHERE status IN ('offen', 'gemeldet')
+           AND typ = 'schaden'
            AND (protokoll_id IS NULL OR protokoll_id != ?)
            AND erstellt_am <= ?
          ORDER BY erstellt_am"
