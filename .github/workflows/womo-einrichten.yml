@@ -108,6 +108,40 @@ jobs:
           fi
           jq -r '"Plesk \(.platform // "?") \(.version // "?")"' /tmp/server.json
 
+      - name: Versand-Postfach womo@ sicherstellen (SMTP-Anmeldung)
+        id: mailkonto
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          # Ohne SMTP-Anmeldung nimmt der Mailserver nur Post für die eigene
+          # Domain an ("Relay access denied") — Protokoll-Mails an Mieter mit
+          # externer Adresse blieben liegen. Deshalb bekommt die App ein
+          # eigenes Versand-Postfach womo@<domain>, dessen Passwort je Lauf
+          # frisch gesetzt wird und nur in der womo-config.php landet.
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli_mail() {
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/mail/call"
+          }
+          KONTO="womo.system@$DOMAIN"
+          MAIL_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$MAIL_PASS"
+          A=$(cli_mail --create "$KONTO" -mailbox true -passwd "$MAIL_PASS")
+          if echo "$A" | jq -e '.code == 0' >/dev/null; then
+            echo "Versand-Postfach $KONTO angelegt."
+          else
+            A=$(cli_mail --update "$KONTO" -passwd "$MAIL_PASS")
+            echo "$A" | jq -e '.code == 0' >/dev/null \
+              || { echo "::error::Versand-Postfach $KONTO ließ sich weder anlegen noch aktualisieren:"; \
+                   echo "$A" | jq -c '{code, stdout: (.stdout // "")[:300], stderr: (.stderr // "")[:300]}'; exit 1; }
+            echo "Versand-Postfach $KONTO vorhanden — Passwort neu gesetzt."
+          fi
+          { echo "konto=$KONTO"; echo "pass=$MAIL_PASS"; } >> "$GITHUB_OUTPUT"
+
       - name: Zugang für diesen Lauf vorbereiten (SSH)
         id: ssh
         env:
@@ -204,6 +238,8 @@ jobs:
           SSH_USER: ${{ steps.ssh.outputs.user }}
           SSH_PASS: ${{ steps.ssh.outputs.pass }}
           ADMIN_PASS: ${{ inputs.womo_admin_passwort || secrets.WOMO_ADMIN_PASSWORT }}
+          MAIL_KONTO: ${{ steps.mailkonto.outputs.konto }}
+          MAIL_PASS: ${{ steps.mailkonto.outputs.pass }}
         run: |
           set -euo pipefail
           HOST=${PLESK#https://}; HOST=${HOST%:8443}
@@ -212,8 +248,9 @@ jobs:
           echo "Heimatverzeichnis: $HOME_DIR"
           HASH=$(php -r 'echo password_hash($argv[1], PASSWORD_DEFAULT);' "$ADMIN_PASS")
           SALZ=$(openssl rand -hex 32)
-          # Kein Postfach-Passwort: Zustellung über den lokalen Mailserver,
-          # wie beim Kontaktformular erprobt.
+          # Angemeldeter Versand über das Postfach womo.system@ — nur so darf
+          # der Mailserver auch an externe Empfänger (Mieter!) zustellen; die
+          # Verbindung zu 127.0.0.1 verlässt den Rechner trotzdem nie.
           cat > /tmp/womo-config.php <<KONF
           <?php
 
@@ -229,15 +266,15 @@ jobs:
               'adminPasswortHash' => '$HASH',
               'daten' => '$HOME_DIR/womo-daten',
               'empfaenger' => '$EMPFAENGER',
-              'absender' => '$EMPFAENGER',
+              'absender' => '$MAIL_KONTO',
               'absenderName' => 'Womo-Schadensakte',
               'basisUrl' => 'https://$SUB',
               'transport' => 'smtp',
               'smtp' => [
                   'host' => '127.0.0.1',
                   'port' => 25,
-                  'benutzer' => '',
-                  'passwort' => '',
+                  'benutzer' => '$MAIL_KONTO',
+                  'passwort' => '$MAIL_PASS',
                   'verschluesselung' => 'keine',
               ],
               'salz' => '$SALZ',
