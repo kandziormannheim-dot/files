@@ -78,7 +78,7 @@ function fotosSpeichern(PDO $db, array $konfig, int $schadenId, string $feld): i
     return $anzahl;
 }
 
-/** Schaden samt Fotoliste laden. */
+/** Schaden samt Fotos, Rechnungen und Verlauf laden. */
 function schadenLaden(PDO $db, int $id): ?array
 {
     $abfrage = $db->prepare('SELECT * FROM schaeden WHERE id = ?');
@@ -87,11 +87,44 @@ function schadenLaden(PDO $db, int $id): ?array
     if ($schaden === false) {
         return null;
     }
-    $fotos = $db->prepare('SELECT * FROM fotos WHERE schaden_id = ? ORDER BY id');
-    $fotos->execute([$id]);
-    $schaden['fotos'] = $fotos->fetchAll();
+    foreach (['fotos', 'rechnungen', 'verlauf'] as $tabelle) {
+        $liste = $db->prepare("SELECT * FROM $tabelle WHERE schaden_id = ? ORDER BY id");
+        $liste->execute([$id]);
+        $schaden[$tabelle] = $liste->fetchAll();
+    }
 
     return $schaden;
+}
+
+/** Einen Verlaufseintrag zu einem Vorgang festhalten. */
+function verlaufEintragen(PDO $db, int $schadenId, string $text): void
+{
+    $db->prepare('INSERT INTO verlauf (schaden_id, text) VALUES (?, ?)')
+        ->execute([$schadenId, $text]);
+}
+
+/** Rechnungen eines Uploads an einen Vorgang hängen; liefert die Anzahl. */
+function rechnungenSpeichern(PDO $db, array $konfig, int $schadenId, string $feld): int
+{
+    $anzahl = 0;
+    foreach (uploadsEinsammeln($feld) as $datei) {
+        $uebernommen = rechnungUebernehmen($konfig, $datei);
+        if ($uebernommen === null) {
+            continue;
+        }
+        $db->prepare('INSERT INTO rechnungen (schaden_id, datei, name) VALUES (?, ?, ?)')
+            ->execute([$schadenId, $uebernommen[0], $uebernommen[1]]);
+        verlaufEintragen($db, $schadenId, 'Rechnung angehängt: ' . $uebernommen[1]);
+        $anzahl++;
+    }
+
+    return $anzahl;
+}
+
+/** Alle Fahrzeuge, ältestes zuerst. */
+function fahrzeugeLaden(PDO $db): array
+{
+    return $db->query('SELECT * FROM fahrzeuge ORDER BY id')->fetchAll();
 }
 
 /** Benachrichtigung an den Vermieter über eine neue Meldung. */
@@ -200,10 +233,17 @@ if (preg_match('#^/m/([a-f0-9]{32})/schaden$#', $pfad, $treffer) && $methode ===
 
     if ($fehler === []) {
         $db->prepare(
-            "INSERT INTO schaeden (vermietung_id, zone, beschreibung, status, verursacher, quelle)
-             VALUES (?, ?, ?, 'gemeldet', ?, 'mieter')"
-        )->execute([(int) $vermietung['id'], $zone, $beschreibung, (string) $vermietung['name']]);
+            "INSERT INTO schaeden (vermietung_id, fahrzeug_id, zone, beschreibung, status, verursacher, quelle)
+             VALUES (?, ?, ?, ?, 'gemeldet', ?, 'mieter')"
+        )->execute([
+            (int) $vermietung['id'],
+            $vermietung['fahrzeug_id'] !== null ? (int) $vermietung['fahrzeug_id'] : null,
+            $zone,
+            $beschreibung,
+            (string) $vermietung['name'],
+        ]);
         $schadenId = (int) $db->lastInsertId();
+        verlaufEintragen($db, $schadenId, 'Über den Mieter-Link gemeldet von ' . (string) $vermietung['name']);
         if (fotosSpeichern($db, $konfig, $schadenId, 'fotos') === 0) {
             // Upload war da, aber kein Bild lesbar: Eintrag ohne Foto wäre
             // gegen die Regel „Foto ist Pflicht“ — wieder zurücknehmen.
@@ -258,10 +298,11 @@ if ($pfad === '/qr') {
         if ($fehler === []) {
             $verursacher = $name . ($kontakt !== '' ? ' (' . mb_substr($kontakt, 0, 100) . ')' : '');
             $db->prepare(
-                "INSERT INTO schaeden (zone, beschreibung, status, verursacher, quelle)
-                 VALUES (?, ?, 'gemeldet', ?, 'qr')"
+                "INSERT INTO schaeden (fahrzeug_id, zone, beschreibung, status, verursacher, quelle)
+                 VALUES ((SELECT MIN(id) FROM fahrzeuge), ?, ?, 'gemeldet', ?, 'qr')"
             )->execute([$zone, $beschreibung, $verursacher]);
             $schadenId = (int) $db->lastInsertId();
+            verlaufEintragen($db, $schadenId, 'Über den QR-Code gemeldet von ' . $verursacher);
             if (fotosSpeichern($db, $konfig, $schadenId, 'fotos') === 0) {
                 $db->prepare('DELETE FROM schaeden WHERE id = ?')->execute([$schadenId]);
                 $fehler[] = t($sprache, 'fehler.foto_format', (int) (FOTO_MAX_BYTES / 1048576));
@@ -363,15 +404,25 @@ if ($pfad === '/') {
     $filterTyp = array_key_exists($_GET['typ'] ?? '', typen()) ? (string) $_GET['typ'] : '';
     $filterBereich = array_key_exists($_GET['bereich'] ?? '', zonenGruppen())
         ? (string) $_GET['bereich'] : '';
+    $fahrzeuge = fahrzeugeLaden($db);
+    $filterFahrzeug = in_array((int) ($_GET['fahrzeug'] ?? 0), array_map('intval', array_column($fahrzeuge, 'id')), true)
+        ? (int) $_GET['fahrzeug'] : 0;
 
-    $sql = 'SELECT s.*, v.name AS mieter_name,
-                   (SELECT COUNT(*) FROM fotos f WHERE f.schaden_id = s.id) AS foto_anzahl
-            FROM schaeden s LEFT JOIN vermietungen v ON v.id = s.vermietung_id';
+    $sql = 'SELECT s.*, v.name AS mieter_name, fz.name AS fahrzeug_name,
+                   (SELECT COUNT(*) FROM fotos f WHERE f.schaden_id = s.id) AS foto_anzahl,
+                   (SELECT COUNT(*) FROM rechnungen r WHERE r.schaden_id = s.id) AS rechnung_anzahl
+            FROM schaeden s
+            LEFT JOIN vermietungen v ON v.id = s.vermietung_id
+            LEFT JOIN fahrzeuge fz ON fz.id = s.fahrzeug_id';
     $bedingungen = [];
     $werte = [];
     if ($filterStatus !== '') {
         $bedingungen[] = 's.status = ?';
         $werte[] = $filterStatus;
+    }
+    if ($filterFahrzeug !== 0) {
+        $bedingungen[] = 's.fahrzeug_id = ?';
+        $werte[] = $filterFahrzeug;
     }
     if ($filterTyp !== '') {
         $bedingungen[] = 's.typ = ?';
@@ -410,15 +461,142 @@ if ($pfad === '/') {
     );
     $faellig->execute([$stichtag]);
 
+    // Skizzen-Übersicht: offene und gemeldete Vorgänge je Zone — für das
+    // gefilterte Fahrzeug oder, ohne Filter, das erste.
+    $skizzeFahrzeug = $filterFahrzeug !== 0 ? $filterFahrzeug : (int) ($fahrzeuge[0]['id'] ?? 0);
+    $zaehlung = $db->prepare(
+        "SELECT zone, COUNT(*) AS anzahl FROM schaeden
+         WHERE fahrzeug_id = ? AND status IN ('offen', 'gemeldet') GROUP BY zone"
+    );
+    $zaehlung->execute([$skizzeFahrzeug]);
+    $zonenZaehler = array_column($zaehlung->fetchAll(), 'anzahl', 'zone');
+
     ansicht('dashboard', [
         'schaeden' => $schaeden,
         'unzugeordnet' => $unzugeordnet,
         'filterStatus' => $filterStatus,
         'filterTyp' => $filterTyp,
         'filterBereich' => $filterBereich,
+        'filterFahrzeug' => $filterFahrzeug,
+        'fahrzeuge' => $fahrzeuge,
+        'skizzeFahrzeug' => $skizzeFahrzeug,
+        'zonenZaehler' => $zonenZaehler,
         'kostenSumme' => $kostenSumme,
         'loeschFaellig' => $faellig->fetchAll(),
     ]);
+}
+
+// ------------------------------------------------------------------ Protokolle-Übersicht
+
+if ($pfad === '/protokolle') {
+    $liste = $db->query(
+        'SELECT p.*, v.name AS mieter_name, v.von, v.bis, v.anonymisiert, fz.name AS fahrzeug_name
+         FROM protokolle p
+         JOIN vermietungen v ON v.id = p.vermietung_id
+         LEFT JOIN fahrzeuge fz ON fz.id = v.fahrzeug_id
+         ORDER BY p.id DESC'
+    )->fetchAll();
+    ansicht('protokolle', ['protokolle' => $liste]);
+}
+
+// ------------------------------------------------------------------ Fahrzeuge
+
+if ($pfad === '/fahrzeuge') {
+    if ($methode === 'POST') {
+        $name = saeubern($_POST['name'] ?? '');
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
+            ansicht('fahrzeuge', [
+                'fahrzeuge' => fahrzeugeLaden($db),
+                'fehler' => ['Bitte einen Fahrzeugnamen angeben.'],
+            ]);
+        }
+        $db->prepare('INSERT INTO fahrzeuge (name, kennzeichen) VALUES (?, ?)')
+            ->execute([$name, mb_substr(saeubern($_POST['kennzeichen'] ?? ''), 0, 20)]);
+        hinweisSetzen('Fahrzeug angelegt — jetzt die Fahrzeugdaten vervollständigen.');
+        umleiten('/fahrzeug/' . (int) $db->lastInsertId());
+    }
+    ansicht('fahrzeuge', ['fahrzeuge' => fahrzeugeLaden($db), 'fehler' => []]);
+}
+
+if (preg_match('#^/fahrzeug/(\d+)$#', $pfad, $treffer)) {
+    $abfrage = $db->prepare('SELECT * FROM fahrzeuge WHERE id = ?');
+    $abfrage->execute([(int) $treffer[1]]);
+    $fahrzeug = $abfrage->fetch();
+    if ($fahrzeug === false) {
+        http_response_code(404);
+        exit('Fahrzeug nicht gefunden.');
+    }
+
+    if ($methode === 'POST') {
+        $name = saeubern($_POST['name'] ?? '');
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
+            $name = (string) $fahrzeug['name'];
+        }
+        $datum = static fn (string $d): string => preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) ? $d : '';
+        $db->prepare(
+            'UPDATE fahrzeuge SET name = ?, kennzeichen = ?, hersteller = ?, modell = ?, fin = ?,
+                 erstzulassung = ?, km_stand = ?, tuev_bis = ?, versicherung = ?, notizen = ?
+             WHERE id = ?'
+        )->execute([
+            $name,
+            mb_substr(saeubern($_POST['kennzeichen'] ?? ''), 0, 20),
+            mb_substr(saeubern($_POST['hersteller'] ?? ''), 0, 100),
+            mb_substr(saeubern($_POST['modell'] ?? ''), 0, 100),
+            mb_substr(saeubern($_POST['fin'] ?? ''), 0, 30),
+            $datum(saeubern($_POST['erstzulassung'] ?? '')),
+            mb_substr(saeubern($_POST['km_stand'] ?? ''), 0, 20),
+            $datum(saeubern($_POST['tuev_bis'] ?? '')),
+            mb_substr(saeubern($_POST['versicherung'] ?? ''), 0, 200),
+            mb_substr(saeubern($_POST['notizen'] ?? ''), 0, 2000),
+            (int) $fahrzeug['id'],
+        ]);
+        hinweisSetzen('Fahrzeugdaten gespeichert.');
+        umleiten('/fahrzeug/' . (int) $fahrzeug['id']);
+    }
+
+    $zaehlung = $db->prepare(
+        "SELECT zone, COUNT(*) AS anzahl FROM schaeden
+         WHERE fahrzeug_id = ? AND status IN ('offen', 'gemeldet') GROUP BY zone"
+    );
+    $zaehlung->execute([(int) $fahrzeug['id']]);
+
+    $offene = $db->prepare(
+        "SELECT * FROM schaeden WHERE fahrzeug_id = ? AND status IN ('offen', 'gemeldet')
+         ORDER BY erstellt_am DESC"
+    );
+    $offene->execute([(int) $fahrzeug['id']]);
+
+    ansicht('fahrzeug', [
+        'fahrzeug' => $fahrzeug,
+        'zonenZaehler' => array_column($zaehlung->fetchAll(), 'anzahl', 'zone'),
+        'offene' => $offene->fetchAll(),
+    ]);
+}
+
+// ------------------------------------------------------------------ Rechnungsabruf
+
+if (preg_match('#^/rechnung/(\d+)$#', $pfad, $treffer)) {
+    $rechnung = $db->prepare('SELECT * FROM rechnungen WHERE id = ?');
+    $rechnung->execute([(int) $treffer[1]]);
+    $rechnung = $rechnung->fetch();
+    $datei = $rechnung === false
+        ? '' : datenPfad($konfig, 'rechnungen') . '/' . basename((string) $rechnung['datei']);
+    if ($rechnung === false || !is_file($datei)) {
+        http_response_code(404);
+        exit;
+    }
+    $endung = strtolower(pathinfo($datei, PATHINFO_EXTENSION));
+    header('Content-Type: ' . ([
+        'pdf' => 'application/pdf',
+        'jpg' => 'image/jpeg',
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+    ][$endung] ?? 'application/octet-stream'));
+    header('Content-Length: ' . (string) filesize($datei));
+    header('Content-Disposition: inline; filename="' . basename((string) $rechnung['datei']) . '"');
+    header('Cache-Control: private');
+    readfile($datei);
+    exit;
 }
 
 // ------------------------------------------------------------ Schaden anlegen
@@ -427,6 +605,7 @@ if ($pfad === '/schaden/neu') {
     $vermietungen = $db->query(
         "SELECT id, name, von, bis FROM vermietungen WHERE anonymisiert = 0 ORDER BY von DESC"
     )->fetchAll();
+    $fahrzeuge = fahrzeugeLaden($db);
 
     if ($methode === 'POST') {
         $typ = array_key_exists($_POST['typ'] ?? '', typen()) ? (string) $_POST['typ'] : 'schaden';
@@ -446,20 +625,27 @@ if ($pfad === '/schaden/neu') {
         }
         if ($fehler === []) {
             $vermietungId = (int) ($_POST['vermietung_id'] ?? 0) ?: null;
+            $fahrzeugId = (int) ($_POST['fahrzeug_id'] ?? 0);
+            if (!in_array($fahrzeugId, array_map('intval', array_column($fahrzeuge, 'id')), true)) {
+                $fahrzeugId = (int) ($fahrzeuge[0]['id'] ?? 0);
+            }
             $status = in_array($_POST['status'] ?? '', ['offen', 'gemeldet', 'repariert'], true)
                 ? (string) $_POST['status'] : 'offen';
             $db->prepare(
                 'INSERT INTO schaeden
-                     (vermietung_id, typ, zone, beschreibung, status, kosten_cent, werkstatt, verursacher, notiz, quelle)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, \'admin\')'
+                     (vermietung_id, fahrzeug_id, typ, zone, beschreibung, status, kosten_cent,
+                      werkstatt, werkstatt_kommentar, verursacher, notiz, quelle)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, \'admin\')'
             )->execute([
                 $vermietungId,
+                $fahrzeugId,
                 $typ,
                 $zone,
                 $beschreibung,
                 $status,
                 centAusEingabe(saeubern($_POST['kosten'] ?? '')),
                 saeubern($_POST['werkstatt'] ?? ''),
+                saeubern($_POST['werkstatt_kommentar'] ?? ''),
                 saeubern($_POST['verursacher'] ?? ''),
                 saeubern($_POST['notiz'] ?? ''),
             ]);
@@ -469,16 +655,20 @@ if ($pfad === '/schaden/neu') {
                 $fehler[] = 'Kein Foto war lesbar (JPEG/PNG/WebP, höchstens '
                     . (int) (FOTO_MAX_BYTES / 1048576) . ' MB).';
             } else {
+                verlaufEintragen($db, $schadenId, 'Angelegt als ' . typName($typ) . ', Status ' . statusName($status));
+                rechnungenSpeichern($db, $konfig, $schadenId, 'rechnungen');
                 hinweisSetzen('Vorgang angelegt.');
                 umleiten('/schaden/' . $schadenId);
             }
         }
         ansicht('schaden_form', [
-            'schaden' => null, 'vermietungen' => $vermietungen, 'fehler' => $fehler,
+            'schaden' => null, 'vermietungen' => $vermietungen, 'fahrzeuge' => $fahrzeuge, 'fehler' => $fehler,
         ]);
     }
 
-    ansicht('schaden_form', ['schaden' => null, 'vermietungen' => $vermietungen, 'fehler' => []]);
+    ansicht('schaden_form', [
+        'schaden' => null, 'vermietungen' => $vermietungen, 'fahrzeuge' => $fahrzeuge, 'fehler' => [],
+    ]);
 }
 
 // --------------------------------------------------- Schaden ansehen/bearbeiten
@@ -492,6 +682,7 @@ if (preg_match('#^/schaden/(\d+)$#', $pfad, $treffer)) {
     $vermietungen = $db->query(
         "SELECT id, name, von, bis FROM vermietungen WHERE anonymisiert = 0 ORDER BY von DESC"
     )->fetchAll();
+    $fahrzeuge = fahrzeugeLaden($db);
 
     if ($methode === 'POST') {
         $aktion = (string) ($_POST['aktion'] ?? 'speichern');
@@ -500,9 +691,24 @@ if (preg_match('#^/schaden/(\d+)$#', $pfad, $treffer)) {
             foreach ($schaden['fotos'] as $foto) {
                 @unlink(datenPfad($konfig, 'fotos') . '/' . basename((string) $foto['datei']));
             }
+            foreach ($schaden['rechnungen'] as $rechnung) {
+                @unlink(datenPfad($konfig, 'rechnungen') . '/' . basename((string) $rechnung['datei']));
+            }
             $db->prepare('DELETE FROM schaeden WHERE id = ?')->execute([(int) $schaden['id']]);
-            hinweisSetzen('Schaden gelöscht.');
+            hinweisSetzen('Vorgang gelöscht.');
             umleiten('/');
+        }
+
+        if ($aktion === 'rechnung_loeschen') {
+            $rechnungId = (int) ($_POST['rechnung_id'] ?? 0);
+            foreach ($schaden['rechnungen'] as $rechnung) {
+                if ((int) $rechnung['id'] === $rechnungId) {
+                    @unlink(datenPfad($konfig, 'rechnungen') . '/' . basename((string) $rechnung['datei']));
+                    $db->prepare('DELETE FROM rechnungen WHERE id = ?')->execute([$rechnungId]);
+                    verlaufEintragen($db, (int) $schaden['id'], 'Rechnung entfernt: ' . (string) $rechnung['name']);
+                }
+            }
+            umleiten('/schaden/' . $schaden['id']);
         }
 
         if ($aktion === 'foto_loeschen') {
@@ -531,38 +737,102 @@ if (preg_match('#^/schaden/(\d+)$#', $pfad, $treffer)) {
         if ($fehler === []) {
             $status = in_array($_POST['status'] ?? '', ['offen', 'gemeldet', 'repariert'], true)
                 ? (string) $_POST['status'] : (string) $schaden['status'];
+            $fahrzeugId = (int) ($_POST['fahrzeug_id'] ?? 0);
+            if (!in_array($fahrzeugId, array_map('intval', array_column($fahrzeuge, 'id')), true)) {
+                $fahrzeugId = (int) ($schaden['fahrzeug_id'] ?? 0) ?: (int) ($fahrzeuge[0]['id'] ?? 0);
+            }
+            $kosten = centAusEingabe(saeubern($_POST['kosten'] ?? ''));
+            $werkstattKommentar = saeubern($_POST['werkstatt_kommentar'] ?? '');
             $db->prepare(
-                "UPDATE schaeden SET vermietung_id = ?, typ = ?, zone = ?, beschreibung = ?, status = ?,
-                     kosten_cent = ?, werkstatt = ?, verursacher = ?, notiz = ?,
+                "UPDATE schaeden SET vermietung_id = ?, fahrzeug_id = ?, typ = ?, zone = ?,
+                     beschreibung = ?, status = ?, kosten_cent = ?, werkstatt = ?,
+                     werkstatt_kommentar = ?, verursacher = ?, notiz = ?,
                      aktualisiert_am = datetime('now')
                  WHERE id = ?"
             )->execute([
                 (int) ($_POST['vermietung_id'] ?? 0) ?: null,
+                $fahrzeugId,
                 $typ,
                 $zone,
                 $beschreibung,
                 $status,
-                centAusEingabe(saeubern($_POST['kosten'] ?? '')),
+                $kosten,
                 saeubern($_POST['werkstatt'] ?? ''),
+                $werkstattKommentar,
                 saeubern($_POST['verursacher'] ?? ''),
                 saeubern($_POST['notiz'] ?? ''),
                 (int) $schaden['id'],
             ]);
+
+            // Verlauf: die sichtbaren Änderungen festhalten.
+            $meldungen = [];
+            if ($status !== (string) $schaden['status']) {
+                $meldungen[] = 'Status: ' . statusName((string) $schaden['status']) . ' → ' . statusName($status);
+            }
+            $kostenAlt = $schaden['kosten_cent'] === null ? null : (int) $schaden['kosten_cent'];
+            if ($kosten !== $kostenAlt) {
+                $meldungen[] = 'Kosten: ' . (euro($kostenAlt) ?: '—') . ' → ' . (euro($kosten) ?: '—');
+            }
+            if ($werkstattKommentar !== (string) $schaden['werkstatt_kommentar']) {
+                $meldungen[] = 'Werkstatt-Kommentar: ' . ($werkstattKommentar !== '' ? $werkstattKommentar : '(entfernt)');
+            }
+            if ($typ !== (string) $schaden['typ']) {
+                $meldungen[] = 'Art: ' . typName((string) $schaden['typ']) . ' → ' . typName($typ);
+            }
+            if ($zone !== (string) $schaden['zone']) {
+                $meldungen[] = 'Stelle: ' . zonenName((string) $schaden['zone']) . ' → ' . zonenName($zone);
+            }
+            foreach ($meldungen as $meldung) {
+                verlaufEintragen($db, (int) $schaden['id'], $meldung);
+            }
+
             fotosSpeichern($db, $konfig, (int) $schaden['id'], 'fotos');
+            rechnungenSpeichern($db, $konfig, (int) $schaden['id'], 'rechnungen');
             hinweisSetzen('Gespeichert.');
             umleiten('/schaden/' . $schaden['id']);
         }
         ansicht('schaden_form', [
-            'schaden' => $schaden, 'vermietungen' => $vermietungen, 'fehler' => $fehler,
+            'schaden' => $schaden, 'vermietungen' => $vermietungen, 'fahrzeuge' => $fahrzeuge,
+            'protokolle' => schadenProtokolle($db, $schaden), 'fehler' => $fehler,
         ]);
     }
 
-    ansicht('schaden_form', ['schaden' => $schaden, 'vermietungen' => $vermietungen, 'fehler' => []]);
+    ansicht('schaden_form', [
+        'schaden' => $schaden, 'vermietungen' => $vermietungen, 'fahrzeuge' => $fahrzeuge,
+        'protokolle' => schadenProtokolle($db, $schaden), 'fehler' => [],
+    ]);
+}
+
+/** Die Protokolle, die zu einem Vorgang gehören: das erfassende und alle der Vermietung. */
+function schadenProtokolle(PDO $db, array $schaden): array
+{
+    $ids = [];
+    $werte = [];
+    if (!empty($schaden['protokoll_id'])) {
+        $ids[] = 'p.id = ?';
+        $werte[] = (int) $schaden['protokoll_id'];
+    }
+    if (!empty($schaden['vermietung_id'])) {
+        $ids[] = 'p.vermietung_id = ?';
+        $werte[] = (int) $schaden['vermietung_id'];
+    }
+    if ($ids === []) {
+        return [];
+    }
+    $abfrage = $db->prepare(
+        'SELECT DISTINCT p.*, v.name AS mieter_name FROM protokolle p
+         JOIN vermietungen v ON v.id = p.vermietung_id
+         WHERE ' . implode(' OR ', $ids) . ' ORDER BY p.id'
+    );
+    $abfrage->execute($werte);
+
+    return $abfrage->fetchAll();
 }
 
 // ---------------------------------------------------------------- Vermietungen
 
 if ($pfad === '/vermietungen') {
+    $fahrzeuge = fahrzeugeLaden($db);
     if ($methode === 'POST') {
         $name = saeubern($_POST['name'] ?? '');
         $email = saeubern($_POST['email'] ?? '');
@@ -580,9 +850,13 @@ if ($pfad === '/vermietungen') {
             $fehler[] = 'Bitte einen gültigen Zeitraum wählen (von ≤ bis).';
         }
         if ($fehler === []) {
+            $fahrzeugId = (int) ($_POST['fahrzeug_id'] ?? 0);
+            if (!in_array($fahrzeugId, array_map('intval', array_column($fahrzeuge, 'id')), true)) {
+                $fahrzeugId = (int) ($fahrzeuge[0]['id'] ?? 0);
+            }
             $db->prepare(
-                'INSERT INTO vermietungen (name, email, telefon, von, bis, sprache, token)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO vermietungen (name, email, telefon, von, bis, sprache, token, fahrzeug_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
             )->execute([
                 $name,
                 $email,
@@ -591,16 +865,17 @@ if ($pfad === '/vermietungen') {
                 $bis,
                 ($_POST['sprache'] ?? 'de') === 'en' ? 'en' : 'de',
                 bin2hex(random_bytes(16)),
+                $fahrzeugId,
             ]);
             hinweisSetzen('Vermietung angelegt — der Mieter-Link steht auf der Detailseite.');
             umleiten('/vermietung/' . (int) $db->lastInsertId());
         }
         $liste = $db->query('SELECT * FROM vermietungen ORDER BY von DESC')->fetchAll();
-        ansicht('vermietungen', ['vermietungen' => $liste, 'fehler' => $fehler]);
+        ansicht('vermietungen', ['vermietungen' => $liste, 'fahrzeuge' => $fahrzeuge, 'fehler' => $fehler]);
     }
 
     $liste = $db->query('SELECT * FROM vermietungen ORDER BY von DESC')->fetchAll();
-    ansicht('vermietungen', ['vermietungen' => $liste, 'fehler' => []]);
+    ansicht('vermietungen', ['vermietungen' => $liste, 'fahrzeuge' => $fahrzeuge, 'fehler' => []]);
 }
 
 if (preg_match('#^/vermietung/(\d+)$#', $pfad, $treffer)) {
@@ -704,8 +979,10 @@ function protokollLaden(PDO $db, int $id): array
 {
     $abfrage = $db->prepare(
         'SELECT p.*, v.name AS mieter_name, v.email AS mieter_email, v.von, v.bis,
-                v.sprache, v.token, v.id AS v_id, v.anonymisiert
+                v.sprache, v.token, v.id AS v_id, v.anonymisiert, v.fahrzeug_id,
+                fz.name AS fahrzeug_name, fz.kennzeichen AS fahrzeug_kennzeichen
          FROM protokolle p JOIN vermietungen v ON v.id = p.vermietung_id
+         LEFT JOIN fahrzeuge fz ON fz.id = v.fahrzeug_id
          WHERE p.id = ?'
     );
     $abfrage->execute([$id]);
@@ -737,11 +1014,17 @@ function protokollVorschaeden(PDO $db, array $protokoll): array
         "SELECT * FROM schaeden
          WHERE status IN ('offen', 'gemeldet')
            AND typ = 'schaden'
+           AND (fahrzeug_id IS NULL OR ? IS NULL OR fahrzeug_id = ?)
            AND (protokoll_id IS NULL OR protokoll_id != ?)
            AND erstellt_am <= ?
          ORDER BY erstellt_am"
     );
-    $abfrage->execute([(int) $protokoll['id'], (string) $protokoll['erstellt_am']]);
+    $abfrage->execute([
+        $protokoll['fahrzeug_id'],
+        $protokoll['fahrzeug_id'],
+        (int) $protokoll['id'],
+        (string) $protokoll['erstellt_am'],
+    ]);
 
     return $abfrage->fetchAll();
 }
@@ -776,16 +1059,18 @@ if (preg_match('#^/protokoll/(\d+)/schaden$#', $pfad, $treffer) && $methode === 
     }
     if ($fehler === []) {
         $db->prepare(
-            "INSERT INTO schaeden (vermietung_id, protokoll_id, zone, beschreibung, status, verursacher, quelle)
-             VALUES (?, ?, ?, ?, 'offen', ?, 'admin')"
+            "INSERT INTO schaeden (vermietung_id, fahrzeug_id, protokoll_id, zone, beschreibung, status, verursacher, quelle)
+             VALUES (?, ?, ?, ?, ?, 'offen', ?, 'admin')"
         )->execute([
             (int) $protokoll['v_id'],
+            $protokoll['fahrzeug_id'] !== null ? (int) $protokoll['fahrzeug_id'] : null,
             (int) $protokoll['id'],
             $zone,
             $beschreibung,
             $protokoll['typ'] === 'rueckgabe' ? (string) $protokoll['mieter_name'] : '',
         ]);
         $schadenId = (int) $db->lastInsertId();
+        verlaufEintragen($db, $schadenId, 'Im ' . t('de', 'protokoll.' . $protokoll['typ']) . ' erfasst');
         if (fotosSpeichern($db, $konfig, $schadenId, 'fotos') === 0) {
             $db->prepare('DELETE FROM schaeden WHERE id = ?')->execute([$schadenId]);
             $fehler[] = 'Kein Foto war lesbar (JPEG/PNG/WebP, höchstens '
@@ -838,9 +1123,16 @@ if (preg_match('#^/protokoll/(\d+)/abschliessen$#', $pfad, $treffer) && $methode
         ]);
         $protokoll = protokollLaden($db, (int) $protokoll['id']);
 
+        // Das PDF trägt den Namen des Fahrzeugs der Vermietung — nicht den
+        // aus der Konfiguration, der nur das erste Fahrzeug beschreibt.
+        $pdfKonfig = $konfig;
+        if ((string) ($protokoll['fahrzeug_name'] ?? '') !== '') {
+            $pdfKonfig['fahrzeugName'] = (string) $protokoll['fahrzeug_name'];
+            $pdfKonfig['kennzeichen'] = (string) ($protokoll['fahrzeug_kennzeichen'] ?? '');
+        }
         try {
             $pdfName = protokollPdfErzeugen(
-                $konfig,
+                $pdfKonfig,
                 $protokoll,
                 [
                     'name' => $protokoll['mieter_name'],

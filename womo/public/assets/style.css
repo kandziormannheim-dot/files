@@ -251,3 +251,35 @@ code.kopierbar {
 .zonen-gruppe:first-of-type { margin-top: 0.2rem; }
 .liste tfoot td { border-bottom: 0; border-top: 2px solid var(--linie); }
 .liste .summe { font-weight: 600; white-space: nowrap; }
+
+/* --------------------------------------- Skizzen-Übersicht und Beiwerk */
+
+.skizze-uebersicht .womo-skizze [data-zone] { cursor: default; }
+.skizze-uebersicht .womo-skizze [data-zone].belastet { fill: #fdecec; stroke: #a4262c; }
+.womo-skizze .schadenspunkt { fill: #a4262c; }
+.womo-skizze .schadenszahl {
+    font-size: 11px;
+    font-weight: 700;
+    fill: #ffffff;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+.skizze-legende { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.skizze-legende li { margin: 0.2rem 0; }
+.skizze-legende .frei { color: var(--akzent); }
+.skizze-legende .punkt {
+    display: inline-block;
+    min-width: 1.4rem;
+    text-align: center;
+    border-radius: 999px;
+    background: #a4262c;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.05rem 0.3rem;
+}
+.werkstatt-kommentar { display: block; color: var(--leise); }
+.rechnungen, .verlauf { list-style: none; margin: 0; padding: 0; }
+.rechnungen li, .verlauf li { margin: 0.3rem 0; }
+.verlauf li small { color: var(--leise); margin-right: 0.4rem; }

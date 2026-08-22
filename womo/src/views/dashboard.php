@@ -41,15 +41,39 @@
 
 <?php
 // Filterlinks behalten die jeweils anderen Filter bei.
-$filterLink = static function (array $aenderung) use ($filterStatus, $filterTyp, $filterBereich): string {
+$filterLink = static function (array $aenderung) use ($filterStatus, $filterTyp, $filterBereich, $filterFahrzeug): string {
     $werte = array_filter(array_merge(
-        ['status' => $filterStatus, 'typ' => $filterTyp, 'bereich' => $filterBereich],
+        ['status' => $filterStatus, 'typ' => $filterTyp, 'bereich' => $filterBereich,
+         'fahrzeug' => $filterFahrzeug !== 0 ? (string) $filterFahrzeug : ''],
         $aenderung
     ), static fn (string $w): bool => $w !== '');
 
     return '/' . ($werte === [] ? '' : '?' . http_build_query($werte));
 };
+$skizzenName = '';
+foreach ($fahrzeuge as $f) {
+    if ((int) $f['id'] === $skizzeFahrzeug) {
+        $skizzenName = (string) $f['name'];
+    }
+}
 ?>
+
+<section class="karte">
+    <h2>Schadenspunkte<?= $skizzenName !== '' ? ' — ' . e($skizzenName) : '' ?></h2>
+    <?php require __DIR__ . '/_skizze.php'; ?>
+</section>
+
+<?php if (count($fahrzeuge) > 1) { ?>
+<nav class="filter">
+    <a href="<?= e($filterLink(['fahrzeug' => ''])) ?>" class="<?= $filterFahrzeug === 0 ? 'aktiv' : '' ?>">Alle Fahrzeuge</a>
+    <?php foreach ($fahrzeuge as $f) { ?>
+    <a href="<?= e($filterLink(['fahrzeug' => (string) (int) $f['id']])) ?>"
+       class="<?= $filterFahrzeug === (int) $f['id'] ? 'aktiv' : '' ?>">
+        <?= e($f['name']) ?>
+    </a>
+    <?php } ?>
+</nav>
+<?php } ?>
 <nav class="filter">
     <a href="<?= e($filterLink(['status' => ''])) ?>" class="<?= $filterStatus === '' ? 'aktiv' : '' ?>">Alle</a>
     <?php foreach (['offen', 'gemeldet', 'repariert'] as $status) { ?>
@@ -92,10 +116,21 @@ $filterLink = static function (array $aenderung) use ($filterStatus, $filterTyp,
                 <?php if ((int) $schaden['foto_anzahl'] > 0) { ?>
                 <small>📷 <?= (int) $schaden['foto_anzahl'] ?></small>
                 <?php } ?>
+                <?php if ((int) ($schaden['rechnung_anzahl'] ?? 0) > 0) { ?>
+                <small>🧾 <?= (int) $schaden['rechnung_anzahl'] ?></small>
+                <?php } ?>
+                <?php if ((string) ($schaden['werkstatt_kommentar'] ?? '') !== '') { ?>
+                <small class="werkstatt-kommentar">🔧 <?= e(mb_substr($schaden['werkstatt_kommentar'], 0, 90)) ?></small>
+                <?php } ?>
             </td>
             <td><span class="status status-<?= e($schaden['status']) ?>"><?= e(statusName($schaden['status'])) ?></span></td>
             <td><?= e(euro($schaden['kosten_cent'] === null ? null : (int) $schaden['kosten_cent'])) ?></td>
-            <td><?= e($schaden['mieter_name'] ?? ($schaden['quelle'] === 'qr' ? 'QR-Meldung' : 'Eigene Akte')) ?></td>
+            <td>
+                <?= e($schaden['mieter_name'] ?? ($schaden['quelle'] === 'qr' ? 'QR-Meldung' : 'Eigene Akte')) ?>
+                <?php if (count($fahrzeuge) > 1 && (string) ($schaden['fahrzeug_name'] ?? '') !== '') { ?>
+                <small>🚐 <?= e($schaden['fahrzeug_name']) ?></small>
+                <?php } ?>
+            </td>
             <td><a href="/schaden/<?= (int) $schaden['id'] ?>">Öffnen</a></td>
         </tr>
         <?php } ?>

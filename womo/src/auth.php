@@ -80,8 +80,14 @@ function schadenFuerMieterSichtbar(array $schaden, array $vermietung): bool
     }
 
     // Werkstattaufträge (etwa Nachrüstungen) sind interne Vorgänge, keine
-    // Vorschäden — sie gehen den Mieter nichts an.
+    // Vorschäden — sie gehen den Mieter nichts an. Und Vorschäden anderer
+    // Fahrzeuge ebenso wenig.
+    $gleichesFahrzeug = $schaden['fahrzeug_id'] === null
+        || $vermietung['fahrzeug_id'] === null
+        || (int) $schaden['fahrzeug_id'] === (int) $vermietung['fahrzeug_id'];
+
     return ($schaden['typ'] ?? 'schaden') === 'schaden'
+        && $gleichesFahrzeug
         && in_array($schaden['status'], ['offen', 'gemeldet'], true)
         && $schaden['erstellt_am'] <= ($vermietung['bis'] . ' 23:59:59');
 }
