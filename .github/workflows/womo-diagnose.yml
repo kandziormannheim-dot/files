@@ -117,10 +117,11 @@ jobs:
           HOST=${PLESK#https://}; HOST=${HOST%:8443}
           timeout 60 sshpass -p "$SSH_PASS" ssh \
             -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$HOST" '
-              echo "== [womo]-Zeilen aus allen error_logs (letzte 40) ==";
-              grep -h "\[womo\]" logs/*error*log* error_log 2>/dev/null | tail -40 || true;
-              echo; echo "== Vorhandene Protokolldateien ==";
-              ls -la logs/ 2>/dev/null | head -15'
+              echo "== [womo]-Zeilen aus allen error_logs, auch der Subdomains (letzte 40) ==";
+              grep -rh "\[womo\]" logs/ error_log 2>/dev/null | tail -40 || true;
+              echo; echo "== Protokollverzeichnisse ==";
+              ls logs/ 2>/dev/null;
+              ls -la logs/womo.kandzior.de/ 2>/dev/null | head -10'
 
       - name: Testversand über den App-Mailer
         env:
@@ -149,6 +150,11 @@ jobs:
           }
           SKRIPT
           sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=accept-new /tmp/mailtest.php "$SSH_USER@$HOST:mailtest.php"
+          # Das System-php der Kommandozeile ist älter als das PHP der
+          # Webseite — deshalb das neueste Plesk-PHP verwenden.
           timeout 120 sshpass -p "$SSH_PASS" ssh \
-            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$HOST" \
-            "php mailtest.php '$TESTEMPFAENGER'; rm -f mailtest.php"
+            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$HOST" '
+              PHP=$(ls -d /opt/plesk/php/*/bin/php 2>/dev/null | sort -V | tail -1);
+              PHP=${PHP:-php};
+              echo "PHP-Binärdatei: $PHP ($($PHP -v | head -1))";
+              $PHP mailtest.php '"'$TESTEMPFAENGER'"'; rm -f mailtest.php'
