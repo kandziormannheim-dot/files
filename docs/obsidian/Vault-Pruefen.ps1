@@ -12,7 +12,8 @@
 [CmdletBinding()]
 param(
     [string]$VaultPath = 'C:\Obsidian\MartinKandzior',
-    [string]$TaskName  = 'Obsidian Vault Sync'
+    [string]$TaskName           = 'Obsidian Vault Sync',
+    [string]$SicherungTaskName  = 'Obsidian Vault Sicherung'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -158,16 +159,20 @@ if ($streuner.Count -gt 0) {
 }
 
 # ------------------------------------------------------------- Versionierung
-Write-Titel 'Versionierung und Sicherung (Git)'
+Write-Titel 'Versionierung (Git)'
+
+# Git ist einer von zwei Wegen; der andere ist die Sicherung weiter unten.
+# Das Urteil, ob überhaupt eine Sicherung besteht, fällt erst im Fazit.
+$script:GitAktiv    = $false
+$script:GitAuswaerts = $false
 
 $gitVorhanden = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
 if (-not $gitVorhanden) {
-    Write-Problem "Git ist nicht installiert oder nicht im PATH."
-    Write-Info    "Ohne Git gibt es keine Historie und keine Sicherung außerhalb dieses Rechners."
-    Write-Info    "Installation: https://git-scm.com/download/win"
+    Write-Info "Git ist nicht installiert — dieser Weg wird nicht genutzt."
 } elseif (-not (Test-Path -LiteralPath (Join-Path $VaultPath '.git'))) {
-    Write-Problem "Die Vault ist kein Git-Repository — es gibt keine Historie."
+    Write-Info "Die Vault ist kein Git-Repository — dieser Weg wird nicht genutzt."
 } else {
+    $script:GitAktiv = $true
     Write-Ok "Git-Repository vorhanden."
 
     $status = & git -C $VaultPath status --porcelain 2>$null
@@ -180,6 +185,7 @@ if (-not $gitVorhanden) {
 
     $remote = & git -C $VaultPath remote get-url origin 2>$null
     if ($remote) {
+        $script:GitAuswaerts = $true
         Write-Ok "Remote 'origin': $remote"
         $zweig  = (& git -C $VaultPath rev-parse --abbrev-ref HEAD 2>$null)
         $stand  = (& git -C $VaultPath rev-list --left-right --count "origin/$zweig...$zweig" 2>$null)
@@ -212,7 +218,7 @@ if (-not $gitVorhanden) {
 }
 
 # ----------------------------------------------------------- Geplante Aufgabe
-Write-Titel 'Automatischer Abgleich (Aufgabenplanung)'
+Write-Titel 'Automatischer Git-Abgleich (Aufgabenplanung)'
 
 if (-not (Get-Command Get-ScheduledTask -ErrorAction SilentlyContinue)) {
     Write-Hinweis 'Die Aufgabenplanung ist auf diesem System nicht abfragbar.'
@@ -223,7 +229,8 @@ if (-not (Get-Command Get-ScheduledTask -ErrorAction SilentlyContinue)) {
 if (-not (Get-Command Get-ScheduledTask -ErrorAction SilentlyContinue)) {
     # nichts weiter zu melden
 } elseif (-not $aufgabe) {
-    Write-Hinweis "Aufgabe '$TaskName' existiert nicht — nichts läuft automatisch."
+    if ($script:GitAktiv) { Write-Hinweis "Aufgabe '$TaskName' existiert nicht — nichts gleicht automatisch ab." }
+    else                  { Write-Info    "Keine Aufgabe '$TaskName' — passend, weil Git hier nicht genutzt wird." }
 } else {
     if ($aufgabe.State -eq 'Disabled') { Write-Problem "Aufgabe '$TaskName' ist deaktiviert." }
     else { Write-Ok "Aufgabe '$TaskName' ist aktiv (Status: $($aufgabe.State))." }
@@ -251,14 +258,116 @@ if ($logPfad -and (Test-Path -LiteralPath $logPfad)) {
     Write-Info "Noch kein Protokoll unter $logPfad"
 }
 
+# ------------------------------------------------------- Sicherung ohne Git
+Write-Titel 'Sicherung ohne Git (Spiegel und Schnappschüsse)'
+
+$script:SicherungAktiv = $false
+$sicherungAufgabe = $null
+if (Get-Command Get-ScheduledTask -ErrorAction SilentlyContinue) {
+    $sicherungAufgabe = Get-ScheduledTask -TaskName $SicherungTaskName -ErrorAction SilentlyContinue
+}
+
+if (-not (Get-Command Get-ScheduledTask -ErrorAction SilentlyContinue)) {
+    Write-Info 'Die Aufgabenplanung ist auf diesem System nicht abfragbar.'
+} elseif (-not $sicherungAufgabe) {
+    Write-Info "Keine Aufgabe '$SicherungTaskName' — dieser Weg wird nicht genutzt."
+} else {
+    $script:SicherungAktiv = $true
+    if ($sicherungAufgabe.State -eq 'Disabled') { Write-Problem "Aufgabe '$SicherungTaskName' ist deaktiviert." }
+    else { Write-Ok "Aufgabe '$SicherungTaskName' ist aktiv (Status: $($sicherungAufgabe.State))." }
+
+    $sInfo = Get-ScheduledTaskInfo -TaskName $SicherungTaskName -ErrorAction SilentlyContinue
+    if ($sInfo) {
+        if ($sInfo.LastRunTime -and $sInfo.LastRunTime.Year -gt 1999) {
+            $her = [int]((Get-Date) - $sInfo.LastRunTime).TotalMinutes
+            Write-Info "Letzter Lauf: $($sInfo.LastRunTime.ToString('dd.MM.yyyy HH:mm')) (vor $her Min.), Ergebnis $($sInfo.LastTaskResult)"
+            if ($sInfo.LastTaskResult -eq 6) {
+                Write-Problem 'Das Sicherungsziel war beim letzten Lauf nicht erreichbar.'
+                Write-Info    'Externe Platte angeschlossen? Netzlaufwerk verbunden?'
+            } elseif ($sInfo.LastTaskResult -ne 0) {
+                Write-Problem "Der letzte Lauf endete mit Fehlercode $($sInfo.LastTaskResult)."
+            }
+        } else {
+            Write-Hinweis 'Die Aufgabe ist noch nie gelaufen.'
+        }
+    }
+
+    # Das Ziel steht in den Argumenten der Aufgabe — kein zweiter Parameter nötig.
+    $argumente = ($sicherungAufgabe.Actions | Select-Object -First 1).Arguments
+    if ($argumente -match '-Sicherungsziel\s+"([^"]+)"') {
+        $ziel = $Matches[1]
+        Write-Info "Sicherungsziel: $ziel"
+
+        if (-not (Test-Path -LiteralPath $ziel -PathType Container)) {
+            Write-Problem 'Das Sicherungsziel ist gerade nicht erreichbar.'
+        } else {
+            $spiegel = Join-Path $ziel 'aktuell'
+            if (Test-Path -LiteralPath $spiegel -PathType Container) {
+                $spiegelStand = (Get-ChildItem -LiteralPath $spiegel -Recurse -File -Force -ErrorAction SilentlyContinue |
+                                 Sort-Object LastWriteTime -Descending | Select-Object -First 1)
+                if ($spiegelStand) { Write-Ok "Spiegel vorhanden, jüngste Datei vom $($spiegelStand.LastWriteTime.ToString('dd.MM.yyyy HH:mm'))." }
+                else { Write-Hinweis 'Der Spiegel ist leer.' }
+            } else {
+                Write-Hinweis "Kein Ordner 'aktuell' im Sicherungsziel."
+            }
+
+            $schnapp = Join-Path $ziel 'schnappschuesse'
+            $zips = @(Get-ChildItem -LiteralPath $schnapp -Filter 'vault_*.zip' -File -ErrorAction SilentlyContinue |
+                      Sort-Object Name -Descending)
+            if ($zips.Count -eq 0) {
+                Write-Hinweis 'Noch kein Schnappschuss vorhanden.'
+            } else {
+                $tage = [Math]::Round(((Get-Date) - $zips[0].LastWriteTime).TotalDays, 1)
+                Write-Ok "$($zips.Count) Schnappschuss/Schnappschüsse, jüngster vom $($zips[0].LastWriteTime.ToString('dd.MM.yyyy HH:mm')) (vor $tage Tag(en))."
+                if ($tage -gt 7) { Write-Hinweis 'Der jüngste Schnappschuss ist über eine Woche alt.' }
+            }
+
+            if (Test-Path -LiteralPath (Join-Path $ziel '.offene-aenderung')) {
+                Write-Info 'Es liegt eine Änderung vor, die noch in keinem Schnappschuss steht.'
+            }
+        }
+    } else {
+        Write-Hinweis 'Aus den Argumenten der Aufgabe ließ sich kein Sicherungsziel lesen.'
+    }
+}
+
+$sLogPfad = if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'ObsidianVaultSync\sicherung.log' } else { $null }
+if ($sLogPfad -and (Test-Path -LiteralPath $sLogPfad)) {
+    Write-Info "Protokoll: $sLogPfad"
+    $letzteZeilen = Get-Content -LiteralPath $sLogPfad -Tail 3 -ErrorAction SilentlyContinue
+    foreach ($z in $letzteZeilen) { Write-Info "  $z" }
+    if ($letzteZeilen -match 'FEHLER') { Write-Problem 'Im Sicherungsprotokoll stehen Fehler — siehe oben.' }
+}
+
+# ------------------------------------------------------------ Sicherungslage
+Write-Titel 'Sicherung außerhalb dieses Rechners'
+
+if ($script:GitAuswaerts) {
+    Write-Ok 'Git mit Remote — die Notizen liegen auch außerhalb dieses Rechners.'
+} elseif ($script:SicherungAktiv) {
+    Write-Ok 'Sicherung eingerichtet. Liegt das Ziel auf derselben Platte wie die Vault,'
+    Write-Info 'schützt es gegen versehentliches Löschen, aber nicht gegen einen Plattenschaden.'
+} elseif ($script:GitAktiv) {
+    Write-Problem 'Nur lokale Git-Historie, keine Kopie außerhalb dieses Rechners.'
+    Write-Info    'Entweder ein Remote setzen (Vault-Einrichten.ps1 -RemoteUrl ...) oder'
+    Write-Info    'Vault-Sicherung.ps1 -Sicherungsziel <Pfad> -AufgabeEinrichten.'
+} else {
+    Write-Problem 'Es gibt keinerlei Sicherung — geht die Platte kaputt, sind die Notizen weg.'
+    Write-Info    'Ohne Git: Vault-Sicherung.ps1 -Sicherungsziel <Pfad> -AufgabeEinrichten'
+    Write-Info    'Mit Git:  Vault-Einrichten.ps1 -RemoteUrl <URL eines privaten Repositorys>'
+}
+
 # -------------------------------------------------------------------- Fazit
 Write-Titel 'Fazit'
 if ($script:Probleme -eq 0 -and $script:Hinweise -eq 0) {
     Write-Host '  Alles in Ordnung. Die Vault speichert und sichert wie vorgesehen.' -ForegroundColor Green
 } else {
     Write-Host "  $($script:Probleme) Problem(e), $($script:Hinweise) Hinweis(e)." -ForegroundColor Yellow
-    Write-Host '  Das meiste davon räumt "Vault-Einrichten.ps1" in einem Lauf auf:' -ForegroundColor Yellow
+    Write-Host '  Einstellungen, Ordner und Vorlagen bringt ein Lauf in Ordnung:' -ForegroundColor Yellow
     Write-Host '    powershell -ExecutionPolicy Bypass -File .\Vault-Einrichten.ps1' -ForegroundColor White
+    if (-not $script:GitAuswaerts -and -not $script:SicherungAktiv) {
+        Write-Host '  Die Sicherung ist davon unabhängig — siehe den Abschnitt darüber.' -ForegroundColor Yellow
+    }
 }
 Write-Host ''
 exit ([Math]::Min($script:Probleme, 1))
