@@ -7,7 +7,8 @@ lokal auf dem Windows-Rechner laufen:
 | --- | --- |
 | [`Vault-Pruefen.ps1`](Vault-Pruefen.ps1) | Zeigt den Zustand an. Ändert nichts. |
 | [`Vault-Einrichten.ps1`](Vault-Einrichten.ps1) | Bringt Einstellungen, Struktur und Versionierung in Ordnung. |
-| [`Vault-Sync.ps1`](Vault-Sync.ps1) | Der regelmäßige Abgleich. Läuft aus der Aufgabenplanung, nicht von Hand. |
+| [`Vault-Sync.ps1`](Vault-Sync.ps1) | Der regelmäßige Abgleich über Git. Läuft aus der Aufgabenplanung, nicht von Hand. |
+| [`Vault-Sicherung.ps1`](Vault-Sicherung.ps1) | Die Alternative ohne Git: Spiegel und datierte Schnappschüsse. |
 
 ## Zuerst: wie Obsidian speichert
 
@@ -58,6 +59,11 @@ powershell -ExecutionPolicy Bypass -File .\Vault-Einrichten.ps1 `
     -RemoteUrl 'https://github.com/kandziormannheim-dot/obsidian-vault.git'
 ```
 
+Wer Git gar nicht will oder nicht installiert hat, hängt `-OhneGit` an — dann
+richtet das Skript nur Einstellungen, Ordner und Vorlagen ein, und die Sicherung
+übernimmt [`Vault-Sicherung.ps1`](Vault-Sicherung.ps1) (siehe **Ohne Git** weiter
+unten).
+
 Das Skript lässt sich beliebig oft laufen. Es legt nur an, was fehlt,
 überschreibt keine Notiz und keine vorhandene Vorlage, und sichert den bisherigen
 `.obsidian`-Ordner vorher nach `C:\Obsidian\_vault-sicherungen\`.
@@ -107,7 +113,7 @@ auch in den Einstellungen und müssten dort mitgeändert werden: `Medien` und
 Anhänge, die schon vorher im Wurzelordner lagen, werden **nicht** verschoben.
 Das geht in Obsidian per Drag & Drop, dann bleiben die Links intakt.
 
-## Sicherung außerhalb des Rechners
+## Sicherung außerhalb des Rechners (mit Git)
 
 Ohne Remote liegt die Historie auf derselben Platte wie die Vault — bei einem
 Plattenschaden ist beides weg. Deshalb ein privates Repository:
@@ -124,7 +130,7 @@ Plattenschaden ist beides weg. Deshalb ein privates Repository:
 öffentliches Repository wäre für jeden lesbar und bliebe es auch nach dem
 Löschen noch eine Weile in Caches und Suchmaschinen.
 
-## Der automatische Abgleich
+## Der automatische Abgleich (mit Git)
 
 `Vault-Einrichten.ps1` legt die geplante Aufgabe **„Obsidian Vault Sync"** an.
 Sie läuft bei der Anmeldung und danach alle 15 Minuten (`-IntervalMinutes`
@@ -143,7 +149,7 @@ Es ist **keine Echtzeit-Synchronisierung**. Wer die Vault auf zwei Rechnern
 parallel bearbeitet, sollte auf dem einen den Abgleich abwarten, bevor er am
 anderen weiterschreibt — sonst entstehen Konflikte.
 
-### Wenn ein Konflikt entsteht
+### Wenn ein Git-Konflikt entsteht
 
 Haben zwei Rechner dieselbe Notiz geändert, bricht der Abgleich ab, **ohne
 etwas zu überschreiben**: der Rebase wird zurückgenommen, der lokale Stand
@@ -172,6 +178,59 @@ Danach übernimmt die geplante Aufgabe wieder von allein.
 - **Keine Community-Plugins** werden installiert. Die Einrichtung kommt mit
   Obsidians Bordmitteln aus.
 
+## Ohne Git
+
+Git ist nicht Voraussetzung. Es trennt sich sauber in zwei Hälften:
+
+- **Einstellungen, Ordner, Vorlagen** — `Vault-Einrichten.ps1 -OhneGit`. Damit
+  ist alles erledigt, was das Speicherverhalten betrifft. Git spielt hier
+  ohnehin keine Rolle.
+- **Sicherung und Historie** — dafür gibt es
+  [`Vault-Sicherung.ps1`](Vault-Sicherung.ps1) als vollwertigen Ersatz.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Vault-Sicherung.ps1 `
+    -Sicherungsziel 'D:\Sicherung\Obsidian' -AufgabeEinrichten
+```
+
+Das legt die geplante Aufgabe **„Obsidian Vault Sicherung"** an, die alle 15
+Minuten läuft und zwei Dinge pflegt:
+
+```
+D:\Sicherung\Obsidian\
+├── aktuell\                        ← 1:1-Kopie der Vault, immer auf Stand
+└── schnappschuesse\
+    ├── vault_2026-08-25_03-00-11.zip
+    ├── vault_2026-08-26_03-00-09.zip
+    └── vault_2026-08-27_03-00-14.zip
+```
+
+`aktuell\` ist eine gewöhnliche Ordnerkopie — im Notfall reicht Kopieren im
+Explorer, kein Werkzeug nötig. Sie kennt aber nur den jetzigen Stand: was in der
+Vault gelöscht wird, verschwindet beim nächsten Lauf auch dort. Deshalb die
+ZIP-Schnappschüsse; voreingestellt einer je Tag, 30 Stück, also einen Monat
+Rückblick. `-SnapshotStunden` und `-Behalten` verschieben das.
+
+Als Ziel taugt alles, was Windows als Pfad kennt: eine externe Platte, ein
+Netzlaufwerk, ein NAS — oder ein OneDrive-Ordner. Letzteres ist unbedenklich,
+weil hier nur *hinein* kopiert wird; die weiter unten beschriebenen Probleme
+entstehen erst, wenn die Vault selbst im Cloud-Ordner liegt und in beide
+Richtungen abgeglichen wird.
+
+Steckt die Platte nicht, meldet das Skript das im Protokoll
+(`%LOCALAPPDATA%\ObsidianVaultSync\sicherung.log`) und beendet sich mit
+Fehlercode 6. `Vault-Pruefen.ps1` zeigt das an — eine Sicherung, die seit zwei
+Wochen nicht mehr lief, fällt so auf, statt still zu bleiben.
+
+**Was gegenüber Git fehlt:** keine Historie einzelner Bearbeitungen, kein
+Zusammenführen von zwei Rechnern. Ein Schnappschuss ist der Stand eines
+Zeitpunkts, nicht eine Kette von Änderungen. Für eine Vault, die auf einem
+Rechner lebt, reicht das; für zwei Rechner im Wechsel ist Git oder Obsidian
+Sync der bessere Weg.
+
+`Vault-Pruefen.ps1` kennt beide Wege und beschwert sich erst, wenn *keiner* von
+beiden eingerichtet ist.
+
 ## Andere Wege, die Vault aktuell zu halten
 
 **Obsidian Sync** (kostenpflichtig, vom Hersteller): Abgleich in Sekunden,
@@ -193,10 +252,11 @@ anlegt — beim Git-Weg tritt das Problem nicht auf.
 
 ## Zurückdrehen
 
-Geplante Aufgabe entfernen:
+Geplante Aufgaben entfernen:
 
 ```powershell
-Unregister-ScheduledTask -TaskName 'Obsidian Vault Sync' -Confirm:$false
+Unregister-ScheduledTask -TaskName 'Obsidian Vault Sync'      -Confirm:$false
+Unregister-ScheduledTask -TaskName 'Obsidian Vault Sicherung' -Confirm:$false
 ```
 
 Alte Einstellungen zurückholen: den gewünschten Stand aus

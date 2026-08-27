@@ -27,6 +27,10 @@
     Abstand zwischen zwei Abgleichen. Vorgabe: 15 Minuten.
 .PARAMETER SkipTask
     Keine geplante Aufgabe anlegen.
+.PARAMETER OhneGit
+    Schritte 5 bis 7 auslassen: keine Versionierung, keine .gitignore, keine
+    Abgleichsaufgabe. Nur Einstellungen, Ordner und Vorlagen. Für die Sicherung
+    ist dann Vault-Sicherung.ps1 zuständig.
 .PARAMETER Force
     Auch dann weitermachen, wenn Obsidian gerade läuft (nicht empfohlen).
 .EXAMPLE
@@ -41,6 +45,7 @@ param(
     [string]$RemoteUrl       = '',
     [int]   $IntervalMinutes = 15,
     [switch]$SkipTask,
+    [switch]$OhneGit,
     [switch]$Force
 )
 
@@ -148,9 +153,15 @@ if (-not (Test-Path -LiteralPath $configDir)) {
     New-Item -ItemType Directory -Path $configDir -Force | Out-Null
 }
 
-$gitVorhanden = $null -ne (Get-Command git -ErrorAction SilentlyContinue)
-if ($gitVorhanden) { Write-Schon "Git gefunden: $((& git --version) -join '')" }
-else { Write-Warn 'Git fehlt — Schritte 6 und 7 werden übersprungen. https://git-scm.com/download/win' }
+$gitVorhanden = (-not $OhneGit) -and ($null -ne (Get-Command git -ErrorAction SilentlyContinue))
+if ($OhneGit) {
+    Write-Schon 'Ohne Git (-OhneGit): nur Einstellungen, Ordner und Vorlagen.'
+} elseif ($gitVorhanden) {
+    Write-Schon "Git gefunden: $((& git --version) -join '')"
+} else {
+    Write-Warn 'Git fehlt — Schritte 5 bis 7 werden übersprungen. https://git-scm.com/download/win'
+    Write-Warn 'Für die Sicherung ohne Git: Vault-Sicherung.ps1 (siehe README).'
+}
 
 # ================================================================ 1 Sicherung
 Write-Schritt 'Sicherung der bisherigen Einstellungen'
@@ -355,6 +366,10 @@ Write-Schon 'Aufbewahrung der Dateiwiederherstellung: Obsidian -> Einstellungen 
 # ================================================== 5 Git-Begleitdateien
 Write-Schritt 'Git-Begleitdateien'
 
+if (-not $gitVorhanden) {
+    Write-Schon 'Übersprungen — ohne Git haben diese Dateien keinen Zweck.'
+} else {
+
 New-TextDatei -Pfad (Join-Path $VaultPath '.gitignore') -Inhalt @'
 # Fensteranordnung und Cache — ändern sich ständig und gehören keinem Rechner.
 .obsidian/workspace.json
@@ -385,11 +400,13 @@ New-TextDatei -Pfad (Join-Path $VaultPath '.gitattributes') -Inhalt @'
 * -text
 '@
 
+}
+
 # ==================================================== 6 Git-Repository
 Write-Schritt 'Versionierung'
 
 if (-not $gitVorhanden) {
-    Write-Warn 'Übersprungen — Git fehlt.'
+    Write-Schon 'Übersprungen — dieser Lauf richtet kein Git ein.'
 } else {
     if (Test-Path -LiteralPath (Join-Path $VaultPath '.git')) {
         Write-Schon 'Repository besteht bereits.'
@@ -455,7 +472,7 @@ Write-Schritt 'Automatischer Abgleich'
 if ($SkipTask) {
     Write-Schon 'Übersprungen (-SkipTask).'
 } elseif (-not $gitVorhanden) {
-    Write-Warn 'Übersprungen — ohne Git gibt es nichts abzugleichen.'
+    Write-Schon 'Übersprungen — ohne Git gibt es nichts abzugleichen.'
 } else {
     $quelle = Join-Path $PSScriptRoot 'Vault-Sync.ps1'
     if (-not (Test-Path -LiteralPath $quelle)) {
@@ -520,8 +537,14 @@ Write-Host '     2. Einstellungen -> Dateiwiederherstellung: Intervall und Aufbe
 Write-Host '        nach Geschmack hochsetzen (z. B. alle 5 Min., 30 Tage).' -ForegroundColor Gray
 Write-Host '     3. Zustand jederzeit nachsehen:' -ForegroundColor Gray
 Write-Host '        powershell -ExecutionPolicy Bypass -File .\Vault-Pruefen.ps1' -ForegroundColor White
+if (-not $gitVorhanden) {
+    Write-Host ''
+    Write-Host '     Noch offen: eine Sicherung. Ohne Git geht das so —' -ForegroundColor Gray
+    Write-Host '        powershell -ExecutionPolicy Bypass -File .\Vault-Sicherung.ps1 `' -ForegroundColor White
+    Write-Host "            -Sicherungsziel 'D:\Sicherung\Obsidian' -AufgabeEinrichten" -ForegroundColor White
+}
 Write-Host ''
-if ($env:LOCALAPPDATA) {
+if ($gitVorhanden -and $env:LOCALAPPDATA) {
     Write-Host "   Protokoll des Abgleichs: $(Join-Path $env:LOCALAPPDATA 'ObsidianVaultSync\sync.log')" -ForegroundColor DarkGray
 }
 Write-Host "   Sicherungen der Einstellungen: $sicherungsWurzel" -ForegroundColor DarkGray
