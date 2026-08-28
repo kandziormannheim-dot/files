@@ -9,6 +9,7 @@ lokal auf dem Windows-Rechner laufen:
 | [`Vault-Einrichten.ps1`](Vault-Einrichten.ps1) | Bringt Einstellungen, Struktur und Versionierung in Ordnung. |
 | [`Vault-Sync.ps1`](Vault-Sync.ps1) | Der regelmäßige Abgleich über Git. Läuft aus der Aufgabenplanung, nicht von Hand. |
 | [`Vault-Sicherung.ps1`](Vault-Sicherung.ps1) | Die Alternative ohne Git: Spiegel und datierte Schnappschüsse. |
+| [`Obsidian-Einrichten.cmd`](Obsidian-Einrichten.cmd) | Zum Doppelklicken: lädt die Skripte und führt Einrichtung und Prüflauf aus. |
 
 ## Zuerst: wie Obsidian speichert
 
@@ -33,6 +34,12 @@ Drei Dinge können trotzdem schiefgehen — und genau die stellt die Einrichtung
    der automatische Push in ein privates Git-Repository.
 
 ## Loslegen
+
+**Der kurze Weg:** [`Obsidian-Einrichten.cmd`](Obsidian-Einrichten.cmd) speichern und
+doppelklicken. Sie prüft, ob Obsidian noch läuft und ob Git da ist, lädt die
+Skripte nach `Downloads\Obsidian-Skripte` und führt Einrichtung und Prüflauf
+aus. Remote und Vault-Pfad stehen oben in der Datei und lassen sich dort
+ändern. Der Rest dieses Abschnitts beschreibt dieselben Schritte von Hand.
 
 **1. Obsidian vollständig beenden.** Auch aus dem Infobereich neben der Uhr —
 Obsidian hält die Einstellungen im Speicher und schreibt sie beim Beenden zurück.

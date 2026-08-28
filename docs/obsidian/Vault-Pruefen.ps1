@@ -20,6 +20,31 @@ $ErrorActionPreference = 'Stop'
 $script:Probleme = 0
 $script:Hinweise = 0
 
+# Windows PowerShell 5.1 verwandelt jede Zeile, die ein natives Programm nach
+# stderr schreibt, in ein Fehlerobjekt, sobald die Ausgabe umgeleitet wird. Bei
+# $ErrorActionPreference = 'Stop' bricht das Skript daran ab — auch wenn git nur
+# "kein Remote gesetzt" gemeldet hat, was hier ein erwarteter Fall ist.
+# PowerShell 7 macht das nicht mehr, deshalb faellt es beim Testen dort nicht auf.
+# Alle git-Aufrufe, deren Ausgabe eingelesen wird, laufen daher hier durch.
+function Invoke-Git {
+    param([Parameter(Mandatory = $true)][string[]]$Argumente)
+    $alt = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $roh  = & git @Argumente 2>&1
+        $code = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $alt
+    }
+    $zeilen = @($roh |
+        Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] } |
+        ForEach-Object { "$_" })
+    return [pscustomobject]@{
+        Code = $code
+        Text = ($zeilen -join [Environment]::NewLine).Trim()
+    }
+}
+
 function Write-Titel { param([string]$Text)
     Write-Host ''
     Write-Host $Text -ForegroundColor Cyan
@@ -175,21 +200,21 @@ if (-not $gitVorhanden) {
     $script:GitAktiv = $true
     Write-Ok "Git-Repository vorhanden."
 
-    $status = & git -C $VaultPath status --porcelain 2>$null
-    $offen  = @($status | Where-Object { $_ -ne '' })
+    $status = (Invoke-Git @('-C', $VaultPath, 'status', '--porcelain')).Text
+    $offen  = @($status -split "`n" | Where-Object { $_.Trim() -ne '' })
     if ($offen.Count -eq 0) { Write-Ok "Keine unversionierten Änderungen — alles eingecheckt." }
     else { Write-Hinweis "$($offen.Count) Änderung(en) noch nicht eingecheckt." }
 
-    $letzter = & git -C $VaultPath log -1 --format='%cd (%s)' --date=format:'%d.%m.%Y %H:%M' 2>$null
+    $letzter = (Invoke-Git @('-C', $VaultPath, 'log', '-1', '--format=%cd (%s)', '--date=format:%d.%m.%Y %H:%M')).Text
     if ($letzter) { Write-Info "Letzter Commit: $letzter" } else { Write-Hinweis "Noch kein einziger Commit." }
 
-    $remote = & git -C $VaultPath remote get-url origin 2>$null
+    $remote = (Invoke-Git @('-C', $VaultPath, 'remote', 'get-url', 'origin')).Text
     if ($remote) {
         $script:GitAuswaerts = $true
         Write-Ok "Remote 'origin': $remote"
-        $zweig  = (& git -C $VaultPath rev-parse --abbrev-ref HEAD 2>$null)
-        $stand  = (& git -C $VaultPath rev-list --left-right --count "origin/$zweig...$zweig" 2>$null)
-        if ($LASTEXITCODE -eq 0 -and $stand -match '^(\d+)\s+(\d+)$') {
+        $zweig     = (Invoke-Git @('-C', $VaultPath, 'rev-parse', '--abbrev-ref', 'HEAD')).Text
+        $standLauf = Invoke-Git @('-C', $VaultPath, 'rev-list', '--left-right', '--count', "origin/$zweig...$zweig")
+        if ($standLauf.Code -eq 0 -and $standLauf.Text -match '^(\d+)\s+(\d+)$') {
             $hinterher = [int]$Matches[1]   # Commits, die nur auf origin liegen
             $voraus    = [int]$Matches[2]   # Commits, die nur lokal liegen
             if ($hinterher -gt 0 -and $voraus -gt 0) {
