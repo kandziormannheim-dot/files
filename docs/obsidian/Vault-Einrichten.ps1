@@ -52,6 +52,31 @@ param(
 $ErrorActionPreference = 'Stop'
 $TaskName = 'Obsidian Vault Sync'
 
+# Windows PowerShell 5.1 verwandelt jede Zeile, die ein natives Programm nach
+# stderr schreibt, in ein Fehlerobjekt, sobald die Ausgabe umgeleitet wird. Bei
+# $ErrorActionPreference = 'Stop' bricht das Skript daran ab — auch wenn git nur
+# "kein Remote gesetzt" gemeldet hat, was hier ein erwarteter Fall ist.
+# PowerShell 7 macht das nicht mehr, deshalb faellt es beim Testen dort nicht auf.
+# Alle git-Aufrufe, deren Ausgabe eingelesen wird, laufen daher hier durch.
+function Invoke-Git {
+    param([Parameter(Mandatory = $true)][string[]]$Argumente)
+    $alt = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $roh  = & git @Argumente 2>&1
+        $code = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $alt
+    }
+    $zeilen = @($roh |
+        Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] } |
+        ForEach-Object { "$_" })
+    return [pscustomobject]@{
+        Code = $code
+        Text = ($zeilen -join [Environment]::NewLine).Trim()
+    }
+}
+
 function Write-Schritt { param([string]$T)
     Write-Host ''
     Write-Host "== $T" -ForegroundColor Cyan
@@ -411,42 +436,40 @@ if (-not $gitVorhanden) {
     if (Test-Path -LiteralPath (Join-Path $VaultPath '.git')) {
         Write-Schon 'Repository besteht bereits.'
     } else {
-        & git -C $VaultPath init -b main 2>$null | Out-Null
-        if ($LASTEXITCODE -ne 0) {
+        if ((Invoke-Git @('-C', $VaultPath, 'init', '-b', 'main')).Code -ne 0) {
             # Git älter als 2.28 kennt "init -b" noch nicht.
-            & git -C $VaultPath init | Out-Null
-            & git -C $VaultPath checkout -b main 2>$null | Out-Null
+            $null = Invoke-Git @('-C', $VaultPath, 'init')
+            $null = Invoke-Git @('-C', $VaultPath, 'checkout', '-b', 'main')
         }
         Write-Tat 'Repository angelegt (Zweig "main").'
     }
 
     # Eine vorhandene globale Kennung wird übernommen; nur wenn gar keine da
     # ist, bekommt diese Vault eine eigene.
-    if (-not (& git -C $VaultPath config user.email)) {
-        & git -C $VaultPath config user.name  'Martin Kandzior'
-        & git -C $VaultPath config user.email 'kandziormannheim@gmail.com'
+    if (-not (Invoke-Git @('-C', $VaultPath, 'config', 'user.email')).Text) {
+        $null = Invoke-Git @('-C', $VaultPath, 'config', 'user.name',  'Martin Kandzior')
+        $null = Invoke-Git @('-C', $VaultPath, 'config', 'user.email', 'kandziormannheim@gmail.com')
         Write-Tat 'Commit-Kennung für diese Vault gesetzt (keine globale gefunden).'
     }
     # Umlaute in Datei- und Ordnernamen unverändert durchreichen.
-    & git -C $VaultPath config core.quotepath false
-    & git -C $VaultPath config core.autocrlf  false
+    $null = Invoke-Git @('-C', $VaultPath, 'config', 'core.quotepath', 'false')
+    $null = Invoke-Git @('-C', $VaultPath, 'config', 'core.autocrlf',  'false')
 
-    & git -C $VaultPath add -A | Out-Null
-    & git -C $VaultPath diff --cached --quiet
-    if ($LASTEXITCODE -ne 0) {
-        & git -C $VaultPath commit -m "Vault eingerichtet: Struktur, Vorlagen, Einstellungen" | Out-Null
+    $null = Invoke-Git @('-C', $VaultPath, 'add', '-A')
+    if ((Invoke-Git @('-C', $VaultPath, 'diff', '--cached', '--quiet')).Code -ne 0) {
+        $null = Invoke-Git @('-C', $VaultPath, 'commit', '-m', 'Vault eingerichtet: Struktur, Vorlagen, Einstellungen')
         Write-Tat 'Erster Commit gesetzt.'
     } else {
         Write-Schon 'Nichts einzuchecken.'
     }
 
     if ($RemoteUrl) {
-        $bestehend = (& git -C $VaultPath remote get-url origin 2>$null)
+        $bestehend = (Invoke-Git @('-C', $VaultPath, 'remote', 'get-url', 'origin')).Text
         if (-not $bestehend) {
-            & git -C $VaultPath remote add origin $RemoteUrl
+            $null = Invoke-Git @('-C', $VaultPath, 'remote', 'add', 'origin', $RemoteUrl)
             Write-Tat "Remote 'origin' gesetzt: $RemoteUrl"
-        } elseif ($bestehend.Trim() -ne $RemoteUrl) {
-            & git -C $VaultPath remote set-url origin $RemoteUrl
+        } elseif ($bestehend -ne $RemoteUrl) {
+            $null = Invoke-Git @('-C', $VaultPath, 'remote', 'set-url', 'origin', $RemoteUrl)
             Write-Tat "Remote 'origin' geändert auf: $RemoteUrl"
         } else {
             Write-Schon "Remote 'origin' war bereits richtig gesetzt."
@@ -457,8 +480,11 @@ if (-not $gitVorhanden) {
         Write-Host '   bitte anmelden — danach merkt sich der Windows-Anmeldeinformations-' -ForegroundColor White
         Write-Host '   manager die Daten und der automatische Abgleich läuft ohne Rückfrage.' -ForegroundColor White
         Write-Host ''
-        $zweig = (& git -C $VaultPath rev-parse --abbrev-ref HEAD).Trim()
-        & git -C $VaultPath push -u origin $zweig
+        $zweig = (Invoke-Git @('-C', $VaultPath, 'rev-parse', '--abbrev-ref', 'HEAD')).Text
+        # Der Push bleibt sichtbar — hier fragt Windows nach den Zugangsdaten.
+        $altePraeferenz = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try { & git -C $VaultPath push -u origin $zweig } finally { $ErrorActionPreference = $altePraeferenz }
         if ($LASTEXITCODE -eq 0) { Write-Tat "Nach 'origin/$zweig' gepusht." }
         else { Write-Warn 'Push fehlgeschlagen. Ist das Remote-Repository angelegt und leer?' }
     } else {
