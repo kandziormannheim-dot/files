@@ -1,0 +1,3 @@
+# Laufprotokolle sind Ergebnis eines konkreten Laufs, nicht Quellcode.
+data/report_*.md
+__pycache__/
