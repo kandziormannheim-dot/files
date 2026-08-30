@@ -1,0 +1,528 @@
+<title>Weltmonitor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Weltmonitor — bewusst dunkles Single-Theme (Lagezentrum). Alle Farben explizit. */
+  :root{
+    --bg0:#080C12; --bg1:#0D141D; --panel:#101923; --panel-hi:#15202D;
+    --line:#1C2836; --line-soft:#16202C;
+    --ink:#DCE6F2; --muted:#7E8EA3; --faint:#4A586B;
+    --accent:#E8B44C; --accent-dim:#8A6C2E;
+    --crit:#F0564A; --high:#E8873A; --ok:#58B98B; --info:#5BB8D4;
+    --up:#58B98B; --down:#E06055;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:"Barlow Condensed","Arial Narrow",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--bg0)}
+  body{
+    margin:0; background:var(--bg0); color:var(--ink);
+    font-family:var(--mono); font-size:13px; line-height:1.5;
+    min-height:100vh;
+  }
+  ::selection{background:var(--accent-dim); color:var(--bg0)}
+
+  /* ── Kopfzeile ─────────────────────────────────────────── */
+  header{
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+    padding:14px 20px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--bg1),var(--bg0));
+  }
+  .brand{display:flex; align-items:baseline; gap:10px}
+  .brand h1{
+    margin:0; font-family:var(--disp); font-weight:700; font-size:30px;
+    letter-spacing:.06em; text-transform:uppercase; line-height:1;
+  }
+  .brand h1 b{color:var(--accent); font-weight:700}
+  .brand .sub{color:var(--faint); font-size:11px; letter-spacing:.14em; text-transform:uppercase}
+  .head-spacer{flex:1}
+  .clockbox{display:flex; gap:18px; align-items:center}
+  .clock{text-align:right}
+  .clock .t{font-size:17px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:.04em}
+  .clock .z{font-size:10px; color:var(--faint); letter-spacing:.16em; text-transform:uppercase}
+  .lage{
+    display:flex; align-items:center; gap:8px; padding:7px 12px;
+    border:1px solid var(--line); border-radius:3px; background:var(--panel);
+  }
+  .lage .dot{width:8px; height:8px; border-radius:50%; background:var(--high); animation:pulse 2.4s ease-in-out infinite}
+  .lage .lbl{font-size:10px; color:var(--muted); letter-spacing:.14em; text-transform:uppercase}
+  .lage .val{font-family:var(--disp); font-weight:600; font-size:16px; letter-spacing:.1em; color:var(--high); text-transform:uppercase}
+  .demo{
+    font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--bg0);
+    background:var(--accent); padding:4px 8px; border-radius:2px; font-weight:600;
+  }
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ── Ticker ────────────────────────────────────────────── */
+  .ticker{
+    display:flex; align-items:stretch; border-bottom:1px solid var(--line);
+    background:var(--bg1); overflow:hidden;
+  }
+  .ticker .tag{
+    flex:none; display:flex; align-items:center; padding:0 14px;
+    font-family:var(--disp); font-size:15px; font-weight:600; letter-spacing:.14em;
+    color:var(--accent); border-right:1px solid var(--line); text-transform:uppercase;
+  }
+  .ticker .rail{flex:1; overflow:hidden; display:flex; align-items:center}
+  .ticker .run{display:inline-flex; gap:0; white-space:nowrap; padding:9px 0; animation:run 90s linear infinite; will-change:transform}
+  .ticker .rail:hover .run{animation-play-state:paused}
+  .ticker .run span{color:var(--muted); padding:0 26px; position:relative}
+  .ticker .run span::after{content:"◆"; position:absolute; right:-6px; color:var(--faint); font-size:8px; top:4px}
+  .ticker .run span b{color:var(--ink); font-weight:500}
+  @keyframes run{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* ── Raster ────────────────────────────────────────────── */
+  .grid{
+    display:grid; gap:12px; padding:12px 20px 4px;
+    grid-template-columns:minmax(280px,340px) minmax(420px,1fr) minmax(280px,340px);
+    align-items:start;
+  }
+  @media (max-width:1180px){
+    .grid{grid-template-columns:1fr 1fr}
+    .col-map{order:-1; grid-column:1/-1}
+  }
+  @media (max-width:720px){
+    .grid{grid-template-columns:1fr}
+    header{gap:12px}
+  }
+  .col{display:flex; flex-direction:column; gap:12px; min-width:0}
+
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:4px; min-width:0}
+  .panel>h2{
+    margin:0; display:flex; align-items:center; gap:8px;
+    padding:9px 12px; border-bottom:1px solid var(--line-soft);
+    font-family:var(--disp); font-size:16px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--ink);
+  }
+  .panel>h2 .cnt{
+    margin-left:auto; font-family:var(--mono); font-size:10px; font-weight:500;
+    color:var(--faint); letter-spacing:.08em; font-variant-numeric:tabular-nums;
+  }
+  .panel>h2 .glyph{color:var(--accent); font-size:12px}
+
+  /* Feeds */
+  .feed{display:flex; flex-direction:column}
+  .feed .item{
+    padding:9px 12px; border-bottom:1px solid var(--line-soft);
+    display:grid; grid-template-columns:auto 1fr; column-gap:9px; row-gap:3px;
+    cursor:default;
+  }
+  .feed .item:last-child{border-bottom:0}
+  .feed .item:hover{background:var(--panel-hi)}
+  .feed .item.fresh{animation:flash 1.6s ease-out}
+  @keyframes flash{from{background:rgba(232,180,76,.14)}to{background:transparent}}
+  .sev{
+    grid-row:1/3; align-self:start; margin-top:4px;
+    width:7px; height:7px; border-radius:50%; flex:none;
+  }
+  .sev.crit{background:var(--crit); box-shadow:0 0 6px rgba(240,86,74,.55)}
+  .sev.high{background:var(--high)}
+  .sev.info{background:var(--info)}
+  .sev.ok{background:var(--ok)}
+  .feed .hl{color:var(--ink); font-size:12.5px}
+  .feed .meta{
+    display:flex; flex-wrap:wrap; column-gap:10px; row-gap:1px; font-size:10px; color:var(--faint);
+    letter-spacing:.06em; text-transform:uppercase;
+  }
+  .feed .meta span{white-space:nowrap}
+  .feed .meta .sevlbl.crit{color:var(--crit)} .feed .meta .sevlbl.high{color:var(--high)}
+  .feed .meta .sevlbl.info{color:var(--info)} .feed .meta .sevlbl.ok{color:var(--ok)}
+
+  /* Karte */
+  .mapwrap{position:relative; background:var(--bg1); border-radius:0 0 4px 4px; overflow:hidden}
+  .mapwrap canvas{display:block; width:100%; height:auto}
+  #tip{
+    position:absolute; pointer-events:none; display:none; z-index:5;
+    background:#050810; border:1px solid var(--line); border-left:2px solid var(--accent);
+    padding:7px 10px; max-width:250px; font-size:11px; color:var(--ink);
+    box-shadow:0 6px 18px rgba(0,0,0,.5);
+  }
+  #tip .m{color:var(--faint); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; margin-top:3px}
+  .maplegend{
+    display:flex; gap:16px; flex-wrap:wrap; padding:8px 12px;
+    border-top:1px solid var(--line-soft); font-size:10px; color:var(--muted);
+    letter-spacing:.08em; text-transform:uppercase;
+  }
+  .maplegend i{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px}
+
+  /* Ereignisprotokoll */
+  .log{max-height:210px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--line) transparent}
+  .log table{width:100%; border-collapse:collapse}
+  .log td{
+    padding:6px 12px; border-bottom:1px solid var(--line-soft);
+    font-size:11.5px; vertical-align:top;
+  }
+  .log tr:hover td{background:var(--panel-hi)}
+  .log .tt{color:var(--faint); white-space:nowrap; font-variant-numeric:tabular-nums; width:1%}
+  .log .rg{color:var(--muted); white-space:nowrap; text-transform:uppercase; font-size:10px; letter-spacing:.06em; width:1%; padding-top:8px}
+
+  /* Instabilitäts-Index */
+  .cii{padding:6px 12px 10px}
+  .cii .row{display:grid; grid-template-columns:24px 1fr 40px; align-items:center; column-gap:8px; row-gap:3px; padding:5px 0}
+  .cii .rk{grid-column:1; grid-row:1/3; color:var(--faint); font-size:10px; font-variant-numeric:tabular-nums}
+  .cii .nm{grid-column:2; grid-row:1; color:var(--ink); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .cii .bar{grid-column:2; grid-row:2; height:5px; background:var(--line-soft); border-radius:2px; overflow:hidden}
+  .cii .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--accent-dim),var(--accent)); border-radius:2px}
+  .cii .row.hot .bar i{background:linear-gradient(90deg,#8A3A32,var(--crit))}
+  .cii .vl{grid-column:3; grid-row:1/3; text-align:right; font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--ink)}
+  .cii .row.hot .vl{color:var(--crit)}
+
+  /* Märkte */
+  .mkts{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line-soft)}
+  .mkt{background:var(--panel); padding:9px 12px}
+  .mkt .nm{font-size:10px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase}
+  .mkt .vl{font-size:16px; font-weight:600; font-variant-numeric:tabular-nums; margin:2px 0 1px}
+  .mkt .chg{font-size:11px; font-variant-numeric:tabular-nums}
+  .mkt .chg.up{color:var(--up)} .mkt .chg.down{color:var(--down)}
+  .mkt canvas{display:block; width:100%; height:30px; margin-top:6px}
+
+  /* Statuszeile */
+  .sysrow{display:flex; flex-wrap:wrap; gap:0; border-top:1px solid var(--line-soft)}
+  .sys{flex:1 1 33%; min-width:110px; padding:8px 12px; border-right:1px solid var(--line-soft)}
+  .sys:last-child{border-right:0}
+  .sys .k{font-size:9.5px; color:var(--faint); letter-spacing:.12em; text-transform:uppercase}
+  .sys .v{font-size:12px; margin-top:2px; display:flex; align-items:center; gap:6px}
+  .sys .v i{width:6px; height:6px; border-radius:50%; display:inline-block}
+
+  footer{
+    padding:12px 20px 18px; color:var(--faint); font-size:10.5px;
+    letter-spacing:.04em; display:flex; gap:8px; flex-wrap:wrap;
+  }
+  footer b{color:var(--muted); font-weight:500}
+
+  @media (prefers-reduced-motion:reduce){
+    .ticker .run{animation:none}
+    .lage .dot{animation:none}
+    .feed .item.fresh{animation:none}
+  }
+</style>
+
+<header>
+  <div class="brand">
+    <h1>Welt<b>monitor</b></h1>
+    <span class="sub">Globales Lagebild</span>
+  </div>
+  <div class="head-spacer"></div>
+  <span class="demo">Demo · simulierte Daten</span>
+  <div class="lage">
+    <span class="dot"></span>
+    <span class="lbl">Globale Lage</span>
+    <span class="val">Angespannt</span>
+  </div>
+  <div class="clockbox">
+    <div class="clock"><div class="t" id="clk-utc">--:--:--</div><div class="z">UTC</div></div>
+    <div class="clock"><div class="t" id="clk-loc">--:--:--</div><div class="z">Lokal</div></div>
+  </div>
+</header>
+
+<div class="ticker">
+  <span class="tag">Eilmeldung</span>
+  <div class="rail"><div class="run" id="tickerrun"></div></div>
+</div>
+
+<div class="grid">
+  <div class="col">
+    <section class="panel">
+      <h2><span class="glyph">▣</span> Geopolitik <span class="cnt" id="cnt-geo"></span></h2>
+      <div class="feed" id="feed-geo"></div>
+    </section>
+    <section class="panel">
+      <h2><span class="glyph">▣</span> Cyber &amp; Technologie <span class="cnt" id="cnt-cyber"></span></h2>
+      <div class="feed" id="feed-cyber"></div>
+    </section>
+    <section class="panel">
+      <h2><span class="glyph">▣</span> Katastrophen &amp; Klima <span class="cnt" id="cnt-nat"></span></h2>
+      <div class="feed" id="feed-nat"></div>
+    </section>
+  </div>
+
+  <div class="col col-map">
+    <section class="panel">
+      <h2><span class="glyph">◉</span> Lagekarte <span class="cnt" id="cnt-map"></span></h2>
+      <div class="mapwrap">
+        <canvas id="map" aria-label="Weltkarte mit Ereignismarkern"></canvas>
+        <div id="tip"></div>
+      </div>
+      <div class="maplegend">
+        <span><i style="background:var(--crit)"></i>Kritisch</span>
+        <span><i style="background:var(--high)"></i>Hoch</span>
+        <span><i style="background:var(--info)"></i>Beobachtung</span>
+        <span><i style="background:var(--ok)"></i>Entspannung</span>
+      </div>
+    </section>
+    <section class="panel">
+      <h2><span class="glyph">≡</span> Ereignisprotokoll <span class="cnt">Live</span></h2>
+      <div class="log"><table id="logtbl"></table></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="panel">
+      <h2><span class="glyph">▤</span> Instabilitäts-Index <span class="cnt">CII / 0–100</span></h2>
+      <div class="cii" id="cii"></div>
+    </section>
+    <section class="panel">
+      <h2><span class="glyph">◭</span> Märkte <span class="cnt" id="mkt-ts"></span></h2>
+      <div class="mkts" id="mkts"></div>
+    </section>
+    <section class="panel">
+      <h2><span class="glyph">☲</span> Systeme</h2>
+      <div class="sysrow">
+        <div class="sys"><div class="k">Feeds</div><div class="v"><i style="background:var(--ok)"></i>412 aktiv</div></div>
+        <div class="sys"><div class="k">KI-Analyse</div><div class="v"><i style="background:var(--ok)"></i>bereit</div></div>
+        <div class="sys"><div class="k">Satellit</div><div class="v"><i style="background:var(--high)"></i>verzögert</div></div>
+        <div class="sys"><div class="k">Seismik</div><div class="v"><i style="background:var(--ok)"></i>nominal</div></div>
+        <div class="sys"><div class="k">Flugdaten</div><div class="v"><i style="background:var(--ok)"></i>nominal</div></div>
+        <div class="sys"><div class="k">Relay</div><div class="v"><i style="background:var(--ok)"></i>34 ms</div></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer>
+  <b>Weltmonitor</b> · Demonstrator im Stil eines globalen Lagezentrums · alle Meldungen, Kurse und Indizes sind simuliert und fiktiv · inspiriert vom Open-Source-Projekt „World Monitor"
+</footer>
+
+<script>
+'use strict';
+
+/* ── Punktraster-Weltkarte (240×120, aus Natural-Earth-Umrissen gerastert) ── */
+const GW=240, GH=120;
+const LAND_B64="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPj/z////3EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/++f///w8AAPADgAEAAOADAAAAAAAAAAAAAAAg3N4f/v///wcAAB8AAAAAAAA4AAAAAAAAAAAAAAADAOAH/P///wcAAA4AAAAAAAAwAAAAAAAAAAAAAAC8cQwBAP///wcAAAAAAIAHAMD/DwDwAAAAAAAAAOAAAAAAAPz//wMAAAAAAGAAAPz/AQAAAAAAAAAAAOBdc/MDAPj//wEAAAAAABjAwP///z9gAAAAA4AAAED8A/P/AOD//wEAAAAAADjg/v///z//HwCAAPj/A0/8X4PwB/D//wAAAOA/AADh/v///////wM+A/7///8Pw56BB+D/DwAAAPz/Y+zf/f//////////N/D///////+Bf/D/AQAAAP7/x////v//////////GP7//////7/wJ+AfAH4AAD9++P//////////////AOD//////88GH8AfAAwAwJ////////////////9/APz//////wNxDIAPAAAA8M///////////////98/APzf/////wHwAwAGAAAA+M///////////////+ADAPAB+P///wHwMwAAAAAA8A//////////////ZBgAAIACgP///wPgfwAAAAAQABf///////////8fAA4AACAAAP///z/gfwAAAAAwYMf///////////8PAB8AAAQAAP7////5/wMAAABoQOj///////////8DAA8AAAAAgPz////5/wcAAADs+P////////////9/AAcAAAAAAPj////7/wMAAADg+f////////////9/AAEAAAAAAPj/////zwAAAAAw/v////////////+/AAAAAAAAAPD/////Gw4AAACg//////////////8fAAAAAAAAAOD/////HxAAAADA//////////////8fAAAAAAAAAOD//////wAAAACA//9P/vj///////8PAAAAAAAAAOD/////EwAAAACA//wHfPz////////HAAAAAAAAAOD/////AQAAAAD8g/EH8Pj////////gAAAAAAAAAOD/////AAAAAAD8Aebn+fH//////z8AAAAAAAAAAOD///9/AAAAAAD8AGT8//H//////xpgAAAAAAAAAMD///8/AAAAAAD8AMT8//H/////fzggAAAAAAAAAID///8fAAAAAABwdAD8/////////zE4AAAAAAAAAID///8fAAAAAACwfwBD/////////zA/AAAAAAAAAAD+//8PAAAAAAD4fwAA/////////wAHAAAAAAAAAAD8//8DAAAAAAD8/2OA/////////4EAAAAAAAAAAADg//8DAAAAAAD8/+///////////wEAAAAAAAAAAADo/wkCAAAAAAD+//////z//////wEAAAAAAAAAAADYfwACAAAAAID///8///n//////wEAAAAAAAAAAACgfwAWAAAAAMD///9//+H//////wAAAAAAAAAAAAAgfwAAAAAAAMD///9//jPg////fwAAAAAAAAAAAAAAfgAAAAAAAOD//////H/A////PwEAAAAAAAAAAAAAfAAIAAAAAOD//////f/A/+f/BwAAAAAAAAAAAAAAfDBwAAAAAOD/////+X8A/sN/AAAAAAAAAAAAAAAA+DgAAwAAAOD/////+T8A/oB/AwAAAAAAAAAAAAAA4B8AAAAAAOD/////8x8AfoB/AAMAAAAAAAAAAAAAgPwAAAAAAOD/////8wcAPoD+AAEAAAAAAAAAAAAAAPgBAAAAAOD/////7wEAHAD+AQEAAAAAAAAAAAAAAMAAAAAAAOD/////PwAAHAD8AQQAAAAAAAAAAAAAAICAAgAAAMD/////HwMAGADgAAoAAAAAAAAAAAAAAADBfgAAAID//////wMAGABAAAAAAAAAAAAAAAAAAADy/wAAAID//////wEAIAAGAAwAAAAAAAAAAAAAAADw/wEAAAD//////wEAIAAIAAgAAAAAAAAAAAAAAADw/x8AAAD8+P///wAAAAAZYAAAAAAAAAAAAAAAAADg/z8AAAAAwP///wAAAAAbMAAAAAAAAAAAAAAAAADw/z8AAAAAwP//fwAAAAAWfAAAAAAAAAAAAAAAAAD4/38AAAAAwP//HwAAAAAcficAAAAAAAAAAAAAAAD8//8BAAAAwP//DwAAAAAYPiABAAAAAAAAAAAAAAD8//8DAAAAwP//BwAAAAA4vgEaAAAAAAAAAAAAAAD8//8/AAAAgP//BwAAAABwEBL+AAAAAAAAAAAAAAD8////AAAAAP//AwAAAABgAADwAQAAAAAAAAAAAAD8////AQAAAP//AwAAAADABADyAwEAAAAAAAAAAAD4////AQAAAP7/AwAAAAAAHADwBgQAAAAAAAAAAADw////AAAAAP7/BwAAAAAAAAQADAAAAAAAAAAAAADw//9/AAAAAP7/BwAAAAAAAAAAAAAAAAAAAAAAAADg//9/AAAAAP7/BwAAAAAAAICHAAAAAAAAAAAAAADg//8/AAAAAP//BwEAAAAAANDHAAAAAAAAAAAAAADA//8/AAAAAP//hwMAAAAAAPjHAQAAAAAAAAAAAAAA//8/AAAAAP//4QEAAAAAAPzfAQAAAAAAAAAAAAAA/v8/AAAAAP//4AEAAAAAAP7/AwAAAAAAAAAAAAAA/v8fAAAAAP5/wAAAAAAAgP//ByAAAAAAAAAAAAAA/v8fAAAAAP7/4AAAAAAA4P//D0AAAAAAAAAAAAAA/v8HAAAAAPz/4AAAAAAA8P//HwAAAAAAAAAAAAAA/v8AAAAAAPx/YAAAAAAA8P//PwAAAAAAAAAAAAAA/v8AAAAAAPw/AAAAAAAA8P//PwAAAAAAAAAAAAAA/v8AAAAAAPw/AAAAAAAA8P//PwAAAAAAAAAAAAAA/38AAAAAAPgfAAAAAAAA4P//PwAAAAAAAAAAAAAA/z8AAAAAAPAPAAAAAAAA4P//PwAAAAAAAAAAAAAA/x8AAAAAAPAHAAAAAAAA4B/+PwAAAAAAAAAAAAAA/w8AAAAAAPABAAAAAAAA4Af0HwAAAAAAAAAAAAAA/wMAAAAAAAAAAAAAAAAAAADwDwAIAAAAAAAAAACA/wMAAAAAAAAAAAAAAAAAAADgDwAQAAAAAAAAAACA/wEAAAAAAAAAAAAAAAAAAADAAgBwAAAAAAAAAACAfwAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAACAHwAAAAAAAAAAAAAAAAAAAAAABgAQAAAAAAAAAACAHwAAAAAAAAAAAAAAAAAAAAAABgAMAAAAAAAAAADADwAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAADABwAAAAAAAAAAAAAAAAAAAAAAAIADAAAAAAAAAADADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADABwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAgwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACABwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAAADwAAAR4Pv4HAAAAAAAAAAAAAAAACAAAAAAAAAAA4P8/4P//////BwAAAAAAAAAAAAAAPwAAAAAAAADg//8//P///////wMAAAAAAAAAAACAewAAAADI/v////8///////////8BAAAAAAAAABAAeAAAAID///////////////////8DAAAAAAAe4P//fwAAAMD//////////////////38AAADA////////BwAAAPz//////////////////x8AAEDz//////8/AAAA8P///////////////////x8AABj///////8PAIAH/////////////////////38AAADA//////8/gPAD4P///////////////////wcAAAD+////////P4Dx/////////////////////w8AAAD8//////////////////////////////////8AAPz/AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+const LAND=(()=>{const bin=atob(LAND_B64),b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b;})();
+const isLand=(x,y)=>{const i=y*GW+x;return (LAND[i>>3]>>(i&7))&1;};
+
+/* ── Simulierte Ereignislage (fiktiv) ─────────────────────── */
+const SEV={crit:{lbl:'Kritisch',css:'crit',col:'#F0564A'},high:{lbl:'Hoch',css:'high',col:'#E8873A'},
+           info:{lbl:'Beobachtung',css:'info',col:'#5BB8D4'},ok:{lbl:'Entspannung',css:'ok',col:'#58B98B'}};
+const CAT={geo:'Geopolitik',cyber:'Cyber',nat:'Naturereignis',mil:'Militär',eco:'Wirtschaft'};
+
+const EVENTS=[
+ {c:'geo', s:'high', lat:50.4, lon:30.5, r:'Osteuropa',    h:'Truppenverlegungen nahe Grenzregion durch Satellitenaufnahmen bestätigt', src:'OSINT-Auswertung'},
+ {c:'geo', s:'info', lat:25.0, lon:121.5,r:'Ostasien',     h:'Marineübung in Meerenge angekündigt — Schifffahrt rechnet mit Umleitungen', src:'Agenturlage'},
+ {c:'geo', s:'crit', lat:31.5, lon:34.5, r:'Naher Osten',  h:'Eskalation im Grenzgebiet: Sicherheitsrat beruft Dringlichkeitssitzung ein', src:'Agenturlage'},
+ {c:'geo', s:'ok',   lat:6.9,  lon:79.9, r:'Südasien',     h:'Waffenruhe hält dritte Woche — Beobachtermission meldet ruhige Lage', src:'Feldbericht'},
+ {c:'geo', s:'info', lat:15.3, lon:44.2, r:'Arab. Halbinsel',h:'Friedensgespräche werden in neutralem Drittland fortgesetzt', src:'Diplomatie'},
+ {c:'cyber',s:'crit',lat:52.5, lon:13.4, r:'Mitteleuropa', h:'Ransomware-Welle trifft Logistikbranche — Behörden warnen Betreiber kritischer Infrastruktur', src:'CERT-Meldung'},
+ {c:'cyber',s:'high',lat:37.6, lon:-122.3,r:'Nordamerika', h:'Zero-Day in verbreiteter VPN-Appliance wird aktiv ausgenutzt', src:'CERT-Meldung'},
+ {c:'cyber',s:'info',lat:1.35, lon:103.8,r:'Südostasien',  h:'Phishing-Kampagne zielt auf Finanzsektor — Muster deutet auf bekannte Gruppe', src:'Threat-Intel'},
+ {c:'cyber',s:'high',lat:59.9, lon:30.3, r:'Nordosteuropa',h:'DDoS-Angriffe auf Regierungsportale — Kapazitäten auf Reserve umgeschaltet', src:'Netzbetreiber'},
+ {c:'nat', s:'crit', lat:38.3, lon:142.4,r:'Pazifik',      h:'Seebeben M 7,1 vor der Küste — Tsunami-Vorwarnung für zwei Präfekturen', src:'Seismik'},
+ {c:'nat', s:'high', lat:-6.2, lon:106.8,r:'Südostasien',  h:'Monsunflut: Pegel erreichen Warnstufe rot, Evakuierungen laufen', src:'Lagezentrum'},
+ {c:'nat', s:'high', lat:34.0, lon:-118.2,r:'Nordamerika', h:'Vegetationsbrand breitet sich bei auflandigem Wind aus — 4.000 ha betroffen', src:'Feuerwehrlage'},
+ {c:'nat', s:'info', lat:64.1, lon:-21.9,r:'Nordatlantik', h:'Erhöhte seismische Aktivität an Spalteneruption — Flugverkehr unbeeinträchtigt', src:'Vulkanologie'},
+ {c:'nat', s:'ok',   lat:-33.9,lon:151.2,r:'Ozeanien',     h:'Zyklon dreht ab — Warnungen für Küstenregion aufgehoben', src:'Wetterdienst'},
+ {c:'mil', s:'high', lat:35.9, lon:127.8,r:'Ostasien',     h:'Raketentest über offener See — Nachbarstaaten aktivieren Frühwarnketten', src:'Militärlage'},
+ {c:'mil', s:'info', lat:54.5, lon:18.5, r:'Ostsee',       h:'Verstärkte Marinepatrouillen entlang Unterwasser-Infrastruktur', src:'Militärlage'},
+ {c:'eco', s:'info', lat:29.9, lon:32.5, r:'Suez',         h:'Konvoi-Stau am Kanal: Wartezeit steigt auf 38 Stunden', src:'Schifffahrt'},
+ {c:'eco', s:'high', lat:26.2, lon:56.3, r:'Hormus',       h:'Versicherungsprämien für Tankerpassagen ziehen deutlich an', src:'Marktdaten'},
+ {c:'eco', s:'ok',   lat:6.5,  lon:3.4,  r:'Westafrika',   h:'Neues Tiefwasser-Terminal nimmt Betrieb auf — Kapazität +18 %', src:'Handelsdaten'},
+ {c:'geo', s:'info', lat:-34.6,lon:-58.4,r:'Südamerika',   h:'Generalstreik angekündigt — Häfen und Flughäfen ab Mitternacht betroffen', src:'Agenturlage'},
+];
+
+/* Ereignisse bekommen gestaffelte Zeitstempel (jüngstes zuerst) */
+const now=Date.now();
+EVENTS.forEach((e,i)=>{e.t=now-(i*7+3)*60000;});
+let live=EVENTS.slice();          // Protokoll- & Kartenbestand
+let pool=EVENTS.slice();          // Nachschub für "neue" Meldungen
+
+const fmtT=t=>new Date(t).toISOString().slice(11,16)+'Z';
+const ago=t=>{const m=Math.max(0,Math.round((Date.now()-t)/60000));return m<1?'jetzt':m<60?`vor ${m} min`:`vor ${Math.floor(m/60)} h`;};
+
+/* ── Uhren ────────────────────────────────────────────────── */
+function tick(){
+  const d=new Date();
+  document.getElementById('clk-utc').textContent=d.toISOString().slice(11,19);
+  document.getElementById('clk-loc').textContent=d.toLocaleTimeString('de-DE');
+}
+tick(); setInterval(tick,1000);
+
+/* ── Ticker ───────────────────────────────────────────────── */
+function buildTicker(){
+  const items=live.slice(0,10).map(e=>`<span><b>${CAT[e.c]}</b> — ${e.h}</span>`).join('');
+  document.getElementById('tickerrun').innerHTML=items+items; // nahtlose Schleife
+}
+
+/* ── Feeds ────────────────────────────────────────────────── */
+const FEEDMAP={geo:['geo','mil','eco'],cyber:['cyber'],nat:['nat']};
+function renderFeeds(freshEvent){
+  for(const key of Object.keys(FEEDMAP)){
+    const list=live.filter(e=>FEEDMAP[key].includes(e.c)).sort((a,b)=>b.t-a.t).slice(0,5);
+    document.getElementById('cnt-'+key).textContent=list.length+' Meldungen';
+    document.getElementById('feed-'+key).innerHTML=list.map(e=>{
+      const s=SEV[e.s];
+      const fresh=freshEvent===e?' fresh':'';
+      return `<div class="item${fresh}">
+        <span class="sev ${s.css}"></span>
+        <div class="hl">${e.h}</div>
+        <div class="meta" style="grid-column:2">
+          <span class="sevlbl ${s.css}">● ${s.lbl}</span><span>${e.r}</span><span>${e.src}</span><span>${ago(e.t)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+/* ── Ereignisprotokoll ───────────────────────────────────── */
+function renderLog(){
+  const rows=live.slice().sort((a,b)=>b.t-a.t).slice(0,14).map(e=>{
+    const s=SEV[e.s];
+    return `<tr><td class="tt">${fmtT(e.t)}</td><td class="rg">${e.r}</td>
+      <td><span style="color:${s.col}">●</span> ${e.h}</td></tr>`;
+  }).join('');
+  document.getElementById('logtbl').innerHTML=rows;
+  document.getElementById('cnt-map').textContent=live.length+' aktive Ereignisse';
+}
+
+/* ── Karte ────────────────────────────────────────────────── */
+const cv=document.getElementById('map'), ctx=cv.getContext('2d');
+const tip=document.getElementById('tip');
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let mapW=0, mapH=0, dpr=1;
+const proj=(lon,lat)=>[ (lon+180)/360*mapW, (90-lat)/180*mapH ];
+
+function sizeMap(){
+  const w=cv.parentElement.clientWidth;
+  dpr=Math.min(2,window.devicePixelRatio||1);
+  mapW=w; mapH=w*0.52;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(mapH*dpr);
+  cv.style.height=mapH+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function drawMap(ts){
+  ctx.clearRect(0,0,mapW,mapH);
+  /* Gradnetz */
+  ctx.strokeStyle='rgba(76,98,128,.10)'; ctx.lineWidth=1;
+  for(let lon=-150;lon<=150;lon+=30){const[x]=proj(lon,0);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,mapH);ctx.stroke();}
+  for(let lat=-60;lat<=60;lat+=30){const[,y]=proj(0,lat);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(mapW,y);ctx.stroke();}
+  /* Landmasse als Punktraster */
+  const cw=mapW/GW, ch=(mapH)/GH, r=Math.max(.7,cw*.26);
+  ctx.fillStyle='rgba(120,146,180,.34)';
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(isLand(x,y)){
+    ctx.beginPath();ctx.arc((x+.5)*cw,(y+.5)*ch,r,0,6.2832);ctx.fill();
+  }
+  /* Ereignismarker mit Puls */
+  for(const e of live){
+    const [x,y]=proj(e.lon,e.lat), col=SEV[e.s].col;
+    if(!reduceMotion){
+      const ph=((ts/1400)+(e.lon+e.lat)/40)%1;
+      ctx.beginPath();ctx.arc(x,y,4+ph*11,0,6.2832);
+      ctx.strokeStyle=col; ctx.globalAlpha=(1-ph)*.5; ctx.lineWidth=1.4; ctx.stroke();
+      ctx.globalAlpha=1;
+    }
+    ctx.beginPath();ctx.arc(x,y,3.4,0,6.2832);
+    ctx.fillStyle=col; ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,3.4,0,6.2832);
+    ctx.strokeStyle='#080C12'; ctx.lineWidth=1.2; ctx.stroke();
+  }
+}
+function loop(ts){ drawMap(ts); if(!reduceMotion) requestAnimationFrame(loop); }
+
+/* Tooltip per Treffertest */
+cv.addEventListener('mousemove',ev=>{
+  const rc=cv.getBoundingClientRect(), mx=ev.clientX-rc.left, my=ev.clientY-rc.top;
+  let hit=null,best=144;
+  for(const e of live){const[x,y]=proj(e.lon,e.lat);const d=(x-mx)**2+(y-my)**2;if(d<best){best=d;hit=e;}}
+  if(hit){
+    const s=SEV[hit.s];
+    tip.innerHTML=`${hit.h}<div class="m"><span style="color:${s.col}">● ${s.lbl}</span> · ${hit.r} · ${CAT[hit.c]} · ${fmtT(hit.t)}</div>`;
+    tip.style.display='block';
+    const tw=tip.offsetWidth;
+    tip.style.left=Math.min(mapW-tw-8,Math.max(8,mx+14))+'px';
+    tip.style.top=Math.max(8,my-14-tip.offsetHeight)+'px';
+    cv.style.cursor='pointer';
+  }else{tip.style.display='none';cv.style.cursor='default';}
+});
+cv.addEventListener('mouseleave',()=>{tip.style.display='none';});
+
+/* ── Instabilitäts-Index (fiktive Werte) ─────────────────── */
+const CII=[['Region Ost-A',87],['Region Levante',82],['Sahelzone',76],['Region Ost-B',71],
+           ['Horn von Afrika',66],['Andenraum',54],['Balkanraum',47],['Südostasien-Küste',41]];
+function renderCII(){
+  document.getElementById('cii').innerHTML=CII.map(([n,v],i)=>`
+    <div class="row${v>=75?' hot':''}">
+      <span class="rk">${String(i+1).padStart(2,'0')}</span>
+      <span class="nm">${n}</span>
+      <span class="vl">${v}</span>
+      <span class="bar"><i style="width:${v}%"></i></span>
+    </div>`).join('');
+}
+
+/* ── Märkte: Sparklines (Random Walk, simuliert) ─────────── */
+const MKTS=[
+ {id:'dax', nm:'DAX',        v:18240, dec:0, step:22},
+ {id:'brent',nm:'Brent (USD)',v:83.4, dec:1, step:.35},
+ {id:'gold',nm:'Gold (USD)', v:2412,  dec:0, step:6},
+ {id:'btc', nm:'BTC (USD)',  v:64350, dec:0, step:260},
+];
+MKTS.forEach(m=>{
+  m.open=m.v; m.hist=[];
+  let v=m.v*(1-.004+Math.random()*.008);
+  for(let i=0;i<48;i++){v+=(Math.random()-.5)*m.step*2;m.hist.push(v);}
+  m.v=v;
+});
+function renderMkts(init){
+  const host=document.getElementById('mkts');
+  if(init) host.innerHTML=MKTS.map(m=>`
+    <div class="mkt"><div class="nm">${m.nm}</div>
+      <div class="vl" id="v-${m.id}"></div><div class="chg" id="c-${m.id}"></div>
+      <canvas id="s-${m.id}" aria-label="Kursverlauf ${m.nm}"></canvas>
+    </div>`).join('');
+  for(const m of MKTS){
+    const chg=(m.v/m.open-1)*100, up=chg>=0;
+    document.getElementById('v-'+m.id).textContent=m.v.toLocaleString('de-DE',{minimumFractionDigits:m.dec,maximumFractionDigits:m.dec});
+    const c=document.getElementById('c-'+m.id);
+    c.textContent=(up?'▲ +':'▼ ')+chg.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' %';
+    c.className='chg '+(up?'up':'down');
+    spark(document.getElementById('s-'+m.id),m.hist,up?'#58B98B':'#E06055');
+  }
+  document.getElementById('mkt-ts').textContent=fmtT(Date.now());
+}
+function spark(canvas,data,color){
+  const w=canvas.clientWidth||140,h=30,d=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=w*d;canvas.height=h*d;
+  const g=canvas.getContext('2d');g.setTransform(d,0,0,d,0,0);g.clearRect(0,0,w,h);
+  const min=Math.min(...data),max=Math.max(...data),sp=(max-min)||1;
+  const X=i=>i/(data.length-1)*(w-6)+2, Y=v=>h-4-((v-min)/sp)*(h-9);
+  /* Flächenfüllung */
+  g.beginPath();g.moveTo(X(0),Y(data[0]));
+  data.forEach((v,i)=>g.lineTo(X(i),Y(v)));
+  g.lineTo(X(data.length-1),h);g.lineTo(X(0),h);g.closePath();
+  g.fillStyle=color+'22';g.fill();
+  /* Linie 2px */
+  g.beginPath();g.moveTo(X(0),Y(data[0]));
+  data.forEach((v,i)=>g.lineTo(X(i),Y(v)));
+  g.strokeStyle=color;g.lineWidth=2;g.lineJoin='round';g.stroke();
+  /* Endpunkt betont */
+  g.beginPath();g.arc(X(data.length-1),Y(data[data.length-1]),2.6,0,6.2832);
+  g.fillStyle=color;g.fill();
+}
+function stepMkts(){
+  for(const m of MKTS){
+    m.v+=(Math.random()-.5)*m.step*2;
+    m.hist.push(m.v); if(m.hist.length>48)m.hist.shift();
+  }
+  renderMkts(false);
+}
+
+/* ── Simulierter Live-Betrieb ────────────────────────────── */
+let poolIdx=0;
+function injectEvent(){
+  const src=pool[poolIdx++%pool.length];
+  const e=Object.assign({},src,{t:Date.now()});
+  live.unshift(e); if(live.length>26)live.pop();
+  renderFeeds(e); renderLog(); buildTicker();
+}
+
+/* ── Start ───────────────────────────────────────────────── */
+function boot(){
+  sizeMap(); renderFeeds(null); renderLog(); buildTicker(); renderCII(); renderMkts(true);
+  requestAnimationFrame(loop);
+  if(reduceMotion) drawMap(0);
+  setInterval(stepMkts,2500);
+  setInterval(injectEvent,9000);
+  setInterval(()=>renderFeeds(null),60000); // relative Zeiten auffrischen
+}
+addEventListener('resize',()=>{sizeMap();if(reduceMotion)drawMap(0);renderMkts(false);});
+boot();
+</script>
