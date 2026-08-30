@@ -1,7 +1,7 @@
 # Obsidian-Vault — prüfen und einrichten
 
-Für die Vault unter `C:\Obsidian\MartinKandzior`. Drei PowerShell-Skripte, die
-lokal auf dem Windows-Rechner laufen:
+Für die Vault unter `C:\Obsidian\MartinKandzior`. Die PowerShell-Skripte laufen
+lokal auf dem Windows-Rechner, das Shell-Skript auf dem Server:
 
 | Skript | Zweck |
 | --- | --- |
@@ -10,6 +10,7 @@ lokal auf dem Windows-Rechner laufen:
 | [`Vault-Sync.ps1`](Vault-Sync.ps1) | Der regelmäßige Abgleich über Git. Läuft aus der Aufgabenplanung, nicht von Hand. |
 | [`Vault-Sicherung.ps1`](Vault-Sicherung.ps1) | Die Alternative ohne Git: Spiegel und datierte Schnappschüsse. |
 | [`Obsidian-Einrichten.cmd`](Obsidian-Einrichten.cmd) | Zum Doppelklicken: lädt die Skripte und führt Einrichtung und Prüflauf aus. |
+| [`vault-sync.sh`](vault-sync.sh) | Dasselbe für den Server, damit OpenClaw mitliest — siehe [OpenClaw.md](OpenClaw.md). |
 
 ## Zuerst: wie Obsidian speichert
 
@@ -237,6 +238,18 @@ Sync der bessere Weg.
 
 `Vault-Pruefen.ps1` kennt beide Wege und beschwert sich erst, wenn *keiner* von
 beiden eingerichtet ist.
+
+## Der Server liest mit (OpenClaw)
+
+Liegt die Vault erst in einem privaten Repository, kann auch der Agent auf dem
+Hostinger-VPS daran: er klont dasselbe Repository und gleicht es im selben
+15-Minuten-Takt ab. Damit sieht OpenClaw jede Notiz vom Laptop und kann
+Aufgezeichnetes zurückschreiben, ohne dass ein Rechner den anderen erreichen
+muss.
+
+Eingerichtet wird das mit [`vault-sync.sh`](vault-sync.sh) auf dem Server; die
+Anleitung samt Deploy-Key, Zeitplan und Konfliktregeln steht in
+[OpenClaw.md](OpenClaw.md). Auf dem Windows-Rechner ändert sich dadurch nichts.
 
 ## Andere Wege, die Vault aktuell zu halten
 
