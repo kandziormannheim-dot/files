@@ -1,0 +1,4 @@
+{
+  "_comment": "Bereits fakturierte Order-Codes. Wird nach jeder erfolgreich angelegten Rechnung fortgeschrieben. Nicht von Hand kuerzen -- sonst entstehen Doppelabrechnungen.",
+  "invoiced": {}
+}
