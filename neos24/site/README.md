@@ -12,11 +12,12 @@ cd neos24/site && python3 -m http.server 8080   # http://localhost:8080
 
 | Datei | Inhalt |
 |---|---|
-| `index.html` | Die komplette Seite, semantisch, `lang="de"`, mit Meta/OG/JSON-LD |
+| `index.html` | Die komplette deutsche Seite, semantisch, `lang="de"`, mit Meta/OG/JSON-LD |
+| `en/index.html` | Englische Fassung, gleiche Struktur und Assets, verlinkt per Sprachumschalter (Header, Mobilmenü, Footer) und `hreflang` |
 | `assets/neos.css` | Design-Tokens (`:root`), Komponenten, Sektionen, Breakpoints, Bewegungsreduktion |
 | `assets/neos.js` | Burger-Menü, Scroll-Reveal, FAQ-Einzelöffnung, Formular-Validierung, aktiver Nav-Punkt — die Seite läuft auch ohne JS |
 | `assets/fonts.css` + `assets/fonts/` | Sora, Hanken Grotesk, JetBrains Mono als variable WOFF2 (OFL), selbst gehostet — kein Google-Fonts-Aufruf beim Besuch |
-| `screenshots/` | Playwright-Aufnahmen bei 1280 und 375 px zur Abnahme |
+| `screenshots/` | Playwright-Aufnahmen bei 1280 und 375 px zur Abnahme (`en-*` für die englische Seite) |
 
 ## Zuordnung zu den PDFs
 
@@ -36,6 +37,11 @@ Bewusst weggelassen: der Spar-Rechner (`Startseite.pdf` S. 4).
 - **Kontaktformular** (`#kontakt`): `action="mailto:info@neos24.com"` als Übergang. Mit Backend in `neos.js` beim Submit ein `fetch()` einsetzen.
 - **Impressum / Datenschutz**: Links zeigen auf `#`.
 - **Open-Graph-Bild**: noch keins hinterlegt (`og:image`).
+- **URL-Schema**: `hreflang` und `canonical` gehen von `neos24.com/` (DE) und `neos24.com/en/` (EN) aus. Bei anderem Schema beide Dateien anpassen.
+
+## Zwei Sprachen pflegen
+
+Beide Seiten haben identische Sektionen in identischer Reihenfolge; nur Texte, Anker-IDs (`#preise` / `#pricing`) und Zahlenformate (`€2,40` / `€2.40`) unterscheiden sich. Eine Änderung am Layout gehört in `assets/`, eine Änderung am Text in beide HTML-Dateien.
 
 ## Design-Regeln (Kurzfassung)
 

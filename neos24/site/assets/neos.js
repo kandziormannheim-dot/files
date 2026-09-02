@@ -15,7 +15,7 @@
     var setOpen = function (open) {
       header.classList.toggle('nav-open', open);
       burger.setAttribute('aria-expanded', String(open));
-      burger.setAttribute('aria-label', open ? 'Menü schließen' : 'Menü öffnen');
+      burger.setAttribute('aria-label', open ? (burger.dataset.labelClose || 'Close menu') : (burger.dataset.labelOpen || 'Open menu'));
     };
     burger.addEventListener('click', function () {
       setOpen(!header.classList.contains('nav-open'));
