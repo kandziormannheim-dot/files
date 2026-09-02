@@ -12,6 +12,7 @@ Ausgangsmaterial: `neos24handover.zip` (AIVA-Anleitung, `setup-neos24.sh`,
 | [`SEO-RANK1-CHECKLIST.md`](SEO-RANK1-CHECKLIST.md) | Die vollständige Ranking-Checkliste, nach Hebelwirkung sortiert |
 | [`patches/`](patches/) | Zwei getestete Fixes für das AIVA-Bundle + Testskript |
 | [`tools/indexability-audit.py`](tools/indexability-audit.py) | Live-Check gegen `noindex` & Co. Läuft überall, nur Python 3 |
+| [`site/`](site/) | Startseite nach dem Rebranding 2026 (HTML/CSS/JS, ohne Build) — Vorlage für Layout, CSS und Navigation, die AIVA später braucht |
 
 ---
 
