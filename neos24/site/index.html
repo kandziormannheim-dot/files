@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-audience="business">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NEOS – Versand, der mitdenkt. Cross-Border Last Mile für E-Commerce in ganz Europa</title>
-  <meta name="description" content="Ein Login, über 100 Zustellpartner, bis zu 55 % günstiger. NEOS verbindet deinen Shop mit der letzten Meile in 27 Ländern – mit einem Ansprechpartner, einem Tracking-Link und Retouren inklusive.">
+  <title>NEOS – Versand, der mitdenkt. Paketversand in ganz Europa für Shops und Privatkunden</title>
+  <meta name="description" content="Ein Login, über 100 Zustellpartner, bis zu 55 % günstiger. NEOS bringt Pakete von Shops und Privatkunden in 27 Länder – ein Ansprechpartner, ein Tracking-Link, Retouren inklusive.">
   <link rel="canonical" href="https://neos24.com/">
   <link rel="alternate" hreflang="de" href="https://neos24.com/">
   <link rel="alternate" hreflang="en" href="https://neos24.com/en/">
@@ -14,7 +14,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="NEOS">
   <meta property="og:title" content="NEOS – Versand, der mitdenkt.">
-  <meta property="og:description" content="Ein Login, über 100 Zustellpartner, bis zu 55 % günstiger. Cross-Border Last Mile für E-Commerce in ganz Europa.">
+  <meta property="og:description" content="Ein Login, über 100 Zustellpartner, bis zu 55 % günstiger. Paketversand in ganz Europa für Shops und Privatkunden.">
   <meta property="og:url" content="https://neos24.com/">
   <meta property="og:locale" content="de_DE">
   <meta property="og:locale:alternate" content="en_GB">
@@ -32,7 +32,7 @@
     "alternateName": "NEOS",
     "url": "https://neos24.com/",
     "email": "info@neos24.com",
-    "description": "Grenzüberschreitender Last-Mile-Versand für E-Commerce in ganz Europa. Ein Login, über 100 Zustellpartner, 27 Länder.",
+    "description": "Grenzüberschreitender Last-Mile-Versand für E-Commerce und Privatkunden in ganz Europa. Über 100 Zustellpartner, 27 Länder.",
     "areaServed": "Europe"
   }
   </script>
@@ -47,35 +47,53 @@
   </symbol>
 </svg>
 
+<!-- Zielgruppen-Reiter: Inhalte mit data-for="business" bzw. data-for="private" gelten nur für
+     eine Gruppe; alles ohne data-for ist gemeinsam. Umschaltung in assets/neos.js, Ausblenden per CSS. -->
 <header class="site-header" id="top">
   <div class="container">
-    <a class="logo logo-chip" href="#top" aria-label="NEOS – zur Startseite">
-      <svg width="62" height="22" role="img" aria-hidden="true"><use href="#neos-logo"/></svg>
-    </a>
+    <div class="brand-group">
+      <a class="logo logo-chip" href="#top" aria-label="NEOS – zur Startseite">
+        <svg width="62" height="22" role="img" aria-hidden="true"><use href="#neos-logo"/></svg>
+      </a>
+      <div class="audience-tabs audience-tabs--desktop" role="tablist" aria-label="Kundengruppe">
+        <button type="button" role="tab" data-audience="business" aria-selected="true">Business</button>
+        <button type="button" role="tab" data-audience="private" aria-selected="false" tabindex="-1">Privatkunden</button>
+      </div>
+    </div>
     <nav class="nav" aria-label="Hauptnavigation">
       <a href="#so-funktionierts">So funktioniert's</a>
-      <a href="#plattform">Plattform</a>
+      <a href="#plattform" data-for="business">Plattform</a>
+      <a href="#abgabe" data-for="private">Abgabe &amp; Abholung</a>
       <a href="#netzwerk">Netzwerk</a>
       <a href="#preise">Preise</a>
       <a href="#faq">FAQ</a>
     </nav>
     <div class="header-actions">
       <a class="lang" href="en/" hreflang="en" lang="en" aria-label="English version">EN</a>
-      <a class="btn btn--primary" href="#kontakt">Konto erstellen</a>
+      <a class="btn btn--primary" href="#kontakt" data-for="business">Konto erstellen</a>
+      <a class="btn btn--primary" href="#preise" data-for="private">Paket verschicken</a>
       <button class="burger" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Menü öffnen" data-label-open="Menü öffnen" data-label-close="Menü schließen">
         <span></span><span></span><span></span>
       </button>
     </div>
   </div>
+  <div class="audience-bar">
+    <div class="audience-tabs" role="tablist" aria-label="Kundengruppe">
+      <button type="button" role="tab" data-audience="business" aria-selected="true">Business</button>
+      <button type="button" role="tab" data-audience="private" aria-selected="false" tabindex="-1">Privatkunden</button>
+    </div>
+  </div>
   <div class="mobile-nav" id="mobile-nav">
     <ul>
       <li><a href="#so-funktionierts">So funktioniert's</a></li>
-      <li><a href="#plattform">Plattform</a></li>
+      <li data-for="business"><a href="#plattform">Plattform</a></li>
+      <li data-for="private"><a href="#abgabe">Abgabe &amp; Abholung</a></li>
       <li><a href="#netzwerk">Netzwerk</a></li>
       <li><a href="#preise">Preise</a></li>
       <li><a href="#faq">FAQ</a></li>
       <li><a href="en/" hreflang="en" lang="en">English</a></li>
-      <li><a class="btn btn--primary" href="#kontakt">Konto erstellen</a></li>
+      <li data-for="business"><a class="btn btn--primary" href="#kontakt">Konto erstellen</a></li>
+      <li data-for="private"><a class="btn btn--primary" href="#preise">Paket verschicken</a></li>
     </ul>
   </div>
 </header>
@@ -87,17 +105,29 @@
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="orbits" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="container">
-      <span class="pill">Cross-Border Last Mile · Europa</span>
+      <span class="pill" data-for="business">Cross-Border Last Mile · Europa</span>
+      <span class="pill" data-for="private">Paketversand · Europa</span>
       <h1 class="h1" id="hero-title">Versand, der<br>mitdenkt.</h1>
-      <p class="lede">Ein Login, über 100 Zustellpartner, bis zu 55 % günstiger. NEOS verbindet deinen Shop mit der letzten Meile in ganz Europa — und du behältst nur einen Ansprechpartner.</p>
-      <div class="hero-actions">
+      <p class="lede" data-for="business">Ein Login, über 100 Zustellpartner, bis zu 55 % günstiger. NEOS verbindet deinen Shop mit der letzten Meile in ganz Europa — und du behältst nur einen Ansprechpartner.</p>
+      <p class="lede" data-for="private">Paket online frankieren, Label drucken oder als QR-Code aufs Handy, abgeben oder abholen lassen — in 27 Länder, ohne Konto, ohne Grundgebühr.</p>
+      <div class="hero-actions" data-for="business">
         <a class="btn btn--primary btn--lg" href="#kontakt">Kostenlos starten <span class="arrow" aria-hidden="true">→</span></a>
         <a class="btn btn--ghost btn--lg" href="#so-funktionierts">So funktioniert's</a>
       </div>
-      <dl class="hero-stats">
+      <div class="hero-actions" data-for="private">
+        <a class="btn btn--primary btn--lg" href="#preise">Paket verschicken <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn--ghost btn--lg" href="#so-funktionierts">So funktioniert's</a>
+      </div>
+      <dl class="hero-stats" data-for="business">
         <div><dt class="visually-hidden">Zustellpartner</dt><dd class="stat-value c-cyan">100+</dd><dd class="stat-label">Zustellpartner</dd></div>
         <div><dt class="visually-hidden">Versandkosten</dt><dd class="stat-value c-yellow">−55%</dd><dd class="stat-label">Versandkosten</dd></div>
         <div><dt class="visually-hidden">Zustellzeit</dt><dd class="stat-value c-magenta">−35%</dd><dd class="stat-label">Zustellzeit</dd></div>
+        <div><dt class="visually-hidden">Länder</dt><dd class="stat-value c-coral">27</dd><dd class="stat-label">Länder</dd></div>
+      </dl>
+      <dl class="hero-stats" data-for="private">
+        <div><dt class="visually-hidden">Zustellpartner</dt><dd class="stat-value c-cyan">100+</dd><dd class="stat-label">Zustellpartner</dd></div>
+        <div><dt class="visually-hidden">Preis</dt><dd class="stat-value c-yellow">ab €2,32</dd><dd class="stat-label">je Paket, inkl. MwSt.</dd></div>
+        <div><dt class="visually-hidden">Dauer bis zum Label</dt><dd class="stat-value c-magenta">2 Min.</dd><dd class="stat-label">bis zum Label</dd></div>
         <div><dt class="visually-hidden">Länder</dt><dd class="stat-value c-coral">27</dd><dd class="stat-label">Länder</dd></div>
       </dl>
     </div>
@@ -123,20 +153,30 @@
         <h2 class="h2" id="warum-title">Die Komplexität der letzten Meile — auf einen Klick reduziert.</h2>
       </div>
       <div class="why-grid">
-        <article class="card reveal" data-delay="1">
+        <article class="card reveal" data-delay="1" data-for="business">
           <div class="tile tile--cyan" aria-hidden="true">→</div>
           <h3 class="h3">Ein Ansprechpartner</h3>
           <p>Schluss mit Carrier-Jonglieren. NEOS bündelt alle Partner hinter einer Schnittstelle und einem Support-Team.</p>
         </article>
-        <article class="card reveal" data-delay="2">
+        <article class="card reveal" data-delay="2" data-for="business">
           <div class="tile tile--yellow" aria-hidden="true">€</div>
           <h3 class="h3">Spürbar günstiger</h3>
           <p>Gebündelte Volumen, smarte Carrier-Auswahl: bis zu 55 % niedrigere Kosten — auch für Retouren.</p>
         </article>
+        <article class="card reveal" data-delay="1" data-for="private">
+          <div class="tile tile--cyan" aria-hidden="true">✓</div>
+          <h3 class="h3">Kein Konto nötig</h3>
+          <p>Adresse eingeben, bezahlen, fertig. Das Label kommt per E-Mail — dein Paket geht noch heute raus.</p>
+        </article>
+        <article class="card reveal" data-delay="2" data-for="private">
+          <div class="tile tile--yellow" aria-hidden="true">€</div>
+          <h3 class="h3">Günstiger als am Schalter</h3>
+          <p>Wir bündeln Millionen Sendungen und geben die Konditionen weiter: europaweit ab €2,32 inkl. MwSt.</p>
+        </article>
         <article class="card reveal" data-delay="3">
           <div class="tile tile--magenta" aria-hidden="true">◎</div>
           <h3 class="h3">Live-Tracking</h3>
-          <p>Jede Sendung in Echtzeit verfolgen — ein Status, ein Link, für dich und deine Kund:innen.</p>
+          <p>Jede Sendung in Echtzeit verfolgen — ein Status, ein Link, für dich und den Empfänger.</p>
         </article>
       </div>
     </div>
@@ -158,7 +198,7 @@
           </svg>
         </div>
 
-        <ol class="steps">
+        <ol class="steps" data-for="business">
           <li class="step">
             <span class="step-dot step-dot--cyan" aria-hidden="true"></span>
             <span class="step-no">01</span>
@@ -178,12 +218,32 @@
             <p>Ein Tracking-Link für alle Länder — inklusive Retouren-Abwicklung.</p>
           </li>
         </ol>
+        <ol class="steps" data-for="private">
+          <li class="step">
+            <span class="step-dot step-dot--cyan" aria-hidden="true"></span>
+            <span class="step-no">01</span>
+            <h3 class="h3">Paket beschreiben</h3>
+            <p>Zielland, Größe und Gewicht eingeben — du siehst sofort Preis und Laufzeit.</p>
+          </li>
+          <li class="step">
+            <span class="step-dot step-dot--yellow" aria-hidden="true"></span>
+            <span class="step-no">02</span>
+            <h3 class="h3">Bezahlen &amp; Label drucken</h3>
+            <p>Karte, PayPal oder Sofortüberweisung. Das Label kommt als PDF oder als QR-Code fürs Handy.</p>
+          </li>
+          <li class="step">
+            <span class="step-dot step-dot--magenta" aria-hidden="true"></span>
+            <span class="step-no">03</span>
+            <h3 class="h3">Abgeben oder abholen lassen</h3>
+            <p>Paketshop um die Ecke oder Abholung an der Haustür. Den Tracking-Link gibt's per E-Mail.</p>
+          </li>
+        </ol>
       </div>
     </div>
   </section>
 
-  <!-- 5 · PLATTFORM (Dashboard-Vorschau, aus Dashboard.pdf) -->
-  <section class="section on-white" id="plattform" aria-labelledby="plattform-title">
+  <!-- 5a · PLATTFORM (Dashboard-Vorschau, aus Dashboard.pdf) — nur Business -->
+  <section class="section on-white" id="plattform" aria-labelledby="plattform-title" data-for="business">
     <div class="container">
       <div class="platform-head">
         <div class="section-head reveal">
@@ -279,6 +339,36 @@
     </div>
   </section>
 
+  <!-- 5b · ABGABE & ABHOLUNG — nur Privatkunden -->
+  <section class="section on-white" id="abgabe" aria-labelledby="abgabe-title" data-for="private">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Abgabe &amp; Abholung</span>
+        <h2 class="h2" id="abgabe-title">Frankieren, drucken, abgeben. Oder abholen lassen.</h2>
+        <p class="lede">Du entscheidest, wie dein Paket auf die Reise geht. Das Label kommt sofort per E-Mail — als PDF zum Drucken oder als QR-Code fürs Handy.</p>
+      </div>
+      <div class="why-grid">
+        <article class="card reveal" data-delay="1">
+          <div class="tile tile--cyan" aria-hidden="true">▤</div>
+          <h3 class="h3">Label drucken oder QR-Code</h3>
+          <p>Kein Drucker? Zeig den QR-Code im Paketshop — das Label wird dort für dich gedruckt.</p>
+        </article>
+        <article class="card reveal" data-delay="2">
+          <div class="tile tile--yellow" aria-hidden="true">◉</div>
+          <h3 class="h3">Abgabe im Paketshop</h3>
+          <!-- PLATZHALTER: Zahl der Abgabestellen vor Livegang prüfen. -->
+          <p>Über 40.000 Paketshops und Packstationen in Europa — wir zeigen dir die nächsten beim Frankieren.</p>
+        </article>
+        <article class="card reveal" data-delay="3">
+          <div class="tile tile--magenta" aria-hidden="true">⌂</div>
+          <h3 class="h3">Abholung an der Haustür</h3>
+          <p>Ab einem Paket, Zeitfenster wählbar. Auf Wunsch bringt der Fahrer das Label mit.</p>
+        </article>
+      </div>
+      <p class="integration-note reveal" data-delay="3"><span aria-hidden="true">→</span><span>Nach der Abgabe bekommst du den Tracking-Link per E-Mail — und der Empfänger auch.</span></p>
+    </div>
+  </section>
+
   <!-- 6 · NETZWERK -->
   <section class="section on-paper" id="netzwerk" aria-labelledby="netzwerk-title">
     <div class="container network">
@@ -288,7 +378,8 @@
         <p class="lede" style="margin-top:1.1rem">Von Lissabon bis Helsinki: NEOS bündelt regionale Spezialisten und globale Carrier in einem robusten Netzwerk — getailored auf deinen Zielmarkt.</p>
         <ul class="network-points">
           <li>Automatisches Routing nach Preis, Tempo &amp; Zone</li>
-          <li>Zoll- &amp; Retouren-Abwicklung inklusive</li>
+          <li data-for="business">Zoll- &amp; Retouren-Abwicklung inklusive</li>
+          <li data-for="private">Zollpapiere werden automatisch mitgedruckt</li>
           <li>Ein einziger Tracking-Standard für alle Länder</li>
         </ul>
       </div>
@@ -304,8 +395,8 @@
     </div>
   </section>
 
-  <!-- 7 · INTEGRATIONEN -->
-  <section class="section on-paper" id="integrationen" aria-labelledby="integrationen-title" style="padding-top:0">
+  <!-- 7 · INTEGRATIONEN — nur Business -->
+  <section class="section on-paper" id="integrationen" aria-labelledby="integrationen-title" style="padding-top:0" data-for="business">
     <div class="container">
       <div class="section-head reveal">
         <span class="eyebrow eyebrow--magenta">Integrationen</span>
@@ -326,42 +417,50 @@
     </div>
   </section>
 
-  <!-- 8 · PREISE (statisch) -->
+  <!-- 8 · PREISE (statisch; Business netto, Privatkunden inkl. 19 % MwSt.) -->
   <section class="section on-paper" id="preise" aria-labelledby="preise-title" style="padding-top:0">
     <div class="container">
       <div class="section-head reveal">
         <span class="eyebrow">Preise</span>
         <h2 class="h2" id="preise-title">Preise, die du vorher kennst.</h2>
-        <p class="lede">Keine Grundgebühr, keine Vertragsbindung. Du zahlst pro Sendung — und siehst den Preis, bevor das Label gedruckt wird.</p>
+        <p class="lede" data-for="business">Keine Grundgebühr, keine Vertragsbindung. Du zahlst pro Sendung — und siehst den Preis, bevor das Label gedruckt wird.</p>
+        <p class="lede" data-for="private">Der Preis, den du siehst, ist der Preis, den du zahlst — inklusive 19 % Mehrwertsteuer, ohne Konto, ohne Zuschläge beim Bezahlen.</p>
       </div>
       <div class="pricing">
         <div class="reveal" data-delay="1">
           <div class="price-table-wrap">
-            <!-- PLATZHALTER: Beispielpreise, abgeleitet aus Dashboard.pdf. Vor Livegang durch die freigegebene Preisliste ersetzen. -->
-            <table class="table" aria-describedby="preis-hinweis">
-              <thead><tr><th>Zielland</th><th>Beispiel-Carrier</th><th>Laufzeit</th><th>Preis</th></tr></thead>
+            <!-- PLATZHALTER: Beispielpreise, abgeleitet aus Dashboard.pdf. Brutto = netto × 1,19, kaufmännisch gerundet.
+                 Vor Livegang durch die freigegebene Preisliste ersetzen. -->
+            <table class="table" aria-describedby="preis-hinweis preis-hinweis-privat">
+              <thead><tr><th>Zielland</th><th>Beispiel-Carrier</th><th>Laufzeit</th><th><span data-for="business">Preis netto</span><span data-for="private">Preis inkl. MwSt.</span></th></tr></thead>
               <tbody>
-                <tr><td><span class="flag">DE</span>Deutschland</td><td>DPD, DHL, GLS</td><td>1–2 Werktage</td><td class="price"><small>ab</small>€1,95</td></tr>
-                <tr><td><span class="flag">PL</span>Polen</td><td>InPost</td><td>2–3 Werktage</td><td class="price"><small>ab</small>€1,95</td></tr>
-                <tr><td><span class="flag">NL</span>Niederlande</td><td>PostNL</td><td>1–2 Werktage</td><td class="price"><small>ab</small>€2,10</td></tr>
-                <tr><td><span class="flag">BE</span>Belgien</td><td>bpost</td><td>1–2 Werktage</td><td class="price"><small>ab</small>€2,20</td></tr>
-                <tr><td><span class="flag">FR</span>Frankreich</td><td>Colissimo, Chronopost</td><td>2–3 Werktage</td><td class="price"><small>ab</small>€2,40</td></tr>
-                <tr><td><span class="flag">AT</span>Österreich</td><td>DPD, Österreichische Post</td><td>1–2 Werktage</td><td class="price"><small>ab</small>€2,55</td></tr>
-                <tr><td><span class="flag">IT</span>Italien</td><td>GLS, Poste Italiane</td><td>2–4 Werktage</td><td class="price"><small>ab</small>€2,85</td></tr>
-                <tr><td><span class="flag">ES</span>Spanien</td><td>Correos</td><td>2–4 Werktage</td><td class="price"><small>ab</small>€2,95</td></tr>
-                <tr><td><span class="flag">PT</span>Portugal</td><td>CTT</td><td>3–5 Werktage</td><td class="price"><small>ab</small>€3,10</td></tr>
+                <tr><td><span class="flag">DE</span>Deutschland</td><td>DPD, DHL, GLS</td><td>1–2 Werktage</td><td class="price"><small>ab</small><span data-for="business">€1,95</span><span data-for="private">€2,32</span></td></tr>
+                <tr><td><span class="flag">PL</span>Polen</td><td>InPost</td><td>2–3 Werktage</td><td class="price"><small>ab</small><span data-for="business">€1,95</span><span data-for="private">€2,32</span></td></tr>
+                <tr><td><span class="flag">NL</span>Niederlande</td><td>PostNL</td><td>1–2 Werktage</td><td class="price"><small>ab</small><span data-for="business">€2,10</span><span data-for="private">€2,50</span></td></tr>
+                <tr><td><span class="flag">BE</span>Belgien</td><td>bpost</td><td>1–2 Werktage</td><td class="price"><small>ab</small><span data-for="business">€2,20</span><span data-for="private">€2,62</span></td></tr>
+                <tr><td><span class="flag">FR</span>Frankreich</td><td>Colissimo, Chronopost</td><td>2–3 Werktage</td><td class="price"><small>ab</small><span data-for="business">€2,40</span><span data-for="private">€2,86</span></td></tr>
+                <tr><td><span class="flag">AT</span>Österreich</td><td>DPD, Österreichische Post</td><td>1–2 Werktage</td><td class="price"><small>ab</small><span data-for="business">€2,55</span><span data-for="private">€3,03</span></td></tr>
+                <tr><td><span class="flag">IT</span>Italien</td><td>GLS, Poste Italiane</td><td>2–4 Werktage</td><td class="price"><small>ab</small><span data-for="business">€2,85</span><span data-for="private">€3,39</span></td></tr>
+                <tr><td><span class="flag">ES</span>Spanien</td><td>Correos</td><td>2–4 Werktage</td><td class="price"><small>ab</small><span data-for="business">€2,95</span><span data-for="private">€3,51</span></td></tr>
+                <tr><td><span class="flag">PT</span>Portugal</td><td>CTT</td><td>3–5 Werktage</td><td class="price"><small>ab</small><span data-for="business">€3,10</span><span data-for="private">€3,69</span></td></tr>
               </tbody>
             </table>
           </div>
-          <p class="price-note" id="preis-hinweis">Beispielpreise netto je Paket bis 2 kg bei rund 500 Sendungen im Monat. Konditionen für weitere Länder, Gewichtsklassen und höhere Volumen bekommst du mit dem Konto — inklusive Retourenpreisen.</p>
+          <p class="price-note" id="preis-hinweis" data-for="business">Beispielpreise netto je Paket bis 2 kg bei rund 500 Sendungen im Monat. Konditionen für weitere Länder, Gewichtsklassen und höhere Volumen bekommst du mit dem Konto — inklusive Retourenpreisen.</p>
+          <p class="price-note" id="preis-hinweis-privat" data-for="private">Endpreise inkl. 19 % MwSt. je Paket bis 2 kg, online frankiert. Abholung an der Haustür und höhere Gewichtsklassen siehst du beim Frankieren — ohne versteckte Zuschläge.</p>
         </div>
         <div class="price-aside reveal" data-delay="2">
-          <div class="card card--yellow">
+          <div class="card card--yellow" data-for="business">
             <span class="eyebrow">Ø Ersparnis</span>
             <div class="stat-value" style="margin-top:.5rem">−55 %</div>
             <p>gegenüber Einzelverträgen mit den Carriern — durch gebündelte Volumen und automatische Carrier-Wahl je Sendung.</p>
           </div>
-          <div class="card">
+          <div class="card card--yellow" data-for="private">
+            <span class="eyebrow">Endpreis</span>
+            <div class="stat-value" style="margin-top:.5rem">19 % MwSt.</div>
+            <p>sind schon drin. Der angezeigte Preis ist der Preis, den du zahlst — keine Zuschläge, keine Grundgebühr, kein Konto.</p>
+          </div>
+          <div class="card" data-for="business">
             <h3 class="h3">Im Preis enthalten</h3>
             <ul class="checklist">
               <li>Alle Carrier, alle Länder, ein Login</li>
@@ -369,6 +468,17 @@
               <li>Retourenportal für deine Kund:innen</li>
               <li>Zollabwicklung für Nicht-EU-Ziele</li>
               <li>Eine Sammelrechnung pro Monat</li>
+              <li>Support von echten Menschen</li>
+            </ul>
+          </div>
+          <div class="card" data-for="private">
+            <h3 class="h3">Im Preis enthalten</h3>
+            <ul class="checklist">
+              <li>Sendungsverfolgung für dich und den Empfänger</li>
+              <li>Label als PDF oder QR-Code fürs Handy</li>
+              <li>Abgabe in Paketshops und Packstationen</li>
+              <li>Haftung bis 50 € Warenwert</li>
+              <li>Zollpapiere für Nicht-EU-Ziele</li>
               <li>Support von echten Menschen</li>
             </ul>
           </div>
@@ -382,10 +492,10 @@
     <div class="container">
       <div class="section-head reveal">
         <span class="eyebrow eyebrow--magenta">Kundenstimmen</span>
-        <h2 class="h2" id="kunden-title">Shops, die schon leuchten.</h2>
+        <h2 class="h2" id="kunden-title"><span data-for="business">Shops, die schon leuchten.</span><span data-for="private">Was Kund:innen sagen.</span></h2>
       </div>
       <!-- PLATZHALTER: Fiktive Referenzen zur Layout-Abnahme. Vor Livegang durch freigegebene Zitate ersetzen. -->
-      <div class="quotes">
+      <div class="quotes" data-for="business">
         <figure class="card quote reveal" data-delay="1">
           <div class="stat-value" style="color:var(--coral)">−55 %</div>
           <blockquote>„Wir haben vier Carrier-Verträge gegen einen Login getauscht. Die Versandkosten sind seitdem um mehr als die Hälfte gesunken — und niemand telefoniert mehr mit Hotlines."</blockquote>
@@ -402,6 +512,23 @@
           <figcaption><span class="avatar">MH</span><div><b>Maren Holt</b>Inhaberin, Vélo Parts Berlin</div></figcaption>
         </figure>
       </div>
+      <div class="quotes" data-for="private">
+        <figure class="card quote reveal" data-delay="1">
+          <div class="stat-value" style="color:var(--coral)">2 Minuten</div>
+          <blockquote>„Adresse rein, bezahlt, Label aufs Handy — im Paketshop war ich schneller fertig als an der Supermarktkasse."</blockquote>
+          <figcaption><span class="avatar">SR</span><div><b>Sabine R.</b>Freiburg, verschickt nach Frankreich</div></figcaption>
+        </figure>
+        <figure class="card quote reveal" data-delay="2">
+          <div class="stat-value" style="color:var(--magenta)">27 Länder</div>
+          <blockquote>„Meine Tochter studiert in Lissabon. Früher Postfiliale, Formulare, Wartezeit. Heute zwei Minuten am Küchentisch."</blockquote>
+          <figcaption><span class="avatar">TK</span><div><b>Thomas K.</b>Hannover, verschickt nach Portugal</div></figcaption>
+        </figure>
+        <figure class="card quote reveal" data-delay="3">
+          <div class="stat-value" style="color:var(--coral)">1 Link</div>
+          <blockquote>„Der Käufer meines alten Rennrads hatte denselben Tracking-Link wie ich. Keine Nachfragen, kein Stress."</blockquote>
+          <figcaption><span class="avatar">JM</span><div><b>Jana M.</b>Leipzig, verschickt nach Österreich</div></figcaption>
+        </figure>
+      </div>
     </div>
   </section>
 
@@ -412,30 +539,56 @@
         <span class="eyebrow">FAQ</span>
         <h2 class="h2" id="faq-title">Kurz beantwortet.</h2>
       </div>
-      <div class="faq reveal" data-delay="1">
-        <details name="faq" open>
+      <div class="faq reveal" data-delay="1" data-for="business">
+        <details name="faq-business" open>
           <summary>Wie schnell ist mein Shop angebunden?</summary>
           <div class="faq-body">Mit Plug-in in unter zehn Minuten: installieren, API-Key eintragen, fertig. Bestellungen erscheinen ab dann automatisch als Sendungen im Dashboard. Für eigene Systeme gibt es eine REST-API mit Sandbox — die meisten Teams sind an einem Nachmittag live.</div>
         </details>
-        <details name="faq">
+        <details name="faq-business">
           <summary>Gibt es eine Grundgebühr oder Vertragsbindung?</summary>
           <div class="faq-body">Nein. Du zahlst pro Sendung, monatlich abgerechnet auf einer Sammelrechnung. Kein Mindestvolumen, keine Laufzeit, keine Kündigungsfrist. Wer mehr verschickt, bekommt bessere Konditionen — automatisch.</div>
         </details>
-        <details name="faq">
+        <details name="faq-business">
           <summary>Wie funktioniert die Carrier-Auswahl?</summary>
           <div class="faq-body">NEOS routet jede Sendung nach Zielzone, Gewicht, Laufzeitziel und Preis zum passenden Partner. Du kannst Regeln setzen (etwa „Frankreich immer Colissimo" oder „Express ab 50 € Warenwert") oder einfach die Automatik laufen lassen.</div>
         </details>
-        <details name="faq">
+        <details name="faq-business">
           <summary>Wie laufen Retouren?</summary>
           <div class="faq-body">Deine Kund:innen nutzen ein Retourenportal in deinem Design und bekommen ein Label des lokalen Carriers. Die Rücksendung läuft über dasselbe Netzwerk zurück und erscheint im Dashboard mit Status und Kosten — zu denselben reduzierten Preisen.</div>
         </details>
-        <details name="faq">
+        <details name="faq-business">
           <summary>Was ist mit Zoll bei Zielen außerhalb der EU?</summary>
           <div class="faq-body">Für Schweiz, Vereinigtes Königreich und Norwegen erzeugt NEOS die Zolldokumente automatisch aus deinen Bestelldaten (Warenbeschreibung, HS-Code, Wert). Du entscheidest je Ziel zwischen DDP und DAP; die Abwicklung übernimmt der Carrier.</div>
         </details>
-        <details name="faq">
+        <details name="faq-business">
           <summary>Wie sehen meine Kund:innen das Tracking?</summary>
           <div class="faq-body">Über einen NEOS-Tracking-Link, der für alle Carrier und Länder gleich aussieht. Optional in deinem Branding und mit Status-Mails oder SMS auf Deutsch, Englisch, Französisch, Italienisch, Spanisch, Niederländisch und Polnisch.</div>
+        </details>
+      </div>
+      <div class="faq reveal" data-delay="1" data-for="private">
+        <details name="faq-private" open>
+          <summary>Brauche ich ein Konto?</summary>
+          <div class="faq-body">Nein. Du gibst Adresse und Paketdaten ein, bezahlst und bekommst das Label per E-Mail. Wer öfter verschickt, kann sich freiwillig ein Konto anlegen und Adressen speichern.</div>
+        </details>
+        <details name="faq-private">
+          <summary>Wie kann ich bezahlen?</summary>
+          <div class="faq-body">Mit Kreditkarte, PayPal, Apple Pay, Google Pay oder Sofortüberweisung. Der angezeigte Preis ist der Endpreis inkl. 19 % MwSt. — beim Bezahlen kommt nichts dazu.</div>
+        </details>
+        <details name="faq-private">
+          <summary>Wo gebe ich mein Paket ab?</summary>
+          <div class="faq-body">In jedem Paketshop oder jeder Packstation des gewählten Carriers — die nächsten zeigen wir dir beim Frankieren. Oder du buchst die Abholung an der Haustür dazu und wählst ein Zeitfenster.</div>
+        </details>
+        <details name="faq-private">
+          <summary>Was darf ins Paket?</summary>
+          <div class="faq-body">Alles, was der Carrier ins Zielland befördert: keine Gefahrgüter, kein Bargeld, keine verderblichen Waren. Beim Frankieren prüfen wir Gewicht und Maße; für Ziele außerhalb der EU füllen wir die Zollpapiere gemeinsam mit dir aus.</div>
+        </details>
+        <details name="faq-private">
+          <summary>Was passiert, wenn etwas kaputtgeht oder verloren geht?</summary>
+          <div class="faq-body">Jede Sendung ist bis 50 € Warenwert abgesichert; höhere Werte kannst du beim Frankieren zusätzlich versichern. Einen Schaden meldest du über den Tracking-Link — um den Rest kümmern wir uns.</div>
+        </details>
+        <details name="faq-private">
+          <summary>Bekomme ich eine Rechnung mit ausgewiesener MwSt.?</summary>
+          <div class="faq-body">Ja, direkt nach dem Bezahlen automatisch per E-Mail, mit 19 % MwSt. ausgewiesen. Wenn du für ein Unternehmen verschickst, lohnt sich der Reiter „Business": Dort siehst du Nettopreise und Volumenkonditionen.</div>
         </details>
       </div>
     </div>
@@ -447,8 +600,10 @@
       <div class="cta reveal">
         <div class="orbits" aria-hidden="true"><span></span><span></span><span></span></div>
         <h2 class="h2" id="cta-title">Logistik, die leuchtet.</h2>
-        <p>Konto in einer Minute erstellt. Keine Grundgebühr, keine Vertragsbindung.</p>
-        <a class="btn btn--ink btn--lg" href="#kontakt">Kostenlos starten <span class="arrow" aria-hidden="true">→</span></a>
+        <p data-for="business">Konto in einer Minute erstellt. Keine Grundgebühr, keine Vertragsbindung.</p>
+        <p data-for="private">Paket in zwei Minuten frankiert. Kein Konto, keine Grundgebühr.</p>
+        <a class="btn btn--ink btn--lg" href="#kontakt" data-for="business">Kostenlos starten <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn--ink btn--lg" href="#preise" data-for="private">Paket verschicken <span class="arrow" aria-hidden="true">→</span></a>
       </div>
     </div>
   </section>
@@ -457,9 +612,11 @@
   <section class="section on-white" id="kontakt" aria-labelledby="kontakt-title">
     <div class="container contact">
       <div class="reveal">
-        <span class="eyebrow">Konto erstellen</span>
-        <h2 class="h2" id="kontakt-title">Sag uns, was du verschickst.</h2>
-        <p class="lede" style="margin-top:1.1rem">Wir melden uns innerhalb eines Werktags mit deinem Zugang und einer Preisübersicht für deine Zielländer.</p>
+        <span class="eyebrow" data-for="business">Konto erstellen</span>
+        <span class="eyebrow" data-for="private">Kontakt</span>
+        <h2 class="h2" id="kontakt-title"><span data-for="business">Sag uns, was du verschickst.</span><span data-for="private">Fragen zu deinem Paket?</span></h2>
+        <p class="lede" style="margin-top:1.1rem" data-for="business">Wir melden uns innerhalb eines Werktags mit deinem Zugang und einer Preisübersicht für deine Zielländer.</p>
+        <p class="lede" style="margin-top:1.1rem" data-for="private">Schreib uns — wir antworten innerhalb eines Werktags. Bei einer laufenden Sendung hilft der Tracking-Link am schnellsten.</p>
         <ul class="contact-meta">
           <li><b>E-Mail</b><a href="mailto:info@neos24.com">info@neos24.com</a></li>
           <li><b>Web</b><a href="https://neos24.com">neos24.com</a></li>
@@ -474,12 +631,17 @@
             <input id="f-name" name="Name" type="text" autocomplete="name" required>
             <span class="error">Bitte gib deinen Namen an.</span>
           </div>
-          <div class="field">
+          <div class="field" data-for="business">
             <label for="f-company">Shop / Unternehmen</label>
             <input id="f-company" name="Unternehmen" type="text" autocomplete="organization">
           </div>
+          <div class="field" data-for="private">
+            <label for="f-email-p">E-Mail</label>
+            <input id="f-email-p" name="E-Mail" type="email" autocomplete="email" inputmode="email" required>
+            <span class="error">Bitte gib eine gültige E-Mail-Adresse an.</span>
+          </div>
         </div>
-        <div class="form-row">
+        <div class="form-row" data-for="business">
           <div class="field">
             <label for="f-email">E-Mail</label>
             <input id="f-email" name="E-Mail" type="email" autocomplete="email" inputmode="email" required>
@@ -499,14 +661,14 @@
           </div>
         </div>
         <div class="field">
-          <label for="f-msg">Zielländer &amp; Anmerkungen <span style="font-weight:400;color:var(--ink-500)">(optional)</span></label>
+          <label for="f-msg"><span data-for="business">Zielländer &amp; Anmerkungen <span style="font-weight:400;color:var(--ink-500)">(optional)</span></span><span data-for="private">Deine Nachricht</span></label>
           <textarea id="f-msg" name="Nachricht" placeholder="z. B. FR, IT, PL – Shopware 6, viele Retouren"></textarea>
         </div>
         <div class="form-foot">
-          <button class="btn btn--primary btn--lg" type="submit">Konto anfragen <span class="arrow" aria-hidden="true">→</span></button>
+          <button class="btn btn--primary btn--lg" type="submit"><span data-for="business">Konto anfragen</span><span data-for="private">Nachricht senden</span> <span class="arrow" aria-hidden="true">→</span></button>
           <small>Mit dem Absenden stimmst du der Verarbeitung deiner Angaben zur Kontaktaufnahme zu. Details in der <a href="#" style="text-decoration:underline">Datenschutzerklärung</a>.</small>
         </div>
-        <p class="form-success" role="status">Danke! Deine Anfrage ist raus — wir melden uns innerhalb eines Werktags bei dir.</p>
+        <p class="form-success" role="status">Danke! Deine Nachricht ist raus — wir melden uns innerhalb eines Werktags bei dir.</p>
       </form>
     </div>
   </section>
@@ -518,13 +680,14 @@
     <div class="footer-grid">
       <div class="footer-brand">
         <a class="logo logo--lg" href="#top" aria-label="NEOS – nach oben"><svg width="84" height="30" aria-hidden="true"><use href="#neos-logo"/></svg></a>
-        <p>Grenzüberschreitender Last-Mile-Versand für E-Commerce in ganz Europa.</p>
+        <p>Grenzüberschreitender Paketversand für Shops und Privatkunden in ganz Europa.</p>
       </div>
       <div class="footer-col">
         <b>Produkt</b>
         <ul>
           <li><a href="#so-funktionierts">So funktioniert's</a></li>
-          <li><a href="#plattform">Plattform</a></li>
+          <li data-for="business"><a href="#plattform">Plattform</a></li>
+          <li data-for="private"><a href="#abgabe">Abgabe &amp; Abholung</a></li>
           <li><a href="#netzwerk">Netzwerk</a></li>
           <li><a href="#preise">Preise</a></li>
           <li><a href="#faq">FAQ</a></li>
@@ -535,7 +698,8 @@
         <ul>
           <li><a href="mailto:info@neos24.com">info@neos24.com</a></li>
           <li><a href="https://neos24.com">neos24.com</a></li>
-          <li><a href="#kontakt">Konto erstellen</a></li>
+          <li data-for="business"><a href="#kontakt">Konto erstellen</a></li>
+          <li data-for="private"><a href="#preise">Paket verschicken</a></li>
         </ul>
       </div>
     </div>

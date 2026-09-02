@@ -8,6 +8,59 @@
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* Zielgruppe: Business (netto) / Privatkunden (inkl. MwSt.) ------------
+     Reihenfolge beim Laden: URL-Parameter → localStorage → Business.
+     DE schreibt ?kunde=privat|business, EN ?customer=private|business;
+     gelesen werden beide. Sprachlinks bekommen den Parameter angehängt. */
+  var tabs = document.querySelectorAll('.audience-tabs [role="tab"]');
+  var isEn = (root.lang || 'de').slice(0, 2) === 'en';
+  var paramName = isEn ? 'customer' : 'kunde';
+  var paramValue = function (a, en) { return a === 'private' ? (en ? 'private' : 'privat') : 'business'; };
+  var parseAudience = function (v) {
+    if (!v) return null;
+    v = String(v).toLowerCase();
+    if (v === 'privat' || v === 'private' || v === 'privatkunden') return 'private';
+    if (v === 'business' || v === 'geschaeftskunden' || v === 'geschäftskunden') return 'business';
+    return null;
+  };
+  var storedAudience = function () { try { return parseAudience(localStorage.getItem('neos-audience')); } catch (e) { return null; } };
+  var setAudience = function (a, writeUrl) {
+    root.setAttribute('data-audience', a);
+    tabs.forEach(function (t) {
+      var on = t.getAttribute('data-audience') === a;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+    });
+    try { localStorage.setItem('neos-audience', a); } catch (e) {}
+    if (writeUrl && window.history && history.replaceState) {
+      var u = new URL(location.href);
+      u.searchParams.set(paramName, paramValue(a, isEn));
+      history.replaceState(null, '', u.toString());
+    }
+    document.querySelectorAll('a[hreflang]').forEach(function (link) {
+      var targetEn = link.getAttribute('hreflang') === 'en';
+      var href = link.getAttribute('href').split('?')[0].split('#')[0];
+      link.setAttribute('href', href + '?' + (targetEn ? 'customer' : 'kunde') + '=' + paramValue(a, targetEn));
+    });
+  };
+  if (tabs.length) {
+    var query = new URLSearchParams(location.search);
+    var fromUrl = parseAudience(query.get('kunde')) || parseAudience(query.get('customer'));
+    setAudience(fromUrl || storedAudience() || 'business', !!fromUrl);
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () { setAudience(t.getAttribute('data-audience'), true); });
+      t.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'Home' && e.key !== 'End') return;
+        e.preventDefault();
+        var group = Array.prototype.slice.call(t.parentElement.querySelectorAll('[role="tab"]'));
+        var i = group.indexOf(t);
+        var next = e.key === 'Home' ? 0 : e.key === 'End' ? group.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + group.length) % group.length;
+        group[next].focus();
+        setAudience(group[next].getAttribute('data-audience'), true);
+      });
+    });
+  }
+
   /* Burger-Menü ------------------------------------------------------------ */
   var header = document.querySelector('.site-header');
   var burger = document.querySelector('.burger');
@@ -56,6 +109,7 @@
     var fields = form.querySelectorAll('[required]');
     var validate = function (input) {
       var wrap = input.closest('.field');
+      if (input.offsetParent === null) { wrap.classList.remove('is-invalid'); return true; } /* Feld der anderen Zielgruppe */
       var ok = input.type === 'email' ? /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(input.value.trim()) : input.value.trim() !== '';
       wrap.classList.toggle('is-invalid', !ok);
       input.setAttribute('aria-invalid', String(!ok));
