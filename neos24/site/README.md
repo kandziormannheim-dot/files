@@ -15,9 +15,11 @@ cd neos24/site && python3 -m http.server 8080   # http://localhost:8080
 | `index.html` | Die komplette deutsche Seite, semantisch, `lang="de"`, mit Meta/OG/JSON-LD |
 | `en/index.html` | Englische Fassung, gleiche Struktur und Assets, verlinkt per Sprachumschalter (Header, Mobilmenü, Footer) und `hreflang` |
 | `assets/neos.css` | Design-Tokens (`:root`), Komponenten, Sektionen, Breakpoints, Bewegungsreduktion |
+| `assets/checkout.js` | Privatkunden-Checkout: Preissumme, Validierung, Bestellung anlegen, Revolut-Popup, Statusabfrage — siehe `api/revolut/README.md` |
+| `api/revolut/` | PHP-Endpunkte für die Revolut-Zahlung (Bestellung, Status, Webhook) plus Konfigurationsvorlage |
 | `assets/neos.js` | Zielgruppen-Reiter, Burger-Menü, Scroll-Reveal, FAQ-Einzelöffnung, Formular-Validierung, aktiver Nav-Punkt — die Seite läuft auch ohne JS (dann Business) |
 | `assets/fonts.css` + `assets/fonts/` | Sora, Hanken Grotesk, JetBrains Mono als variable WOFF2 (OFL), selbst gehostet — kein Google-Fonts-Aufruf beim Besuch |
-| `screenshots/` | Playwright-Aufnahmen bei 1280 und 375 px zur Abnahme (`en-*` englische Seite, `*-privat` / `*-private` Privatkunden-Reiter) |
+| `screenshots/` | Playwright-Aufnahmen bei 1280 und 375 px zur Abnahme (`en-*` englische Seite, `*-privat` / `*-private` Privatkunden-Reiter, `checkout-*` Bezahlformular) |
 
 ## Zuordnung zu den PDFs
 
@@ -35,6 +37,7 @@ Bewusst weggelassen: der Spar-Rechner (`Startseite.pdf` S. 4).
 - **Preise** (`#preise`): Beispielwerte, aus den Sendungskosten im Dashboard-PDF abgeleitet. Privatkunden-Preise sind dieselben Werte × 1,19, kaufmännisch gerundet, beide Fassungen stehen fertig formatiert in der Tabelle.
 - **Kundenstimmen** (`#kunden`): fiktive Zitate und Firmen bzw. Privatpersonen zur Layout-Abnahme.
 - **Abgabe & Abholung** (`#abgabe`, nur Privatkunden): „über 40.000 Paketshops“ ist eine Platzhalterzahl.
+- **Paket verschicken** (`#paket`, nur Privatkunden): Zahlung läuft, das Versandlabel selbst entsteht erst mit der Carrier-Anbindung (`labelBeauftragen()` in `api/revolut/_bootstrap.php`). Preise im Formular (`data-netto`) müssen mit `api/revolut/preise.php` übereinstimmen.
 - **Kontaktformular** (`#kontakt`): `action="mailto:info@neos24.com"` als Übergang. Mit Backend in `neos.js` beim Submit ein `fetch()` einsetzen.
 - **Impressum / Datenschutz**: Links zeigen auf `#`.
 - **Open-Graph-Bild**: noch keins hinterlegt (`og:image`).
@@ -53,6 +56,10 @@ Inhalte nur für eine Gruppe tragen `data-for="business"` bzw. `data-for="privat
 - **Nur Privatkunden**: Abgabe & Abholung, Privat-FAQ, Privat-Zitate, eigenes E-Mail-Feld im Formular.
 - **Ohne JS**: Business-Fassung, Reiter sichtbar aber ohne Funktion.
 - **Neuen Inhalt zuordnen**: Element mit `data-for="business"` oder `data-for="private"` versehen, fertig. Gemeinsame Überschriften mit zwei Varianten bekommen zwei `<span data-for="…">` im selben Element.
+
+## Zahlung (Privatkunden, Revolut)
+
+Der Abschnitt „Paket verschicken“ legt über `api/revolut/bestellung.php` eine Bestellung an und öffnet das Revolut-Popup; Einrichtung, Ablauf, Webhook und Prüfpunkte stehen in [`api/revolut/README.md`](api/revolut/README.md). Ohne Konfiguration (kein Secret Key) meldet das Formular „Zahlung nicht verfügbar“ und die Seite bleibt sonst voll nutzbar.
 
 ## Zwei Sprachen pflegen
 

@@ -71,7 +71,7 @@
     <div class="header-actions">
       <a class="lang" href="../" hreflang="de" lang="de" aria-label="Deutsche Version">DE</a>
       <a class="btn btn--primary" href="#contact" data-for="business">Create account</a>
-      <a class="btn btn--primary" href="#pricing" data-for="private">Send a parcel</a>
+      <a class="btn btn--primary" href="#parcel" data-for="private">Send a parcel</a>
       <button class="burger" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Open menu" data-label-open="Open menu" data-label-close="Close menu">
         <span></span><span></span><span></span>
       </button>
@@ -93,7 +93,7 @@
       <li><a href="#faq">FAQ</a></li>
       <li><a href="../" hreflang="de" lang="de">Deutsch</a></li>
       <li data-for="business"><a class="btn btn--primary" href="#contact">Create account</a></li>
-      <li data-for="private"><a class="btn btn--primary" href="#pricing">Send a parcel</a></li>
+      <li data-for="private"><a class="btn btn--primary" href="#parcel">Send a parcel</a></li>
     </ul>
   </div>
 </header>
@@ -115,7 +115,7 @@
         <a class="btn btn--ghost btn--lg" href="#how-it-works">How it works</a>
       </div>
       <div class="hero-actions" data-for="private">
-        <a class="btn btn--primary btn--lg" href="#pricing">Send a parcel <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn--primary btn--lg" href="#parcel">Send a parcel <span class="arrow" aria-hidden="true">→</span></a>
         <a class="btn btn--ghost btn--lg" href="#how-it-works">How it works</a>
       </div>
       <dl class="hero-stats" data-for="business">
@@ -144,6 +144,141 @@
       </ul>
     </div>
   </div>
+
+
+  <!-- 2b · SEND A PARCEL (private checkout, payment via Revolut; logic in assets/checkout.js, endpoints in api/revolut/) -->
+  <section class="section on-white" id="parcel" aria-labelledby="parcel-title" data-for="private" data-api="../api/revolut" data-lang="en"
+    data-msg-invalid="Please check the fields marked in red."
+    data-msg-network="Connection failed. Please try again in a moment."
+    data-msg-unavailable="Payment is not available right now. Write to info@neos24.com and we will sort the postage for you."
+    data-msg-toomany="Too many attempts. Please wait a moment and try again."
+    data-msg-failed="The payment was not completed. Nothing has been charged — you can try again."
+    data-msg-cancelled="Payment cancelled. Your details are still here.">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Send a parcel</span>
+        <h2 class="h2" id="parcel-title">Postage in two minutes.</h2>
+        <p class="lede">Pick the destination, enter the addresses, pay with Revolut — the label arrives by email straight away. No account needed.</p>
+      </div>
+      <form class="checkout reveal" data-delay="1" novalidate>
+        <div class="checkout-form">
+          <fieldset class="checkout-block">
+            <legend>Shipment</legend>
+            <div class="form-row">
+              <div class="field">
+                <label for="p-land">Destination</label>
+                <select id="p-land" name="zielland" required>
+                  <option value="">Please select</option>
+                  <option value="DE" data-netto="195" data-carrier="DPD, DHL, GLS" data-laufzeit="1–2 working days">Germany</option>
+                  <option value="PL" data-netto="195" data-carrier="InPost" data-laufzeit="2–3 working days">Poland</option>
+                  <option value="NL" data-netto="210" data-carrier="PostNL" data-laufzeit="1–2 working days">Netherlands</option>
+                  <option value="BE" data-netto="220" data-carrier="bpost" data-laufzeit="1–2 working days">Belgium</option>
+                  <option value="FR" data-netto="240" data-carrier="Colissimo, Chronopost" data-laufzeit="2–3 working days">France</option>
+                  <option value="AT" data-netto="255" data-carrier="DPD, Austrian Post" data-laufzeit="1–2 working days">Austria</option>
+                  <option value="IT" data-netto="285" data-carrier="GLS, Poste Italiane" data-laufzeit="2–4 working days">Italy</option>
+                  <option value="ES" data-netto="295" data-carrier="Correos" data-laufzeit="2–4 working days">Spain</option>
+                  <option value="PT" data-netto="310" data-carrier="CTT" data-laufzeit="3–5 working days">Portugal</option>
+                </select>
+                <span class="error">Please choose the destination.</span>
+              </div>
+              <div class="field">
+                <label for="p-gewicht">Weight</label>
+                <select id="p-gewicht" name="gewichtsklasse">
+                  <option value="2kg">up to 2 kg</option>
+                </select>
+              </div>
+            </div>
+            <p class="hint">More weight classes and home collection are coming — until then, parcels up to 2 kg are paid here and dropped off at a parcel shop.</p>
+          </fieldset>
+
+          <fieldset class="checkout-block">
+            <legend>Sender</legend>
+            <div class="form-row">
+              <div class="field">
+                <label for="p-a-name">Name</label>
+                <input id="p-a-name" name="absender.name" type="text" autocomplete="name" minlength="2" required>
+                <span class="error">Please enter your name.</span>
+              </div>
+              <div class="field">
+                <label for="p-email">Email <span style="font-weight:400;color:var(--ink-500)">(for label &amp; tracking)</span></label>
+                <input id="p-email" name="email" type="email" autocomplete="email" inputmode="email" required>
+                <span class="error">Please enter a valid email address.</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="p-a-strasse">Street &amp; number</label>
+              <input id="p-a-strasse" name="absender.strasse" type="text" autocomplete="street-address" minlength="3" required>
+              <span class="error">Please enter street and number.</span>
+            </div>
+            <div class="form-row form-row--plz">
+              <div class="field">
+                <label for="p-a-plz">Postcode</label>
+                <input id="p-a-plz" name="absender.plz" type="text" autocomplete="postal-code" minlength="3" required>
+                <span class="error">Postcode missing.</span>
+              </div>
+              <div class="field">
+                <label for="p-a-ort">City</label>
+                <input id="p-a-ort" name="absender.ort" type="text" autocomplete="address-level2" minlength="2" required>
+                <span class="error">City missing.</span>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="checkout-block">
+            <legend>Recipient</legend>
+            <div class="field">
+              <label for="p-e-name">Name</label>
+              <input id="p-e-name" name="empfaenger.name" type="text" minlength="2" required>
+              <span class="error">Please enter the recipient's name.</span>
+            </div>
+            <div class="field">
+              <label for="p-e-strasse">Street &amp; number</label>
+              <input id="p-e-strasse" name="empfaenger.strasse" type="text" minlength="3" required>
+              <span class="error">Please enter street and number.</span>
+            </div>
+            <div class="form-row form-row--plz">
+              <div class="field">
+                <label for="p-e-plz">Postcode</label>
+                <input id="p-e-plz" name="empfaenger.plz" type="text" minlength="3" required>
+                <span class="error">Postcode missing.</span>
+              </div>
+              <div class="field">
+                <label for="p-e-ort">City</label>
+                <input id="p-e-ort" name="empfaenger.ort" type="text" minlength="2" required>
+                <span class="error">City missing.</span>
+              </div>
+            </div>
+            <p class="hint">Country: <b data-zielland>—</b></p>
+          </fieldset>
+
+          <div class="field checkout-honey" aria-hidden="true">
+            <label for="p-firma">Company</label>
+            <input id="p-firma" name="firma" type="text" tabindex="-1" autocomplete="off">
+          </div>
+        </div>
+
+        <aside class="checkout-summary" aria-live="polite">
+          <span class="eyebrow eyebrow--cyan">Your shipment</span>
+          <dl class="summary-lines">
+            <div><dt>Destination</dt><dd data-sum="land">—</dd></div>
+            <div><dt>Carrier</dt><dd data-sum="carrier">—</dd></div>
+            <div><dt>Transit time</dt><dd data-sum="laufzeit">—</dd></div>
+            <div><dt>Net</dt><dd data-sum="netto">—</dd></div>
+            <div><dt>19% VAT</dt><dd data-sum="mwst">—</dd></div>
+          </dl>
+          <div class="summary-total"><span>Total incl. VAT</span><strong data-sum="brutto">—</strong></div>
+          <button class="btn btn--primary btn--lg checkout-pay" type="submit" disabled>Pay with Revolut <span class="arrow" aria-hidden="true">→</span></button>
+          <p class="summary-note"><b>Card, Revolut Pay, Apple Pay or Google Pay.</b> Payment is handled by Revolut — card details never reach our server.</p>
+          <p class="checkout-state checkout-state--error" role="alert" hidden></p>
+          <div class="checkout-state checkout-state--success" role="status" hidden>
+            <b>Paid — thank you!</b>
+            <p>Order <span class="mono" data-sum="bestellung"></span>. Confirmation and label go to <span data-sum="email"></span>.</p>
+            <p data-pending hidden>The payment is still being confirmed — the email will arrive within the next few minutes.</p>
+          </div>
+        </aside>
+      </form>
+    </div>
+  </section>
 
   <!-- 3 · WHY NEOS -->
   <section class="section on-paper" id="why" aria-labelledby="why-title">
@@ -603,7 +738,7 @@
         <p data-for="business">Account created in one minute. No base fee, no contract lock-in.</p>
         <p data-for="private">Postage sorted in two minutes. No account, no base fee.</p>
         <a class="btn btn--ink btn--lg" href="#contact" data-for="business">Start for free <span class="arrow" aria-hidden="true">→</span></a>
-        <a class="btn btn--ink btn--lg" href="#pricing" data-for="private">Send a parcel <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn--ink btn--lg" href="#parcel" data-for="private">Send a parcel <span class="arrow" aria-hidden="true">→</span></a>
       </div>
     </div>
   </section>
@@ -699,7 +834,7 @@
           <li><a href="mailto:info@neos24.com">info@neos24.com</a></li>
           <li><a href="https://neos24.com">neos24.com</a></li>
           <li data-for="business"><a href="#contact">Create account</a></li>
-          <li data-for="private"><a href="#pricing">Send a parcel</a></li>
+          <li data-for="private"><a href="#parcel">Send a parcel</a></li>
         </ul>
       </div>
     </div>
@@ -722,5 +857,6 @@
 </footer>
 
 <script src="../assets/neos.js" defer></script>
+<script src="../assets/checkout.js" defer></script>
 </body>
 </html>

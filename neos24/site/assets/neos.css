@@ -618,3 +618,42 @@ table { border-collapse: collapse; width: 100%; }
   .marquee { animation: none; flex-wrap: wrap; width: 100%; }
   .marquee ul:last-child { display: none; }
 }
+
+/* --------------------------------------------------------------------------
+   20. CHECKOUT (Privatkunden, Revolut)
+   -------------------------------------------------------------------------- */
+[hidden] { display: none !important; }
+.checkout { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2.5rem; align-items: start; }
+.checkout > * { min-width: 0; }
+.checkout-form { display: grid; gap: 1.25rem; }
+.checkout-block { margin: 0; padding: 1.25rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); display: grid; gap: 1rem; }
+.checkout-block legend { font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--coral); padding: 0 .4rem; }
+.checkout-block .hint { font-size: var(--text-sm); color: var(--ink-500); }
+.checkout-block .hint b { color: var(--ink); font-weight: 600; }
+.form-row--plz { grid-template-columns: 1fr; }
+.checkout-honey { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+.checkout-summary { background: var(--ink); color: var(--paper); border: 1px solid var(--ink-800); border-radius: var(--radius); padding: clamp(1.4rem, 2vw, 1.9rem); display: grid; gap: 1.1rem; position: sticky; top: 5.5rem; }
+.summary-lines { display: grid; gap: .55rem; margin: 0; }
+.summary-lines div { display: flex; justify-content: space-between; gap: 1rem; font-size: var(--text-sm); color: var(--ink-300); }
+.summary-lines dd { margin: 0; color: var(--paper); text-align: right; }
+.summary-total { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; border-top: 1px solid var(--ink-700); padding-top: 1rem; }
+.summary-total span { font-size: var(--text-sm); color: var(--ink-300); }
+.summary-total strong { font-family: var(--font-display); font-weight: 800; font-size: 2rem; letter-spacing: -0.03em; color: var(--yellow); text-shadow: 0 0 18px rgba(244,237,32,.35); font-variant-numeric: tabular-nums; }
+.checkout-pay { width: 100%; }
+.checkout-pay[disabled] { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+.is-busy .checkout-pay { cursor: wait; }
+.summary-note { font-size: var(--text-xs); color: var(--ink-300); line-height: 1.55; }
+.summary-note b { color: var(--paper); font-weight: 600; }
+.checkout-state { padding: .9rem 1rem; border-radius: var(--radius-sm); font-size: var(--text-sm); line-height: 1.5; }
+.checkout-state--error { background: rgba(255,38,161,.12); border: 1px solid rgba(255,38,161,.45); color: #ffc2e3; }
+.checkout-state--success { background: rgba(41,211,245,.1); border: 1px solid rgba(41,211,245,.45); color: var(--paper); display: grid; gap: .4rem; }
+.checkout-state--success b { font-family: var(--font-display); font-size: 1.1rem; color: var(--cyan); }
+.checkout.is-paid .checkout-form, .checkout.is-paid .checkout-pay, .checkout.is-paid .summary-note { display: none; }
+.checkout.is-paid { grid-template-columns: 1fr; max-width: 40rem; }
+.checkout.is-paid .checkout-summary { position: static; }
+@media (min-width: 640px) {
+  .form-row--plz { grid-template-columns: 1fr 2fr; }
+}
+@media (min-width: 900px) {
+  .checkout { grid-template-columns: 1.25fr .8fr; gap: 2rem; }
+}
