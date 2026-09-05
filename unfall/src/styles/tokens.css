@@ -1,0 +1,32 @@
+/* ==========================================================================
+   Rettinger & Kollegen — Design-Tokens für unfall.sv-rettinger.de
+
+   NOCH NICHT BEFÜLLT.
+   Die Werte werden nicht erfunden, sondern aus der CSS von sv-rettinger.de
+   extrahiert. Aus der Agent-Session war sv-rettinger.de nicht erreichbar
+   (Egress-Proxy, 403 auf CONNECT). Einmal lokal ausführen:
+
+       cd unfall
+       node scripts/extract-tokens.mjs      # überschreibt diese Datei
+       ./scripts/fetch-brand.sh             # Logo, Favicon, Badge → public/brand/
+
+   Das Skript schreibt genau die folgenden Variablen. Komponenten greifen nur
+   auf diese Namen zu, nie auf Rohwerte. Tailwind bindet sie in global.css
+   über @theme ein (--color-*, --font-*, --radius-*).
+   ========================================================================== */
+
+:root {
+  /* Farben — Elementor Global Colors der Hauptseite
+     --color-primary, --color-secondary, --color-text, --color-accent,
+     --brand-<kit-id> für weitere Kit-Farben, --color-bg */
+
+  /* Schriftfamilien
+     --font-heading, --font-body */
+
+  /* Buttons (.elementor-button der Hauptseite)
+     --btn-bg, --btn-text, --btn-radius, --btn-padding, --btn-weight,
+     --btn-transform, --btn-font */
+
+  /* Eckenradien — die drei häufigsten Werte der Hauptseite
+     --radius-sm, --radius-md, --radius-lg */
+}
