@@ -1,0 +1,7 @@
+{
+  "_comment": "customer_id aus dem Sendungs-Export -> lexoffice contactId (UUID). Ohne Eintrag bricht --create-drafts fuer diesen Kunden ab; das Script legt bewusst keine Kontakte an, um Dubletten zu vermeiden. Die contactId steht in lexoffice in der URL der Kontaktseite.",
+  "_beispiel": "\"57\": \"a1b2c3d4-1234-5678-9abc-de1234567890\"",
+  "1": "",
+  "48": "",
+  "57": ""
+}
