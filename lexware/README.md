@@ -111,13 +111,40 @@ Fundstelle. Die Reports sind über `.gitignore` ausgenommen.
 
 ## Stand der API-Anbindung
 
-Die verwendeten Endpunkte (`GET /v1/profile`, `GET /v1/voucherlist`,
-`GET /v1/invoices/{id}`, `POST /v1/invoices?finalize=false`) und die Struktur
-des Request-Body sind **nicht gegen die Live-Dokumentation verifiziert** —
-`developers.lexware.io` und `api.lexoffice.io` waren aus der Entwicklungs-
-umgebung durch die Netzwerkrichtlinie gesperrt. Schritt 2 oben (Dry-Run mit
-Key) ist genau dafür da: er ruft `profile` und `voucherlist` wirklich auf und
-deckt falsche Feldnamen auf, bevor irgendetwas geschrieben wird.
+Die gesamte Lexware-Domainfamilie (`api.lexoffice.io`, `developers.lexware.io`,
+`lexware.de`) ist aus der Entwicklungsumgebung durch die Netzwerkrichtlinie
+gesperrt; die Live-Dokumentation war nicht erreichbar. Der Vertrag wurde
+stattdessen gegen die Datenmodelle des Clients
+[`lexoffice-client`](https://github.com/jvm986/lexoffice-client) (PyPI 0.2.0)
+abgeglichen. Bestätigt sind dabei:
+
+- Basis-URL `https://api.lexoffice.io/v1`, Auth als `Authorization: Bearer …`
+- `GET /v1/profile`, `GET /v1/invoices/{id}`, `POST /v1/invoices` mit
+  `finalize`-Parameter, `GET /v1/voucherlist` mit `voucherType`,
+  `voucherStatus` und `page`
+- Alle im Request-Body verwendeten Felder: `archived`, `voucherDate`,
+  `address.contactId`, `lineItems[]` (`type: custom`, `name`, `description`,
+  `quantity`, `unitName`, `unitPrice.{currency,netAmount,taxRatePercentage}`,
+  `discountPercentage`), `totalPrice.currency`, `taxConditions.taxType: net`,
+  `shippingConditions.{shippingDate,shippingType: service}`, `title`,
+  `introduction`, `remark`
+- Seitenantwort mit `content`, `last` und `totalPages`
+
+Zwei Punkte bleiben ungeprüft, weil der Client sie nicht verwendet: der
+Parameter `size=100` auf `voucherlist` (dient nur der Reduktion der
+Request-Zahl) und das explizite `finalize=false` (entspricht dem Default).
+Schlägt der Dry-Run mit Key an einer dieser Stellen fehl, sind sie die ersten
+Verdächtigen.
 
 Der Client drosselt auf 2 Requests/Sekunde und wiederholt `429`/`5xx` mit
 exponentiellem Backoff unter Beachtung von `Retry-After`.
+
+### Vollständigkeit des Duplikatscans
+
+Der Scan deckt die Status `draft,open,paid,paidoff,voided` ab. `paidoff` ist
+der leicht übersehene: teilweise ausgeglichene, aber sehr wohl gestellte
+Rechnungen. Fehlt ein Status, werden dessen Rechnungen übersehen und deren
+Sendungen ein zweites Mal berechnet.
+
+Bricht die Seitenfolge ab, ohne dass `last` oder `totalPages` erkennbar ist,
+bricht der Lauf ab, statt mit einem unvollständigen Bestand weiterzurechnen.

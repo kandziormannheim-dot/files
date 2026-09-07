@@ -27,6 +27,10 @@ from decimal import Decimal, ROUND_HALF_UP
 
 API_BASE = "https://api.lexoffice.io"
 ORDER_CODE_RE = re.compile(r"JBD\d{6}[A-Z]{3}\d{12}")
+# Alle Rechnungsstatus, die lexoffice kennt. Fehlt hier einer, werden dessen
+# Rechnungen beim Duplikatscan uebersehen -- 'paidoff' ist der leicht
+# uebersehene: teilweise ausgeglichene, aber sehr wohl gestellte Rechnungen.
+VOUCHER_STATUSES = "draft,open,paid,paidoff,voided"
 MIN_REQUEST_INTERVAL = 0.5  # lexoffice erlaubt 2 Requests/Sekunde
 MAX_RETRIES = 5
 
@@ -311,7 +315,7 @@ class LexofficeClient:
                 "/v1/voucherlist",
                 params={
                     "voucherType": "invoice",
-                    "voucherStatus": "draft,open,paid,voided",
+                    "voucherStatus": VOUCHER_STATUSES,
                     "page": page,
                     "size": 100,
                 },
@@ -319,8 +323,21 @@ class LexofficeClient:
             for voucher in result.get("content", []):
                 if voucher.get("id"):
                     yield voucher
-            if page + 1 >= int(result.get("totalPages", 0) or 0):
-                return
+
+            # Eine abgeschnittene Seitenfolge wuerde bestehende Rechnungen
+            # uebersehen und damit doppelt fakturieren. Deshalb hier lieber
+            # abbrechen als stillschweigend aufhoeren.
+            if isinstance(result.get("last"), bool):
+                if result["last"]:
+                    return
+            elif result.get("totalPages") is not None:
+                if page + 1 >= int(result["totalPages"]):
+                    return
+            else:
+                raise AbortRun(
+                    "Antwort von /v1/voucherlist enthaelt weder 'last' noch "
+                    "'totalPages'; die Duplikatspruefung waere unvollstaendig."
+                )
             page += 1
 
     def invoice(self, invoice_id):
