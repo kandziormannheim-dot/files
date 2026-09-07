@@ -67,6 +67,10 @@ Ein zweiter Lauf mit derselben Quelldatei erzeugt daher nichts mehr.
 
 Nur Python 3 der Standardbibliothek, keine Installation nötig.
 
+Wird der Lauf von Claude Cowork übernommen, steht der fertige Prompt dafür in
+[`COWORK-PROMPT.md`](COWORK-PROMPT.md) — er führt durch dieselben vier Schritte
+in derselben Reihenfolge.
+
 ```bash
 # 1. Dry-Run ohne Key: rechnet und berichtet, schreibt nichts
 python3 shipments_to_invoices.py --source ../pfad/shopments_ab_mai_2026.ods
