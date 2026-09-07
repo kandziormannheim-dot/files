@@ -377,11 +377,12 @@ def build_line_item(row, vat_rate):
     return {
         "type": "custom",
         "name": row["product_name"],
-        "description": "Sendung %s | %s | %s kg"
+        "description": "Sendung %s | %s | %s kg | ID %s"
         % (
             row["shipment_ext_order_code"],
             german_date(row["shipment_created_at"]),
             weight,
+            row["shipment_id"],
         ),
         "quantity": 1,
         "unitName": "Sendung",

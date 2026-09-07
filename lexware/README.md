@@ -18,8 +18,13 @@ das Script den Order-Code in die Beschreibung **jeder** Rechnungsposition:
 
 ```
 DHL Paket 20
-Sendung JBD260612GWE002550000076 | 12.06.2026 | 16 kg
+Sendung JBD260612GWE002550000076 | 12.06.2026 | 16 kg | ID 179
 ```
+
+Die angehängte `ID` ist die interne `shipment_id` aus dem Sendungssystem — für
+die eigene Rückverfolgung zwischen Rechnung und Sendung. Eine DHL-Tracking-
+nummer steht bewusst nicht dort: sie ist in der Quelldatei zerstört (siehe
+oben) und aus ihr nicht rekonstruierbar.
 
 Deshalb wird pro Sendung eine eigene Position erzeugt und nicht nach Produkt
 zusammengefasst.
