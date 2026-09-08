@@ -1,0 +1,109 @@
+/* NEOS Kundenportal — baut auf ../assets/neos.css auf (Tokens, Knöpfe, Felder,
+   Tabelle, Karten). Hier nur der App-Rahmen: Kopf mit Reitern, Kacheln,
+   Listen, Statuspillen, Gast-Ansicht (Login/Registrierung). */
+.konto { background: var(--paper); min-height: 100vh; display: flex; flex-direction: column; }
+.konto .reveal { opacity: 1; transform: none; }
+.k-kopf { background: var(--ink); color: var(--paper); position: sticky; top: 0; z-index: 20; }
+.k-kopf-innen { display: flex; align-items: center; gap: 1.5rem; min-height: 4.25rem; flex-wrap: wrap; }
+.k-marke { display: inline-flex; align-items: center; gap: .6rem; text-decoration: none; color: inherit; }
+.k-marke-zusatz { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--cyan); }
+.k-navi { display: flex; align-items: center; gap: .15rem; flex: 1; flex-wrap: wrap; }
+.k-navi a { color: var(--ink-300); text-decoration: none; font-weight: 600; font-size: .9rem; padding: .5rem .75rem; border-radius: var(--radius-pill, 999px); white-space: nowrap; transition: color var(--fast), background var(--fast); }
+.k-navi a:hover { color: var(--paper); background: var(--ink-800); }
+.k-navi a.aktiv { color: var(--ink); background: var(--paper); }
+.k-navi-rest { margin-left: auto; display: inline-flex; align-items: center; gap: .5rem; }
+.k-navi--gast { justify-content: flex-end; }
+.k-sprache { font-family: var(--font-mono) !important; font-size: .78rem !important; letter-spacing: .08em; }
+.k-inline { display: inline; }
+.k-navi-schalter, .k-navi-knopf { display: none; }
+.k-btn-leise { background: var(--white); color: var(--ink); border: 1.5px solid var(--ink-200); }
+.k-kopf .k-btn-leise { background: transparent; color: var(--paper); border-color: var(--ink-700); }
+.k-btn-leise:hover { border-color: var(--cyan); }
+.k-btn-gefahr { background: var(--white); color: #b63a12; border: 1.5px solid #ffc9b5; }
+.k-btn-breit { width: 100%; }
+.k-inhalt { padding: 1.75rem var(--gutter) 3rem; flex: 1; }
+.k-ich { font-size: .82rem; color: var(--ink-500); margin-bottom: .75rem; }
+.k-kopfzeile { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.k-kopfzeile .h2 { margin-top: .35rem; font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.2rem); }
+.k-kopfzeile .k-text { margin-top: .5rem; max-width: 52ch; }
+.k-text { color: var(--ink-600); font-size: var(--text-sm); line-height: 1.55; }
+.k-klein { color: var(--ink-500); font-size: .8rem; }
+.k-mono { font-family: var(--font-mono); font-size: .85em; font-weight: 500; }
+.k-zurueck { font-size: .82rem; color: var(--ink-500); text-decoration: none; }
+.k-zurueck:hover { color: var(--coral); }
+.k-hinweis { padding: .75rem 1rem; border-radius: var(--radius-sm, 10px); background: var(--cyan-50); border: 1px solid #b7ecf8; margin-bottom: 1rem; font-size: var(--text-sm); }
+.k-hinweis--ok { background: #E3F6EC; border-color: #bfe8d3; }
+.k-hinweis--fehler { background: var(--coral-50); border-color: #ffc9b5; }
+.konto .card { margin-bottom: 1.25rem; transform: none !important; box-shadow: none !important; }
+.k-karte-tabelle { padding: 1rem 1.25rem; }
+.k-karte-kopf { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: .5rem; }
+.k-karte-kopf a { font-size: .85rem; }
+.k-spalten { display: grid; gap: 1.25rem; align-items: start; }
+.k-spalten > * { min-width: 0; }
+.k-spalten > .card { margin-bottom: 0; }
+.k-spalten--2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.k-spalten--2-1 { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); }
+.k-kacheln { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.k-kachel { position: relative; overflow: hidden; display: grid; gap: .25rem; margin-bottom: 0 !important; }
+.k-kachel::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--cyan); }
+.k-kachel--gelb::before { background: var(--yellow); }
+.k-kachel--coral::before { background: var(--coral); }
+.k-kachel-name { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-500); }
+.k-kachel-wert { font-family: var(--font-display); font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.2rem); font-weight: 800; letter-spacing: -.02em; }
+.k-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.k-tabelle th, .k-tabelle td { padding: .65rem .55rem; font-size: .875rem; text-align: left; }
+.k-tabelle td:last-child, .k-tabelle th:last-child { text-align: left; }
+.k-tabelle tbody tr:hover td { background: var(--paper); }
+.k-inaktiv td { color: var(--ink-500); }
+.k-aktionen { white-space: nowrap; }
+.k-aktionen form { display: inline-block; margin-right: .3rem; }
+.k-liste { display: grid; grid-template-columns: max-content 1fr; gap: .4rem 1rem; font-size: .9rem; margin-top: .75rem; }
+.k-liste dt { color: var(--ink-500); }
+.k-liste dd { margin: 0; overflow-wrap: anywhere; }
+.k-liste--ink dt { color: var(--ink-300); }
+.k-verlauf { list-style: none; display: grid; gap: .45rem; margin-top: .75rem; }
+.k-verlauf li { padding-left: .9rem; border-left: 2px solid var(--cyan); font-size: .88rem; }
+.k-leer { color: var(--ink-500); text-align: center; padding: 1.5rem 0; }
+.k-werkzeuge { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.k-werkzeuge input, .k-werkzeuge select { font: inherit; border: 1.5px solid var(--ink-200); border-radius: 10px; padding: .55rem .7rem; background: var(--white); }
+.k-werkzeuge input[type="search"] { flex: 1 1 240px; }
+.konto .form { padding: 0; background: none; border: 0; box-shadow: none; min-width: 0; }
+.konto .field, .konto .field input, .konto .field select, .konto .field textarea { min-width: 0; max-width: 100%; }
+.k-form { gap: 1rem; }
+.k-form .field .k-klein { margin-top: .1rem; }
+.k-form-fuss { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.form-row--2 { grid-template-columns: 1fr; }
+.k-summe { position: sticky; top: 5.25rem; display: grid; gap: .75rem; }
+.k-summe-wert { font-family: var(--font-display); font-size: 2.2rem; font-weight: 800; color: var(--yellow); }
+.status { display: inline-block; font-family: var(--font-mono); font-size: .66rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: .2rem .5rem; border-radius: 999px; background: var(--ink-200); color: var(--ink-600); white-space: nowrap; }
+.status--bezahlt, .status--beauftragt { background: #E3F6EC; color: #157a52; }
+.status--angelegt, .status--autorisiert, .status--offen { background: var(--yellow-50); color: #6e6800; }
+.status--fehlgeschlagen, .status--storniert { background: var(--coral-50); color: #b63a12; }
+.blaettern { display: flex; gap: 1rem; justify-content: center; padding-top: 1rem; font-size: .86rem; }
+.k-fuss { display: flex; gap: 1.25rem; flex-wrap: wrap; padding: 1.25rem var(--gutter) 2rem; font-size: .8rem; color: var(--ink-500); }
+.k-fuss a { color: inherit; }
+
+/* Gast: Login, Registrierung, Links */
+.konto--gast .k-inhalt { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: center; }
+.k-gast { width: 100%; max-width: 440px; min-width: 0; padding: 1rem 0; }
+.k-gast .field input { width: 100%; min-width: 0; }
+.k-gast-karte { display: grid; grid-template-columns: minmax(0, 1fr); gap: .9rem; padding: 2rem; }
+.k-gast-karte .h2 { margin-top: 0; font-size: 1.6rem; }
+.k-oder { display: flex; align-items: center; gap: .75rem; color: var(--ink-500); font-size: .8rem; }
+.k-oder::before, .k-oder::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.k-links { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-size: .85rem; }
+.k-links a { color: var(--ink-600); }
+
+@media (max-width: 800px) {
+  .k-gast-karte { padding: 1.5rem 1.25rem; }
+  .k-navi-knopf { display: inline-block; margin-left: auto; font-size: 1.4rem; cursor: pointer; }
+  .k-navi:not(.k-navi--gast) { display: none; flex-direction: column; align-items: stretch; width: 100%; padding-bottom: .75rem; }
+  .k-navi-schalter:checked ~ .k-navi { display: flex; }
+  .k-navi-rest { margin-left: 0; padding-top: .5rem; }
+  .k-spalten--2-1 { grid-template-columns: 1fr; }
+  .k-summe { position: static; }
+  .k-kopfzeile { flex-direction: column; align-items: flex-start; }
+  .k-liste { grid-template-columns: 1fr; gap: .1rem .5rem; }
+  .k-liste dt { margin-top: .4rem; }
+}
+@media (min-width: 640px) { .form-row--2 { grid-template-columns: 1fr 1fr; } }
