@@ -560,6 +560,9 @@ table { border-collapse: collapse; width: 100%; }
 .form-foot small { color: var(--ink-500); font-size: var(--text-xs); max-width: 22rem; }
 .form-success { display: none; padding: 1.25rem; border-radius: var(--radius-sm); background: var(--cyan-50); color: #0a4a58; font-weight: 500; }
 .form.is-sent .form-success { display: block; }
+.form.is-sent .form-row, .form.is-sent .field, .form.is-sent .form-foot { display: none; }
+.form-error { padding: 1rem 1.25rem; border-radius: var(--radius-sm); background: var(--coral-50); color: #8a2a0c; font-weight: 500; }
+.form.is-busy button[type="submit"] { opacity: .6; pointer-events: none; }
 
 /* --------------------------------------------------------------------------
    17. FOOTER

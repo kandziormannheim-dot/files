@@ -1,24 +1,24 @@
 <?php
 
 /**
- * Einzige Preisquelle des Privatkunden-Checkouts.
+ * NUR NOCH SAATGUT. Wird einmalig von preiseSaeen() in _bootstrap.php in die
+ * Datenbank übernommen, solange dort keine Länder angelegt sind. Danach ist
+ * die Datenbank die einzige Preisquelle — gepflegt im internen Dashboard
+ * (intern/ → Preise & Zielländer, Routingmatrix). Änderungen an dieser Datei
+ * wirken auf eine bestehende Datenbank nicht mehr.
  *
- * Der Browser zeigt Preise nur an; verbindlich ist, was dieser Datei
- * entnommen wird (bestellung.php rechnet den Betrag hier heraus und ignoriert
- * jeden Betrag aus dem Formular). Die Werte müssen mit der Preistabelle in
- * index.html / en/index.html übereinstimmen — bei Änderung beides anpassen.
+ * Aus „carrier“ werden beim Säen die Prioritäten 1–3 der Routingmatrix
+ * (erster Name = Priorität 1 = auf der Startseite gezeigt), „netto“ wird der
+ * Verkaufspreis, der Einkaufspreis startet bei 0.
  *
- * PLATZHALTER: Beispielpreise, abgeleitet aus Dashboard.pdf. Vor Livegang
- * durch die freigegebene Preisliste ersetzen.
+ * PLATZHALTER: Beispielpreise, abgeleitet aus Dashboard.pdf.
  */
 
 declare(strict_types=1);
 
 return [
-    'waehrung' => 'EUR',
-    'mwstSatz' => 19, // Prozent, für Privatkunden inklusive
     'gewichtsklassen' => [
-        '2kg' => ['de' => 'bis 2 kg', 'en' => 'up to 2 kg'],
+        '2kg' => ['de' => 'bis 2 kg', 'en' => 'up to 2 kg', 'max_gramm' => 2000],
     ],
     // Nettopreise in Cent je Paket der Gewichtsklasse 2kg.
     'laender' => [

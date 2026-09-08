@@ -16,7 +16,7 @@
 
 declare(strict_types=1);
 
-if (PHP_SAPI !== 'cli') {
+if (PHP_SAPI !== 'cli' && !defined('NEOS_INTERN')) {
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
     header('X-Content-Type-Options: nosniff');
@@ -62,6 +62,11 @@ function konfig(): array
             'zeitstempelToleranz' => 300,    // Sekunden, Webhook-Zeitstempel
         ],
         'daten' => NEOS_WEBROOT . '/../neos24-daten',
+        'mwstSatz' => 19,                   // Prozent, Privatkundenpreise inklusive
+        'intern' => [                       // Internes Dashboard (site/intern/)
+            'sitzungsdauer' => 28800,       // Sekunden ohne Aktivität, bis die Anmeldung verfällt
+            'anmeldung' => ['versuche' => 5, 'sperre' => 900, 'jeIp' => 30], // Fehlversuche je Konto, Sperre in Sekunden, Versuche je IP und Stunde
+        ],
         'basisUrl' => '',
         'absender' => '',
         'absenderName' => 'NEOS',
@@ -176,9 +181,10 @@ function saeubern(mixed $wert, int $max = 200): string
  * Zählung je Absender im Datenverzeichnis. IP nur als Streuwert mit täglich
  * wechselndem Salz — bremst Missbrauch, verfolgt niemanden.
  */
-function begrenzungPruefen(string $bereich): bool
+function begrenzungPruefen(string $bereich, ?int $maxAnfragen = null): bool
 {
     $konfig = konfig();
+    $maxAnfragen ??= (int) $konfig['limit']['anfragen'];
     $spool = rtrim((string) $konfig['daten'], '/') . '/spool';
     if (!is_dir($spool) && !@mkdir($spool, 0770, true) && !is_dir($spool)) {
         error_log('[revolut] Spool-Verzeichnis nicht anlegbar: ' . $spool);
@@ -208,7 +214,7 @@ function begrenzungPruefen(string $bereich): bool
             $zeiten = array_filter($inhalt, static fn ($z): bool => is_int($z) && $z > $jetzt - $fenster);
         }
     }
-    if (count($zeiten) >= (int) $konfig['limit']['anfragen']) {
+    if (count($zeiten) >= $maxAnfragen) {
         return false;
     }
     $zeiten[] = $jetzt;
@@ -235,6 +241,19 @@ function datenbank(): PDO
     ]);
     $db->exec('PRAGMA journal_mode=WAL');
     $db->exec('PRAGMA busy_timeout=5000');
+    $db->exec('PRAGMA foreign_keys=ON');
+    schemaAnlegen($db);
+
+    return $db;
+}
+
+/**
+ * Schema: Bestellungen des Checkouts plus die Tabellen des internen
+ * Dashboards (Preise/Routing, Anfragen, Benutzer/Rollen, Protokoll).
+ * Alles CREATE TABLE IF NOT EXISTS; nachträgliche Spalten per table_info.
+ */
+function schemaAnlegen(PDO $db): void
+{
     $db->exec(<<<'SQL'
         CREATE TABLE IF NOT EXISTS bestellungen (
             id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -259,7 +278,174 @@ function datenbank(): PDO
     SQL);
     $db->exec('CREATE INDEX IF NOT EXISTS bestellungen_status ON bestellungen (status, erstellt)');
 
-    return $db;
+    // Nachträgliche Spalten (CREATE TABLE IF NOT EXISTS greift dann nicht mehr).
+    $spalten = array_column($db->query('PRAGMA table_info(bestellungen)')->fetchAll(), 'name');
+    if (!in_array('carrier', $spalten, true)) {
+        $db->exec('ALTER TABLE bestellungen ADD COLUMN carrier TEXT');
+    }
+    if (!in_array('einkauf_cent', $spalten, true)) {
+        $db->exec('ALTER TABLE bestellungen ADD COLUMN einkauf_cent INTEGER NOT NULL DEFAULT 0');
+    }
+
+    // Preise & Zielländer, Routingmatrix
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS laender (
+            code       TEXT PRIMARY KEY,
+            name_de    TEXT NOT NULL,
+            name_en    TEXT NOT NULL,
+            aktiv      INTEGER NOT NULL DEFAULT 1,
+            sortierung INTEGER NOT NULL DEFAULT 100
+        );
+        CREATE TABLE IF NOT EXISTS gewichtsklassen (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            code       TEXT NOT NULL UNIQUE,
+            name_de    TEXT NOT NULL,
+            name_en    TEXT NOT NULL,
+            max_gramm  INTEGER NOT NULL DEFAULT 0,
+            aktiv      INTEGER NOT NULL DEFAULT 1,
+            sortierung INTEGER NOT NULL DEFAULT 100
+        );
+        CREATE TABLE IF NOT EXISTS carrier (
+            id    INTEGER PRIMARY KEY AUTOINCREMENT,
+            name  TEXT NOT NULL UNIQUE,
+            aktiv INTEGER NOT NULL DEFAULT 1
+        );
+        CREATE TABLE IF NOT EXISTS routing (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            land_code         TEXT NOT NULL REFERENCES laender(code),
+            gewichtsklasse_id INTEGER NOT NULL REFERENCES gewichtsklassen(id),
+            carrier_id        INTEGER NOT NULL REFERENCES carrier(id),
+            prioritaet        INTEGER NOT NULL,
+            laufzeit_de       TEXT NOT NULL DEFAULT '',
+            laufzeit_en       TEXT NOT NULL DEFAULT '',
+            einkauf_cent      INTEGER NOT NULL DEFAULT 0,
+            verkauf_cent      INTEGER NOT NULL DEFAULT 0,
+            aktiv             INTEGER NOT NULL DEFAULT 1,
+            aktualisiert      TEXT NOT NULL,
+            aktualisiert_von  TEXT NOT NULL DEFAULT '',
+            UNIQUE (land_code, gewichtsklasse_id, prioritaet)
+        );
+    SQL);
+
+    // Kunden & Anfragen (Kontaktformular)
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS anfragen (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            art           TEXT NOT NULL DEFAULT 'business',
+            name          TEXT NOT NULL,
+            firma         TEXT NOT NULL DEFAULT '',
+            email         TEXT NOT NULL,
+            volumen       TEXT NOT NULL DEFAULT '',
+            nachricht     TEXT NOT NULL DEFAULT '',
+            sprache       TEXT NOT NULL DEFAULT 'de',
+            status        TEXT NOT NULL DEFAULT 'neu',
+            notiz         TEXT NOT NULL DEFAULT '',
+            bearbeiter_id INTEGER,
+            erstellt      TEXT NOT NULL,
+            aktualisiert  TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS anfragen_status ON anfragen (status, erstellt);
+    SQL);
+
+    // Benutzer, Rollen, Rechte, Protokoll
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS rollen (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            name         TEXT NOT NULL UNIQUE,
+            beschreibung TEXT NOT NULL DEFAULT '',
+            system       INTEGER NOT NULL DEFAULT 0,
+            erstellt     TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS rechte (
+            rolle_id   INTEGER NOT NULL REFERENCES rollen(id) ON DELETE CASCADE,
+            modul      TEXT NOT NULL,
+            sehen      INTEGER NOT NULL DEFAULT 0,
+            bearbeiten INTEGER NOT NULL DEFAULT 0,
+            loeschen   INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (rolle_id, modul)
+        );
+        CREATE TABLE IF NOT EXISTS benutzer (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            email                 TEXT NOT NULL UNIQUE,
+            name                  TEXT NOT NULL,
+            passwort_hash         TEXT NOT NULL,
+            rolle_id              INTEGER NOT NULL REFERENCES rollen(id),
+            aktiv                 INTEGER NOT NULL DEFAULT 1,
+            muss_passwort_aendern INTEGER NOT NULL DEFAULT 0,
+            fehlversuche          INTEGER NOT NULL DEFAULT 0,
+            gesperrt_bis          TEXT,
+            letzte_anmeldung      TEXT,
+            erstellt              TEXT NOT NULL,
+            aktualisiert          TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS protokoll (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            benutzer_id   INTEGER,
+            benutzer_name TEXT NOT NULL DEFAULT '',
+            aktion        TEXT NOT NULL,
+            objekt        TEXT NOT NULL DEFAULT '',
+            objekt_id     TEXT NOT NULL DEFAULT '',
+            details_json  TEXT NOT NULL DEFAULT '{}',
+            zeit          TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS protokoll_zeit ON protokoll (zeit);
+    SQL);
+
+    preiseSaeen($db);
+}
+
+/**
+ * Einmaliges Saatgut: Solange keine Länder angelegt sind, werden Länder,
+ * Gewichtsklasse, Carrier und Routing-Zeilen aus preise.php übernommen.
+ * Danach ist die Datenbank (Dashboard → Routingmatrix) die einzige Quelle.
+ */
+function preiseSaeen(PDO $db): void
+{
+    if ((int) $db->query('SELECT COUNT(*) FROM laender')->fetchColumn() > 0) {
+        return;
+    }
+    $saat = require __DIR__ . '/preise.php';
+    $jetzt = jetzt();
+    $db->beginTransaction();
+    try {
+        $gkIds = [];
+        $sort = 10;
+        foreach ($saat['gewichtsklassen'] as $code => $gk) {
+            $db->prepare('INSERT INTO gewichtsklassen (code, name_de, name_en, max_gramm, aktiv, sortierung) VALUES (?, ?, ?, ?, 1, ?)')
+               ->execute([$code, $gk['de'], $gk['en'], $gk['max_gramm'] ?? 0, $sort]);
+            $gkIds[$code] = (int) $db->lastInsertId();
+            $sort += 10;
+        }
+        $carrierIds = [];
+        $carrierId = static function (string $name) use ($db, &$carrierIds): int {
+            if (!isset($carrierIds[$name])) {
+                $db->prepare('INSERT INTO carrier (name, aktiv) VALUES (?, 1)')->execute([$name]);
+                $carrierIds[$name] = (int) $db->lastInsertId();
+            }
+
+            return $carrierIds[$name];
+        };
+        $sort = 10;
+        foreach ($saat['laender'] as $code => $land) {
+            $db->prepare('INSERT INTO laender (code, name_de, name_en, aktiv, sortierung) VALUES (?, ?, ?, 1, ?)')
+               ->execute([$code, $land['name']['de'], $land['name']['en'], $sort]);
+            $sort += 10;
+            $namen = array_values(array_filter(array_map('trim', explode(',', (string) $land['carrier']))));
+            foreach ($gkIds as $gkId) {
+                foreach (array_slice($namen, 0, 3) as $i => $name) {
+                    $db->prepare(<<<'SQL'
+                        INSERT INTO routing (land_code, gewichtsklasse_id, carrier_id, prioritaet, laufzeit_de, laufzeit_en,
+                                             einkauf_cent, verkauf_cent, aktiv, aktualisiert, aktualisiert_von)
+                        VALUES (?, ?, ?, ?, ?, ?, 0, ?, 1, ?, 'saatgut')
+                    SQL)->execute([$code, $gkId, $carrierId($name), $i + 1, $land['laufzeit']['de'], $land['laufzeit']['en'], (int) $land['netto'], $jetzt]);
+                }
+            }
+        }
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollBack();
+        throw $e;
+    }
 }
 
 function bestellungLaden(string $spalte, string $wert): ?array
@@ -312,10 +498,68 @@ function bestellungFortschreiben(array $bestellung, string $status, string $erei
 
 // ---------------------------------------------------------------------- Preise
 
+/**
+ * Preisliste aus der Datenbank (Dashboard → Preise & Zielländer, Routingmatrix).
+ *
+ * Form je Land: name{de,en}, klassen[gkCode] = {carrier, fallback[], laufzeit{de,en},
+ * netto, einkauf}, dazu carrier/laufzeit/netto der ersten (kleinsten) aktiven
+ * Gewichtsklasse als „ab“-Wert für Tabelle und Formular. Gezeigt wird je Zelle
+ * der aktive Carrier mit der niedrigsten Priorität; die weiteren sind Fallback.
+ */
 function preisliste(): array
 {
     static $preise = null;
-    $preise ??= require __DIR__ . '/preise.php';
+    if ($preise !== null) {
+        return $preise;
+    }
+    $db = datenbank();
+    $klassen = [];
+    foreach ($db->query('SELECT * FROM gewichtsklassen WHERE aktiv = 1 ORDER BY sortierung, id') as $gk) {
+        $klassen[$gk['code']] = ['de' => $gk['name_de'], 'en' => $gk['name_en'], 'id' => (int) $gk['id'], 'max_gramm' => (int) $gk['max_gramm']];
+    }
+    $laender = [];
+    $zeilen = $db->query(<<<'SQL'
+        SELECT l.code, l.name_de, l.name_en, g.code AS gk, c.name AS carrier,
+               r.laufzeit_de, r.laufzeit_en, r.verkauf_cent, r.einkauf_cent, r.prioritaet
+        FROM routing r
+        JOIN laender l ON l.code = r.land_code
+        JOIN gewichtsklassen g ON g.id = r.gewichtsklasse_id
+        JOIN carrier c ON c.id = r.carrier_id
+        WHERE r.aktiv = 1 AND l.aktiv = 1 AND g.aktiv = 1 AND c.aktiv = 1
+        ORDER BY l.sortierung, l.code, g.sortierung, g.id, r.prioritaet
+    SQL);
+    foreach ($zeilen as $z) {
+        $code = (string) $z['code'];
+        $laender[$code] ??= ['name' => ['de' => $z['name_de'], 'en' => $z['name_en']], 'carrier' => '', 'laufzeit' => ['de' => '', 'en' => ''], 'netto' => 0, 'klassen' => []];
+        if (!isset($laender[$code]['klassen'][$z['gk']])) {
+            $laender[$code]['klassen'][$z['gk']] = [
+                'carrier' => (string) $z['carrier'],
+                'fallback' => [],
+                'laufzeit' => ['de' => (string) $z['laufzeit_de'], 'en' => (string) $z['laufzeit_en']],
+                'netto' => (int) $z['verkauf_cent'],
+                'einkauf' => (int) $z['einkauf_cent'],
+            ];
+        } else {
+            $laender[$code]['klassen'][$z['gk']]['fallback'][] = (string) $z['carrier'];
+        }
+    }
+    foreach ($laender as $code => $land) {
+        foreach ($klassen as $gkCode => $_) {
+            if (isset($land['klassen'][$gkCode])) {
+                $erste = $land['klassen'][$gkCode];
+                $laender[$code]['carrier'] = $erste['carrier'];
+                $laender[$code]['laufzeit'] = $erste['laufzeit'];
+                $laender[$code]['netto'] = $erste['netto'];
+                break;
+            }
+        }
+    }
+    $preise = [
+        'waehrung' => 'EUR',
+        'mwstSatz' => (int) konfig()['mwstSatz'],
+        'gewichtsklassen' => $klassen,
+        'laender' => $laender,
+    ];
 
     return $preise;
 }
@@ -330,13 +574,21 @@ function bruttoCent(int $nettoCent): int
 function preisFuer(string $land, string $gewichtsklasse): ?array
 {
     $p = preisliste();
-    if (!isset($p['laender'][$land]) || !isset($p['gewichtsklassen'][$gewichtsklasse])) {
+    $zelle = $p['laender'][$land]['klassen'][$gewichtsklasse] ?? null;
+    if ($zelle === null || !isset($p['gewichtsklassen'][$gewichtsklasse])) {
         return null;
     }
-    $netto = (int) $p['laender'][$land]['netto'];
+    $netto = (int) $zelle['netto'];
     $brutto = bruttoCent($netto);
 
-    return ['netto' => $netto, 'mwst' => $brutto - $netto, 'brutto' => $brutto, 'waehrung' => (string) $p['waehrung']];
+    return [
+        'netto' => $netto,
+        'mwst' => $brutto - $netto,
+        'brutto' => $brutto,
+        'waehrung' => (string) $p['waehrung'],
+        'carrier' => (string) $zelle['carrier'],
+        'einkauf' => (int) $zelle['einkauf'],
+    ];
 }
 
 // --------------------------------------------------------------- Revolut-Client

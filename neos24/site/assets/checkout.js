@@ -45,19 +45,64 @@
   land.addEventListener('change', update);
   update();
 
-  /* Verbindliche Preise vom Server (überschreibt die Werte im Markup) ---- */
+  /* Verbindliche Preise vom Server (Dashboard → Routingmatrix): überschreibt
+     die Werte im Markup, baut Zielland-/Gewichtsauswahl und die Preistabelle
+     (#preise / #pricing) neu. Ohne Backend bleiben die Markup-Werte. ------- */
+  var angebot = null;
+  var preis = function (cent) { return '€' + (cent / 100).toFixed(2).replace('.', lang === 'de' ? ',' : '.'); };
+  var applyKlasse = function () {
+    if (!angebot) return;
+    var gk = gewicht ? gewicht.value : '2kg';
+    var erste = null;
+    angebot.laender.forEach(function (l) {
+      var o = land.querySelector('option[value="' + l.code + '"]');
+      var k = l.klassen && l.klassen[gk];
+      if (!o) { o = document.createElement('option'); o.value = l.code; land.appendChild(o); }
+      o.textContent = l.name;
+      o.disabled = !k; o.hidden = !k;
+      if (k) { o.setAttribute('data-netto', k.netto); o.setAttribute('data-carrier', k.carrier); o.setAttribute('data-laufzeit', k.laufzeit); erste = erste || o; }
+    });
+    Array.prototype.forEach.call(land.options, function (o) {
+      if (o.value && !angebot.laender.some(function (l) { return l.code === o.value; })) { o.disabled = true; o.hidden = true; }
+    });
+    if (land.value && land.options[land.selectedIndex].disabled) land.value = '';
+    update();
+  };
+  var buildTable = function (d) {
+    var body = document.querySelector('.price-table-wrap tbody');
+    if (!body || !d.laender.length) return;
+    var ab = body.querySelector('small') ? body.querySelector('small').textContent : (lang === 'de' ? 'ab' : 'from');
+    var tpl = body.querySelector('tr');
+    body.innerHTML = '';
+    d.laender.forEach(function (l) {
+      var tr = document.createElement('tr');
+      var td = function (html) { var c = document.createElement('td'); tr.appendChild(c); return c; };
+      var c1 = td(); var flag = document.createElement('span'); flag.className = 'flag'; flag.textContent = l.code; c1.appendChild(flag); c1.appendChild(document.createTextNode(l.name));
+      td().textContent = l.carrier;
+      td().textContent = l.laufzeit;
+      var c4 = td(); c4.className = 'price';
+      var sm = document.createElement('small'); sm.textContent = ab; c4.appendChild(sm);
+      var b = document.createElement('span'); b.setAttribute('data-for', 'business'); b.textContent = preis(l.netto); c4.appendChild(b);
+      var p = document.createElement('span'); p.setAttribute('data-for', 'private'); p.textContent = preis(l.brutto); c4.appendChild(p);
+      body.appendChild(tr);
+    });
+    void tpl;
+  };
   fetch(api + '/angebot.php?sprache=' + lang, { headers: { Accept: 'application/json' } })
     .then(function (r) { return r.json(); })
     .then(function (d) {
-      if (!d || !d.ok) return;
-      mwst = d.mwst; modus = d.modus; bereit = !!d.bereit;
-      d.laender.forEach(function (l) {
-        var o = land.querySelector('option[value="' + l.code + '"]');
-        if (!o) return;
-        o.setAttribute('data-netto', l.netto); o.setAttribute('data-carrier', l.carrier); o.setAttribute('data-laufzeit', l.laufzeit); o.textContent = l.name;
-      });
+      if (!d || !d.ok || !d.laender) return;
+      mwst = d.mwst; modus = d.modus; bereit = !!d.bereit; angebot = d;
+      if (gewicht && d.gewichtsklassen) {
+        var aktuell = gewicht.value;
+        gewicht.innerHTML = '';
+        Object.keys(d.gewichtsklassen).forEach(function (code) { var o = document.createElement('option'); o.value = code; o.textContent = d.gewichtsklassen[code]; gewicht.appendChild(o); });
+        if (d.gewichtsklassen[aktuell]) gewicht.value = aktuell;
+        gewicht.addEventListener('change', applyKlasse);
+      }
+      applyKlasse();
+      buildTable(d);
       if (!bereit) showError(msg('unavailable'));
-      update();
     })
     .catch(function () { /* Markup-Preise bleiben; die Bestellung prüft ohnehin serverseitig */ });
 

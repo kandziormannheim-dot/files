@@ -12,8 +12,8 @@
  *   { "ok": true, "token": "<Revolut-Order-Token>", "bestellung": "NE-2026-…",
  *     "modus": "sandbox", "betrag": {netto, mwst, brutto, waehrung} }
  *
- * Der Betrag wird ausschließlich aus preise.php berechnet — was der Browser
- * schickt, spielt keine Rolle.
+ * Der Betrag wird ausschließlich aus der Preisliste der Datenbank berechnet
+ * (Dashboard → Routingmatrix) — was der Browser schickt, spielt keine Rolle.
  */
 
 declare(strict_types=1);
@@ -96,10 +96,10 @@ try {
     $extRef = 'NE-' . gmdate('Y') . '-' . strtoupper(bin2hex(random_bytes(4)));
     $st = $db->prepare(<<<'SQL'
         INSERT INTO bestellungen
-            (ext_ref, status, netto_cent, mwst_cent, betrag_cent, waehrung, zielland, gewichtsklasse,
+            (ext_ref, status, netto_cent, mwst_cent, betrag_cent, waehrung, zielland, gewichtsklasse, carrier, einkauf_cent,
              email, sprache, absender_json, empfaenger_json, ereignisse_json, erstellt, aktualisiert)
         VALUES
-            (:ref, 'offen', :netto, :mwst, :brutto, :w, :land, :gk, :email, :sprache, :abs, :emp, :ev, :t, :t)
+            (:ref, 'offen', :netto, :mwst, :brutto, :w, :land, :gk, :carrier, :einkauf, :email, :sprache, :abs, :emp, :ev, :t, :t)
     SQL);
     $st->execute([
         ':ref' => $extRef,
@@ -109,6 +109,8 @@ try {
         ':w' => $preis['waehrung'],
         ':land' => $zielland,
         ':gk' => $gewichtsklasse,
+        ':carrier' => $preis['carrier'],
+        ':einkauf' => $preis['einkauf'],
         ':email' => $email,
         ':sprache' => $sprache,
         ':abs' => json_encode($absender, JSON_UNESCAPED_UNICODE),
@@ -167,5 +169,5 @@ antworten(200, [
     'token' => $token,
     'bestellung' => $extRef,
     'modus' => checkoutModus(),
-    'betrag' => $preis,
+    'betrag' => ['netto' => $preis['netto'], 'mwst' => $preis['mwst'], 'brutto' => $preis['brutto'], 'waehrung' => $preis['waehrung']],
 ]);

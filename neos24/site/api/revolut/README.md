@@ -10,7 +10,7 @@ Revolut Pay, Apple Pay, Google Pay). Geschäftskunden bleiben beim Konto auf Rec
 Browser (assets/checkout.js)            Server (api/revolut/)               Revolut
 ────────────────────────────            ─────────────────────               ───────
 Formular ausfüllen
-POST bestellung.php  ────────────────▶  Betrag aus preise.php rechnen
+POST bestellung.php  ────────────────▶  Betrag aus der Datenbank rechnen (Routingmatrix)
                                         Bestellung in SQLite anlegen
                                         POST /api/orders ─────────────────▶ Order (token)
 ◀──────── { token, bestellung, modus }
@@ -20,7 +20,7 @@ onSuccess → GET status.php?id=…  ───▶  ggf. GET /api/orders/{id} ─
                                         POST webhook.php  ◀──────────────── ORDER_COMPLETED (signiert)
 ```
 
-Der Betrag kommt **ausschließlich** aus `preise.php` (netto × 1,19, auf den Cent
+Der Betrag kommt **ausschließlich** aus der Datenbank — Routingmatrix des internen Dashboards (`intern/`), Priorität 1 — (netto × 1,19, auf den Cent
 gerundet). Was der Browser schickt, wird nur zur Validierung von Land und
 Adressen gelesen.
 
@@ -29,8 +29,8 @@ Adressen gelesen.
 | Datei | Zweck |
 |---|---|
 | `_bootstrap.php` | Konfiguration, SQLite, Herkunftsprüfung, Missbrauchsbremse, Revolut-Client, Statuspflege, Mail |
-| `preise.php` | Preisquelle (netto, Cent). Muss mit der Tabelle in `index.html` / `en/index.html` und den `data-netto`-Werten im Formular übereinstimmen |
-| `angebot.php` | GET · Preisliste, Modus und Bereitschaft für das Formular |
+| `preise.php` | Nur noch Saatgut: wird einmalig in die Datenbank übernommen, solange dort keine Länder stehen. Danach pflegt das Dashboard (`intern/` → Preise & Zielländer, Routingmatrix) Länder, Carrier und Preise |
+| `angebot.php` | GET · Preisliste live aus der Datenbank (je Land und Gewichtsklasse), Modus und Bereitschaft — für Preistabelle und Formular, Cache 5 Minuten |
 | `bestellung.php` | POST · Bestellung anlegen, Revolut-Order eröffnen, Token zurückgeben |
 | `status.php` | GET `?id=NE-…` · Status, gleicht bei Bedarf mit Revolut ab |
 | `webhook.php` | POST · Empfänger für Revolut-Ereignisse, prüft die Signatur |

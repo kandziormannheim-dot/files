@@ -759,32 +759,40 @@
         </ul>
       </div>
       <!-- PLACEHOLDER TARGET: mailto until a form backend exists (see README). -->
-      <form class="form reveal" data-delay="1" action="mailto:info@neos24.com" method="post" enctype="text/plain" novalidate>
+      <!-- Posts to api/anfrage.php (database + notification, dashboard → Kunden & Anfragen);
+           via fetch with JS, as a plain form without JS (returns with ?sent=1). -->
+      <form class="form reveal" data-delay="1" action="../api/anfrage.php" method="post" novalidate
+        data-msg-invalid="Please check the highlighted fields."
+        data-msg-toomany="Too many requests in a short time. Please try again later or email info@neos24.com."
+        data-msg-network="Sending failed. Please try again in a moment or email info@neos24.com.">
+        <input type="hidden" name="sprache" value="en">
+        <input type="hidden" name="art" value="business">
+        <div class="field checkout-honey" aria-hidden="true"><label for="f-webseite">Website</label><input id="f-webseite" name="webseite" type="text" tabindex="-1" autocomplete="off"></div>
         <div class="form-row">
           <div class="field">
             <label for="f-name">Name</label>
-            <input id="f-name" name="Name" type="text" autocomplete="name" required>
+            <input id="f-name" name="name" type="text" autocomplete="name" required>
             <span class="error">Please enter your name.</span>
           </div>
           <div class="field" data-for="business">
             <label for="f-company">Shop / company</label>
-            <input id="f-company" name="Company" type="text" autocomplete="organization">
+            <input id="f-company" name="firma" type="text" autocomplete="organization">
           </div>
           <div class="field" data-for="private">
             <label for="f-email-p">Email</label>
-            <input id="f-email-p" name="Email" type="email" autocomplete="email" inputmode="email" required>
+            <input id="f-email-p" name="email_privat" type="email" autocomplete="email" inputmode="email" required>
             <span class="error">Please enter a valid email address.</span>
           </div>
         </div>
         <div class="form-row" data-for="business">
           <div class="field">
             <label for="f-email">Email</label>
-            <input id="f-email" name="Email" type="email" autocomplete="email" inputmode="email" required>
+            <input id="f-email" name="email" type="email" autocomplete="email" inputmode="email" required>
             <span class="error">Please enter a valid email address.</span>
           </div>
           <div class="field">
             <label for="f-volume">Shipments per month</label>
-            <select id="f-volume" name="Shipments per month" required>
+            <select id="f-volume" name="volumen" required>
               <option value="">Please select</option>
               <option>under 100</option>
               <option>100 – 500</option>
@@ -797,12 +805,13 @@
         </div>
         <div class="field">
           <label for="f-msg"><span data-for="business">Destination countries &amp; notes <span style="font-weight:400;color:var(--ink-500)">(optional)</span></span><span data-for="private">Your message</span></label>
-          <textarea id="f-msg" name="Message" placeholder="e.g. FR, IT, PL – Shopware 6, lots of returns"></textarea>
+          <textarea id="f-msg" name="nachricht" placeholder="e.g. FR, IT, PL – Shopware 6, lots of returns"></textarea>
         </div>
         <div class="form-foot">
           <button class="btn btn--primary btn--lg" type="submit"><span data-for="business">Request account</span><span data-for="private">Send message</span> <span class="arrow" aria-hidden="true">→</span></button>
           <small>By submitting you agree to the processing of your details so we can get in touch. See the <a href="#" style="text-decoration:underline">privacy policy</a>.</small>
         </div>
+        <p class="form-error" role="alert" hidden></p>
         <p class="form-success" role="status">Thanks! Your message is on its way — we'll be in touch within one working day.</p>
       </form>
     </div>

@@ -564,8 +564,8 @@
       <div class="pricing">
         <div class="reveal" data-delay="1">
           <div class="price-table-wrap">
-            <!-- PLATZHALTER: Beispielpreise, abgeleitet aus Dashboard.pdf. Brutto = netto × 1,19, kaufmännisch gerundet.
-                 Vor Livegang durch die freigegebene Preisliste ersetzen. -->
+            <!-- Fallback-Werte ohne JS/PHP. Mit Backend baut assets/checkout.js die Zeilen aus api/revolut/angebot.php
+                 neu (Dashboard → Routingmatrix, Priorität 1). -->
             <table class="table" aria-describedby="preis-hinweis preis-hinweis-privat">
               <thead><tr><th>Zielland</th><th>Beispiel-Carrier</th><th>Laufzeit</th><th><span data-for="business">Preis netto</span><span data-for="private">Preis inkl. MwSt.</span></th></tr></thead>
               <tbody>
@@ -758,33 +758,40 @@
           <li><b>Unternehmen</b>NEOS Logistics UG</li>
         </ul>
       </div>
-      <!-- PLATZHALTER-ZIEL: mailto, bis ein Formular-Backend steht (siehe README). -->
-      <form class="form reveal" data-delay="1" action="mailto:info@neos24.com" method="post" enctype="text/plain" novalidate>
+      <!-- Geht an api/anfrage.php (Datenbank + Benachrichtigung, Dashboard → Kunden & Anfragen);
+           mit JS per fetch, ohne JS als normales Formular mit Rücksprung ?gesendet=1. -->
+      <form class="form reveal" data-delay="1" action="api/anfrage.php" method="post" novalidate
+        data-msg-invalid="Bitte prüfe die rot markierten Felder."
+        data-msg-toomany="Zu viele Anfragen in kurzer Zeit. Bitte versuch es später noch einmal oder schreib an info@neos24.com."
+        data-msg-network="Senden fehlgeschlagen. Bitte versuch es gleich noch einmal oder schreib an info@neos24.com.">
+        <input type="hidden" name="sprache" value="de">
+        <input type="hidden" name="art" value="business">
+        <div class="field checkout-honey" aria-hidden="true"><label for="f-webseite">Webseite</label><input id="f-webseite" name="webseite" type="text" tabindex="-1" autocomplete="off"></div>
         <div class="form-row">
           <div class="field">
             <label for="f-name">Name</label>
-            <input id="f-name" name="Name" type="text" autocomplete="name" required>
+            <input id="f-name" name="name" type="text" autocomplete="name" required>
             <span class="error">Bitte gib deinen Namen an.</span>
           </div>
           <div class="field" data-for="business">
             <label for="f-company">Shop / Unternehmen</label>
-            <input id="f-company" name="Unternehmen" type="text" autocomplete="organization">
+            <input id="f-company" name="firma" type="text" autocomplete="organization">
           </div>
           <div class="field" data-for="private">
             <label for="f-email-p">E-Mail</label>
-            <input id="f-email-p" name="E-Mail" type="email" autocomplete="email" inputmode="email" required>
+            <input id="f-email-p" name="email_privat" type="email" autocomplete="email" inputmode="email" required>
             <span class="error">Bitte gib eine gültige E-Mail-Adresse an.</span>
           </div>
         </div>
         <div class="form-row" data-for="business">
           <div class="field">
             <label for="f-email">E-Mail</label>
-            <input id="f-email" name="E-Mail" type="email" autocomplete="email" inputmode="email" required>
+            <input id="f-email" name="email" type="email" autocomplete="email" inputmode="email" required>
             <span class="error">Bitte gib eine gültige E-Mail-Adresse an.</span>
           </div>
           <div class="field">
             <label for="f-volume">Sendungen pro Monat</label>
-            <select id="f-volume" name="Sendungen pro Monat" required>
+            <select id="f-volume" name="volumen" required>
               <option value="">Bitte wählen</option>
               <option>unter 100</option>
               <option>100 – 500</option>
@@ -797,12 +804,13 @@
         </div>
         <div class="field">
           <label for="f-msg"><span data-for="business">Zielländer &amp; Anmerkungen <span style="font-weight:400;color:var(--ink-500)">(optional)</span></span><span data-for="private">Deine Nachricht</span></label>
-          <textarea id="f-msg" name="Nachricht" placeholder="z. B. FR, IT, PL – Shopware 6, viele Retouren"></textarea>
+          <textarea id="f-msg" name="nachricht" placeholder="z. B. FR, IT, PL – Shopware 6, viele Retouren"></textarea>
         </div>
         <div class="form-foot">
           <button class="btn btn--primary btn--lg" type="submit"><span data-for="business">Konto anfragen</span><span data-for="private">Nachricht senden</span> <span class="arrow" aria-hidden="true">→</span></button>
           <small>Mit dem Absenden stimmst du der Verarbeitung deiner Angaben zur Kontaktaufnahme zu. Details in der <a href="#" style="text-decoration:underline">Datenschutzerklärung</a>.</small>
         </div>
+        <p class="form-error" role="alert" hidden></p>
         <p class="form-success" role="status">Danke! Deine Nachricht ist raus — wir melden uns innerhalb eines Werktags bei dir.</p>
       </form>
     </div>

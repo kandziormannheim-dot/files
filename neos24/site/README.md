@@ -16,10 +16,12 @@ cd neos24/site && python3 -m http.server 8080   # http://localhost:8080
 | `en/index.html` | Englische Fassung, gleiche Struktur und Assets, verlinkt per Sprachumschalter (Header, Mobilmenü, Footer) und `hreflang` |
 | `assets/neos.css` | Design-Tokens (`:root`), Komponenten, Sektionen, Breakpoints, Bewegungsreduktion |
 | `assets/checkout.js` | Privatkunden-Checkout: Preissumme, Validierung, Bestellung anlegen, Revolut-Popup, Statusabfrage — siehe `api/revolut/README.md` |
-| `api/revolut/` | PHP-Endpunkte für die Revolut-Zahlung (Bestellung, Status, Webhook) plus Konfigurationsvorlage |
+| `api/revolut/` | PHP-Endpunkte für die Revolut-Zahlung (Bestellung, Status, Webhook) plus Konfigurationsvorlage; `angebot.php` liefert die Preisliste live aus der Datenbank |
+| `api/anfrage.php` | Kontaktformular → Anfrage in der Datenbank (Dashboard → Kunden & Anfragen) + Benachrichtigung ans Postfach; JSON per fetch oder klassisches Formular ohne JS |
+| `intern/` | Internes Dashboard mit Rollen und Rechtematrix: Übersicht, Bestellungen, Preise & Zielländer, Routingmatrix, Kunden & Anfragen, Benutzer & Rollen — siehe `intern/README.md` |
 | `assets/neos.js` | Zielgruppen-Reiter, Burger-Menü, Scroll-Reveal, FAQ-Einzelöffnung, Formular-Validierung, aktiver Nav-Punkt — die Seite läuft auch ohne JS (dann Business) |
 | `assets/fonts.css` + `assets/fonts/` | Sora, Hanken Grotesk, JetBrains Mono als variable WOFF2 (OFL), selbst gehostet — kein Google-Fonts-Aufruf beim Besuch |
-| `screenshots/` | Playwright-Aufnahmen bei 1280 und 375 px zur Abnahme (`en-*` englische Seite, `*-privat` / `*-private` Privatkunden-Reiter, `checkout-*` Bezahlformular) |
+| `screenshots/` | Playwright-Aufnahmen bei 1280 und 375 px zur Abnahme (`en-*` englische Seite, `*-privat` / `*-private` Privatkunden-Reiter, `checkout-*` Bezahlformular, `intern-*` Dashboard, `kontakt-*` Formularbestätigung) |
 
 ## Zuordnung zu den PDFs
 
@@ -34,11 +36,11 @@ Bewusst weggelassen: der Spar-Rechner (`Startseite.pdf` S. 4).
 
 ## Platzhalter — vor dem Livegang ersetzen
 
-- **Preise** (`#preise`): Beispielwerte, aus den Sendungskosten im Dashboard-PDF abgeleitet. Privatkunden-Preise sind dieselben Werte × 1,19, kaufmännisch gerundet, beide Fassungen stehen fertig formatiert in der Tabelle.
+- **Preise** (`#preise`): Mit Backend kommen Zeilen, Carrier und Preise live aus der Datenbank (Dashboard → Routingmatrix, Priorität 1; `assets/checkout.js` baut die Tabelle aus `api/revolut/angebot.php`). Die Werte im Markup sind nur der Fallback ohne PHP — Beispielwerte aus dem Dashboard-PDF, Privatkunden × 1,19.
 - **Kundenstimmen** (`#kunden`): fiktive Zitate und Firmen bzw. Privatpersonen zur Layout-Abnahme.
 - **Abgabe & Abholung** (`#abgabe`, nur Privatkunden): „über 40.000 Paketshops“ ist eine Platzhalterzahl.
-- **Paket verschicken** (`#paket`, nur Privatkunden): Zahlung läuft, das Versandlabel selbst entsteht erst mit der Carrier-Anbindung (`labelBeauftragen()` in `api/revolut/_bootstrap.php`). Preise im Formular (`data-netto`) müssen mit `api/revolut/preise.php` übereinstimmen.
-- **Kontaktformular** (`#kontakt`): `action="mailto:info@neos24.com"` als Übergang. Mit Backend in `neos.js` beim Submit ein `fetch()` einsetzen.
+- **Paket verschicken** (`#paket`, nur Privatkunden): Zahlung läuft, das Versandlabel selbst entsteht erst mit der Carrier-Anbindung (`labelBeauftragen()` in `api/revolut/_bootstrap.php`). Preise und Länder im Formular kommen live aus `angebot.php`; `data-netto` im Markup ist Fallback.
+- **Kontaktformular** (`#kontakt`): geht an `api/anfrage.php` und landet im Dashboard; die Benachrichtigung braucht `kopie` oder `absender` in der Konfiguration.
 - **Impressum / Datenschutz**: Links zeigen auf `#`.
 - **Open-Graph-Bild**: noch keins hinterlegt (`og:image`).
 - **URL-Schema**: `hreflang` und `canonical` gehen von `neos24.com/` (DE) und `neos24.com/en/` (EN) aus. Bei anderem Schema beide Dateien anpassen.

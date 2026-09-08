@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Vorlage für die Konfiguration von neos24.com (Revolut-Checkout, Mails).
+ * Vorlage für die Konfiguration von neos24.com (Revolut-Checkout, Mails,
+ * Kontaktformular, internes Dashboard).
  *
  * Diese Datei gehört NICHT ins Webroot und NICHT ins Repository. Sie liegt
  * eine Ebene oberhalb des Webroots:
@@ -35,7 +36,18 @@ return [
     ],
 
     // Verzeichnis für SQLite und Missbrauchsbremse — außerhalb des Webroots.
+    // Enthält Bestellungen UND die Daten des internen Dashboards (Preise,
+    // Routing, Anfragen, Benutzer, Rollen, Protokoll).
     'daten' => '/var/www/vhosts/neos24.com/neos24-daten',
+
+    // Mehrwertsteuersatz in Prozent — Privatkundenpreise = netto × (100 + Satz) / 100.
+    'mwstSatz' => 19,
+
+    // Internes Dashboard (intern/). Ersten Admin anlegen: php intern/einrichten.php <E-Mail> "Name"
+    'intern' => [
+        'sitzungsdauer' => 28800,                       // Sekunden ohne Aktivität bis zur Abmeldung (8 h)
+        'anmeldung' => ['versuche' => 5, 'sperre' => 900, 'jeIp' => 30], // Fehlversuche je Konto → Sperre (s); Versuche je IP und Stunde
+    ],
 
     // Öffentliche Adresse der Seite ohne Schrägstrich am Ende; wird für die
     // Rücksprung-URL nach 3-D-Secure gebraucht.

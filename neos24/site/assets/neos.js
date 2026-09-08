@@ -119,13 +119,43 @@
       input.addEventListener('blur', function () { validate(input); });
       input.addEventListener('input', function () { if (input.closest('.field').classList.contains('is-invalid')) validate(input); });
     });
+    var errBox = form.querySelector('.form-error');
+    var msg = function (k) { return form.getAttribute('data-msg-' + k) || k; };
+    var showError = function (text) { if (!errBox) return; errBox.textContent = text; errBox.hidden = false; };
+    form.addEventListener('input', function () { if (errBox && !errBox.hidden) errBox.hidden = true; });
+    var sent = function () { form.classList.add('is-sent'); form.querySelector('.form-success').scrollIntoView({ block: 'center', behavior: 'smooth' }); };
+    /* Rücksprung ohne JS-Absenden (?gesendet=1 / ?sent=1) — Bestätigung zeigen */
+    if (/[?&](gesendet|sent)=1(&|$)/.test(location.search)) form.classList.add('is-sent');
+    var rueck = /[?&](?:fehler|error)=([^&#]*)/.exec(location.search);
+    if (rueck) showError(msg(rueck[1] === 'ungueltig' ? 'invalid' : rueck[1] === 'zu-viele' ? 'toomany' : 'network'));
+
     form.addEventListener('submit', function (e) {
       var allOk = true, first = null;
       fields.forEach(function (input) { var ok = validate(input); if (!ok) { allOk = false; first = first || input; } });
-      if (!allOk) { e.preventDefault(); first.focus(); return; }
-      /* Gültig: Formular geht an sein action-Ziel (Platzhalter mailto) und
-         zeigt die Bestätigung. Mit echtem Backend hier fetch() einsetzen. */
-      form.classList.add('is-sent');
+      if (!allOk) { e.preventDefault(); first.focus(); showError(msg('invalid')); return; }
+      if (!window.fetch || !form.getAttribute('action') || /^mailto:/.test(form.getAttribute('action'))) return; /* ohne fetch: normales Absenden */
+      e.preventDefault();
+      var val = function (n) { var el = form.querySelector('[name="' + n + '"]'); return el ? el.value.trim() : ''; };
+      var privat = document.documentElement.getAttribute('data-audience') === 'private';
+      var payload = {
+        sprache: val('sprache') || document.documentElement.lang || 'de',
+        art: privat ? 'privat' : 'business',
+        name: val('name'),
+        email: privat ? val('email_privat') : val('email'),
+        firma: privat ? '' : val('firma'),
+        volumen: privat ? '' : val('volumen'),
+        nachricht: val('nachricht'),
+        webseite: val('webseite')
+      };
+      form.classList.add('is-busy');
+      fetch(form.getAttribute('action'), { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(payload) })
+        .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d || {} }; }); })
+        .then(function (res) {
+          form.classList.remove('is-busy');
+          if (res.d.ok) { sent(); return; }
+          showError(msg(res.d.fehler === 'zu-viele' ? 'toomany' : res.d.fehler === 'ungueltig' ? 'invalid' : 'network'));
+        })
+        .catch(function () { form.classList.remove('is-busy'); showError(msg('network')); });
     });
   }
 
