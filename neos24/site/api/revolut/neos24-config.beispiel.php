@@ -49,12 +49,30 @@ return [
         'anmeldung' => ['versuche' => 5, 'sperre' => 900, 'jeIp' => 30], // Fehlversuche je Konto → Sperre (s); Versuche je IP und Stunde
     ],
 
+    // Kundenportal (konto/): Anmeldung per Passwort oder E-Mail-Link.
+    'konto' => [
+        'sitzungsdauer' => 1209600,                     // 14 Tage ohne Aktivität
+        'linkGueltigkeit' => 900,                       // Anmelde-/Registrierungslink in Sekunden
+        'einladungGueltigkeit' => 604800,               // Einladung für Firmenbenutzer in Sekunden (7 Tage)
+        'anmeldung' => ['versuche' => 5, 'sperre' => 900, 'jeIp' => 30],
+    ],
+
+    // Rechnungsabsender für die Sammelrechnungen (Pflichtangaben vor Livegang füllen).
+    'firma' => [
+        'name' => 'NEOS Logistics UG',
+        'strasse' => 'Musterstraße 1', 'plz' => '68159', 'ort' => 'Mannheim', 'land' => 'Deutschland',
+        'ustId' => 'DE000000000', 'registergericht' => 'Amtsgericht Mannheim, HRB 000000', 'geschaeftsfuehrung' => 'Vorname Nachname',
+        'iban' => 'DE00 0000 0000 0000 0000 00', 'bic' => 'XXXXDEXXXXX', 'bank' => 'Musterbank',
+        'email' => 'info@neos24.com', 'web' => 'neos24.com',
+    ],
+    'rechnung' => ['praefix' => 'NR', 'zahlungszielTage' => 14], // Nummer NR-<Jahr>-0001, Fälligkeit
+
     // Öffentliche Adresse der Seite ohne Schrägstrich am Ende; wird für die
     // Rücksprung-URL nach 3-D-Secure gebraucht.
     'basisUrl' => 'https://neos24.com',
 
-    // Bestätigungsmails. 'smtp' (empfohlen), 'mail' (lokaler MTA) oder ''
-    // (nur ins Serverprotokoll — für die lokale Entwicklung).
+    // Mails (Bestätigungen, Anmeldelinks, Rechnungen). 'smtp' (empfohlen), 'mail' (lokaler MTA),
+    // 'datei' (Textdateien unter daten/mails/ — lokale Entwicklung) oder '' (nur Serverprotokoll).
     'transport' => 'smtp',
     'absender' => 'bestellung@neos24.com',
     'absenderName' => 'NEOS',

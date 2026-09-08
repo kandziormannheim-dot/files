@@ -276,6 +276,9 @@ table { border-collapse: collapse; width: 100%; }
 .nav a:hover, .nav a.is-active { color: var(--ink); background: var(--paper); }
 .header-actions { display: flex; align-items: center; gap: .5rem; }
 .lang { display: inline-flex; align-items: center; justify-content: center; min-width: 2.75rem; min-height: 2.75rem; padding: .4rem .6rem; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 600; letter-spacing: .18em; color: var(--ink-600); border: 1px solid var(--line); transition: color var(--fast), border-color var(--fast); }
+.login { font-weight: 600; font-size: .875rem; color: var(--ink-600); white-space: nowrap; display: none; }
+.login:hover { color: var(--ink); }
+@media (min-width: 1140px) { .login { display: inline-block; } }
 .lang:hover { color: var(--ink); border-color: var(--ink-200); }
 .header-actions .btn { display: none; }
 .burger { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--radius-sm); }

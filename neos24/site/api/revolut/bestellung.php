@@ -91,15 +91,25 @@ if (!begrenzungPruefen('bestellung')) {
 
 // ---------------------------------------------------------------- Anlegen
 
+// Bestätigtes Privatkunden-Konto zu dieser E-Mail? Dann gehört die Bestellung ins Portal.
+$kundeId = null;
+try {
+    $st = datenbank()->prepare("SELECT id FROM kunden WHERE email = ? AND art = 'privat' AND email_bestaetigt = 1 AND aktiv = 1");
+    $st->execute([mb_strtolower($email)]);
+    $kundeId = ($id = $st->fetchColumn()) !== false ? (int) $id : null;
+} catch (Throwable) {
+    $kundeId = null;
+}
+
 try {
     $db = datenbank();
     $extRef = 'NE-' . gmdate('Y') . '-' . strtoupper(bin2hex(random_bytes(4)));
     $st = $db->prepare(<<<'SQL'
         INSERT INTO bestellungen
             (ext_ref, status, netto_cent, mwst_cent, betrag_cent, waehrung, zielland, gewichtsklasse, carrier, einkauf_cent,
-             email, sprache, absender_json, empfaenger_json, ereignisse_json, erstellt, aktualisiert)
+             email, sprache, absender_json, empfaenger_json, ereignisse_json, erstellt, aktualisiert, kunde_id, zahlungsart)
         VALUES
-            (:ref, 'offen', :netto, :mwst, :brutto, :w, :land, :gk, :carrier, :einkauf, :email, :sprache, :abs, :emp, :ev, :t, :t)
+            (:ref, 'offen', :netto, :mwst, :brutto, :w, :land, :gk, :carrier, :einkauf, :email, :sprache, :abs, :emp, :ev, :t, :t, :kunde, 'revolut')
     SQL);
     $st->execute([
         ':ref' => $extRef,
@@ -117,6 +127,7 @@ try {
         ':emp' => json_encode($empfaenger, JSON_UNESCAPED_UNICODE),
         ':ev' => json_encode([['zeit' => jetzt(), 'ereignis' => 'angelegt', 'status' => 'offen']]),
         ':t' => jetzt(),
+        ':kunde' => $kundeId,
     ]);
     $bestellung = bestellungLaden('ext_ref', $extRef);
 } catch (Throwable $e) {

@@ -10,7 +10,7 @@ $ich = benutzerAktuell();
 $hinweis = hinweisHolen();
 $titel = $titel ?? 'Dashboard';
 $aktiv = $aktiv ?? '';
-$symbole = ['uebersicht' => '◎', 'bestellungen' => '▤', 'preise' => '€', 'routing' => '⇄', 'kunden' => '☺', 'benutzer' => '⚙'];
+$symbole = ['uebersicht' => '◎', 'bestellungen' => '▤', 'preise' => '€', 'routing' => '⇄', 'kunden' => '☺', 'rechnungen' => '▣', 'benutzer' => '⚙'];
 ?>
 <!doctype html>
 <html lang="de">
@@ -19,6 +19,7 @@ $symbole = ['uebersicht' => '◎', 'bestellungen' => '▤', 'preise' => '€', '
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0C0E16">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230C0E16'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-family='Sora,Arial,sans-serif' font-weight='800' font-size='34' fill='none' stroke='%2329D3F5' stroke-width='2'%3EN%3C/text%3E%3C/svg%3E">
 <title><?= e($titel) ?> · NEOS intern</title>
 <link rel="stylesheet" href="<?= e(url('../assets/fonts.css')) ?>">
 <link rel="stylesheet" href="<?= e(url('assets/intern.css')) ?>">

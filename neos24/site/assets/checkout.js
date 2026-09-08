@@ -106,6 +106,18 @@
     })
     .catch(function () { /* Markup-Preise bleiben; die Bestellung prüft ohnehin serverseitig */ });
 
+  /* Angemeldeter Privatkunde (Kundenportal): E-Mail und Absender vorbelegen */
+  var konto = sec.getAttribute('data-konto') || (api.indexOf('../') === 0 ? '../konto' : 'konto');
+  fetch(konto + '/ich', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d || !d.angemeldet) return;
+      var set = function (n, v) { var el = form.querySelector('[name="' + n + '"]'); if (el && !el.value && v) el.value = v; };
+      set('email', d.email); set('absender.name', (d.absender && d.absender.name) || d.name);
+      if (d.absender) { set('absender.strasse', d.absender.strasse); set('absender.plz', d.absender.plz); set('absender.ort', d.absender.ort); }
+    })
+    .catch(function () {});
+
   /* Validierung ---------------------------------------------------------- */
   var validate = function (input) {
     var wrap = input.closest('.field');

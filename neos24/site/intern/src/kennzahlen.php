@@ -23,8 +23,8 @@ function kennzahlen(): array
         return (int) $st->fetchColumn();
     };
     $summe = static function (string $ab, string $bis = '9999') use ($db): array {
-        $st = $db->prepare("SELECT COALESCE(SUM(betrag_cent),0) AS brutto, COALESCE(SUM(netto_cent),0) AS netto, COALESCE(SUM(einkauf_cent),0) AS einkauf, COUNT(*) AS anzahl FROM bestellungen WHERE status = 'bezahlt' AND bezahlt >= ? AND bezahlt < ?");
-        $st->execute([$ab, $bis]);
+        $st = $db->prepare("SELECT COALESCE(SUM(betrag_cent),0) AS brutto, COALESCE(SUM(netto_cent),0) AS netto, COALESCE(SUM(einkauf_cent),0) AS einkauf, COUNT(*) AS anzahl FROM bestellungen WHERE (status = 'bezahlt' AND bezahlt >= ? AND bezahlt < ?) OR (status = 'beauftragt' AND erstellt >= ? AND erstellt < ?)");
+        $st->execute([$ab, $bis, $ab, $bis]);
 
         return $st->fetch() ?: ['brutto' => 0, 'netto' => 0, 'einkauf' => 0, 'anzahl' => 0];
     };
@@ -62,6 +62,8 @@ function kennzahlen(): array
     $carrier = $st->fetchAll();
 
     $letzte = $db->query('SELECT ext_ref, status, zielland, carrier, betrag_cent, email, erstellt FROM bestellungen ORDER BY id DESC LIMIT 10')->fetchAll();
+    $rechnungenOffen = $db->query("SELECT COUNT(*) AS n, COALESCE(SUM(brutto_cent),0) AS brutto FROM rechnungen WHERE status = 'offen'")->fetch() ?: ['n' => 0, 'brutto' => 0];
+    $firmenAktiv = (int) $db->query('SELECT COUNT(*) FROM firmen WHERE aktiv = 1')->fetchColumn();
     $anfragenNeu = (int) $db->query("SELECT COUNT(*) FROM anfragen WHERE status = 'neu'")->fetchColumn();
     $anfragenOffen = (int) $db->query("SELECT COUNT(*) FROM anfragen WHERE status IN ('neu','in_bearbeitung')")->fetchColumn();
 
@@ -78,6 +80,9 @@ function kennzahlen(): array
         'laender' => $laender,
         'carrier' => $carrier,
         'letzte' => $letzte,
+        'rechnungenOffen' => (int) $rechnungenOffen['n'],
+        'rechnungenOffenBrutto' => (int) $rechnungenOffen['brutto'],
+        'firmenAktiv' => $firmenAktiv,
         'anfragenNeu' => $anfragenNeu,
         'anfragenOffen' => $anfragenOffen,
     ];

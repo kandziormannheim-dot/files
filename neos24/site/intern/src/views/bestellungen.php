@@ -6,7 +6,7 @@
   <input type="search" name="q" value="<?= e($q) ?>" placeholder="Bestellnummer, E-Mail, Land, Revolut-ID" aria-label="Suche">
   <select name="status" aria-label="Status">
     <option value="">Alle Status</option>
-    <?php foreach (['offen', 'angelegt', 'autorisiert', 'bezahlt', 'fehlgeschlagen', 'storniert'] as $s) { ?>
+    <?php foreach (['offen', 'angelegt', 'autorisiert', 'bezahlt', 'beauftragt', 'fehlgeschlagen', 'storniert'] as $s) { ?>
       <option value="<?= $s ?>" <?= $status === $s ? 'selected' : '' ?>><?= e(statusName($s)) ?></option>
     <?php } ?>
   </select>
@@ -17,7 +17,7 @@
   <?php if ($zeilen === []) { ?><p class="leer">Keine Bestellungen gefunden.</p><?php } else { ?>
   <div class="scrollen">
   <table class="tabelle">
-    <thead><tr><th>Bestellung</th><th>Status</th><th>Ziel</th><th>Carrier</th><th>Kunde</th><th class="rechts">Brutto</th><th class="rechts">Angelegt</th></tr></thead>
+    <thead><tr><th>Bestellung</th><th>Status</th><th>Ziel</th><th>Carrier</th><th>Kunde</th><th>Zahlung</th><th class="rechts">Brutto</th><th class="rechts">Angelegt</th></tr></thead>
     <tbody>
     <?php foreach ($zeilen as $z) { ?>
       <tr>
@@ -25,7 +25,8 @@
         <td><?= statusPille((string) $z['status']) ?></td>
         <td><span class="flagge"><?= e($z['zielland']) ?></span><?= e($z['gewichtsklasse']) ?></td>
         <td><?= e($z['carrier'] ?? '—') ?></td>
-        <td><?= e($z['email']) ?></td>
+        <td><?= e($z['email']) ?><?= !empty($z['firma']) ? '<br><span class="leise">' . e($z['firma']) . '</span>' : '' ?></td>
+        <td><?= $z['zahlungsart'] === 'rechnung' ? 'Rechnung' : 'Revolut' ?></td>
         <td class="mono rechts"><?= e(euro((int) $z['betrag_cent'])) ?></td>
         <td class="mono rechts leise"><?= e(zeitAnzeigen($z['erstellt'])) ?></td>
       </tr>

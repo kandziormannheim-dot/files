@@ -42,6 +42,17 @@
         <dt>Aktualisiert</dt><dd><?= e(zeitAnzeigen($a['aktualisiert'])) ?></dd>
       </dl>
     </div>
+    <?php if (darf('kunden', 'bearbeiten')) { ?>
+    <div class="karte">
+      <h2 class="h2">Firmenkonto</h2>
+      <?php if (!empty($a['firma_id'])) { ?>
+        <p>Angelegt: <a href="<?= e(url('kunden/firmen/' . $a['firma_id'])) ?>">Firma öffnen</a></p>
+      <?php } else { ?>
+        <p class="leise" style="margin-bottom:.75rem">Legt Firma und Inhaber an und schickt die Einladung ins Kundenportal.</p>
+        <a class="knopf knopf--primaer knopf--breit" href="<?= e(url('kunden/firmen/neu', ['anfrage' => $a['id']])) ?>">Firmenkonto anlegen</a>
+      <?php } ?>
+    </div>
+    <?php } ?>
     <?php if (darf('kunden', 'loeschen')) { ?>
     <div class="karte">
       <form method="post" action="<?= e(url('kunden/anfragen/' . $a['id'] . '/loeschen')) ?>" data-bestaetigen="Anfrage von <?= e($a['name']) ?> endgültig löschen?"><?= csrfFeld() ?><button class="knopf knopf--gefahr knopf--breit" type="submit">Anfrage löschen</button></form>

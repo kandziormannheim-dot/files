@@ -12,9 +12,12 @@
 declare(strict_types=1);
 
 define('NEOS_INTERN', true);
+define('NEOS_HTML', true);
 
 require dirname(__DIR__, 2) . '/api/revolut/_bootstrap.php';
 require __DIR__ . '/helpers.php';
+require dirname(__DIR__, 2) . '/lib/kunden.php';
+require dirname(__DIR__, 2) . '/lib/rechnungen.php';
 require __DIR__ . '/rechte.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/preise.php';
@@ -40,6 +43,8 @@ function internBasis(): string
     return rtrim(str_replace('\\', '/', dirname($skript)), '/');
 }
 
+define('APP_BASIS', internBasis());
+
 /** Sitzung mit strengen Cookie-Regeln starten (Anmeldung und CSRF). */
 function sitzungStarten(): void
 {
@@ -50,7 +55,7 @@ function sitzungStarten(): void
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => internBasis() . '/',
-        'secure' => (($_SERVER['HTTPS'] ?? '') !== '' && ($_SERVER['HTTPS'] ?? '') !== 'off'),
+        'secure' => istHttps(),
         'httponly' => true,
         'samesite' => 'Lax',
     ]);

@@ -13,8 +13,9 @@ $trend = (int) $k['umsatzVor']['brutto'] > 0 ? (int) round(((int) $k['umsatz30']
 
 <div class="kpi-raster">
   <div class="kpi kpi--cyan"><span class="kpi-name">Bestellungen heute</span><strong class="kpi-wert"><?= $k['heute'] ?></strong><span class="kpi-zusatz"><?= $k['tage7'] ?> in 7 Tagen · <?= $k['tage30'] ?> in 30 Tagen</span></div>
-  <div class="kpi kpi--gelb"><span class="kpi-name">Umsatz 30 Tage (brutto)</span><strong class="kpi-wert"><?= e(euro((int) $k['umsatz30']['brutto'])) ?></strong><span class="kpi-zusatz">netto <?= e(euro((int) $k['umsatz30']['netto'])) ?><?= $trend !== null ? ' · ' . ($trend >= 0 ? '+' : '') . $trend . ' % zu den 30 Tagen davor' : '' ?></span></div>
+  <div class="kpi kpi--gelb"><span class="kpi-name">Umsatz 30 Tage (brutto)</span><strong class="kpi-wert"><?= e(euro((int) $k['umsatz30']['brutto'])) ?></strong><span class="kpi-zusatz">netto <?= e(euro((int) $k['umsatz30']['netto'])) ?> · bezahlt und auf Rechnung<?= $trend !== null ? ' · ' . ($trend >= 0 ? '+' : '') . $trend . ' % zu den 30 Tagen davor' : '' ?></span></div>
   <div class="kpi kpi--magenta"><span class="kpi-name">Marge 30 Tage</span><strong class="kpi-wert"><?= e(euro($k['marge30'])) ?></strong><span class="kpi-zusatz">Verkauf netto − Einkauf laut Routingmatrix</span></div>
+  <div class="kpi kpi--cyan"><span class="kpi-name">Offene Rechnungen</span><strong class="kpi-wert"><?= (int) $k['rechnungenOffen'] ?></strong><span class="kpi-zusatz"><?= e(euro((int) $k['rechnungenOffenBrutto'])) ?> brutto · <?= (int) $k['firmenAktiv'] ?> aktive Firmen<?= darf('rechnungen') ? ' · <a href="' . e(url('rechnungen')) . '">öffnen</a>' : '' ?></span></div>
   <div class="kpi kpi--coral"><span class="kpi-name">Neue Anfragen</span><strong class="kpi-wert"><?= $k['anfragenNeu'] ?></strong><span class="kpi-zusatz"><?= $k['anfragenOffen'] ?> offen insgesamt<?= darf('kunden') ? ' · <a href="' . e(url('kunden')) . '">öffnen</a>' : '' ?></span></div>
 </div>
 

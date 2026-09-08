@@ -18,10 +18,12 @@ cd neos24/site && python3 -m http.server 8080   # http://localhost:8080
 | `assets/checkout.js` | Privatkunden-Checkout: Preissumme, Validierung, Bestellung anlegen, Revolut-Popup, Statusabfrage — siehe `api/revolut/README.md` |
 | `api/revolut/` | PHP-Endpunkte für die Revolut-Zahlung (Bestellung, Status, Webhook) plus Konfigurationsvorlage; `angebot.php` liefert die Preisliste live aus der Datenbank |
 | `api/anfrage.php` | Kontaktformular → Anfrage in der Datenbank (Dashboard → Kunden & Anfragen) + Benachrichtigung ans Postfach; JSON per fetch oder klassisches Formular ohne JS |
-| `intern/` | Internes Dashboard mit Rollen und Rechtematrix: Übersicht, Bestellungen, Preise & Zielländer, Routingmatrix, Kunden & Anfragen, Benutzer & Rollen — siehe `intern/README.md` |
+| `intern/` | Internes Dashboard mit Rollen und Rechtematrix: Übersicht, Bestellungen, Preise & Zielländer, Routingmatrix, Kunden & Anfragen (Firmen, Privatkunden), Rechnungen, Benutzer & Rollen — siehe `intern/README.md` |
+| `konto/` | Kundenportal: Privatkunden sehen ihre Bestellungen, Geschäftskunden beauftragen Sendungen auf Rechnung, laden Benutzer ein und laden Rechnungen — jeder nur seine eigenen Daten; Login per Passwort oder E-Mail-Link — siehe `konto/README.md` |
+| `lib/` | Gemeinsame Helfer für `intern/` und `konto/` (Maskierung, CSRF, Formate), Kundenkonten und Firmen, Sammelrechnungen mit PDF (FPDF vendored) |
 | `assets/neos.js` | Zielgruppen-Reiter, Burger-Menü, Scroll-Reveal, FAQ-Einzelöffnung, Formular-Validierung, aktiver Nav-Punkt — die Seite läuft auch ohne JS (dann Business) |
 | `assets/fonts.css` + `assets/fonts/` | Sora, Hanken Grotesk, JetBrains Mono als variable WOFF2 (OFL), selbst gehostet — kein Google-Fonts-Aufruf beim Besuch |
-| `screenshots/` | Playwright-Aufnahmen bei 1280 und 375 px zur Abnahme (`en-*` englische Seite, `*-privat` / `*-private` Privatkunden-Reiter, `checkout-*` Bezahlformular, `intern-*` Dashboard, `kontakt-*` Formularbestätigung) |
+| `screenshots/` | Playwright-Aufnahmen bei 1280 und 375 px zur Abnahme (`en-*` englische Seite, `*-privat` / `*-private` Privatkunden-Reiter, `checkout-*` Bezahlformular, `intern-*` Dashboard, `konto-*` Kundenportal, `kontakt-*` Formularbestätigung) |
 
 ## Zuordnung zu den PDFs
 

@@ -16,7 +16,7 @@
 
 declare(strict_types=1);
 
-if (PHP_SAPI !== 'cli' && !defined('NEOS_INTERN')) {
+if (PHP_SAPI !== 'cli' && !defined('NEOS_HTML')) {
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
     header('X-Content-Type-Options: nosniff');
@@ -67,11 +67,23 @@ function konfig(): array
             'sitzungsdauer' => 28800,       // Sekunden ohne Aktivität, bis die Anmeldung verfällt
             'anmeldung' => ['versuche' => 5, 'sperre' => 900, 'jeIp' => 30], // Fehlversuche je Konto, Sperre in Sekunden, Versuche je IP und Stunde
         ],
+        'konto' => [                        // Kundenportal (site/konto/)
+            'sitzungsdauer' => 1209600,     // 14 Tage ohne Aktivität
+            'linkGueltigkeit' => 900,       // Anmelde-/Registrierungslink, Sekunden
+            'einladungGueltigkeit' => 604800, // Einladung Firmenbenutzer, Sekunden
+            'anmeldung' => ['versuche' => 5, 'sperre' => 900, 'jeIp' => 30],
+        ],
+        'firma' => [                        // Rechnungsabsender (Pflichtangaben vor Livegang füllen)
+            'name' => 'NEOS Logistics UG', 'strasse' => '', 'plz' => '', 'ort' => '', 'land' => 'Deutschland',
+            'ustId' => '', 'registergericht' => '', 'geschaeftsfuehrung' => '',
+            'iban' => '', 'bic' => '', 'bank' => '', 'email' => 'info@neos24.com', 'web' => 'neos24.com',
+        ],
+        'rechnung' => ['praefix' => 'NR', 'zahlungszielTage' => 14],
         'basisUrl' => '',
         'absender' => '',
         'absenderName' => 'NEOS',
         'kopie' => '',
-        'transport' => '',                  // 'smtp', 'mail' oder '' (nur Protokoll)
+        'transport' => '',                  // 'smtp', 'mail', 'datei' (lokal: Textdateien) oder '' (nur Protokoll)
         'smtp' => [
             'host' => '', 'port' => 587, 'benutzer' => '', 'passwort' => '',
             'verschluesselung' => 'starttls', 'zeitlimit' => 15,
@@ -286,6 +298,14 @@ function schemaAnlegen(PDO $db): void
     if (!in_array('einkauf_cent', $spalten, true)) {
         $db->exec('ALTER TABLE bestellungen ADD COLUMN einkauf_cent INTEGER NOT NULL DEFAULT 0');
     }
+    foreach (['kunde_id' => 'INTEGER', 'firma_id' => 'INTEGER', 'rechnung_id' => 'INTEGER',
+              'zahlungsart' => "TEXT NOT NULL DEFAULT 'revolut'", 'referenz' => "TEXT NOT NULL DEFAULT ''"] as $spalte => $typ) {
+        if (!in_array($spalte, $spalten, true)) {
+            $db->exec("ALTER TABLE bestellungen ADD COLUMN $spalte $typ");
+        }
+    }
+    $db->exec('CREATE INDEX IF NOT EXISTS bestellungen_kunde ON bestellungen (kunde_id)');
+    $db->exec('CREATE INDEX IF NOT EXISTS bestellungen_firma ON bestellungen (firma_id, erstellt)');
 
     // Preise & Zielländer, Routingmatrix
     $db->exec(<<<'SQL'
@@ -345,6 +365,74 @@ function schemaAnlegen(PDO $db): void
             aktualisiert  TEXT NOT NULL
         );
         CREATE INDEX IF NOT EXISTS anfragen_status ON anfragen (status, erstellt);
+    SQL);
+    $spalten = array_column($db->query('PRAGMA table_info(anfragen)')->fetchAll(), 'name');
+    if (!in_array('firma_id', $spalten, true)) {
+        $db->exec('ALTER TABLE anfragen ADD COLUMN firma_id INTEGER');
+    }
+
+    // Kundenportal: Firmen, Kundenkonten, Anmeldelinks, Rechnungen
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS firmen (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            name              TEXT NOT NULL,
+            strasse           TEXT NOT NULL DEFAULT '',
+            plz               TEXT NOT NULL DEFAULT '',
+            ort               TEXT NOT NULL DEFAULT '',
+            land              TEXT NOT NULL DEFAULT 'DE',
+            ust_id            TEXT NOT NULL DEFAULT '',
+            rechnungs_email   TEXT NOT NULL DEFAULT '',
+            zahlungsziel_tage INTEGER NOT NULL DEFAULT 14,
+            aktiv             INTEGER NOT NULL DEFAULT 1,
+            anfrage_id        INTEGER,
+            freigeschaltet_von TEXT NOT NULL DEFAULT '',
+            erstellt          TEXT NOT NULL,
+            aktualisiert      TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS kunden (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            art               TEXT NOT NULL DEFAULT 'privat',
+            email             TEXT NOT NULL UNIQUE,
+            name              TEXT NOT NULL DEFAULT '',
+            firma_id          INTEGER REFERENCES firmen(id),
+            firmenrolle       TEXT NOT NULL DEFAULT '',
+            passwort_hash     TEXT,
+            email_bestaetigt  INTEGER NOT NULL DEFAULT 0,
+            aktiv             INTEGER NOT NULL DEFAULT 1,
+            sprache           TEXT NOT NULL DEFAULT 'de',
+            absender_json     TEXT NOT NULL DEFAULT '{}',
+            fehlversuche      INTEGER NOT NULL DEFAULT 0,
+            gesperrt_bis      TEXT,
+            letzte_anmeldung  TEXT,
+            erstellt          TEXT NOT NULL,
+            aktualisiert      TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS kunden_firma ON kunden (firma_id);
+        CREATE TABLE IF NOT EXISTS anmeldelinks (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            kunde_id    INTEGER NOT NULL REFERENCES kunden(id) ON DELETE CASCADE,
+            token_hash  TEXT NOT NULL UNIQUE,
+            zweck       TEXT NOT NULL,
+            ablauf      TEXT NOT NULL,
+            genutzt     TEXT,
+            erstellt    TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS rechnungen (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            nummer        TEXT NOT NULL UNIQUE,
+            firma_id      INTEGER NOT NULL REFERENCES firmen(id),
+            zeitraum_von  TEXT NOT NULL,
+            zeitraum_bis  TEXT NOT NULL,
+            netto_cent    INTEGER NOT NULL,
+            mwst_cent     INTEGER NOT NULL,
+            brutto_cent   INTEGER NOT NULL,
+            status        TEXT NOT NULL DEFAULT 'offen',
+            faellig       TEXT NOT NULL,
+            pdf_datei     TEXT NOT NULL DEFAULT '',
+            erstellt      TEXT NOT NULL,
+            erstellt_von  TEXT NOT NULL DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS rechnungen_firma ON rechnungen (firma_id, erstellt);
     SQL);
 
     // Benutzer, Rollen, Rechte, Protokoll
@@ -473,7 +561,7 @@ function bestellungFortschreiben(array $bestellung, string $status, string $erei
 
     $warBezahlt = $bestellung['status'] === 'bezahlt';
     // Ein endgültiger Status wird nicht mehr durch einen früheren überschrieben.
-    $rang = ['offen' => 0, 'angelegt' => 1, 'autorisiert' => 2, 'bezahlt' => 3, 'fehlgeschlagen' => 3, 'storniert' => 3];
+    $rang = ['offen' => 0, 'angelegt' => 1, 'autorisiert' => 2, 'bezahlt' => 3, 'beauftragt' => 3, 'fehlgeschlagen' => 3, 'storniert' => 3];
     $neuerStatus = ($rang[$status] ?? 0) >= ($rang[$bestellung['status']] ?? 0) ? $status : $bestellung['status'];
 
     $st = datenbank()->prepare(
@@ -715,6 +803,8 @@ function bestaetigungSenden(array $bestellung): void
             '',
             'Dein Versandlabel bekommst du in einer zweiten E-Mail, sobald es erzeugt ist.',
             '',
+            'Alle Bestellungen jederzeit im Kundenportal: ' . rtrim((string) $konfig['basisUrl'], '/') . '/konto/ — Anmeldung per E-Mail-Link, kein Passwort nötig.',
+            '',
             'NEOS Logistics UG · info@neos24.com',
         ]);
     } else {
@@ -730,6 +820,8 @@ function bestaetigungSenden(array $bestellung): void
             'Amount:      ' . betragFormat((int) $bestellung['betrag_cent'], 'en') . ' incl. ' . preisliste()['mwstSatz'] . '% VAT',
             '',
             'Your shipping label follows in a second email as soon as it is generated.',
+            '',
+            'All your orders any time in the customer portal: ' . rtrim((string) $konfig['basisUrl'], '/') . '/konto/?sprache=en — sign in by email link, no password needed.',
             '',
             'NEOS Logistics UG · info@neos24.com',
         ]);
@@ -752,6 +844,16 @@ function mailSenden(string $an, string $betreff, string $koerper): void
 {
     $konfig = konfig();
     $transport = (string) $konfig['transport'];
+    if ($transport === 'datei') {
+        // Lokale Entwicklung: jede Mail als Textdatei ins Datenverzeichnis.
+        $verzeichnis = rtrim((string) $konfig['daten'], '/') . '/mails';
+        if (!is_dir($verzeichnis)) {
+            @mkdir($verzeichnis, 0770, true);
+        }
+        @file_put_contents($verzeichnis . '/' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(3)) . '.txt', "An: $an\nBetreff: $betreff\n\n$koerper\n");
+
+        return;
+    }
     if ($transport === '' || (string) $konfig['absender'] === '') {
         error_log('[revolut] Mail (kein Transport) an ' . $an . ': ' . $betreff);
 

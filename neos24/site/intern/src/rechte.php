@@ -15,6 +15,7 @@ const MODULE = [
     'preise' => 'Preise & Zielländer',
     'routing' => 'Routingmatrix',
     'kunden' => 'Kunden & Anfragen',
+    'rechnungen' => 'Rechnungen',
     'benutzer' => 'Benutzer & Rollen',
 ];
 
