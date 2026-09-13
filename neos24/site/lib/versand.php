@@ -455,6 +455,9 @@ function bestellungAnlegen(array $p): array
 /** Nach Beauftragung (Rechnung/Guthaben) und nach Zahlung: Label, Abholung, Ereignisse. */
 function nachBeauftragung(array $bestellung): void
 {
+    if (($bestellung['art'] ?? 'sendung') === 'nachberechnung') {
+        return; // kein Label, keine Abholung — reine Geldposition
+    }
     try {
         labelBeauftragen($bestellung);
     } catch (Throwable $e) {

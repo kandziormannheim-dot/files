@@ -176,7 +176,7 @@ if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/(bezahlen|tok
 
 if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/label\.pdf$#', $pfad, $t)) {
     $b = eigeneBestellung($ich, $t[2]);
-    if ($b === null || !in_array($b['status'], ['bezahlt', 'beauftragt'], true)) {
+    if ($b === null || !in_array($b['status'], ['bezahlt', 'beauftragt'], true) || $b['art'] === 'nachberechnung') {
         fehlerSeite(404, t('fehler.404'), t('label.noch_nicht'));
     }
     header('Content-Type: application/pdf');
@@ -191,7 +191,7 @@ if ($pfad === '/sendungen/labels.pdf' || $pfad === '/bestellungen/labels.pdf') {
     foreach (array_slice($refs, 0, 40) as $ref) {
         if (preg_match('/^NE-\d{4}-[0-9A-F]{8}$/', $ref)) {
             $b = eigeneBestellung($ich, $ref);
-            if ($b !== null && in_array($b['status'], ['bezahlt', 'beauftragt'], true)) {
+            if ($b !== null && in_array($b['status'], ['bezahlt', 'beauftragt'], true) && $b['art'] !== 'nachberechnung') {
                 $liste[] = $b;
             }
         }
@@ -209,7 +209,7 @@ if ($pfad === '/sendungen/labels.pdf' || $pfad === '/bestellungen/labels.pdf') {
 
 if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/retoure$#', $pfad, $t) && $methode === 'POST') {
     $b = eigeneBestellung($ich, $t[2]);
-    if ($b === null || !in_array($b['status'], ['bezahlt', 'beauftragt'], true) || $b['art'] === 'retoure') {
+    if ($b === null || !in_array($b['status'], ['bezahlt', 'beauftragt'], true) || $b['art'] !== 'sendung') {
         fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
     }
     $zahlungsart = $business ? 'rechnung' : (guthabenStand($ich) >= bruttoCent((int) $b['netto_cent'] - (int) $b['zusatz_cent']) ? 'guthaben' : 'revolut');

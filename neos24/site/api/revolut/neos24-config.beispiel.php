@@ -66,6 +66,7 @@ return [
         'email' => 'info@neos24.com', 'web' => 'neos24.com',
     ],
     'rechnung' => ['praefix' => 'NR', 'zahlungszielTage' => 14], // Nummer NR-<Jahr>-0001, Fälligkeit
+    'rechnungspruefung' => ['toleranzCent' => 2],          // Lieferantenrechnung: erlaubte Abweichung vom Einkaufspreis je Position
 
     // Öffentliche Adresse der Seite ohne Schrägstrich am Ende; wird für die
     // Rücksprung-URL nach 3-D-Secure gebraucht.

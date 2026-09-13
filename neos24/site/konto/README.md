@@ -79,7 +79,10 @@ Dashboard; das öffentliche Tracking zeigt denselben Verlauf.
 
 **Reklamationen** (Art, Beschreibung, geforderter Betrag) bearbeitet das Team im Dashboard;
 eine Erstattung wird dem Guthaben gutgeschrieben und der Kunde per Mail informiert.
-**Retouren** sind eigene Bestellungen (`art = retoure`, `retoure_zu`) mit getauschten
+**Nachberechnungen** aus der Rechnungsprüfung des Dashboards (Carrier hat schwerer gewogen als
+gebucht) erscheinen als eigene Position „Nachberechnung“ mit Erklärung (gewogenes Gewicht,
+gebuchte und tatsächliche Klasse); Firmen sehen sie auf der nächsten Sammelrechnung,
+Privatkunden zahlen sie vom Guthaben oder per Revolut. **Retouren** sind eigene Bestellungen (`art = retoure`, `retoure_zu`) mit getauschten
 Adressen zum Preis der Routingmatrix.
 
 ## Geschäftskunden: Ablauf

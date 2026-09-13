@@ -79,6 +79,7 @@ function konfig(): array
             'iban' => '', 'bic' => '', 'bank' => '', 'email' => 'info@neos24.com', 'web' => 'neos24.com',
         ],
         'rechnung' => ['praefix' => 'NR', 'zahlungszielTage' => 14],
+        'rechnungspruefung' => ['toleranzCent' => 2],   // Abweichung Einkaufspreis, die noch als „in Ordnung“ gilt
         'basisUrl' => '',
         'absender' => '',
         'absenderName' => 'NEOS',
@@ -592,6 +593,71 @@ function schemaAnlegen(PDO $db): void
         $st->execute(['benachrichtigung', 'SMS an den Empfänger', 'SMS to recipient', 'Ankündigung der Zustellung per SMS', 'Delivery notice by SMS', 49, 40]);
     }
 
+    // Rechnungsprüfung: Lieferantenrechnungen, Positionen, Spaltenprofile; Gewicht laut Carrier an der Bestellung
+    $spalten = array_column($db->query('PRAGMA table_info(bestellungen)')->fetchAll(), 'name');
+    foreach (['carrier_sendungsnummer' => "TEXT NOT NULL DEFAULT ''", 'gewicht_carrier_gramm' => 'INTEGER NOT NULL DEFAULT 0', 'einkauf_ist_cent' => 'INTEGER',
+              'nachberechnung_zu' => 'INTEGER', 'nachberechnung_json' => "TEXT NOT NULL DEFAULT '{}'"] as $spalte => $typ) {
+        if (!in_array($spalte, $spalten, true)) {
+            $db->exec("ALTER TABLE bestellungen ADD COLUMN $spalte $typ");
+        }
+    }
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS lieferantenrechnungen (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            carrier_id        INTEGER NOT NULL REFERENCES carrier(id),
+            nummer            TEXT NOT NULL DEFAULT '',
+            datum             TEXT NOT NULL DEFAULT '',
+            betrag_netto_cent INTEGER NOT NULL DEFAULT 0,
+            status            TEXT NOT NULL DEFAULT 'zuordnung',
+            datei_pdf         TEXT NOT NULL DEFAULT '',
+            datei_csv         TEXT NOT NULL DEFAULT '',
+            csv_trenner       TEXT NOT NULL DEFAULT ';',
+            spalten_json      TEXT NOT NULL DEFAULT '{}',
+            gewicht_einheit   TEXT NOT NULL DEFAULT 'kg',
+            pdf_text          TEXT NOT NULL DEFAULT '',
+            pdf_kopf_json     TEXT NOT NULL DEFAULT '{}',
+            notiz             TEXT NOT NULL DEFAULT '',
+            hochgeladen_von   TEXT NOT NULL DEFAULT '',
+            erstellt          TEXT NOT NULL,
+            aktualisiert      TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS lieferantenpositionen (
+            id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+            rechnung_id                 INTEGER NOT NULL REFERENCES lieferantenrechnungen(id) ON DELETE CASCADE,
+            zeile                       INTEGER NOT NULL DEFAULT 0,
+            sendungsnummer              TEXT NOT NULL DEFAULT '',
+            referenz                    TEXT NOT NULL DEFAULT '',
+            datum                       TEXT NOT NULL DEFAULT '',
+            zielland                    TEXT NOT NULL DEFAULT '',
+            gewicht_gramm               INTEGER NOT NULL DEFAULT 0,
+            betrag_cent                 INTEGER NOT NULL DEFAULT 0,
+            zuschlag_cent               INTEGER NOT NULL DEFAULT 0,
+            roh_json                    TEXT NOT NULL DEFAULT '{}',
+            bestellung_id               INTEGER,
+            manuell                     INTEGER NOT NULL DEFAULT 0,
+            gk_bestellt                 TEXT NOT NULL DEFAULT '',
+            gk_ist                      TEXT NOT NULL DEFAULT '',
+            einkauf_soll_cent           INTEGER NOT NULL DEFAULT 0,
+            differenz_cent              INTEGER NOT NULL DEFAULT 0,
+            verkauf_bestellt_cent       INTEGER NOT NULL DEFAULT 0,
+            verkauf_ist_cent            INTEGER NOT NULL DEFAULT 0,
+            nachberechnung_cent         INTEGER NOT NULL DEFAULT 0,
+            nachberechnung_status       TEXT NOT NULL DEFAULT 'keine',
+            nachberechnung_bestellung_id INTEGER,
+            befund                      TEXT NOT NULL DEFAULT 'nicht_zugeordnet',
+            hinweis                     TEXT NOT NULL DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS lieferantenpositionen_rechnung ON lieferantenpositionen (rechnung_id, befund);
+        CREATE INDEX IF NOT EXISTS lieferantenpositionen_bestellung ON lieferantenpositionen (bestellung_id);
+        CREATE TABLE IF NOT EXISTS rechnungsprofile (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            carrier_id      INTEGER NOT NULL,
+            spalten_json    TEXT NOT NULL DEFAULT '{}',
+            gewicht_einheit TEXT NOT NULL DEFAULT 'kg',
+            erstellt        TEXT NOT NULL
+        );
+    SQL);
+
     preiseSaeen($db);
 }
 
@@ -867,6 +933,15 @@ function checkoutModus(): string
  */
 function nachBezahlung(array $bestellung): void
 {
+    if (($bestellung['art'] ?? 'sendung') === 'nachberechnung') {
+        try {
+            nachberechnungBezahltSenden($bestellung);
+        } catch (Throwable $e) {
+            error_log('[revolut] Bestätigungsmail fehlgeschlagen: ' . $e->getMessage());
+        }
+
+        return;
+    }
     try {
         sendungsereignis((int) $bestellung['id'], 'bezahlt', '', 'system');
         nachBeauftragung($bestellung);
@@ -888,6 +963,19 @@ function labelBeauftragen(array $bestellung): void
     $st = datenbank()->prepare('UPDATE bestellungen SET ereignisse_json = :e, label_datei = :l, aktualisiert = :a WHERE id = :id');
     $st->execute([':e' => json_encode($ereignisse, JSON_UNESCAPED_UNICODE), ':l' => $carrierLabel['datei'] ?? 'neos', ':a' => jetzt(), ':id' => $bestellung['id']]);
     sendungsereignis((int) $bestellung['id'], 'label', '', 'system');
+}
+
+/** Kurze Bestätigung, wenn eine Gewichtsnachberechnung per Revolut bezahlt wurde. */
+function nachberechnungBezahltSenden(array $bestellung): void
+{
+    $sprache = $bestellung['sprache'] === 'en' ? 'en' : 'de';
+    $grund = json_decode((string) ($bestellung['nachberechnung_json'] ?? '{}'), true) ?: [];
+    $original = (string) ($grund['original'] ?? '');
+    if ($sprache === 'en') {
+        mailSenden((string) $bestellung['email'], 'Weight adjustment ' . $bestellung['ext_ref'] . ' paid', "Hello,\n\nthank you — the weight adjustment for shipment " . $original . ' (' . betragFormat((int) $bestellung['betrag_cent'], 'en') . ") has been paid.\n\nNEOS Logistics UG · info@neos24.com");
+    } else {
+        mailSenden((string) $bestellung['email'], 'Nachberechnung ' . $bestellung['ext_ref'] . ' bezahlt', "Hallo,\n\ndanke — die Gewichtsnachberechnung zur Sendung " . $original . ' (' . betragFormat((int) $bestellung['betrag_cent'], 'de') . ") ist bezahlt.\n\nNEOS Logistics UG · info@neos24.com");
+    }
 }
 
 function betragFormat(int $cent, string $sprache): string
@@ -1069,3 +1157,4 @@ function perSmtpSenden(array $konfig, string $von, string $an, string $rohmail):
 }
 
 require_once __DIR__ . '/../../lib/versand.php';
+require_once __DIR__ . '/../../lib/rechnungspruefung.php';

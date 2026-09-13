@@ -11,7 +11,7 @@ $labelDa = in_array($b['status'], ['bezahlt', 'beauftragt'], true);
 $zahlungsartName = ['rechnung' => 'Auf Rechnung (Sammelrechnung)', 'guthaben' => 'Vom Guthaben', 'revolut' => 'Revolut'][$b['zahlungsart']] ?? $b['zahlungsart'];
 ?>
 <header class="kopfzeile">
-  <div><a class="zurueck" href="<?= e(url('bestellungen')) ?>">← Bestellungen</a><h1 class="h1 mono"><?= e($b['ext_ref']) ?><?= $b['art'] === 'retoure' ? ' <span class="pille">Retoure</span>' : '' ?></h1></div>
+  <div><a class="zurueck" href="<?= e(url('bestellungen')) ?>">← Bestellungen</a><h1 class="h1 mono"><?= e($b['ext_ref']) ?><?= $b['art'] === 'retoure' ? ' <span class="pille">Retoure</span>' : ($b['art'] === 'nachberechnung' ? ' <span class="pille pille--warn">Nachberechnung</span>' : '') ?></h1></div>
   <div><?= statusPille((string) $b['status']) ?> <span class="status status--vs-<?= e($b['versandstatus']) ?>"><?= e(versandstatusName((string) $b['versandstatus'])) ?></span></div>
 </header>
 <div class="spalten spalten--2-1">
@@ -38,6 +38,10 @@ $zahlungsartName = ['rechnung' => 'Auf Rechnung (Sammelrechnung)', 'guthaben' =>
           <dt>Einkauf / Marge</dt><dd class="mono"><?= e(euro((int) $b['einkauf_cent'])) ?> / <?= e(euro((int) $b['netto_cent'] - (int) $b['zusatz_cent'] - (int) $b['einkauf_cent'])) ?></dd>
         </dl>
       </div>
+      <?php $nbGrund = json_decode((string) ($b['nachberechnung_json'] ?? '{}'), true) ?: []; if ($b['art'] === 'nachberechnung' && $nbGrund !== []) { ?>
+      <p class="hinweis" style="margin-top:.75rem">Gewichtsnachberechnung zu <a class="mono" href="<?= e(url('bestellungen/' . ($nbGrund['original'] ?? ''))) ?>"><?= e($nbGrund['original'] ?? '') ?></a>: gewogen <?= e(number_format((int) ($nbGrund['gewicht_gramm'] ?? 0) / 1000, 2, ',', '')) ?> kg, gebucht <?= e($nbGrund['gk_bestellt'] ?? '') ?>, tatsächlich <?= e($nbGrund['gk_ist'] ?? '') ?><?= !empty($nbGrund['lieferantenrechnung']) ? ' · Lieferantenrechnung ' . e($nbGrund['lieferantenrechnung']) : '' ?>.</p>
+      <?php } ?>
+      <?php if ((int) $b['gewicht_carrier_gramm'] > 0) { ?><p class="leise" style="margin-top:.75rem">Vom Carrier gewogen: <strong><?= e(number_format((int) $b['gewicht_carrier_gramm'] / 1000, 2, ',', '')) ?> kg</strong><?= $b['einkauf_ist_cent'] !== null ? ' · tatsächlicher Einkauf ' . e(euro((int) $b['einkauf_ist_cent'])) : '' ?><?= $b['carrier_sendungsnummer'] !== '' ? ' · Carrier-Nr. <span class="mono">' . e($b['carrier_sendungsnummer']) . '</span>' : '' ?><?= $nachberechnungen !== [] ? ' · Nachberechnung: ' . implode(', ', array_map(static fn (string $ref): string => '<a class="mono" href="' . e(url('bestellungen/' . $ref)) . '">' . e($ref) . '</a>', $nachberechnungen)) : '' ?></p><?php } ?>
       <?php if ($retoureZu !== null || $retouren !== []) { ?>
       <p class="leise" style="margin-top:.75rem">
         <?php if ($retoureZu !== null) { ?>Retoure zu <a class="mono" href="<?= e(url('bestellungen/' . $retoureZu['ext_ref'])) ?>"><?= e($retoureZu['ext_ref']) ?></a><?php } ?>
@@ -102,7 +106,7 @@ $zahlungsartName = ['rechnung' => 'Auf Rechnung (Sammelrechnung)', 'guthaben' =>
     </div>
     <div class="karte">
       <h2 class="h2">Label</h2>
-      <?php if ($labelDa) { ?>
+      <?php if ($b['art'] === 'nachberechnung') { ?><p class="leise">Reine Geldposition — kein Label.</p><?php } elseif ($labelDa) { ?>
         <a class="knopf knopf--primaer knopf--breit" href="<?= e(url('bestellungen/' . $b['ext_ref'] . '/label.pdf')) ?>" target="_blank" rel="noopener">Label (PDF, A6)</a>
         <p class="leise" style="margin-top:.5rem"><?= $b['label_datei'] === 'neos' || $b['label_datei'] === null ? 'NEOS-Label mit Strichcode — das Carrier-Label ersetzt es automatisch mit der Anbindung.' : 'Carrier-Label: ' . e($b['label_datei']) ?></p>
       <?php } else { ?><p class="leise">Das Label gibt es nach Zahlung bzw. Beauftragung.</p><?php } ?>

@@ -16,9 +16,38 @@ gepflegt wird.
 | **Kunden & Anfragen** | Anfragen des Kontaktformulars (Status, Notiz, Bearbeiter, „Firmenkonto anlegen“), Firmen (Daten, Benutzer einladen/deaktivieren, Sendungen, Rechnungen, Sammelrechnung erzeugen, Guthaben mit Buchungen) und registrierte Privatkunden (Detail mit Bestellungen, Guthaben, Reklamationen) |
 | **Rechnungen** | Alle Sammelrechnungen mit Status offen / bezahlt / storniert, PDF, Positionen; Stornieren gibt die Sendungen wieder zur Abrechnung frei |
 | **Reklamationen** | Reklamationen aus dem Kundenportal: Status neu / in Prüfung / anerkannt / erstattet / abgelehnt, Antwort an den Kunden (optional per Mail), Erstattung — wird bei „Erstattet“ einmalig als Guthaben gebucht |
+| **Rechnungsprüfung** | Lieferantenrechnungen der Carrier (PDF + CSV) hochladen, CSV-Spalten zuordnen (Vorschlag, Profil je Carrier), jede Position der eigenen Bestellung zuordnen und prüfen: gewogenes Gewicht gegen gebuchte Gewichtsklasse, Einkaufspreis gegen Routingmatrix, doppelt, storniert, nicht zuzuordnen. Nachberechnung an den Kunden (Firma: nächste Sammelrechnung; Privatkunde: Guthaben, sonst offene Revolut-Zahlung), Gutschrift bei niedrigerem Gewicht, Beanstandung an den Lieferanten als CSV — siehe unten |
 | **Benutzer & Rollen** | Benutzer anlegen (Startpasswort wird einmal angezeigt), Rolle und Aktiv-Status ändern, Passwort zurücksetzen, löschen; Rollen mit Rechtematrix; Änderungsprotokoll |
 
 Jeder Angemeldete kann unter „Mein Konto“ sein Passwort ändern und seine Rechte sehen.
+
+## Rechnungsprüfung
+
+Ablauf: **Hochladen** (Carrier wählen, CSV Pflicht, PDF als Beleg — Rechnungsnummer, Datum und
+Nettosumme werden aus dem PDF gelesen, `pdftotext` wenn vorhanden, sonst eigener Leser für
+einfache PDFs; von Hand korrigierbar) → **Spalten zuordnen** (Trennzeichen und Spalten werden
+erkannt, unsere Nummer `NE-…` auch mitten in einer Referenzspalte; die Zuordnung wird je Carrier
+als Profil gemerkt) → **Prüfung** je Zeile:
+
+| Befund | Bedeutung | Folge |
+|---|---|---|
+| In Ordnung | Klasse stimmt, Betrag = Einkauf laut Routingmatrix (± Toleranz `rechnungspruefung.toleranzCent`) | — |
+| Gewicht höher | gewogene Klasse über der gebuchten | **Nachberechnung** = Verkauf(tatsächliche Klasse) − Verkauf(gebucht), netto; Betrag vor dem Buchen änderbar |
+| Gewicht niedriger | gewogene Klasse unter der gebuchten | optional **Gutschrift** der Differenz als Guthaben |
+| Preis weicht ab | Betrag ≠ Einkauf der Routingmatrix | Beanstandung |
+| Doppelt | Sendung schon auf dieser oder einer früheren Rechnung | Beanstandung |
+| Storniert / unbezahlt | Bestellung nicht bezahlt oder beauftragt | Beanstandung |
+| Nicht zugeordnet | keine Bestellung zur Nummer | von Hand zuordnen (Bestellnummer eintragen) oder Beanstandung |
+| Gewicht über der höchsten Klasse | keine Klasse passt | Nachberechnung mit Betrag von Hand |
+
+Eine gebuchte Nachberechnung ist eine eigene Bestellung (`art = nachberechnung`, verweist auf
+das Original) ohne Label: bei Firmen `zahlungsart rechnung`, Status `beauftragt` → sie erscheint
+als Position „Nachber. NE-…“ auf der nächsten Sammelrechnung; bei Privatkunden vom Guthaben,
+wenn es reicht, sonst als offene Revolut-Zahlung mit Link im Portal. Der Kunde bekommt eine
+Mail mit gebuchter und gewogener Klasse. Die Originalbestellung speichert das Carrier-Gewicht,
+den tatsächlichen Einkauf und die Carrier-Sendungsnummer (Marge). „Beanstandung CSV“ exportiert
+alle beanstandeten Zeilen für den Lieferanten. Dateien liegen im Datenverzeichnis unter
+`lieferantenrechnungen/`.
 
 ## Rechte
 

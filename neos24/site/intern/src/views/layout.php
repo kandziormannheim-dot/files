@@ -10,7 +10,7 @@ $ich = benutzerAktuell();
 $hinweis = hinweisHolen();
 $titel = $titel ?? 'Dashboard';
 $aktiv = $aktiv ?? '';
-$symbole = ['uebersicht' => '◎', 'bestellungen' => '▤', 'preise' => '€', 'routing' => '⇄', 'kunden' => '☺', 'rechnungen' => '▣', 'reklamationen' => '⚑', 'benutzer' => '⚙'];
+$symbole = ['uebersicht' => '◎', 'bestellungen' => '▤', 'preise' => '€', 'routing' => '⇄', 'kunden' => '☺', 'rechnungen' => '▣', 'reklamationen' => '⚑', 'rechnungspruefung' => '✓', 'benutzer' => '⚙'];
 ?>
 <!doctype html>
 <html lang="de">

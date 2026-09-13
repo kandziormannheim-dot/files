@@ -69,6 +69,8 @@ function kennzahlen(): array
     $reklamationenOffen = (int) $db->query("SELECT COUNT(*) FROM reklamationen WHERE status IN ('neu','in_pruefung','anerkannt')")->fetchColumn();
     $abholungenOffen = (int) $db->query("SELECT COUNT(*) FROM bestellungen WHERE status IN ('bezahlt','beauftragt') AND versandstatus IN ('label','abholung') AND abholung_json LIKE '%\"datum\":\"2%'")->fetchColumn();
     $guthabenGesamt = (int) $db->query('SELECT COALESCE(SUM(betrag_cent),0) FROM guthaben_buchungen')->fetchColumn();
+    $lieferantenOffen = (int) $db->query("SELECT COUNT(*) FROM lieferantenrechnungen WHERE status IN ('zuordnung','geprueft')")->fetchColumn();
+    $nachberechnungOffen = (int) $db->query("SELECT COALESCE(SUM(nachberechnung_cent),0) FROM lieferantenpositionen WHERE nachberechnung_status = 'offen'")->fetchColumn();
 
     return [
         'heute' => $zaehle($heute),
@@ -91,5 +93,7 @@ function kennzahlen(): array
         'reklamationenOffen' => $reklamationenOffen,
         'abholungenOffen' => $abholungenOffen,
         'guthabenGesamt' => $guthabenGesamt,
+        'lieferantenOffen' => $lieferantenOffen,
+        'nachberechnungOffen' => $nachberechnungOffen,
     ];
 }

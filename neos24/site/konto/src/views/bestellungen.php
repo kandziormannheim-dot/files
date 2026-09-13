@@ -18,9 +18,9 @@
     <tbody>
     <?php foreach ($zeilen as $z) { $emp = json_decode((string) $z['empfaenger_json'], true) ?: []; ?>
       <tr>
-        <td><?php if (in_array($z['status'], ['bezahlt', 'beauftragt'], true)) { ?><input type="checkbox" value="<?= e($z['ext_ref']) ?>" data-label-ref aria-label="<?= e($z['ext_ref']) ?>"><?php } ?></td>
-        <td><a class="k-mono" href="<?= e(url($pfad . '/' . $z['ext_ref'])) ?>"><?= e($z['ext_ref']) ?></a><?= $z['art'] === 'retoure' ? ' <span class="k-klein">↩</span>' : '' ?><br><span class="k-klein"><?= e(datumAnzeigen($z['erstellt'], $sp)) ?></span></td>
-        <td><?= statusPille((string) $z['status'], statusName((string) $z['status'], $sp)) ?><br><span class="k-klein"><?= e(versandstatusName((string) $z['versandstatus'], $sp)) ?></span></td>
+        <td><?php if (in_array($z['status'], ['bezahlt', 'beauftragt'], true) && $z['art'] !== 'nachberechnung') { ?><input type="checkbox" value="<?= e($z['ext_ref']) ?>" data-label-ref aria-label="<?= e($z['ext_ref']) ?>"><?php } ?></td>
+        <td><a class="k-mono" href="<?= e(url($pfad . '/' . $z['ext_ref'])) ?>"><?= e($z['ext_ref']) ?></a><?= $z['art'] === 'retoure' ? ' <span class="k-klein">↩</span>' : ($z['art'] === 'nachberechnung' ? ' <span class="status status--vs-problem">' . e(t('nachberechnung')) . '</span>' : '') ?><br><span class="k-klein"><?= e(datumAnzeigen($z['erstellt'], $sp)) ?></span></td>
+        <td><?= statusPille((string) $z['status'], statusName((string) $z['status'], $sp)) ?><?= $z['art'] !== 'nachberechnung' ? '<br><span class="k-klein">' . e(versandstatusName((string) $z['versandstatus'], $sp)) . '</span>' : '' ?></td>
         <td><span class="flag"><?= e($z['zielland']) ?></span><?= e($z['gewichtsklasse']) ?></td>
         <td><?= e($emp['name'] ?? '') ?><br><span class="k-klein"><?= e(trim(($emp['plz'] ?? '') . ' ' . ($emp['ort'] ?? ''))) ?></span></td>
         <?php if ($business) { ?><td><?= e($z['referenz'] ?: '—') ?></td><td><?= e($z['angelegt_von'] ?? '—') ?></td><?php } ?>

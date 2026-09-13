@@ -17,6 +17,7 @@ const MODULE = [
     'kunden' => 'Kunden & Anfragen',
     'rechnungen' => 'Rechnungen',
     'reklamationen' => 'Reklamationen',
+    'rechnungspruefung' => 'Rechnungsprüfung',
     'benutzer' => 'Benutzer & Rollen',
 ];
 

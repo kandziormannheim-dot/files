@@ -241,3 +241,19 @@ code { font-family: var(--font-mono); font-size: .85em; background: var(--ink-80
 .status--rk-anerkannt, .status--rk-erstattet { background: var(--green-50); color: #157a52; }
 .status--rk-abgelehnt { background: var(--coral-50); color: #b63a12; }
 .werkzeuge .schalter { font-size: .85rem; }
+
+/* Rechnungsprüfung */
+.status--lr-zuordnung { background: var(--yellow-50); color: #6e6800; }
+.status--lr-geprueft { background: var(--cyan-50); color: #0a7f9a; }
+.status--lr-freigegeben { background: var(--green-50); color: #157a52; }
+.status--lr-beanstandet { background: var(--coral-50); color: #b63a12; }
+.status--bf-ok { background: var(--green-50); color: #157a52; }
+.status--bf-gewicht_hoeher, .status--bf-unbekannte_klasse { background: var(--yellow-50); color: #6e6800; }
+.status--bf-gewicht_niedriger { background: var(--cyan-50); color: #0a7f9a; }
+.status--bf-preis_abweichung, .status--bf-doppelt, .status--bf-storniert, .status--bf-nicht_zugeordnet { background: var(--coral-50); color: #b63a12; }
+.tabelle tr.lr-fehler td { background: #fff4ef; }
+.tabelle tr.lr-warn td { background: #fffbe0; }
+.lr-inline { display: inline-flex; gap: .3rem; align-items: center; margin: .15rem 0; }
+.lr-inline input { font: inherit; font-size: .8rem; padding: .3rem .45rem; border: 1.5px solid var(--ink-200); border-radius: 8px; width: 7.5rem; }
+.lr-pdftext { font-family: var(--font-mono); font-size: .72rem; white-space: pre-wrap; max-height: 24rem; overflow: auto; margin-top: .75rem; color: var(--ink-600); }
+.werkzeuge select[name="befund"] { font-size: .85rem; }

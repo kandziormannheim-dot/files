@@ -111,7 +111,7 @@ function rechnungPdfErzeugen(array $rechnung, array $firma, array $positionen): 
         $werte = [
             datumAnzeigen($p['erstellt']),
             (string) $p['ext_ref'],
-            mb_substr((string) ($p['referenz'] ?? ''), 0, 18),
+            mb_substr((string) (($p['art'] ?? 'sendung') === 'nachberechnung' ? 'Nachber. ' . substr((string) $p['referenz'], -16) : ($p['referenz'] ?? '')), 0, 26),
             mb_substr($landName((string) $p['zielland']), 0, 18),
             (string) $p['gewichtsklasse'],
             mb_substr((string) ($p['carrier'] ?? ''), 0, 14),

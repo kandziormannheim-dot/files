@@ -157,8 +157,8 @@ if ($pfad === '/bestellungen') {
 if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})/label\.pdf$#', $pfad, $t)) {
     rechtErzwingen('bestellungen');
     $b = bestellungLaden('ext_ref', $t[1]);
-    if ($b === null) {
-        fehlerSeite(404, 'Nicht gefunden', 'Diese Bestellung gibt es nicht.');
+    if ($b === null || $b['art'] === 'nachberechnung') {
+        fehlerSeite(404, 'Nicht gefunden', 'Zu dieser Bestellung gibt es kein Label.');
     }
     header('Content-Type: application/pdf');
     header('Content-Disposition: inline; filename="NEOS-Label-' . $b['ext_ref'] . '.pdf"');
@@ -203,6 +203,10 @@ if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})(?:/(sync|status|label|ere
                 hinweisSetzen('Status gesetzt: ' . statusName($neu) . '.');
             }
         } elseif ($aktion === 'label') {
+            if ($b['art'] === 'nachberechnung') {
+                hinweisSetzen('Eine Nachberechnung hat kein Label.', 'fehler');
+                umleiten(url('bestellungen/' . $b['ext_ref']));
+            }
             labelBeauftragen($b);
             protokollieren('bestellung.label', 'bestellung', $b['ext_ref']);
             hinweisSetzen('Label erzeugt (NEOS-Label; Carrier-Anbindung folgt).');
@@ -237,7 +241,9 @@ if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})(?:/(sync|status|label|ere
     $retoureZu = $b['retoure_zu'] ? bestellungLaden('id', (string) $b['retoure_zu']) : null;
     $st2 = $db->prepare('SELECT ext_ref FROM bestellungen WHERE retoure_zu = ?');
     $st2->execute([$b['id']]);
-    ansicht('bestellung', ['titel' => 'Bestellung ' . $b['ext_ref'], 'b' => $b, 'sendungsereignisse' => sendungsereignisse((int) $b['id']), 'reklamationen' => $st->fetchAll(), 'retoureZu' => $retoureZu, 'retouren' => $st2->fetchAll(PDO::FETCH_COLUMN),
+    $st3 = $db->prepare('SELECT ext_ref FROM bestellungen WHERE nachberechnung_zu = ?');
+    $st3->execute([$b['id']]);
+    ansicht('bestellung', ['titel' => 'Bestellung ' . $b['ext_ref'], 'b' => $b, 'sendungsereignisse' => sendungsereignisse((int) $b['id']), 'reklamationen' => $st->fetchAll(), 'retoureZu' => $retoureZu, 'retouren' => $st2->fetchAll(PDO::FETCH_COLUMN), 'nachberechnungen' => $st3->fetchAll(PDO::FETCH_COLUMN),
         'kunde' => $b['kunde_id'] ? kundeLaden((int) $b['kunde_id']) : null, 'firma' => $b['firma_id'] ? firmaLaden((int) $b['firma_id']) : null, 'aktiv' => 'bestellungen']);
 }
 
@@ -759,6 +765,177 @@ if (preg_match('#^/reklamationen/(\d+)(?:/(status))?$#', $pfad, $t)) {
         umleiten(url('reklamationen/' . $r['id']));
     }
     ansicht('reklamation', ['titel' => 'Reklamation #' . $r['id'], 'r' => $r, 'b' => bestellungLaden('id', (string) $r['bestellung_id']), 'aktiv' => 'reklamationen']);
+}
+
+// ------------------------------------------------------------ Rechnungsprüfung
+
+if ($pfad === '/rechnungspruefung') {
+    rechtErzwingen('rechnungspruefung');
+    if ($methode === 'POST') {
+        rechtErzwingen('rechnungspruefung', 'bearbeiten');
+        try {
+            $carrierId = (int) feld('carrier_id', 10);
+            if ($carrierId <= 0) {
+                throw new InvalidArgumentException('Bitte den Carrier wählen, der die Rechnung gestellt hat.');
+            }
+            $csv = $_FILES['csv'] ?? null;
+            if ($csv === null || ($csv['error'] ?? 1) !== UPLOAD_ERR_OK || (int) $csv['size'] > 10 * 1024 * 1024) {
+                throw new InvalidArgumentException('Bitte die CSV-Datei der Rechnung hochladen (bis 10 MB).');
+            }
+            $pdf = $_FILES['pdf'] ?? null;
+            $pdfPfad = $pdf !== null && ($pdf['error'] ?? 1) === UPLOAD_ERR_OK && (int) $pdf['size'] <= 20 * 1024 * 1024 ? (string) $pdf['tmp_name'] : null;
+            if ($pdfPfad !== null && substr((string) file_get_contents($pdfPfad, false, null, 0, 5), 0, 4) !== '%PDF') {
+                throw new InvalidArgumentException('Die PDF-Datei ist kein PDF.');
+            }
+            $id = rpRechnungAnlegen($carrierId, ['csv' => (string) $csv['tmp_name'], 'pdf' => $pdfPfad], ['nummer' => feld('nummer', 40), 'datum' => rpDatumNormalisieren(feld('datum', 12)), 'netto_cent' => centAusEingabe(feld('netto', 14)) ?? 0], $ich['name']);
+            protokollieren('lieferantenrechnung.hochgeladen', 'lieferantenrechnung', $id, ['carrier_id' => $carrierId]);
+            umleiten(url('rechnungspruefung/' . $id . '/zuordnung'));
+        } catch (InvalidArgumentException $e) {
+            hinweisSetzen($e->getMessage(), 'fehler');
+            umleiten(url('rechnungspruefung'));
+        }
+    }
+    $status = saeubern($_GET['status'] ?? '', 20);
+    ansicht('rechnungspruefung', ['titel' => 'Rechnungsprüfung', 'zeilen' => rpRechnungenAlle($status), 'status' => $status, 'carrier' => carrierAlle(), 'aktiv' => 'rechnungspruefung']);
+}
+
+if (preg_match('#^/rechnungspruefung/(\d+)(?:/(zuordnung|pruefen|status|notiz|kopf|beanstandung\.csv|rechnung\.pdf|loeschen|alle-buchen))?$#', $pfad, $t)) {
+    rechtErzwingen('rechnungspruefung');
+    $r = rpRechnungLaden((int) $t[1]);
+    if ($r === null) {
+        fehlerSeite(404, 'Nicht gefunden', 'Diese Lieferantenrechnung gibt es nicht.');
+    }
+    $aktion = $t[2] ?? '';
+    if ($aktion === 'rechnung.pdf') {
+        $datei = rpVerzeichnis() . '/' . $r['datei_pdf'];
+        if ($r['datei_pdf'] === '' || !is_file($datei)) {
+            fehlerSeite(404, 'Nicht gefunden', 'Zu dieser Rechnung wurde kein PDF hochgeladen.');
+        }
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="Lieferantenrechnung-' . ($r['nummer'] ?: $r['id']) . '.pdf"');
+        readfile($datei);
+        exit;
+    }
+    if ($aktion === 'beanstandung.csv') {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="Beanstandung-' . preg_replace('/[^A-Za-z0-9_-]/', '_', (string) ($r['nummer'] ?: $r['id'])) . '.csv"');
+        echo rpBeanstandungCsv($r);
+        exit;
+    }
+    if ($aktion === 'zuordnung') {
+        $csv = rpRechnungCsv($r);
+        if ($methode === 'POST') {
+            rechtErzwingen('rechnungspruefung', 'bearbeiten');
+            $spalten = [];
+            foreach (array_keys(RP_FELDER) as $feld) {
+                $spalten[$feld] = isset($_POST['spalte'][$feld]) && $_POST['spalte'][$feld] !== '' ? (int) $_POST['spalte'][$feld] : -1;
+            }
+            $einheit = feld('einheit', 2) === 'g' ? 'g' : 'kg';
+            try {
+                $n = rpPositionenImportieren($r, $spalten, $einheit);
+                if (!empty($_POST['profil'])) {
+                    rpProfilSpeichern((int) $r['carrier_id'], $spalten, $einheit, $csv['kopf']);
+                }
+                protokollieren('lieferantenrechnung.geprueft', 'lieferantenrechnung', (int) $r['id'], ['positionen' => $n]);
+                hinweisSetzen($n . ' Positionen eingelesen und geprüft.');
+                umleiten(url('rechnungspruefung/' . $r['id']));
+            } catch (InvalidArgumentException $e) {
+                hinweisSetzen($e->getMessage(), 'fehler');
+                umleiten(url('rechnungspruefung/' . $r['id'] . '/zuordnung'));
+            }
+        }
+        $gespeichert = json_decode((string) $r['spalten_json'], true) ?: [];
+        $vorschlag = $gespeichert !== [] && isset($gespeichert['gewicht']) ? $gespeichert : (rpProfilAnwenden(rpProfilFuerCarrier((int) $r['carrier_id']), $csv['kopf']) ?? rpSpaltenErkennen($csv['kopf'], $csv['zeilen']));
+        ansicht('rechnungspruefung_zuordnung', ['titel' => 'Spalten zuordnen', 'r' => $r, 'csv' => $csv, 'vorschlag' => $vorschlag, 'einheit' => $r['status'] !== 'zuordnung' ? $r['gewicht_einheit'] : rpGewichtEinheitRaten($csv['zeilen'], (int) ($vorschlag['gewicht'] ?? -1)), 'aktiv' => 'rechnungspruefung']);
+    }
+    if ($aktion !== '' && $methode === 'POST') {
+        rechtErzwingen('rechnungspruefung', $aktion === 'loeschen' ? 'loeschen' : 'bearbeiten');
+        try {
+            if ($aktion === 'pruefen') {
+                rpRechnungPruefen((int) $r['id']);
+                hinweisSetzen('Alle Positionen neu geprüft.');
+            } elseif ($aktion === 'status') {
+                $neu = feld('status', 20);
+                if (!isset(RP_STATUS[$neu]) || $neu === 'zuordnung') {
+                    throw new InvalidArgumentException('Unbekannter Status.');
+                }
+                $db->prepare('UPDATE lieferantenrechnungen SET status = ?, aktualisiert = ? WHERE id = ?')->execute([$neu, jetzt(), $r['id']]);
+                protokollieren('lieferantenrechnung.status', 'lieferantenrechnung', (int) $r['id'], ['status' => $neu]);
+                hinweisSetzen('Rechnung: ' . RP_STATUS[$neu] . '.');
+            } elseif ($aktion === 'notiz') {
+                $db->prepare('UPDATE lieferantenrechnungen SET notiz = ?, aktualisiert = ? WHERE id = ?')->execute([feld('notiz', 4000), jetzt(), $r['id']]);
+                hinweisSetzen('Notiz gespeichert.');
+            } elseif ($aktion === 'kopf') {
+                $db->prepare('UPDATE lieferantenrechnungen SET nummer = ?, datum = ?, betrag_netto_cent = ?, aktualisiert = ? WHERE id = ?')
+                   ->execute([feld('nummer', 40), rpDatumNormalisieren(feld('datum', 12)), centAusEingabe(feld('netto', 14)) ?? 0, jetzt(), $r['id']]);
+                hinweisSetzen('Kopfdaten gespeichert.');
+            } elseif ($aktion === 'alle-buchen') {
+                $n = 0;
+                $summe = 0;
+                foreach (rpPositionen((int) $r['id']) as $p) {
+                    if ($p['nachberechnung_status'] === 'offen' && (int) $p['nachberechnung_cent'] > 0) {
+                        $p['rechnung_nummer'] = $r['nummer'];
+                        rpNachberechnungBuchen($p, $ich['name']);
+                        $n++;
+                        $summe += (int) $p['nachberechnung_cent'];
+                    }
+                }
+                protokollieren('nachberechnung.alle', 'lieferantenrechnung', (int) $r['id'], ['anzahl' => $n, 'netto' => $summe]);
+                hinweisSetzen($n . ' Nachberechnungen gebucht (' . euro($summe) . ' netto) — Kunden sind per Mail informiert.');
+            } elseif ($aktion === 'loeschen') {
+                if ((int) $db->query('SELECT COUNT(*) FROM lieferantenpositionen WHERE rechnung_id = ' . (int) $r['id'] . " AND nachberechnung_status IN ('gebucht','gutschrift')")->fetchColumn() > 0) {
+                    throw new InvalidArgumentException('Rechnungen mit gebuchten Nachberechnungen oder Gutschriften lassen sich nicht löschen.');
+                }
+                $db->prepare('DELETE FROM lieferantenpositionen WHERE rechnung_id = ?')->execute([$r['id']]);
+                $db->prepare('DELETE FROM lieferantenrechnungen WHERE id = ?')->execute([$r['id']]);
+                foreach ([$r['datei_pdf'], $r['datei_csv']] as $d) {
+                    if ($d !== '' && is_file(rpVerzeichnis() . '/' . $d)) {
+                        unlink(rpVerzeichnis() . '/' . $d);
+                    }
+                }
+                protokollieren('lieferantenrechnung.geloescht', 'lieferantenrechnung', (int) $r['id']);
+                hinweisSetzen('Lieferantenrechnung gelöscht.');
+                umleiten(url('rechnungspruefung'));
+            }
+        } catch (InvalidArgumentException $e) {
+            hinweisSetzen($e->getMessage(), 'fehler');
+        }
+        umleiten(url('rechnungspruefung/' . $r['id']));
+    }
+    if ($r['status'] === 'zuordnung') {
+        umleiten(url('rechnungspruefung/' . $r['id'] . '/zuordnung'));
+    }
+    $befund = saeubern($_GET['befund'] ?? '', 24);
+    ansicht('lieferantenrechnung', ['titel' => 'Lieferantenrechnung ' . ($r['nummer'] ?: '#' . $r['id']), 'r' => $r, 'positionen' => rpPositionen((int) $r['id'], $befund), 'z' => rpZusammenfassung((int) $r['id']), 'befund' => $befund, 'pdfKopf' => json_decode((string) $r['pdf_kopf_json'], true) ?: [], 'aktiv' => 'rechnungspruefung']);
+}
+
+if (preg_match('#^/rechnungspruefung/position/(\d+)/(zuordnen|buchen|verzichten|gutschrift)$#', $pfad, $t) && $methode === 'POST') {
+    rechtErzwingen('rechnungspruefung', 'bearbeiten');
+    $p = rpPositionLaden((int) $t[1]);
+    if ($p === null) {
+        fehlerSeite(404, 'Nicht gefunden', 'Diese Position gibt es nicht.');
+    }
+    try {
+        if ($t[2] === 'zuordnen') {
+            rpPositionZuordnen($p, feld('ext_ref', 20));
+            hinweisSetzen('Position ' . $p['zeile'] . ' zugeordnet und neu geprüft.');
+        } elseif ($t[2] === 'buchen') {
+            $betrag = feld('betrag', 12) !== '' ? centAusEingabe(feld('betrag', 12)) : null;
+            $neu = rpNachberechnungBuchen($p, $ich['name'], $betrag);
+            protokollieren('nachberechnung.gebucht', 'bestellung', $neu['ext_ref'], ['netto' => $neu['netto_cent'], 'zahlungsart' => $neu['zahlungsart'], 'position' => (int) $p['id']]);
+            hinweisSetzen('Nachberechnung ' . $neu['ext_ref'] . ' gebucht (' . euro((int) $neu['netto_cent']) . ' netto, ' . ['rechnung' => 'nächste Sammelrechnung', 'guthaben' => 'vom Guthaben abgebucht', 'revolut' => 'offene Zahlung, Kunde per Mail gebeten'][$neu['zahlungsart']] . ').');
+        } elseif ($t[2] === 'verzichten') {
+            rpNachberechnungVerzichten($p);
+            hinweisSetzen('Auf die Nachberechnung für Zeile ' . $p['zeile'] . ' verzichtet.');
+        } else {
+            $betrag = rpGutschriftBuchen($p, $ich['name']);
+            protokollieren('gutschrift.gebucht', 'lieferantenposition', (int) $p['id'], ['betrag' => $betrag]);
+            hinweisSetzen('Gutschrift ' . euro($betrag) . ' als Guthaben gebucht.');
+        }
+    } catch (InvalidArgumentException $e) {
+        hinweisSetzen($e->getMessage(), 'fehler');
+    }
+    umleiten(url('rechnungspruefung/' . $p['rechnung_id']));
 }
 
 // ---------------------------------------------------------- Benutzer & Rollen
