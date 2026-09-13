@@ -60,7 +60,7 @@
   </table>
   <?php } else { ?>
   <table class="tabelle">
-    <thead><tr><th>Name</th><th>E-Mail</th><th>Bestätigt</th><th>Passwort</th><th class="rechts">Bestellungen</th><th class="rechts">Umsatz brutto</th><th class="rechts">Letzte Anmeldung</th><th></th></tr></thead>
+    <thead><tr><th>Name</th><th>E-Mail</th><th>Bestätigt</th><th>Passwort</th><th class="rechts">Bestellungen</th><th class="rechts">Umsatz brutto</th><th class="rechts">Guthaben</th><th class="rechts">Letzte Anmeldung</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($zeilen as $k) { ?>
       <tr class="<?= (int) $k['aktiv'] === 1 ? '' : 'inaktiv' ?>">
@@ -70,8 +70,9 @@
         <td><?= $k['passwort_hash'] !== null ? '<span class="ja">✓</span>' : '<span class="leise">Link</span>' ?></td>
         <td class="mono rechts"><?= (int) $k['bestellungen'] ?></td>
         <td class="mono rechts"><?= e(euro((int) $k['umsatz'])) ?></td>
+        <td class="mono rechts"><?= e(euro((int) $k['guthaben'])) ?></td>
         <td class="mono rechts leise"><?= e(zeitAnzeigen($k['letzte_anmeldung'])) ?></td>
-        <td class="rechts"><?php if (darf('bestellungen')) { ?><a class="knopf knopf--leise knopf--klein" href="<?= e(url('bestellungen', ['q' => $k['email']])) ?>">Bestellungen</a><?php } ?></td>
+        <td class="rechts"><a class="knopf knopf--leise knopf--klein" href="<?= e(url('kunden/privat/' . $k['id'])) ?>">Öffnen</a></td>
       </tr>
     <?php } ?>
     </tbody>

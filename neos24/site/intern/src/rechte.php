@@ -16,6 +16,7 @@ const MODULE = [
     'routing' => 'Routingmatrix',
     'kunden' => 'Kunden & Anfragen',
     'rechnungen' => 'Rechnungen',
+    'reklamationen' => 'Reklamationen',
     'benutzer' => 'Benutzer & Rollen',
 ];
 

@@ -17,8 +17,13 @@
 declare(strict_types=1);
 
 return [
+    // Aufschlag je Klasse in Cent auf den Nettopreis des Landes (nur für das Säen).
     'gewichtsklassen' => [
-        '2kg' => ['de' => 'bis 2 kg', 'en' => 'up to 2 kg', 'max_gramm' => 2000],
+        '2kg' => ['de' => 'bis 2 kg', 'en' => 'up to 2 kg', 'max_gramm' => 2000, 'aufschlag' => 0],
+        '5kg' => ['de' => 'bis 5 kg', 'en' => 'up to 5 kg', 'max_gramm' => 5000, 'aufschlag' => 180],
+        '10kg' => ['de' => 'bis 10 kg', 'en' => 'up to 10 kg', 'max_gramm' => 10000, 'aufschlag' => 390],
+        '20kg' => ['de' => 'bis 20 kg', 'en' => 'up to 20 kg', 'max_gramm' => 20000, 'aufschlag' => 690],
+        '31kg' => ['de' => 'bis 31,5 kg', 'en' => 'up to 31.5 kg', 'max_gramm' => 31500, 'aufschlag' => 1090],
     ],
     // Nettopreise in Cent je Paket der Gewichtsklasse 2kg.
     'laender' => [

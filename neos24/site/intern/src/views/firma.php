@@ -65,6 +65,18 @@
     </div>
   </div>
   <div>
+    <div class="karte karte--gelb">
+      <div class="karte-kopf"><h2 class="h2">Guthaben</h2><strong class="mono"><?= e(euro($guthaben)) ?></strong></div>
+      <?php if ($buchungen === []) { ?><p class="leise">Keine Buchungen — Aufladung per Revolut im Portal, Erstattungen aus Reklamationen.</p><?php } else { ?>
+      <table class="tabelle tabelle--kompakt">
+        <tbody>
+        <?php foreach ($buchungen as $g) { ?>
+          <tr><td class="leise mono"><?= e(datumAnzeigen($g['zeit'])) ?></td><td><?= e(['aufladung' => 'Aufladung', 'verbrauch' => 'Sendung', 'erstattung' => 'Erstattung', 'korrektur' => 'Korrektur'][$g['art']] ?? $g['art']) ?><?= $g['ext_ref'] ? ' <a class="mono" href="' . e(url('bestellungen/' . $g['ext_ref'])) . '">' . e($g['ext_ref']) . '</a>' : '' ?></td><td class="mono rechts"><?= (int) $g['betrag_cent'] > 0 ? '+' : '' ?><?= e(euro((int) $g['betrag_cent'])) ?></td></tr>
+        <?php } ?>
+        </tbody>
+      </table>
+      <?php } ?>
+    </div>
     <div class="karte karte--tabelle">
       <div class="karte-kopf"><h2 class="h2">Benutzer</h2></div>
       <?php foreach ($benutzer as $b) { ?>

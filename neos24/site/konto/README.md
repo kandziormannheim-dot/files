@@ -11,7 +11,13 @@ gemerkt in Sitzung und Konto).
 |---|---|---|
 | Konto entsteht | selbst über „Registrieren“ (E-Mail wird per Link bestätigt) | vom NEOS-Team im Dashboard freigeschaltet, Inhaber per Einladung |
 | Bestellungen / Sendungen | alle Bestellungen, die mit der bestätigten E-Mail bezahlt wurden | alle Sendungen der Firma, von allen Firmenbenutzern |
-| Neue Sendung | über die Startseite (Checkout, Absender vorbelegt) | im Portal auf Rechnung, Nettopreis aus der Routingmatrix, Label folgt per Mail |
+| Neue Sendung | im Portal (oder über die Startseite): Carrier-Vergleich, Zusatzleistungen, Abholung; Zahlung per Revolut oder Guthaben | im Portal: Carrier-Vergleich, Zusatzleistungen, Abholung; auf Rechnung oder vom Guthaben |
+| Labels | NEOS-Label (PDF A6) je Sendung, Sammeldruck A4 aus der Liste | wie links |
+| Tracking | Verlauf in der Sendung; öffentlich unter `konto/tracking` (Nummer + PLZ des Empfängers) | wie links |
+| Adressbuch, Paketvorlagen | Empfänger- und Absenderadressen, Vorlagen mit Gewicht, Maßen, Zusatzleistungen | wie links, firmenweit |
+| CSV-Import | — | viele Sendungen auf einmal: Vorschau mit Preis je Zeile, dann beauftragen |
+| Guthaben | Aufladen per Revolut, Sendungen davon bezahlen, Erstattungen landen hier | wie links, firmenweit |
+| Retoure, Reklamation | Rücksendung mit einem Klick (Adressen getauscht); Reklamation mit Art, Beschreibung, Betrag | wie links |
 | Preise | Startseite (brutto) | Netto-Preisliste im Portal |
 | Rechnungen | — (Revolut-Beleg) | monatliche Sammelrechnung als PDF, Positionen im Detail |
 | Benutzer | — | Inhaber lädt Mitarbeiter ein, deaktiviert sie; Mitarbeiter sehen Sendungen und Rechnungen, nicht Benutzer und Firmendaten |
@@ -47,6 +53,35 @@ oder Revolut-Rohdaten.
 `konto/ich` liefert dem Checkout der Startseite (`assets/checkout.js`) Name, E-Mail und
 Absenderadresse eines angemeldeten Privatkunden zur Vorbelegung — nur mit gültiger Sitzung.
 
+## Sendungen: Carrier-Vergleich, Zusatzleistungen, Zahlung
+
+Das Formular „Neue Sendung“ (`konto/sendungen/neu`, beide Kundengruppen) zeigt zu Zielland und
+Gewicht **alle aktiven Carrier** der Routingmatrix-Zelle mit Nettopreis, Bruttopreis und
+Laufzeit; Priorität 1 ist als „Empfohlen“ vorausgewählt (`angeboteFuer()` in `lib/versand.php`).
+Das Gewicht in kg wird der kleinsten passenden Gewichtsklasse zugeordnet
+(`gewichtsklasseFuerGewicht()`, Maximalgewicht je Klasse aus dem Dashboard). Zusatzleistungen
+(Versicherung mit Warenwert, Abholung mit Werktag ab morgen und Zeitfenster, Nachnahme mit
+Betrag, SMS) kommen aus der Tabelle `zusatzleistungen`, die das Dashboard unter „Preise“ pflegt.
+Die Summe (Porto + Zusatz = netto, MwSt., brutto) rechnet `konto.js` live und der Server beim
+Anlegen verbindlich (`bestellungAnlegen()`).
+
+Zahlungsarten: **Revolut** (Privatkunden; Popup auf `…/bezahlen`, Rücksprung nach 3-D-Secure
+mit `?zurueck=1`, Statusabgleich über `…/status`), **Guthaben** (beide; Prepaid, Aufladung per
+Revolut unter `konto/guthaben` als `NG-`-Order, Webhook und Statusabfrage buchen einmalig) und
+**Rechnung** (Geschäftskunden; Sammelrechnung). Sendungen auf Rechnung oder vom Guthaben sind
+sofort `beauftragt`, bekommen Label und Abholungs-Ereignis und eine Bestätigungsmail.
+
+Der **Versandstatus** (`versandstatus`, Ereignisse in `sendungsereignisse`) läuft getrennt vom
+Bestell-/Zahlungsstatus: angelegt → bezahlt → Label erstellt → Abholung beauftragt → an Carrier
+übergeben → unterwegs → in Zustellung → zugestellt (oder Rücksendung, Zustellproblem,
+storniert). Bis zur Carrier-Anbindung (`lib/carrier.php`, Stubs) pflegt das Team die Stufen im
+Dashboard; das öffentliche Tracking zeigt denselben Verlauf.
+
+**Reklamationen** (Art, Beschreibung, geforderter Betrag) bearbeitet das Team im Dashboard;
+eine Erstattung wird dem Guthaben gutgeschrieben und der Kunde per Mail informiert.
+**Retouren** sind eigene Bestellungen (`art = retoure`, `retoure_zu`) mit getauschten
+Adressen zum Preis der Routingmatrix.
+
 ## Geschäftskunden: Ablauf
 
 1. Anfrage über das Kontaktformular landet im Dashboard (Kunden & Anfragen).
@@ -69,9 +104,16 @@ Absender, Bankverbindung und Pflichtangaben der Rechnung stehen in der Konfigura
 konto/index.php        Front-Controller, alle Routen
 konto/src/bootstrap.php  Sitzung, ansicht(), fehlerSeite(), Basis-URL
 konto/src/auth.php     kundeAktuell(), kundeAnmelden(), Guards (business/privat/inhaber)
-konto/src/sendungen.php  eigeneBestellungen(), eigeneBestellung(), sendungAnlegen(), kundenVerlauf()
-konto/src/texte.php    t() — alle Texte DE/EN
-konto/src/views/       Ansichten; assets/konto.css baut auf ../assets/neos.css auf
+konto/src/sendungen.php  eigeneBestellungen(), eigeneBestellung(), kundenVerlauf(), firmaKennzahlen()
+konto/src/routen_versand.php  Neue Sendung, Bezahlen (Revolut/Guthaben), Labels, Tracking, Retoure, Reklamation,
+                       Adressbuch, Paketvorlagen, CSV-Import, Guthaben
+konto/src/texte.php    t() — alle Texte DE/EN (texte_versand.php: Versandfunktionen)
+konto/src/views/       Ansichten; assets/konto.css baut auf ../assets/neos.css auf; assets/konto.js
+                       (Angebote, Summen, Zusatzleistungen, Sammeldruck, Revolut-Popup, Aufladung)
+lib/versand.php        Angebote je Zelle, Zusatzleistungen, bestellungAnlegen(), Guthaben und Aufladungen,
+                       Versandstatus/Ereignisse, Tracking, Adressbuch, Vorlagen, Retouren, Reklamationen
+lib/carrier.php        Carrier-Schnittstelle (Label, Abholung, Tracking) — noch Stubs
+lib/label_pdf.php      NEOS-Label (Code 128) als PDF, A6 einzeln oder A4 vierfach
 lib/kunden.php         Konten, Firmen, Anmeldelinks, Einladungs-/Link-Mails
 lib/rechnungen.php     Sammelrechnung erzeugen, Nummernkreis, Status
 lib/rechnung_pdf.php   PDF mit FPDF (lib/pdf/, vendored)

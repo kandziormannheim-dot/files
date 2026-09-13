@@ -479,6 +479,119 @@ function schemaAnlegen(PDO $db): void
         CREATE INDEX IF NOT EXISTS protokoll_zeit ON protokoll (zeit);
     SQL);
 
+    // Versand: Zusatzleistungen, Gewicht und Maße, Versandstatus, Abholung, Retouren
+    $spalten = array_column($db->query('PRAGMA table_info(bestellungen)')->fetchAll(), 'name');
+    foreach (['art' => "TEXT NOT NULL DEFAULT 'sendung'", 'retoure_zu' => 'INTEGER', 'gewicht_gramm' => 'INTEGER NOT NULL DEFAULT 0',
+              'masse_json' => "TEXT NOT NULL DEFAULT '{}'", 'zusatz_json' => "TEXT NOT NULL DEFAULT '[]'", 'zusatz_cent' => 'INTEGER NOT NULL DEFAULT 0',
+              'versandstatus' => "TEXT NOT NULL DEFAULT 'angelegt'", 'abholung_json' => "TEXT NOT NULL DEFAULT '{}'", 'label_datei' => "TEXT NOT NULL DEFAULT ''",
+              'versicherung_cent' => 'INTEGER NOT NULL DEFAULT 0', 'nachnahme_cent' => 'INTEGER NOT NULL DEFAULT 0'] as $spalte => $typ) {
+        if (!in_array($spalte, $spalten, true)) {
+            $db->exec("ALTER TABLE bestellungen ADD COLUMN $spalte $typ");
+        }
+    }
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS zusatzleistungen (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            code            TEXT NOT NULL UNIQUE,
+            name_de         TEXT NOT NULL,
+            name_en         TEXT NOT NULL,
+            beschreibung_de TEXT NOT NULL DEFAULT '',
+            beschreibung_en TEXT NOT NULL DEFAULT '',
+            preis_cent      INTEGER NOT NULL DEFAULT 0,
+            aktiv           INTEGER NOT NULL DEFAULT 1,
+            sortierung      INTEGER NOT NULL DEFAULT 100
+        );
+        CREATE TABLE IF NOT EXISTS sendungsereignisse (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            bestellung_id INTEGER NOT NULL REFERENCES bestellungen(id) ON DELETE CASCADE,
+            zeit          TEXT NOT NULL,
+            code          TEXT NOT NULL,
+            text_de       TEXT NOT NULL DEFAULT '',
+            text_en       TEXT NOT NULL DEFAULT '',
+            ort           TEXT NOT NULL DEFAULT '',
+            quelle        TEXT NOT NULL DEFAULT 'system',
+            benutzer      TEXT NOT NULL DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS sendungsereignisse_bestellung ON sendungsereignisse (bestellung_id, zeit);
+        CREATE TABLE IF NOT EXISTS adressen (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            kunde_id  INTEGER,
+            firma_id  INTEGER,
+            art       TEXT NOT NULL DEFAULT 'empfaenger',
+            name      TEXT NOT NULL,
+            firma     TEXT NOT NULL DEFAULT '',
+            strasse   TEXT NOT NULL,
+            plz       TEXT NOT NULL,
+            ort       TEXT NOT NULL,
+            land      TEXT NOT NULL DEFAULT 'DE',
+            email     TEXT NOT NULL DEFAULT '',
+            telefon   TEXT NOT NULL DEFAULT '',
+            standard  INTEGER NOT NULL DEFAULT 0,
+            erstellt  TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS adressen_bereich ON adressen (firma_id, kunde_id, art);
+        CREATE TABLE IF NOT EXISTS paketvorlagen (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            kunde_id      INTEGER,
+            firma_id      INTEGER,
+            name          TEXT NOT NULL,
+            gewicht_gramm INTEGER NOT NULL DEFAULT 0,
+            laenge_cm     INTEGER NOT NULL DEFAULT 0,
+            breite_cm     INTEGER NOT NULL DEFAULT 0,
+            hoehe_cm      INTEGER NOT NULL DEFAULT 0,
+            zusatz_json   TEXT NOT NULL DEFAULT '[]',
+            erstellt      TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS guthaben_buchungen (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            kunde_id      INTEGER,
+            firma_id      INTEGER,
+            art           TEXT NOT NULL,
+            betrag_cent   INTEGER NOT NULL,
+            bestellung_id INTEGER,
+            aufladung_id  INTEGER,
+            text          TEXT NOT NULL DEFAULT '',
+            zeit          TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS guthaben_bereich ON guthaben_buchungen (firma_id, kunde_id);
+        CREATE TABLE IF NOT EXISTS aufladungen (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            ext_ref     TEXT NOT NULL UNIQUE,
+            revolut_id  TEXT UNIQUE,
+            kunde_id    INTEGER,
+            firma_id    INTEGER,
+            betrag_cent INTEGER NOT NULL,
+            status      TEXT NOT NULL DEFAULT 'offen',
+            sprache     TEXT NOT NULL DEFAULT 'de',
+            erstellt    TEXT NOT NULL,
+            bezahlt     TEXT
+        );
+        CREATE TABLE IF NOT EXISTS reklamationen (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            bestellung_id     INTEGER NOT NULL REFERENCES bestellungen(id),
+            kunde_id          INTEGER,
+            firma_id          INTEGER,
+            art               TEXT NOT NULL,
+            beschreibung      TEXT NOT NULL,
+            betrag_cent       INTEGER NOT NULL DEFAULT 0,
+            erstattung_cent   INTEGER NOT NULL DEFAULT 0,
+            erstattet_gebucht INTEGER NOT NULL DEFAULT 0,
+            status            TEXT NOT NULL DEFAULT 'neu',
+            antwort           TEXT NOT NULL DEFAULT '',
+            bearbeiter        TEXT NOT NULL DEFAULT '',
+            erstellt          TEXT NOT NULL,
+            aktualisiert      TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS reklamationen_status ON reklamationen (status, erstellt);
+    SQL);
+    if ((int) $db->query('SELECT COUNT(*) FROM zusatzleistungen')->fetchColumn() === 0) {
+        $st = $db->prepare('INSERT INTO zusatzleistungen (code, name_de, name_en, beschreibung_de, beschreibung_en, preis_cent, aktiv, sortierung) VALUES (?, ?, ?, ?, ?, ?, 1, ?)');
+        $st->execute(['versicherung', 'Transportversicherung', 'Transport insurance', 'Warenwert bis 500 € abgesichert', 'Goods value insured up to €500', 290, 10]);
+        $st->execute(['abholung', 'Abholung an der Haustür', 'Home pickup', 'Werktags im gewählten Zeitfenster', 'Weekdays in the chosen time window', 490, 20]);
+        $st->execute(['nachnahme', 'Nachnahme', 'Cash on delivery', 'Der Empfänger zahlt bei Zustellung', 'Recipient pays on delivery', 390, 30]);
+        $st->execute(['benachrichtigung', 'SMS an den Empfänger', 'SMS to recipient', 'Ankündigung der Zustellung per SMS', 'Delivery notice by SMS', 49, 40]);
+    }
+
     preiseSaeen($db);
 }
 
@@ -497,11 +610,13 @@ function preiseSaeen(PDO $db): void
     $db->beginTransaction();
     try {
         $gkIds = [];
+        $aufschlag = [];
         $sort = 10;
         foreach ($saat['gewichtsklassen'] as $code => $gk) {
             $db->prepare('INSERT INTO gewichtsklassen (code, name_de, name_en, max_gramm, aktiv, sortierung) VALUES (?, ?, ?, ?, 1, ?)')
                ->execute([$code, $gk['de'], $gk['en'], $gk['max_gramm'] ?? 0, $sort]);
             $gkIds[$code] = (int) $db->lastInsertId();
+            $aufschlag[$code] = (int) ($gk['aufschlag'] ?? 0);
             $sort += 10;
         }
         $carrierIds = [];
@@ -519,13 +634,13 @@ function preiseSaeen(PDO $db): void
                ->execute([$code, $land['name']['de'], $land['name']['en'], $sort]);
             $sort += 10;
             $namen = array_values(array_filter(array_map('trim', explode(',', (string) $land['carrier']))));
-            foreach ($gkIds as $gkId) {
+            foreach ($gkIds as $gkCode => $gkId) {
                 foreach (array_slice($namen, 0, 3) as $i => $name) {
                     $db->prepare(<<<'SQL'
                         INSERT INTO routing (land_code, gewichtsklasse_id, carrier_id, prioritaet, laufzeit_de, laufzeit_en,
                                              einkauf_cent, verkauf_cent, aktiv, aktualisiert, aktualisiert_von)
                         VALUES (?, ?, ?, ?, ?, ?, 0, ?, 1, ?, 'saatgut')
-                    SQL)->execute([$code, $gkId, $carrierId($name), $i + 1, $land['laufzeit']['de'], $land['laufzeit']['en'], (int) $land['netto'], $jetzt]);
+                    SQL)->execute([$code, $gkId, $carrierId($name), $i + 1, $land['laufzeit']['de'], $land['laufzeit']['en'], (int) $land['netto'] + $aufschlag[$gkCode] + $i * 15, $jetzt]);
                 }
             }
         }
@@ -538,7 +653,7 @@ function preiseSaeen(PDO $db): void
 
 function bestellungLaden(string $spalte, string $wert): ?array
 {
-    if (!in_array($spalte, ['ext_ref', 'revolut_id'], true)) {
+    if (!in_array($spalte, ['ext_ref', 'revolut_id', 'id'], true)) {
         throw new InvalidArgumentException('Unbekannte Spalte');
     }
     $st = datenbank()->prepare("SELECT * FROM bestellungen WHERE $spalte = :w LIMIT 1");
@@ -658,25 +773,23 @@ function bruttoCent(int $nettoCent): int
     return (int) round($nettoCent * (100 + (int) preisliste()['mwstSatz']) / 100);
 }
 
-/** Preis für Zielland und Gewichtsklasse, oder null wenn nicht angeboten. */
-function preisFuer(string $land, string $gewichtsklasse): ?array
+/**
+ * Preis für Zielland und Gewichtsklasse — Priorität 1 oder, wenn angegeben,
+ * ein bestimmter Carrier aus den Angeboten der Zelle. null, wenn nicht angeboten.
+ */
+function preisFuer(string $land, string $gewichtsklasse, string $carrier = ''): ?array
 {
     $p = preisliste();
-    $zelle = $p['laender'][$land]['klassen'][$gewichtsklasse] ?? null;
-    if ($zelle === null || !isset($p['gewichtsklassen'][$gewichtsklasse])) {
+    if (!isset($p['gewichtsklassen'][$gewichtsklasse])) {
         return null;
     }
-    $netto = (int) $zelle['netto'];
-    $brutto = bruttoCent($netto);
+    foreach (angeboteFuer($land, $gewichtsklasse) as $a) {
+        if ($carrier === '' || $a['carrier'] === $carrier) {
+            return ['netto' => $a['netto'], 'mwst' => $a['mwst'], 'brutto' => $a['brutto'], 'waehrung' => (string) $p['waehrung'], 'carrier' => $a['carrier'], 'einkauf' => $a['einkauf'], 'laufzeit' => $a['laufzeit']];
+        }
+    }
 
-    return [
-        'netto' => $netto,
-        'mwst' => $brutto - $netto,
-        'brutto' => $brutto,
-        'waehrung' => (string) $p['waehrung'],
-        'carrier' => (string) $zelle['carrier'],
-        'einkauf' => (int) $zelle['einkauf'],
-    ];
+    return null;
 }
 
 // --------------------------------------------------------------- Revolut-Client
@@ -755,7 +868,8 @@ function checkoutModus(): string
 function nachBezahlung(array $bestellung): void
 {
     try {
-        labelBeauftragen($bestellung);
+        sendungsereignis((int) $bestellung['id'], 'bezahlt', '', 'system');
+        nachBeauftragung($bestellung);
     } catch (Throwable $e) {
         error_log('[revolut] Label-Auftrag fehlgeschlagen: ' . $e->getMessage());
     }
@@ -768,10 +882,12 @@ function nachBezahlung(array $bestellung): void
 
 function labelBeauftragen(array $bestellung): void
 {
+    $carrierLabel = carrierLabelAnfordern($bestellung);
     $ereignisse = json_decode((string) $bestellung['ereignisse_json'], true) ?: [];
-    $ereignisse[] = ['zeit' => jetzt(), 'ereignis' => 'label.beauftragt', 'status' => $bestellung['status'], 'hinweis' => 'Carrier-Anbindung folgt'];
-    $st = datenbank()->prepare('UPDATE bestellungen SET ereignisse_json = :e, aktualisiert = :a WHERE id = :id');
-    $st->execute([':e' => json_encode($ereignisse, JSON_UNESCAPED_UNICODE), ':a' => jetzt(), ':id' => $bestellung['id']]);
+    $ereignisse[] = ['zeit' => jetzt(), 'ereignis' => 'label.beauftragt', 'status' => $bestellung['status'], 'hinweis' => $carrierLabel === null ? 'NEOS-Label, Carrier-Anbindung folgt' : 'Carrier-Label'];
+    $st = datenbank()->prepare('UPDATE bestellungen SET ereignisse_json = :e, label_datei = :l, aktualisiert = :a WHERE id = :id');
+    $st->execute([':e' => json_encode($ereignisse, JSON_UNESCAPED_UNICODE), ':l' => $carrierLabel['datei'] ?? 'neos', ':a' => jetzt(), ':id' => $bestellung['id']]);
+    sendungsereignis((int) $bestellung['id'], 'label', '', 'system');
 }
 
 function betragFormat(int $cent, string $sprache): string
@@ -802,6 +918,7 @@ function bestaetigungSenden(array $bestellung): void
             'Betrag:      ' . betragFormat((int) $bestellung['betrag_cent'], 'de') . ' inkl. ' . preisliste()['mwstSatz'] . ' % MwSt.',
             '',
             'Dein Versandlabel bekommst du in einer zweiten E-Mail, sobald es erzeugt ist.',
+            'Sendungsverfolgung: ' . rtrim((string) $konfig['basisUrl'], '/') . '/konto/tracking?nr=' . $bestellung['ext_ref'] . '&plz=' . rawurlencode((string) ($empfaenger['plz'] ?? '')),
             '',
             'Alle Bestellungen jederzeit im Kundenportal: ' . rtrim((string) $konfig['basisUrl'], '/') . '/konto/ — Anmeldung per E-Mail-Link, kein Passwort nötig.',
             '',
@@ -820,6 +937,7 @@ function bestaetigungSenden(array $bestellung): void
             'Amount:      ' . betragFormat((int) $bestellung['betrag_cent'], 'en') . ' incl. ' . preisliste()['mwstSatz'] . '% VAT',
             '',
             'Your shipping label follows in a second email as soon as it is generated.',
+            'Tracking: ' . rtrim((string) $konfig['basisUrl'], '/') . '/konto/tracking?nr=' . $bestellung['ext_ref'] . '&plz=' . rawurlencode((string) ($empfaenger['plz'] ?? '')) . '&sprache=en',
             '',
             'All your orders any time in the customer portal: ' . rtrim((string) $konfig['basisUrl'], '/') . '/konto/?sprache=en — sign in by email link, no password needed.',
             '',
@@ -949,3 +1067,5 @@ function perSmtpSenden(array $konfig, string $von, string $an, string $rohmail):
         fclose($verbindung);
     }
 }
+
+require_once __DIR__ . '/../../lib/versand.php';

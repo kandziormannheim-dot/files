@@ -10,6 +10,9 @@ $gkForm = null;
 foreach ($klassen as $g) { if ((int) $g['id'] === $bearbeitenGk) { $gkForm = $g; } }
 $carrierForm = null;
 foreach ($carrier as $c) { if ((int) $c['id'] === $bearbeitenCarrier) { $carrierForm = $c; } }
+$bearbeitenZusatz = str_starts_with($bearbeiten, 'zusatz:') ? (int) substr($bearbeiten, 7) : 0;
+$zusatzForm = null;
+foreach ($zusatz as $z) { if ($z['id'] === $bearbeitenZusatz) { $zusatzForm = $z; } }
 ?>
 <header class="kopfzeile">
   <div><span class="eyebrow">Preise &amp; Zielländer</span><h1 class="h1">Stammdaten</h1></div>
@@ -123,4 +126,45 @@ foreach ($carrier as $c) { if ((int) $c['id'] === $bearbeitenCarrier) { $carrier
     <p class="leise" style="margin-top:.75rem">Ein deaktivierter Carrier fällt in der Routingmatrix aus; die nächste Priorität rückt nach.</p>
     <?php } ?>
   </div>
+</div>
+
+<div class="karte karte--tabelle" id="formular-zusatz">
+  <div class="karte-kopf"><h2 class="h2">Zusatzleistungen</h2><span class="leise">Nettopreise je Sendung · Abholung, Versicherung und Nachnahme fragen im Portal Zusatzfelder ab (Termin, Warenwert, Betrag)</span></div>
+  <div class="scrollen">
+  <table class="tabelle">
+    <thead><tr><th>Kürzel</th><th>Deutsch</th><th>Englisch</th><th class="rechts">Netto</th><th class="rechts">Sortierung</th><th>Aktiv</th><th></th></tr></thead>
+    <tbody>
+    <?php foreach ($zusatz as $z) { ?>
+      <tr class="<?= $z['aktiv'] ? '' : 'inaktiv' ?>">
+        <td class="mono"><?= e($z['code']) ?></td>
+        <td><?= e($z['name']['de']) ?><br><span class="leise"><?= e($z['beschreibung']['de']) ?></span></td>
+        <td><?= e($z['name']['en']) ?><br><span class="leise"><?= e($z['beschreibung']['en']) ?></span></td>
+        <td class="mono rechts"><?= e(euro($z['preis'])) ?></td>
+        <td class="mono rechts"><?= $z['sortierung'] ?></td>
+        <td><?= $z['aktiv'] ? '<span class="ja">✓</span>' : '<span class="nein">–</span>' ?></td>
+        <td class="rechts zeilen-aktionen">
+          <?php if ($darfB) { ?><a class="knopf knopf--leise knopf--klein" href="<?= e(url('preise', ['bearbeiten' => 'zusatz:' . $z['id']])) ?>#formular-zusatz">Bearbeiten</a><?php } ?>
+          <?php if ($darfL) { ?><form method="post" action="<?= e(url('preise/zusatz/loeschen')) ?>" data-bestaetigen="Zusatzleistung <?= e($z['code']) ?> löschen?"><?= csrfFeld() ?><input type="hidden" name="id" value="<?= $z['id'] ?>"><button class="knopf knopf--gefahr knopf--klein" type="submit">Löschen</button></form><?php } ?>
+        </td>
+      </tr>
+    <?php } ?>
+    </tbody>
+  </table>
+  </div>
+  <?php if ($darfB) { ?>
+  <form method="post" action="<?= e(url('preise/zusatz')) ?>" class="formular formular--zeile" style="margin-top:1rem">
+    <?= csrfFeld() ?>
+    <input type="hidden" name="id" value="<?= (int) ($zusatzForm['id'] ?? 0) ?>">
+    <div class="feld"><label for="z-code">Kürzel</label><input id="z-code" name="code" value="<?= e($zusatzForm['code'] ?? '') ?>" pattern="[a-z0-9_]{2,20}" placeholder="sperrgut" required></div>
+    <div class="feld"><label for="z-de">Deutsch</label><input id="z-de" name="name_de" value="<?= e($zusatzForm['name']['de'] ?? '') ?>" required></div>
+    <div class="feld"><label for="z-en">Englisch</label><input id="z-en" name="name_en" value="<?= e($zusatzForm['name']['en'] ?? '') ?>" required></div>
+    <div class="feld"><label for="z-preis">Netto €</label><input id="z-preis" name="preis" value="<?= $zusatzForm !== null ? e(number_format($zusatzForm['preis'] / 100, 2, ',', '')) : '' ?>" inputmode="decimal" placeholder="2,90" required></div>
+    <div class="feld"><label for="z-sort">Sortierung</label><input id="z-sort" name="sortierung" type="number" value="<?= e($zusatzForm['sortierung'] ?? '100') ?>" min="0"></div>
+    <div class="feld feld--wachsen"><label for="z-bde">Beschreibung deutsch</label><input id="z-bde" name="beschreibung_de" value="<?= e($zusatzForm['beschreibung']['de'] ?? '') ?>"></div>
+    <div class="feld feld--wachsen"><label for="z-ben">Beschreibung englisch</label><input id="z-ben" name="beschreibung_en" value="<?= e($zusatzForm['beschreibung']['en'] ?? '') ?>"></div>
+    <label class="schalter"><input type="checkbox" name="aktiv" <?= ($zusatzForm === null || $zusatzForm['aktiv']) ? 'checked' : '' ?>> Aktiv</label>
+    <button class="knopf knopf--primaer" type="submit"><?= $zusatzForm !== null ? 'Speichern' : 'Anlegen' ?></button>
+    <?php if ($zusatzForm !== null) { ?><a class="knopf knopf--leise" href="<?= e(url('preise')) ?>#formular-zusatz">Neu statt bearbeiten</a><?php } ?>
+  </form>
+  <?php } ?>
 </div>

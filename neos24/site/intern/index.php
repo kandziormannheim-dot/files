@@ -124,28 +124,49 @@ if ($pfad === '/') {
 if ($pfad === '/bestellungen') {
     rechtErzwingen('bestellungen');
     $status = saeubern($_GET['status'] ?? '', 20);
+    $versand = saeubern($_GET['versand'] ?? '', 20);
+    $abholung = ($_GET['abholung'] ?? '') === '1';
     $q = saeubern($_GET['q'] ?? '', 100);
     $wo = [];
     $werte = [];
     if ($status !== '') {
-        $wo[] = 'status = ?';
+        $wo[] = 'b.status = ?';
         $werte[] = $status;
     }
-    if ($q !== '') {
-        $wo[] = '(ext_ref LIKE ? OR email LIKE ? OR zielland = ? OR revolut_id = ?)';
-        array_push($werte, '%' . $q . '%', '%' . $q . '%', strtoupper($q), $q);
+    if ($versand !== '' && isset(VERSANDSTATUS[$versand])) {
+        $wo[] = 'b.versandstatus = ?';
+        $werte[] = $versand;
     }
-    $sql = $wo !== [] ? ' WHERE ' . implode(' AND ', $wo) : '';
-    $st = $db->prepare('SELECT COUNT(*) FROM bestellungen' . $sql);
+    if ($abholung) {
+        $wo[] = "b.abholung_json LIKE '%\"datum\":\"2%' AND b.status IN ('bezahlt','beauftragt')";
+    }
+    if ($q !== '') {
+        $wo[] = '(b.ext_ref LIKE ? OR b.email LIKE ? OR b.zielland = ? OR b.revolut_id = ? OR b.referenz LIKE ? OR f.name LIKE ?)';
+        array_push($werte, '%' . $q . '%', '%' . $q . '%', strtoupper($q), $q, '%' . $q . '%', '%' . $q . '%');
+    }
+    $sql = ' FROM bestellungen b LEFT JOIN firmen f ON f.id = b.firma_id' . ($wo !== [] ? ' WHERE ' . implode(' AND ', $wo) : '');
+    $st = $db->prepare('SELECT COUNT(*)' . $sql);
     $st->execute($werte);
     $gesamt = (int) $st->fetchColumn();
     $seite = seiteLesen();
-    $st = $db->prepare('SELECT b.*, f.name AS firma FROM bestellungen b LEFT JOIN firmen f ON f.id = b.firma_id' . str_replace(['status = ?', 'ext_ref LIKE', 'email LIKE', 'zielland = ?', 'revolut_id = ?'], ['b.status = ?', 'b.ext_ref LIKE', 'b.email LIKE', 'b.zielland = ?', 'b.revolut_id = ?'], $sql) . ' ORDER BY b.id DESC LIMIT 50 OFFSET ' . (($seite - 1) * 50));
+    $st = $db->prepare('SELECT b.*, f.name AS firma' . $sql . ' ORDER BY ' . ($abholung ? "json_extract(b.abholung_json, '$.datum'), " : '') . 'b.id DESC LIMIT 50 OFFSET ' . (($seite - 1) * 50));
     $st->execute($werte);
-    ansicht('bestellungen', ['titel' => 'Bestellungen & Sendungen', 'zeilen' => $st->fetchAll(), 'gesamt' => $gesamt, 'seite' => $seite, 'status' => $status, 'q' => $q, 'aktiv' => 'bestellungen']);
+    ansicht('bestellungen', ['titel' => 'Bestellungen & Sendungen', 'zeilen' => $st->fetchAll(), 'gesamt' => $gesamt, 'seite' => $seite, 'status' => $status, 'versand' => $versand, 'abholung' => $abholung, 'q' => $q, 'aktiv' => 'bestellungen']);
 }
 
-if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})(?:/(sync|status|label|loeschen))?$#', $pfad, $t)) {
+if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})/label\.pdf$#', $pfad, $t)) {
+    rechtErzwingen('bestellungen');
+    $b = bestellungLaden('ext_ref', $t[1]);
+    if ($b === null) {
+        fehlerSeite(404, 'Nicht gefunden', 'Diese Bestellung gibt es nicht.');
+    }
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="NEOS-Label-' . $b['ext_ref'] . '.pdf"');
+    echo labelPdf([$b], 'a6');
+    exit;
+}
+
+if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})(?:/(sync|status|label|ereignis|loeschen))?$#', $pfad, $t)) {
     rechtErzwingen('bestellungen');
     $b = bestellungLaden('ext_ref', $t[1]);
     if ($b === null) {
@@ -184,7 +205,20 @@ if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})(?:/(sync|status|label|loe
         } elseif ($aktion === 'label') {
             labelBeauftragen($b);
             protokollieren('bestellung.label', 'bestellung', $b['ext_ref']);
-            hinweisSetzen('Label-Auftrag vermerkt (Carrier-Anbindung folgt).');
+            hinweisSetzen('Label erzeugt (NEOS-Label; Carrier-Anbindung folgt).');
+        } elseif ($aktion === 'ereignis') {
+            $code = feld('code', 20);
+            if (!isset(VERSANDSTATUS[$code]) || in_array($code, ['angelegt', 'bezahlt'], true)) {
+                hinweisSetzen('Unbekannter Versandstatus.', 'fehler');
+            } else {
+                $text = feld('text', 200);
+                sendungsereignis((int) $b['id'], $code, feld('ort', 80), 'intern', $ich['name'], $text !== '' ? $text : null, $text !== '' ? $text : null);
+                if ($code === 'storniert' && !in_array($b['status'], ['storniert'], true)) {
+                    bestellungFortschreiben($b, 'storniert', 'intern.status', ['von' => $ich['name'], 'grund' => $text]);
+                }
+                protokollieren('bestellung.ereignis', 'bestellung', $b['ext_ref'], ['code' => $code, 'ort' => feld('ort', 80)]);
+                hinweisSetzen('Versandstatus gesetzt: ' . versandstatusName($code) . '.');
+            }
         } elseif ($aktion === 'loeschen') {
             if (!in_array($b['status'], ['offen', 'fehlgeschlagen', 'storniert'], true)) {
                 hinweisSetzen('Nur offene, fehlgeschlagene oder stornierte Bestellungen lassen sich löschen.', 'fehler');
@@ -197,14 +231,59 @@ if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})(?:/(sync|status|label|loe
         }
         umleiten(url('bestellungen/' . $b['ext_ref']));
     }
-    ansicht('bestellung', ['titel' => 'Bestellung ' . $b['ext_ref'], 'b' => bestellungLaden('ext_ref', $t[1]), 'aktiv' => 'bestellungen']);
+    $b = bestellungLaden('ext_ref', $t[1]);
+    $st = $db->prepare('SELECT r.* FROM reklamationen r WHERE r.bestellung_id = ? ORDER BY r.id DESC');
+    $st->execute([$b['id']]);
+    $retoureZu = $b['retoure_zu'] ? bestellungLaden('id', (string) $b['retoure_zu']) : null;
+    $st2 = $db->prepare('SELECT ext_ref FROM bestellungen WHERE retoure_zu = ?');
+    $st2->execute([$b['id']]);
+    ansicht('bestellung', ['titel' => 'Bestellung ' . $b['ext_ref'], 'b' => $b, 'sendungsereignisse' => sendungsereignisse((int) $b['id']), 'reklamationen' => $st->fetchAll(), 'retoureZu' => $retoureZu, 'retouren' => $st2->fetchAll(PDO::FETCH_COLUMN),
+        'kunde' => $b['kunde_id'] ? kundeLaden((int) $b['kunde_id']) : null, 'firma' => $b['firma_id'] ? firmaLaden((int) $b['firma_id']) : null, 'aktiv' => 'bestellungen']);
 }
 
 // -------------------------------------------------------- Preise & Zielländer
 
 if ($pfad === '/preise') {
     rechtErzwingen('preise');
-    ansicht('preise', ['titel' => 'Preise & Zielländer', 'laender' => laenderAlle(), 'klassen' => gewichtsklassenAlle(), 'carrier' => carrierAlle(), 'bearbeiten' => saeubern($_GET['bearbeiten'] ?? '', 40), 'aktiv' => 'preise']);
+    ansicht('preise', ['titel' => 'Preise & Zielländer', 'laender' => laenderAlle(), 'klassen' => gewichtsklassenAlle(), 'carrier' => carrierAlle(), 'zusatz' => zusatzleistungen(false), 'bearbeiten' => saeubern($_GET['bearbeiten'] ?? '', 40), 'aktiv' => 'preise']);
+}
+
+if (preg_match('#^/preise/zusatz(/loeschen)?$#', $pfad, $t) && $methode === 'POST') {
+    $loeschen = isset($t[1]);
+    rechtErzwingen('preise', $loeschen ? 'loeschen' : 'bearbeiten');
+    $id = (int) feld('id', 10);
+    try {
+        if ($loeschen) {
+            $db->prepare('DELETE FROM zusatzleistungen WHERE id = ?')->execute([$id]);
+            protokollieren('zusatz.geloescht', 'zusatzleistung', $id);
+            hinweisSetzen('Zusatzleistung gelöscht. Bestehende Sendungen behalten ihre gebuchten Leistungen.');
+        } else {
+            $code = strtolower(feld('code', 20));
+            $z = ['name_de' => feld('name_de', 60), 'name_en' => feld('name_en', 60), 'beschreibung_de' => feld('beschreibung_de', 160), 'beschreibung_en' => feld('beschreibung_en', 160), 'preis_cent' => centAusEingabe(feld('preis', 12)) ?? -1, 'sortierung' => (int) feld('sortierung', 6) ?: 100, 'aktiv' => isset($_POST['aktiv']) ? 1 : 0];
+            if (!preg_match('/^[a-z0-9_]{2,20}$/', $code) || $z['name_de'] === '' || $z['name_en'] === '' || $z['preis_cent'] < 0) {
+                throw new InvalidArgumentException('Kürzel (Kleinbuchstaben, z. B. versicherung), beide Namen und ein Preis ≥ 0 sind Pflicht.');
+            }
+            $st = $db->prepare('SELECT id FROM zusatzleistungen WHERE code = ?');
+            $st->execute([$code]);
+            $vorhanden = $st->fetchColumn();
+            if ($vorhanden !== false && (int) $vorhanden !== $id) {
+                throw new InvalidArgumentException('Das Kürzel ist schon vergeben.');
+            }
+            if ($id > 0) {
+                $db->prepare('UPDATE zusatzleistungen SET code = ?, name_de = ?, name_en = ?, beschreibung_de = ?, beschreibung_en = ?, preis_cent = ?, sortierung = ?, aktiv = ? WHERE id = ?')
+                   ->execute([$code, $z['name_de'], $z['name_en'], $z['beschreibung_de'], $z['beschreibung_en'], $z['preis_cent'], $z['sortierung'], $z['aktiv'], $id]);
+                protokollieren('zusatz.geaendert', 'zusatzleistung', $id, ['code' => $code, 'preis' => $z['preis_cent'], 'aktiv' => $z['aktiv']]);
+            } else {
+                $db->prepare('INSERT INTO zusatzleistungen (code, name_de, name_en, beschreibung_de, beschreibung_en, preis_cent, sortierung, aktiv) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                   ->execute([$code, $z['name_de'], $z['name_en'], $z['beschreibung_de'], $z['beschreibung_en'], $z['preis_cent'], $z['sortierung'], $z['aktiv']]);
+                protokollieren('zusatz.angelegt', 'zusatzleistung', (int) $db->lastInsertId(), ['code' => $code]);
+            }
+            hinweisSetzen('Zusatzleistung „' . $code . '“ gespeichert.');
+        }
+    } catch (InvalidArgumentException $e) {
+        hinweisSetzen($e->getMessage(), 'fehler');
+    }
+    umleiten(url('preise') . '#formular-zusatz');
 }
 
 if (preg_match('#^/preise/(land|gewichtsklasse|carrier)(/loeschen)?$#', $pfad, $t) && $methode === 'POST') {
@@ -431,7 +510,8 @@ if ($pfad === '/kunden') {
         $gesamt = (int) $st->fetchColumn();
         $st = $db->prepare(<<<'SQL'
             SELECT k.*, (SELECT COUNT(*) FROM bestellungen b WHERE b.kunde_id = k.id) AS bestellungen,
-                   (SELECT COALESCE(SUM(betrag_cent),0) FROM bestellungen b WHERE b.kunde_id = k.id AND b.status = 'bezahlt') AS umsatz
+                   (SELECT COALESCE(SUM(betrag_cent),0) FROM bestellungen b WHERE b.kunde_id = k.id AND b.status IN ('bezahlt','beauftragt')) AS umsatz,
+                   (SELECT COALESCE(SUM(betrag_cent),0) FROM guthaben_buchungen g WHERE g.kunde_id = k.id AND g.firma_id IS NULL) AS guthaben
             FROM kunden k WHERE k.art = 'privat'
         SQL . ($q !== '' ? ' AND (k.email LIKE ? OR k.name LIKE ?)' : '') . ' ORDER BY k.id DESC LIMIT 50 OFFSET ' . (($seite - 1) * 50));
         $st->execute($werte);
@@ -543,7 +623,22 @@ if (preg_match('#^/kunden/firmen/(\d+)(?:/(daten|einladen|benutzer|rechnung|akti
     for ($i = 0; $i < 6; $i++) {
         $monate[] = gmdate('Y-m', strtotime('first day of -' . $i . ' month'));
     }
-    ansicht('firma', ['titel' => $firma['name'], 'firma' => $firma, 'benutzer' => firmenBenutzer((int) $firma['id']), 'sendungen' => $st->fetchAll(), 'rechnungen' => rechnungenDerFirma((int) $firma['id']), 'monate' => $monate, 'aktiv' => 'kunden']);
+    $guthabenKonto = ['id' => 0, 'art' => 'business', 'firma_id' => (int) $firma['id']];
+    ansicht('firma', ['titel' => $firma['name'], 'firma' => $firma, 'benutzer' => firmenBenutzer((int) $firma['id']), 'sendungen' => $st->fetchAll(), 'rechnungen' => rechnungenDerFirma((int) $firma['id']), 'monate' => $monate,
+        'guthaben' => guthabenStand($guthabenKonto), 'buchungen' => guthabenBuchungen($guthabenKonto, 10), 'aktiv' => 'kunden']);
+}
+
+if (preg_match('#^/kunden/privat/(\d+)$#', $pfad, $t)) {
+    rechtErzwingen('kunden');
+    $kunde = kundeLaden((int) $t[1]);
+    if ($kunde === null || $kunde['art'] !== 'privat') {
+        fehlerSeite(404, 'Nicht gefunden', 'Diesen Privatkunden gibt es nicht.');
+    }
+    $st = $db->prepare('SELECT * FROM bestellungen WHERE kunde_id = ? ORDER BY id DESC LIMIT 20');
+    $st->execute([$kunde['id']]);
+    $rk = $db->prepare('SELECT r.*, b.ext_ref FROM reklamationen r JOIN bestellungen b ON b.id = r.bestellung_id WHERE r.kunde_id = ? AND r.firma_id IS NULL ORDER BY r.id DESC');
+    $rk->execute([$kunde['id']]);
+    ansicht('privatkunde', ['titel' => $kunde['name'], 'kunde' => $kunde, 'bestellungen' => $st->fetchAll(), 'guthaben' => guthabenStand($kunde), 'buchungen' => guthabenBuchungen($kunde, 20), 'reklamationen' => $rk->fetchAll(), 'aktiv' => 'kunden']);
 }
 
 if (preg_match('#^/kunden/anfragen/(\d+)(?:/(status|notiz|loeschen))?$#', $pfad, $t)) {
@@ -617,6 +712,53 @@ if (preg_match('#^/rechnungen/(\d+)(\.pdf)?(?:/(status))?$#', $pfad, $t)) {
         umleiten(url('rechnungen/' . $r['id']));
     }
     ansicht('rechnung', ['titel' => 'Rechnung ' . $r['nummer'], 'r' => $r, 'firma' => firmaLaden((int) $r['firma_id']), 'positionen' => rechnungPositionen((int) $r['id']), 'aktiv' => 'rechnungen']);
+}
+
+// -------------------------------------------------------------- Reklamationen
+
+if ($pfad === '/reklamationen') {
+    rechtErzwingen('reklamationen');
+    $status = saeubern($_GET['status'] ?? '', 20);
+    $sql = 'SELECT r.*, b.ext_ref, b.zielland, b.carrier, k.name AS kunde_name, f.name AS firma_name FROM reklamationen r JOIN bestellungen b ON b.id = r.bestellung_id LEFT JOIN kunden k ON k.id = r.kunde_id LEFT JOIN firmen f ON f.id = r.firma_id';
+    $werte = [];
+    if ($status !== '' && isset(REKLAMATION_STATUS[$status])) {
+        $sql .= ' WHERE r.status = ?';
+        $werte[] = $status;
+    } elseif ($status === '') {
+        $sql .= " WHERE r.status NOT IN ('erstattet','abgelehnt')";
+    }
+    $st = $db->prepare($sql . ' ORDER BY r.id DESC LIMIT 200');
+    $st->execute($werte);
+    ansicht('reklamationen', ['titel' => 'Reklamationen', 'zeilen' => $st->fetchAll(), 'status' => $status, 'aktiv' => 'reklamationen']);
+}
+
+if (preg_match('#^/reklamationen/(\d+)(?:/(status))?$#', $pfad, $t)) {
+    rechtErzwingen('reklamationen');
+    $r = reklamationLaden((int) $t[1]);
+    if ($r === null) {
+        fehlerSeite(404, 'Nicht gefunden', 'Diese Reklamation gibt es nicht.');
+    }
+    if (($t[2] ?? '') === 'status' && $methode === 'POST') {
+        rechtErzwingen('reklamationen', 'bearbeiten');
+        try {
+            $neu = feld('status', 20);
+            $antwort = feld('antwort', 4000);
+            $erstattung = centAusEingabe(feld('erstattung', 12)) ?? 0;
+            if ($neu === 'erstattet' && $erstattung <= 0) {
+                throw new InvalidArgumentException('Für „Erstattet“ bitte einen Betrag angeben — er wird dem Kunden als Guthaben gutgeschrieben.');
+            }
+            reklamationFortschreiben($r, $neu, $antwort, $erstattung, $ich['name']);
+            protokollieren('reklamation.status', 'reklamation', (int) $r['id'], ['status' => $neu, 'erstattung' => $erstattung]);
+            if (!empty($_POST['mail']) && $antwort !== '') {
+                reklamationAntwortSenden(reklamationLaden((int) $r['id']) ?? $r);
+            }
+            hinweisSetzen('Reklamation: ' . REKLAMATION_STATUS[$neu]['de'] . ($neu === 'erstattet' ? ' — ' . euro($erstattung) . ' als Guthaben gebucht' : '') . '.');
+        } catch (InvalidArgumentException $e) {
+            hinweisSetzen($e->getMessage() === 'status' ? 'Unbekannter Status.' : $e->getMessage(), 'fehler');
+        }
+        umleiten(url('reklamationen/' . $r['id']));
+    }
+    ansicht('reklamation', ['titel' => 'Reklamation #' . $r['id'], 'r' => $r, 'b' => bestellungLaden('id', (string) $r['bestellung_id']), 'aktiv' => 'reklamationen']);
 }
 
 // ---------------------------------------------------------- Benutzer & Rollen

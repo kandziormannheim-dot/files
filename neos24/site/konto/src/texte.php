@@ -147,7 +147,7 @@ function texte(): array
             'neu.plz' => 'PLZ',
             'neu.ort' => 'Ort',
             'neu.email' => 'E-Mail des Empfängers (optional, für Tracking)',
-            'neu.absender' => 'Absender: %s',
+            'neu.absender' => 'Absender',
             'neu.absender.fehlt' => 'Die Firmenanschrift fehlt — der Inhaber trägt sie unter „Firma“ ein.',
             'neu.preis' => 'Preis netto',
             'neu.knopf' => 'Sendung beauftragen',
@@ -325,7 +325,7 @@ function texte(): array
             'neu.plz' => 'Postcode',
             'neu.ort' => 'City',
             'neu.email' => 'Recipient email (optional, for tracking)',
-            'neu.absender' => 'Sender: %s',
+            'neu.absender' => 'Sender',
             'neu.absender.fehlt' => 'The company address is missing — the owner adds it under “Company”.',
             'neu.preis' => 'Net price',
             'neu.knopf' => 'Book shipment',
@@ -398,6 +398,9 @@ function texte(): array
             'nein' => 'No',
         ],
     ];
+    $mehr = require __DIR__ . '/texte_versand.php';
+    $t['de'] += $mehr['de'];
+    $t['en'] += $mehr['en'];
 
     return $t;
 }

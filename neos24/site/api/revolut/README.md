@@ -91,9 +91,10 @@ Zeitstempel älter als 5 Minuten → 401, unbekanntes Zielland → 422, fremde H
 
 ## Was noch fehlt
 
-- **Versandlabel**: `labelBeauftragen()` vermerkt nur den Auftrag. Die Carrier-Anbindung erzeugt
-  später das Label und schickt es als zweite Mail.
-- Mehrere Pakete, weitere Gewichtsklassen, Abholung an der Haustür.
+- **Carrier-Anbindung**: `lib/carrier.php` sind Stubs. `labelBeauftragen()` erzeugt bis dahin ein
+  NEOS-Label mit Strichcode (`lib/label_pdf.php`), Abholungen werden nur als Ereignis vermerkt,
+  Tracking-Stufen pflegt das Team im Dashboard.
+- Mehrere Pakete je Bestellung.
 - Rechnung als PDF (die Bestätigungsmail nennt Betrag und MwSt., ist aber keine Rechnung).
 
 ## Kundenportal
@@ -101,4 +102,9 @@ Zeitstempel älter als 5 Minuten → 401, unbekanntes Zielland → 422, fremde H
 Bestellungen tragen seit dem Kundenportal (`konto/`) `kunde_id` (bestätigtes Privatkunden-Konto zur
 E-Mail, gesetzt in `bestellung.php`), `firma_id` und `zahlungsart` (`revolut` hier, `rechnung` für
 Sendungen von Geschäftskunden mit Status `beauftragt`) sowie `rechnung_id` nach der
-Sammelrechnung. Die Bestätigungsmail verweist auf das Portal.
+Sammelrechnung. Die Bestätigungsmail verweist auf das Portal. `bestellung.php` legt Bestellungen
+über `bestellungAnlegen()` in `lib/versand.php` an — derselbe Weg wie im Portal: Gewicht in Gramm
+→ Gewichtsklasse, Carrier aus allen Angeboten der Zelle (Priorität 1, wenn keiner gewählt),
+Zusatzleistungen (`zusatz_json`, `zusatz_cent`), Abholung, Versicherung, Nachnahme. Die
+Zahlungsart `guthaben` (Prepaid, Aufladungen `NG-…` als eigene Revolut-Orders, `webhook.php`
+kennt sie) kommt dazu; `versandstatus` und `sendungsereignisse` bilden das Tracking ab.

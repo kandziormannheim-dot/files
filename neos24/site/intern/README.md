@@ -10,11 +10,12 @@ gepflegt wird.
 | Modul | Inhalt |
 |---|---|
 | **Übersicht** | Bestellungen heute / 7 / 30 Tage, Umsatz brutto und netto, Marge (Verkauf netto − Einkauf), Statusanteile, Sendungen je Kalenderwoche, Top-Zielländer, Top-Carrier, neue Anfragen, letzte Bestellungen — alles aus der Tabelle `bestellungen`, nichts geschätzt |
-| **Bestellungen & Sendungen** | Liste mit Statusfilter und Suche, Detail mit Adressen, Beträgen und Ereignisverlauf; Status bei Revolut abfragen, Status manuell setzen (bezahlt / storniert), Label-Auftrag vermerken, löschen (nur offen / fehlgeschlagen / storniert) |
-| **Preise & Zielländer** | Zielländer (Code, Name DE/EN, aktiv, Sortierung), Gewichtsklassen (Kürzel, Name DE/EN, Maximalgewicht), Carrier — anlegen, ändern, deaktivieren, löschen (nur ohne Routing-Zeilen) |
+| **Bestellungen & Sendungen** | Liste mit Status-, Versandstatus- und Abholungsfilter und Suche (Nummer, E-Mail, Referenz, Firma); Detail mit Adressen, Gewicht/Maßen, Zusatzleistungen, Abholtermin, Beträgen, Sendungsverlauf (sieht der Kunde) und internem Verlauf; Versandstatus mit Ort und Text eintragen, Label (PDF) ansehen oder neu erzeugen, Status bei Revolut abfragen, Bestellstatus manuell setzen, löschen (nur offen / fehlgeschlagen / storniert) |
+| **Preise & Zielländer** | Zielländer (Code, Name DE/EN, aktiv, Sortierung), Gewichtsklassen (Kürzel, Name DE/EN, Maximalgewicht), Carrier, Zusatzleistungen (Kürzel, Name und Beschreibung DE/EN, Nettopreis, aktiv) — anlegen, ändern, deaktivieren, löschen (nur ohne Routing-Zeilen) |
 | **Routingmatrix** | Zielland × Gewichtsklasse → bis zu drei Carrier mit Priorität 1/2/3, Laufzeit DE/EN, Einkaufs- und Verkaufspreis (netto). **Priorität 1 ist der Carrier, den die Startseite zeigt und der Checkout verkauft.** Fällt er aus (Carrier deaktiviert, Zeile inaktiv), rückt die nächste Priorität nach. Leere Zelle = für diese Gewichtsklasse nicht angeboten |
-| **Kunden & Anfragen** | Anfragen des Kontaktformulars (Status, Notiz, Bearbeiter, „Firmenkonto anlegen“), Firmen (Daten, Benutzer einladen/deaktivieren, Sendungen, Rechnungen, Sammelrechnung erzeugen) und registrierte Privatkunden |
+| **Kunden & Anfragen** | Anfragen des Kontaktformulars (Status, Notiz, Bearbeiter, „Firmenkonto anlegen“), Firmen (Daten, Benutzer einladen/deaktivieren, Sendungen, Rechnungen, Sammelrechnung erzeugen, Guthaben mit Buchungen) und registrierte Privatkunden (Detail mit Bestellungen, Guthaben, Reklamationen) |
 | **Rechnungen** | Alle Sammelrechnungen mit Status offen / bezahlt / storniert, PDF, Positionen; Stornieren gibt die Sendungen wieder zur Abrechnung frei |
+| **Reklamationen** | Reklamationen aus dem Kundenportal: Status neu / in Prüfung / anerkannt / erstattet / abgelehnt, Antwort an den Kunden (optional per Mail), Erstattung — wird bei „Erstattet“ einmalig als Guthaben gebucht |
 | **Benutzer & Rollen** | Benutzer anlegen (Startpasswort wird einmal angezeigt), Rolle und Aktiv-Status ändern, Passwort zurücksetzen, löschen; Rollen mit Rechtematrix; Änderungsprotokoll |
 
 Jeder Angemeldete kann unter „Mein Konto“ sein Passwort ändern und seine Rechte sehen.
@@ -71,10 +72,12 @@ Selbsttest ohne Anmeldung: `intern/status` liefert `{"ok":true,"dienst":"intern"
 Alles liegt in `bestellungen.sqlite` im Datenverzeichnis (`daten` in der Konfiguration, außerhalb
 des Webroots). Tabellen des Dashboards: `laender`, `gewichtsklassen`, `carrier`, `routing`,
 `anfragen`, `benutzer`, `rollen`, `rechte`, `protokoll`; dazu die des Kundenportals `kunden`,
-`firmen`, `anmeldelinks`, `rechnungen` (siehe `konto/README.md`); das Schema legt `datenbank()` in
-`api/revolut/_bootstrap.php` an. Beim ersten Start ohne Länder wird `api/revolut/preise.php`
-einmalig als Saatgut übernommen (Länder, Gewichtsklasse 2 kg, Carrier, Routing-Zeilen mit
-Einkauf 0). Danach ist die Datenbank die einzige Preisquelle.
+`firmen`, `anmeldelinks`, `rechnungen`, `zusatzleistungen`, `sendungsereignisse`, `adressen`,
+`paketvorlagen`, `guthaben_buchungen`, `aufladungen`, `reklamationen` (siehe `konto/README.md`);
+das Schema legt `datenbank()` in `api/revolut/_bootstrap.php` an. Beim ersten Start ohne Länder
+wird `api/revolut/preise.php` einmalig als Saatgut übernommen (Länder, Gewichtsklassen 2 bis
+31,5 kg mit Aufschlag, Carrier, Routing-Zeilen mit Einkauf 0, vier Zusatzleistungen). Danach ist
+die Datenbank die einzige Preisquelle.
 
 Die Startseite holt sich Preise über `api/revolut/angebot.php` (Cache 5 Minuten) und baut die
 Preistabelle und die Checkout-Auswahl damit neu; ohne PHP bleiben die Werte im Markup als

@@ -230,3 +230,14 @@ code { font-family: var(--font-mono); font-size: .85em; background: var(--ink-80
 .ueberfaellig { color: #b63a12; font-weight: 600; }
 .status--beauftragt { background: var(--cyan-50); color: #0a7f9a; }
 .status--offen { background: var(--yellow-50); color: #6e6800; }
+
+/* Versand- und Reklamationsstatus (Kundenportal-Funktionen) */
+.status--vs-angelegt, .status--vs-bezahlt { background: var(--yellow-50); color: #6e6800; }
+.status--vs-label, .status--vs-abholung, .status--vs-uebergeben, .status--vs-unterwegs, .status--vs-zustellung { background: var(--cyan-50); color: #0a7f9a; }
+.status--vs-zugestellt { background: var(--green-50); color: #157a52; }
+.status--vs-retoure, .status--vs-problem, .status--vs-storniert { background: var(--coral-50); color: #b63a12; }
+.status--rk-neu { background: var(--yellow-50); color: #6e6800; }
+.status--rk-in_pruefung { background: var(--cyan-50); color: #0a7f9a; }
+.status--rk-anerkannt, .status--rk-erstattet { background: var(--green-50); color: #157a52; }
+.status--rk-abgelehnt { background: var(--coral-50); color: #b63a12; }
+.werkzeuge .schalter { font-size: .85rem; }

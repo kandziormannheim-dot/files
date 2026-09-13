@@ -18,6 +18,7 @@ require dirname(__DIR__, 2) . '/api/revolut/_bootstrap.php';
 require __DIR__ . '/helpers.php';
 require dirname(__DIR__, 2) . '/lib/kunden.php';
 require dirname(__DIR__, 2) . '/lib/rechnungen.php';
+require dirname(__DIR__, 2) . '/lib/label_pdf.php';
 require __DIR__ . '/rechte.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/preise.php';

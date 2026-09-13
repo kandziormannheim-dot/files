@@ -17,13 +17,13 @@ $wechsel = $aktuellePfad . '?' . http_build_query(array_merge(array_diff_key($_G
 $navi = [];
 if ($ich !== null) {
     if ($ich['art'] === 'business') {
-        $navi = ['uebersicht' => ['', t('nav.uebersicht')], 'sendungen' => ['sendungen', t('nav.sendungen')], 'neu' => ['sendungen/neu', t('nav.neu')], 'preise' => ['preise', t('nav.preise')], 'rechnungen' => ['rechnungen', t('nav.rechnungen')]];
+        $navi = ['uebersicht' => ['', t('nav.uebersicht')], 'sendungen' => ['sendungen', t('nav.sendungen')], 'neu' => ['sendungen/neu', t('nav.neu')], 'import' => ['import', t('nav.import')], 'adressbuch' => ['adressbuch', t('nav.adressbuch')], 'preise' => ['preise', t('nav.preise')], 'rechnungen' => ['rechnungen', t('nav.rechnungen')], 'guthaben' => ['guthaben', t('nav.guthaben')], 'reklamationen' => ['reklamationen', t('nav.reklamationen')]];
         if ($ich['firmenrolle'] === 'inhaber') {
             $navi['benutzer'] = ['benutzer', t('nav.benutzer')];
             $navi['firma'] = ['firma', t('nav.firma')];
         }
     } else {
-        $navi = ['uebersicht' => ['', t('nav.uebersicht')], 'bestellungen' => ['bestellungen', t('nav.bestellungen')]];
+        $navi = ['uebersicht' => ['', t('nav.uebersicht')], 'bestellungen' => ['bestellungen', t('nav.bestellungen')], 'neu' => ['sendungen/neu', t('nav.neu')], 'adressbuch' => ['adressbuch', t('nav.adressbuch')], 'guthaben' => ['guthaben', t('nav.guthaben')], 'reklamationen' => ['reklamationen', t('nav.reklamationen')]];
     }
     $navi['einstellungen'] = ['einstellungen', t('nav.einstellungen')];
 }
@@ -64,6 +64,7 @@ if ($ich !== null) {
     </nav>
     <?php } else { ?>
     <nav class="k-navi k-navi--gast">
+      <a class="k-sprache" href="<?= e(url('tracking')) ?>"><?= e(t('nav.tracking')) ?></a>
       <a class="k-sprache" href="<?= e($wechsel) ?>" hreflang="<?= e($andere) ?>"><?= e(t('sprache_wechseln')) ?></a>
       <a class="k-sprache" href="<?= e(startseite()) ?>"><?= e(t('zur_seite')) ?></a>
     </nav>

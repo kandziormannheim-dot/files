@@ -63,6 +63,19 @@ if ($pfad === '/ich') {
     exit;
 }
 
+// ---------------------------------------------------- Sendungsverfolgung (öffentlich)
+
+if ($pfad === '/tracking') {
+    $nr = strtoupper(saeubern($_GET['nr'] ?? '', 20));
+    $plz = saeubern($_GET['plz'] ?? '', 12);
+    $ergebnis = null;
+    $gesucht = $nr !== '' && $plz !== '';
+    if ($gesucht && begrenzungPruefen('tracking', 60)) {
+        $ergebnis = trackingOeffentlich($nr, $plz);
+    }
+    ansicht('tracking', ['titel' => t('tracking.titel'), 'nr' => $nr, 'plz' => $plz, 'ergebnis' => $ergebnis, 'gesucht' => $gesucht, 'aktiv' => 'tracking']);
+}
+
 // ------------------------------------------------------------------ Anmeldung
 
 $weiter = (string) ($_GET['weiter'] ?? $_POST['weiter'] ?? '');
@@ -241,10 +254,10 @@ if ($pfad === '/') {
     if ($ich['art'] === 'business') {
         $firma = businessErzwingen($ich);
         [$letzte] = eigeneBestellungen($ich, 5);
-        ansicht('uebersicht', ['titel' => t('nav.uebersicht'), 'k' => firmaKennzahlen((int) $firma['id']), 'letzte' => $letzte, 'firma' => $firma, 'aktiv' => 'uebersicht']);
+        ansicht('uebersicht', ['titel' => t('nav.uebersicht'), 'k' => firmaKennzahlen((int) $firma['id']), 'letzte' => $letzte, 'firma' => $firma, 'guthaben' => guthabenStand($ich), 'aktiv' => 'uebersicht']);
     }
     [$letzte] = eigeneBestellungen($ich, 5);
-    ansicht('uebersicht', ['titel' => t('nav.uebersicht'), 'letzte' => $letzte, 'absender' => json_decode((string) $ich['absender_json'], true) ?: [], 'aktiv' => 'uebersicht']);
+    ansicht('uebersicht', ['titel' => t('nav.uebersicht'), 'letzte' => $letzte, 'absender' => json_decode((string) $ich['absender_json'], true) ?: [], 'guthaben' => guthabenStand($ich), 'aktiv' => 'uebersicht']);
 }
 
 // ------------------------------------------------- Bestellungen / Sendungen
@@ -272,26 +285,12 @@ if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})$#', $pfad, $t
     if ($b === null) {
         fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
     }
-    ansicht('bestellung', ['titel' => $b['ext_ref'], 'b' => $b, 'pfad' => $t[1], 'aktiv' => $t[1]]);
+    $st = $db->prepare('SELECT id, status FROM reklamationen WHERE bestellung_id = ? ORDER BY id DESC LIMIT 1');
+    $st->execute([$b['id']]);
+    ansicht('bestellung', ['titel' => $b['ext_ref'], 'b' => $b, 'pfad' => $t[1], 'ereignisse' => sendungsereignisse((int) $b['id']), 'reklamation' => $st->fetch() ?: null, 'guthaben' => guthabenStand($ich), 'aktiv' => $t[1]]);
 }
 
-if ($pfad === '/sendungen/neu') {
-    $firma = businessErzwingen($ich);
-    $fehler = [];
-    $werte = ['zielland' => '', 'gewichtsklasse' => '', 'referenz' => '', 'name' => '', 'strasse' => '', 'plz' => '', 'ort' => '', 'email' => ''];
-    if ($methode === 'POST') {
-        foreach ($werte as $k => $_) {
-            $werte[$k] = saeubern($_POST[$k] ?? '', 254);
-        }
-        $ergebnis = sendungAnlegen($ich, $firma, $_POST);
-        if (isset($ergebnis['bestellung'])) {
-            hinweisSetzen(t('neu.angelegt', $ergebnis['bestellung']['ext_ref']));
-            umleiten(url('sendungen/' . $ergebnis['bestellung']['ext_ref']));
-        }
-        $fehler = $ergebnis['fehler'];
-    }
-    ansicht('sendung_neu', ['titel' => t('neu.titel'), 'firma' => $firma, 'werte' => $werte, 'fehler' => $fehler, 'preise' => preisliste(), 'aktiv' => 'neu']);
-}
+require __DIR__ . '/src/routen_versand.php';
 
 if ($pfad === '/preise') {
     businessErzwingen($ich);

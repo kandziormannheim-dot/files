@@ -89,6 +89,15 @@ try {
         $bestellung = bestellungLaden('ext_ref', $extRef);
     }
     if ($bestellung === null) {
+        // Guthaben-Aufladung aus dem Kundenportal?
+        $aufladung = $orderId !== '' ? aufladungLaden('revolut_id', $orderId) : null;
+        $aufladung ??= $extRef !== '' ? aufladungLaden('ext_ref', $extRef) : null;
+        if ($aufladung !== null) {
+            if (isset($statusJeEreignis[$ereignis])) {
+                aufladungFortschreiben($aufladung, $statusJeEreignis[$ereignis]);
+            }
+            antworten(200, ['ok' => true]);
+        }
         error_log('[revolut] Webhook für unbekannte Bestellung: ' . $ereignis . ' ' . $orderId . ' ' . $extRef);
         antworten(200, ['ok' => true, 'hinweis' => 'unbekannt']);
     }

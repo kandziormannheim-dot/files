@@ -83,6 +83,61 @@
 .k-fuss { display: flex; gap: 1.25rem; flex-wrap: wrap; padding: 1.25rem var(--gutter) 2rem; font-size: .8rem; color: var(--ink-500); }
 .k-fuss a { color: inherit; }
 
+/* Versand: Angebote, Zusatzleistungen, Maße, Zahlung, Tracking, Guthaben */
+.k-masse { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: .35rem; align-items: center; }
+.k-masse span { color: var(--ink-500); }
+.k-angebote { display: grid; gap: .6rem; margin-top: .5rem; }
+.k-angebot { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .85rem; align-items: center; padding: .8rem 1rem; border: 1.5px solid var(--ink-200); border-radius: var(--radius-sm, 10px); cursor: pointer; background: var(--white); transition: border-color var(--fast), box-shadow var(--fast); }
+.k-angebot:hover { border-color: var(--cyan); }
+.k-angebot:has(input:checked) { border-color: var(--ink); box-shadow: 0 0 0 2px var(--yellow); }
+.k-angebot input { accent-color: var(--ink); width: 1.1rem; height: 1.1rem; margin: 0; }
+.k-angebot-kopf { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.k-angebot-mitte { display: grid; gap: .15rem; min-width: 0; }
+.k-angebot-preis { display: grid; justify-items: end; text-align: right; }
+.k-angebot-preis strong { font-size: 1.05rem; }
+.k-zusatz { display: grid; gap: .5rem; margin-top: .5rem; }
+.k-zusatz-zeile { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .75rem; align-items: center; padding: .65rem .85rem; border: 1.5px solid var(--ink-200); border-radius: var(--radius-sm, 10px); cursor: pointer; font-size: .92rem; }
+.k-zusatz-zeile:has(input:checked) { border-color: var(--ink); background: var(--yellow-50); }
+.k-zusatz-zeile input { accent-color: var(--ink); width: 1.1rem; height: 1.1rem; margin: 0; }
+.k-zusatz-detail { padding: .25rem .5rem .5rem 2.5rem; }
+.k-zusatz-detail[hidden] { display: none; }
+.k-schalter { display: inline-flex; align-items: center; gap: .5rem; font-size: .9rem; cursor: pointer; margin-right: 1rem; }
+.k-schalter input { accent-color: var(--ink); }
+.k-adresswahl { font: inherit; font-size: .82rem; border: 1.5px solid var(--ink-200); border-radius: 999px; padding: .35rem .7rem; background: var(--white); max-width: 100%; }
+.k-zahlung { border: 0; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.k-zahlung label { display: flex; gap: .55rem; align-items: flex-start; font-size: .88rem; cursor: pointer; }
+.k-zahlung input { accent-color: var(--yellow); margin-top: .2rem; }
+.k-zahlung input:disabled + span { color: var(--ink-400, #8b93a1); }
+.k-betraege { display: grid; grid-template-columns: repeat(4, 1fr); gap: .4rem; margin: .75rem 0; }
+.k-betraege .btn { padding-inline: .3rem; }
+.k-aufladen .k-btn-leise { background: transparent; color: var(--paper); border-color: var(--ink-700); }
+.k-aufladen .k-btn-leise.is-aktiv { border-color: var(--yellow); color: var(--yellow); }
+.k-aufladen .field { margin-top: .25rem; }
+.k-aufladen .field input { background: var(--ink-800); color: var(--paper); border-color: var(--ink-700); }
+.k-aufladen .k-hinweis { color: var(--ink); }
+.k-bezahlen .k-hinweis { color: var(--ink); }
+.k-plus { color: #157a52; }
+.k-minus { color: #b63a12; }
+.k-fehlerzeile td { background: var(--coral-50); }
+.k-gast--breit { max-width: 640px; }
+.k-tracking { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.k-tracking-kopf { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
+.k-tracking-status { font-family: var(--font-display); font-size: 1.4rem; }
+.status--vs-angelegt, .status--vs-bezahlt { background: var(--yellow-50); color: #6e6800; }
+.status--vs-label, .status--vs-abholung, .status--vs-uebergeben, .status--vs-unterwegs, .status--vs-zustellung { background: var(--cyan-50); color: #0b6f86; }
+.status--vs-zugestellt { background: #E3F6EC; color: #157a52; }
+.status--vs-retoure, .status--vs-problem, .status--vs-storniert { background: var(--coral-50); color: #b63a12; }
+.status--rk-neu { background: var(--yellow-50); color: #6e6800; }
+.status--rk-in_pruefung { background: var(--cyan-50); color: #0b6f86; }
+.status--rk-anerkannt, .status--rk-erstattet { background: #E3F6EC; color: #157a52; }
+.status--rk-abgelehnt { background: var(--coral-50); color: #b63a12; }
+@media (max-width: 480px) {
+  .k-angebot { grid-template-columns: auto minmax(0, 1fr); }
+  .k-angebot-preis { grid-column: 2; justify-items: start; text-align: left; }
+  .k-betraege { grid-template-columns: repeat(2, 1fr); }
+  .k-zusatz-detail { padding-left: .5rem; }
+}
+
 /* Gast: Login, Registrierung, Links */
 .konto--gast .k-inhalt { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-content: center; }
 .k-gast { width: 100%; max-width: 440px; min-width: 0; padding: 1rem 0; }
