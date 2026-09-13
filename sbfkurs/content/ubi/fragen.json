@@ -1,0 +1,182 @@
+{
+  "zertifikat": "ubi",
+  "quelle": { "name": "Beispielfragen, selbst verfasst", "stand": "2026-09", "amtlich": false },
+  "module": [
+    { "id": "grundlagen", "titel": "Grundlagen und Rechtliches" },
+    { "id": "verkehrskreise", "titel": "Verkehrskreise und Kanäle" },
+    { "id": "anlage-atis", "titel": "Anlage und ATIS" },
+    { "id": "notverkehr", "titel": "Not-, Dringlichkeits- und Sicherheitsverkehr" }
+  ],
+  "fragen": [
+    {
+      "id": "ubi-001",
+      "nr": 1,
+      "modul": "grundlagen",
+      "text": "Auf welcher zwischenstaatlichen Vereinbarung beruht der Binnenschifffahrtsfunk in Europa?",
+      "antworten": [
+        "Auf der Regionalen Vereinbarung über den Binnenschifffahrtsfunk (RAINWAT)",
+        "Auf dem Internationalen Übereinkommen zum Schutz des menschlichen Lebens auf See (SOLAS)",
+        "Auf dem Übereinkommen über die Internationale Seeschifffahrts-Organisation (IMO)",
+        "Auf der Binnenschifffahrtsstraßen-Ordnung (BinSchStrO)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "RAINWAT legt Verkehrskreise, ATIS, Leistungsbegrenzung und die gegenseitige Anerkennung der Zeugnisse fest. Die Einzelheiten stehen im Handbuch Binnenschifffahrtsfunk.",
+      "lektion": "01-rechtsrahmen",
+      "beispiel": true
+    },
+    {
+      "id": "ubi-002",
+      "nr": 2,
+      "modul": "grundlagen",
+      "text": "Wer darf an Bord eines Sportboots eine UKW-Funkanlage im Binnenschifffahrtsfunk bedienen?",
+      "antworten": [
+        "Nur Personen, die ein gültiges Sprechfunkzeugnis für den Binnenschifffahrtsfunk (UBI) besitzen",
+        "Jede Person, sofern der Schiffsführer ein Sprechfunkzeugnis besitzt",
+        "Jede Person, die den Sportbootführerschein Binnen besitzt",
+        "Nur der Eigentümer des Fahrzeugs"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Das Zeugnis muss die Person besitzen, die die Anlage tatsächlich bedient — nicht der Schiffsführer oder der Eigentümer. Der Sportbootführerschein ersetzt das Sprechfunkzeugnis nicht.",
+      "lektion": "01-rechtsrahmen",
+      "beispiel": true
+    },
+    {
+      "id": "ubi-003",
+      "nr": 3,
+      "modul": "grundlagen",
+      "text": "Welche Stelle erteilt in Deutschland die Frequenzzuteilung, das Rufzeichen und die ATIS-Kennung für eine Binnenfunkanlage?",
+      "antworten": [
+        "Die Bundesnetzagentur",
+        "Die Wasserstraßen- und Schifffahrtsverwaltung des Bundes",
+        "Der Deutsche Motoryachtverband",
+        "Die Zentralkommission für die Rheinschifffahrt"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Die Bundesnetzagentur verwaltet die Frequenzen und vergibt mit der Zuteilungsurkunde Rufzeichen und ATIS-Kennung. Die Schifffahrtsverwaltung betreibt die Landfunkstellen, vergibt aber keine Frequenzen.",
+      "lektion": "01-rechtsrahmen",
+      "beispiel": true
+    },
+    {
+      "id": "ubi-004",
+      "nr": 4,
+      "modul": "verkehrskreise",
+      "text": "Welcher Kanal ist im Binnenschifffahrtsfunk der Hauptkanal für den Verkehrskreis Schiff–Schiff?",
+      "antworten": [
+        "Kanal 10",
+        "Kanal 16",
+        "Kanal 70",
+        "Kanal 22"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Kanal 10 ist der Schiff–Schiff-Kanal, der unterwegs abzuhören ist; Kanal 13 steht zusätzlich für Schiff–Schiff zur Verfügung. Kanal 16 ist ein Seefunkkanal, Kanal 70 dient dem DSC.",
+      "lektion": "02-verkehrskreise",
+      "beispiel": true
+    },
+    {
+      "id": "ubi-005",
+      "nr": 5,
+      "modul": "verkehrskreise",
+      "text": "Über welche Landfunkstellen wird der Verkehrskreis „nautische Information“ abgewickelt?",
+      "antworten": [
+        "Über Revierzentralen, Schleusen und Brücken, jeweils auf deren eigenem Kanal",
+        "Über Küstenfunkstellen auf Kanal 16",
+        "Über Hafenmeister auf Kanal 10",
+        "Über andere Fahrzeuge auf Kanal 13"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Nautische Information bekommst du von Landfunkstellen der Schifffahrtsverwaltung. Deren Kanäle sind nicht einheitlich und stehen im Regionalen Teil des Handbuchs und auf Schildern am Ufer.",
+      "lektion": "02-verkehrskreise",
+      "beispiel": true
+    },
+    {
+      "id": "ubi-006",
+      "nr": 6,
+      "modul": "verkehrskreise",
+      "text": "Welche Kanäle sind für den Verkehrskreis „Funkverkehr an Bord“ vorgesehen?",
+      "antworten": [
+        "Kanal 15 und Kanal 17",
+        "Kanal 10 und Kanal 13",
+        "Kanal 6 und Kanal 8",
+        "Kanal 16 und Kanal 70"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Die Kanäle 15 und 17 dienen der Verständigung innerhalb eines Fahrzeugs oder Verbands und sind auf rund 1 W begrenzt. Kanal 10 und 13 gehören zum Verkehrskreis Schiff–Schiff.",
+      "lektion": "02-verkehrskreise",
+      "beispiel": true
+    },
+    {
+      "id": "ubi-007",
+      "nr": 7,
+      "modul": "anlage-atis",
+      "text": "Wofür steht die Abkürzung ATIS?",
+      "antworten": [
+        "Automatic Transmitter Identification System",
+        "Automatic Telephone Inland Service",
+        "Advanced Traffic Information Service",
+        "Automatic Transmission Interference Suppression"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "ATIS ist die automatische Senderkennung: Nach jedem Loslassen der Sprechtaste sendet die Anlage eine zehnstellige Kennung, die mit 9 und der Landeskennung 211 für Deutschland beginnt.",
+      "lektion": "03-anlage-atis",
+      "beispiel": true
+    },
+    {
+      "id": "ubi-008",
+      "nr": 8,
+      "modul": "anlage-atis",
+      "text": "In welchen Verkehrskreisen muss die Binnenfunkanlage die Sendeleistung automatisch auf etwa 1 W begrenzen?",
+      "antworten": [
+        "Schiff–Schiff, Schiff–Hafenbehörde und Funkverkehr an Bord",
+        "Nur im Verkehrskreis nautische Information",
+        "In allen vier Verkehrskreisen",
+        "In keinem Verkehrskreis; die Leistung wählt der Bediener frei"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Auf den Kanälen dieser drei Verkehrskreise schaltet die Anlage von selbst auf kleine Leistung, damit Gespräche nicht weit über den eigenen Streckenabschnitt hinaus stören. Im Verkehrskreis nautische Information ist volle Leistung zulässig.",
+      "lektion": "03-anlage-atis",
+      "beispiel": true
+    },
+    {
+      "id": "ubi-009",
+      "nr": 9,
+      "modul": "notverkehr",
+      "text": "Auf welchen Kanälen wird ein Notruf im Binnenschifffahrtsfunk abgesetzt?",
+      "antworten": [
+        "Auf dem Schiff–Schiff-Kanal 10 und auf dem Kanal der zuständigen Landfunkstelle",
+        "Ausschließlich auf Kanal 16",
+        "Ausschließlich auf Kanal 70 per DSC",
+        "Auf Kanal 15 oder 17"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Auf Kanal 10 hören die Fahrzeuge in der Nähe, die Landfunkstelle (Revierzentrale oder Schleuse) kann Rettungsdienste alarmieren. Kanal 16 ist im Binnenschifffahrtsfunk kein Notrufkanal, DSC gibt es im UBI nicht.",
+      "lektion": "05-notverkehr",
+      "beispiel": true
+    },
+    {
+      "id": "ubi-010",
+      "nr": 10,
+      "modul": "notverkehr",
+      "text": "In welcher Reihenfolge folgen im Notruf mit Notmeldung die Bestandteile aufeinander?",
+      "antworten": [
+        "MAYDAY (dreimal) — hier ist + Name (dreimal) — MAYDAY + Name — Position — Art der Not — erbetene Hilfe — weitere Angaben — kommen",
+        "hier ist + Name — MAYDAY (dreimal) — erbetene Hilfe — Position — Art der Not — Ende",
+        "MAYDAY (einmal) — Position — Name — Art der Not — kommen",
+        "PAN PAN (dreimal) — Name — Position — Art der Not — kommen"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Erst der Notruf (MAYDAY dreimal, hier ist plus Name dreimal), dann die Notmeldung mit MAYDAY plus Name, Position, Art der Not, erbetener Hilfe und weiteren Angaben, abgeschlossen mit „kommen“.",
+      "lektion": "05-notverkehr",
+      "beispiel": true
+    }
+  ]
+}

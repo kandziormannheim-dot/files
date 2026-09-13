@@ -1,0 +1,75 @@
+{
+  "uebungen": [
+    {
+      "id": "mayday-notruf-notmeldung", "typ": "lueckentext", "titel": "Notruf und Notmeldung",
+      "einleitung": "Die Yacht SEEADLER (MMSI 211123450) hat Wassereinbruch, 2 sm südlich des Leuchtturms Kiel. Vier Personen sind an Bord. Setze Notruf und Notmeldung ab.",
+      "text": "{{1}} {{1}} {{1}}\nTHIS IS {{2}} {{2}} {{2}}\nMMSI {{3}}\n{{1}} {{2}}\nMMSI {{3}}\nPOSITION {{4}}\n{{5}}\nI REQUIRE {{6}}\nFOUR PERSONS ON BOARD\n{{7}}",
+      "luecken": {
+        "1": { "loesung": ["MAYDAY"], "hinweis": "das Notzeichen" },
+        "2": { "loesung": ["SEEADLER"], "hinweis": "der eigene Schiffsname" },
+        "3": { "loesung": ["211123450"], "hinweis": "die neunstellige MMSI" },
+        "4": { "loesung": ["2 NM SOUTH OF KIEL LIGHTHOUSE", "2 MILES SOUTH OF KIEL LIGHTHOUSE", "TWO MILES SOUTH OF KIEL LIGHTHOUSE"], "hinweis": "Abstand und Richtung vom Leuchtturm" },
+        "5": { "loesung": ["WE ARE TAKING WATER", "TAKING WATER", "FLOODING"], "hinweis": "die Art der Not" },
+        "6": { "loesung": ["IMMEDIATE ASSISTANCE"], "hinweis": "welche Hilfe wird erbeten" },
+        "7": { "loesung": ["OVER"], "hinweis": "Abschluss, Antwort erwartet" }
+      }
+    },
+    {
+      "id": "pan-pan-dringlichkeit", "typ": "lueckentext", "titel": "Die Dringlichkeitsmeldung",
+      "einleitung": "Die Yacht MÖWE (MMSI 211987650) hat Maschinenausfall in ruhiger See auf Position 54°10' N, 007°50' E und benötigt einen Schlepper. Zwei Personen an Bord. Es besteht keine unmittelbare Gefahr.",
+      "text": "{{1}} {{1}} {{1}}\n{{2}} {{2}} {{2}}\nTHIS IS {{3}} {{3}} {{3}}\nMMSI {{4}}\nPOSITION 54 10 NORTH 007 50 EAST\n{{5}}\nI REQUIRE {{6}}\nTWO PERSONS ON BOARD\n{{7}}",
+      "luecken": {
+        "1": { "loesung": ["PAN PAN"], "hinweis": "das Dringlichkeitszeichen" },
+        "2": { "loesung": ["ALL STATIONS", "ALL SHIPS"], "hinweis": "der Adressat" },
+        "3": { "loesung": ["MÖWE", "MOEWE"], "hinweis": "der eigene Schiffsname" },
+        "4": { "loesung": ["211987650"], "hinweis": "die neunstellige MMSI" },
+        "5": { "loesung": ["ENGINE FAILURE", "ENGINE BREAKDOWN"], "hinweis": "was ist passiert" },
+        "6": { "loesung": ["A TUG", "TUG", "A TOW", "TOW", "TOWING"], "hinweis": "welche Hilfe wird erbeten" },
+        "7": { "loesung": ["OVER"], "hinweis": "Abschluss, Antwort erwartet" }
+      }
+    },
+    {
+      "id": "securite-sicherheit", "typ": "lueckentext", "titel": "Die Sicherheitsmeldung",
+      "einleitung": "Bremen Rescue warnt alle Schiffe vor einem treibenden Container auf Position 54°10' N, 007°50' E.",
+      "text": "{{1}} {{1}} {{1}}\n{{2}} {{2}} {{2}}\nTHIS IS {{3}}\nNAVIGATIONAL WARNING\nA {{4}} IS {{5}} IN POSITION 54 10 NORTH 007 50 EAST\n{{6}} TO NAVIGATION\n{{7}}",
+      "luecken": {
+        "1": { "loesung": ["SÉCURITÉ", "SECURITE", "SECURITÉ"], "hinweis": "das Sicherheitszeichen" },
+        "2": { "loesung": ["ALL SHIPS", "ALL STATIONS"], "hinweis": "der Adressat" },
+        "3": { "loesung": ["BREMEN RESCUE"], "hinweis": "die sendende Station" },
+        "4": { "loesung": ["CONTAINER"], "hinweis": "das Hindernis" },
+        "5": { "loesung": ["ADRIFT", "DRIFTING"], "hinweis": "was tut es" },
+        "6": { "loesung": ["DANGER"], "hinweis": "die Bedeutung für die Schifffahrt" },
+        "7": { "loesung": ["OUT"], "hinweis": "Abschluss, keine Antwort erwartet" }
+      }
+    },
+    {
+      "id": "notmeldung-aufbau", "typ": "reihenfolge", "titel": "Aufbau der Notmeldung",
+      "einleitung": "Bringe die Bestandteile von Notruf und Notmeldung in die richtige Reihenfolge.",
+      "elemente": [
+        "MAYDAY (dreimal)",
+        "THIS IS + Schiffsname (dreimal), Rufzeichen, MMSI",
+        "MAYDAY + Schiffsname, Rufzeichen, MMSI",
+        "Position",
+        "Art der Not",
+        "Art der erbetenen Hilfe",
+        "Weitere Angaben (Personen an Bord, Beschreibung des Bootes)",
+        "OVER"
+      ],
+      "loesung": [0, 1, 2, 3, 4, 5, 6, 7]
+    },
+    {
+      "id": "notverkehr-ablauf", "typ": "reihenfolge", "titel": "Ablauf des Notverkehrs",
+      "einleitung": "Vom DSC-Notalarm bis zur Aufhebung der Funkstille: Bringe die Schritte in die richtige Reihenfolge.",
+      "elemente": [
+        "DSC-Notalarm auslösen (DISTRESS-Taste 3–5 s halten)",
+        "Notruf im Sprechfunk auf Kanal 16: MAYDAY (dreimal), THIS IS + Name (dreimal)",
+        "Notmeldung: Position, Art der Not, erbetene Hilfe, OVER",
+        "Bestätigung durch die Küstenfunkstelle: RECEIVED MAYDAY",
+        "Anordnung der Funkstille: SEELONCE MAYDAY",
+        "Abwicklung des Notverkehrs unter Leitung der Küstenfunkstelle",
+        "Aufhebung der Funkstille: SEELONCE FEENEE, OUT"
+      ],
+      "loesung": [0, 1, 2, 3, 4, 5, 6]
+    }
+  ]
+}

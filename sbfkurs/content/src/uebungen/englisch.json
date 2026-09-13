@@ -1,0 +1,32 @@
+{
+  "uebungen": [
+    {
+      "id": "en-de-01", "richtung": "en-de", "titel": "Sicherheitsmeldung",
+      "quelle": "SÉCURITÉ SÉCURITÉ SÉCURITÉ. ALL SHIPS ALL SHIPS ALL SHIPS. THIS IS BREMEN RESCUE. A CONTAINER IS ADRIFT IN POSITION 54 10 NORTH 007 50 EAST. DANGER TO NAVIGATION. OUT.",
+      "musterloesung": "Sicherheitsmeldung an alle Schiffe von Bremen Rescue: Ein Container treibt auf Position 54°10' N, 007°50' E. Gefahr für die Schifffahrt.",
+      "schluesselwoerter": [["Container"], ["treibt", "treibend", "abgetrieben", "treibender"], ["Position"], ["Gefahr"]],
+      "mindestTreffer": 3
+    },
+    {
+      "id": "en-de-02", "richtung": "en-de", "titel": "Notmeldung",
+      "quelle": "MAYDAY MAYDAY MAYDAY. THIS IS SAILING YACHT NORDWIND NORDWIND NORDWIND. MMSI 211456780. MAYDAY NORDWIND. POSITION THREE MILES NORTH OF FEHMARN LIGHTHOUSE. FIRE ON BOARD. I REQUIRE IMMEDIATE ASSISTANCE. THREE PERSONS ON BOARD. WE ARE ABANDONING SHIP. OVER.",
+      "musterloesung": "Notmeldung der Segelyacht NORDWIND, MMSI 211456780: Position drei Seemeilen nördlich des Leuchtturms Fehmarn. Feuer an Bord. Ich benötige sofortige Hilfe. Drei Personen an Bord. Wir verlassen das Schiff.",
+      "schluesselwoerter": [["Feuer", "Brand"], ["nördlich", "Nord", "Norden"], ["sofortige Hilfe", "sofort Hilfe", "unverzüglich", "sofortig"], ["drei Personen", "3 Personen"], ["verlassen"]],
+      "mindestTreffer": 4
+    },
+    {
+      "id": "de-en-01", "richtung": "de-en", "titel": "Dringlichkeitsmeldung",
+      "quelle": "Die Motoryacht ALBATROS (MMSI 211987650) hat Ruderausfall auf Position 54°30' N, 010°15' E. Sie benötigt einen Schlepper. Zwei Personen an Bord. Formuliere die Dringlichkeitsmeldung auf Englisch.",
+      "musterloesung": "PAN PAN PAN PAN PAN PAN. ALL STATIONS ALL STATIONS ALL STATIONS. THIS IS MOTOR YACHT ALBATROS ALBATROS ALBATROS. MMSI 211987650. POSITION 54 30 NORTH 010 15 EAST. RUDDER FAILURE. I REQUIRE A TUG. TWO PERSONS ON BOARD. OVER.",
+      "schluesselwoerter": [["PAN PAN"], ["ALL STATIONS", "ALL SHIPS"], ["RUDDER"], ["TUG", "TOW"], ["TWO PERSONS", "2 PERSONS"]],
+      "mindestTreffer": 4
+    },
+    {
+      "id": "de-en-02", "richtung": "de-en", "titel": "Notmeldung bei Wassereinbruch",
+      "quelle": "Die Segelyacht SEEADLER (MMSI 211123450) hat Wassereinbruch zwei Seemeilen südlich des Leuchtturms Kiel. Vier Personen an Bord, sofortige Hilfe erforderlich. Formuliere Notruf und Notmeldung auf Englisch.",
+      "musterloesung": "MAYDAY MAYDAY MAYDAY. THIS IS SEEADLER SEEADLER SEEADLER. MMSI 211123450. MAYDAY SEEADLER. MMSI 211123450. POSITION TWO MILES SOUTH OF KIEL LIGHTHOUSE. WE ARE TAKING WATER. I REQUIRE IMMEDIATE ASSISTANCE. FOUR PERSONS ON BOARD. OVER.",
+      "schluesselwoerter": [["MAYDAY"], ["THIS IS"], ["SOUTH"], ["TAKING WATER", "FLOODING", "WATER INGRESS"], ["IMMEDIATE ASSISTANCE"], ["FOUR PERSONS", "4 PERSONS"]],
+      "mindestTreffer": 5
+    }
+  ]
+}

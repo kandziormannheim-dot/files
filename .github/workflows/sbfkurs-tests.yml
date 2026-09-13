@@ -1,0 +1,42 @@
+# Tests und Inhaltsprüfung des SBF-Kurses bei jedem Push, der sbfkurs/ berührt.
+# Ohne Framework: php -l über alle Dateien, dann tests/lauf.php und
+# werkzeuge/katalog-pruefen.php. Der Browser-Durchlauf (Playwright) läuft
+# bewusst nicht hier — er braucht ein Chromium und ist für die lokale
+# Abnahme gedacht (docs/sbfkurs/README.md).
+
+name: SBF-Kurs Tests
+
+on:
+  push:
+    paths: ['sbfkurs/**', '.github/workflows/sbfkurs-tests.yml']
+  pull_request:
+    paths: ['sbfkurs/**', '.github/workflows/sbfkurs-tests.yml']
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP 8.2 wie auf dem Plesk-Server
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_sqlite, mbstring
+          coverage: none
+
+      - name: poppler für den Import-Test
+        run: sudo apt-get install -y -q poppler-utils >/dev/null
+
+      - name: Syntax
+        run: |
+          set -e
+          find sbfkurs -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          echo "Alle PHP-Dateien syntaktisch in Ordnung."
+
+      - name: Anwendungstests
+        run: php sbfkurs/tests/lauf.php
+
+      - name: Inhalte prüfen
+        run: php sbfkurs/werkzeuge/katalog-pruefen.php

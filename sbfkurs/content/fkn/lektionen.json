@@ -1,0 +1,28 @@
+{
+  "lektionen": [
+    { "slug": "01-rechtsgrundlagen", "titel": "Rechtsgrundlagen — warum es den Pyroschein gibt",
+      "kurz": "Sprengstoffgesetz, 1. SprengV, wer den Fachkundenachweis braucht und wie pyrotechnische Gegenstände eingeteilt sind.",
+      "dauerMin": 15, "module": ["recht"] },
+    { "slug": "02-signalmittel", "titel": "Die Seenotsignalmittel im Überblick",
+      "kurz": "Fallschirmsignalrakete, Handfackel, Rauchsignal und Signalpistole — Wirkung, Sichtweite und Brenndauer.",
+      "dauerMin": 20, "module": ["signalmittel"] },
+    { "slug": "03-notzeichen", "titel": "Notzeichen — wann welches Signal?",
+      "kurz": "Die Notzeichen nach Anlage IV der Kollisionsverhütungsregeln, Auswahl nach Tag, Nacht und Sichtverhältnissen.",
+      "dauerMin": 15, "module": ["signalmittel"] },
+    { "slug": "04-handhabung", "titel": "Sichere Handhabung und Auslösung",
+      "kurz": "Windrichtung, Abstand, Körperhaltung, Abschussrichtung und Handschutz beim Einsatz pyrotechnischer Signale.",
+      "dauerMin": 20, "module": ["handhabung"] },
+    { "slug": "05-lagerung", "titel": "Lagerung an Bord und Transport",
+      "kurz": "Trocken, kühl, griffbereit und vor unbefugtem Zugriff geschützt — so bleiben Signalmittel einsatzbereit.",
+      "dauerMin": 15, "module": ["lagerung"] },
+    { "slug": "06-erwerb-entsorgung", "titel": "Erwerb, Haltbarkeit und Entsorgung",
+      "kurz": "Kauf nur mit Fachkundenachweis, Ablaufdatum beachten, abgelaufene Signalmittel über den Fachhandel entsorgen.",
+      "dauerMin": 15, "module": ["lagerung"] },
+    { "slug": "07-gefahren", "titel": "Gefahren, Versager und Erste Hilfe",
+      "kurz": "Verbrennungen, Brand, Fehlzündungen — wie du dich bei einem Versager verhältst und was im Verletzungsfall zu tun ist.",
+      "dauerMin": 15, "module": ["handhabung"] },
+    { "slug": "08-pruefung", "titel": "Die Prüfung zum Fachkundenachweis",
+      "kurz": "Anmeldung, Zulassung, Ablauf von Theorie und praktischer Unterweisung und was nach bestandener Prüfung folgt.",
+      "dauerMin": 10, "module": ["recht"] }
+  ]
+}
