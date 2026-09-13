@@ -23,11 +23,17 @@ Jeder Angemeldete kann unter „Mein Konto“ sein Passwort ändern und seine Re
 
 ## Rechnungsprüfung
 
-Ablauf: **Hochladen** (Carrier wählen, CSV Pflicht, PDF als Beleg — Rechnungsnummer, Datum und
-Nettosumme werden aus dem PDF gelesen, `pdftotext` wenn vorhanden, sonst eigener Leser für
-einfache PDFs; von Hand korrigierbar) → **Spalten zuordnen** (Trennzeichen und Spalten werden
+Ablauf: **Hochladen** (Carrier wählen, Tabelle als CSV oder XLSX Pflicht, PDF als Beleg —
+Rechnungsnummer, Datum und Nettosumme werden aus dem PDF gelesen: `pdftotext`, wenn installiert,
+sonst der eigene Leser `lib/pdf_text.php`, der auch eingebettete Schriften mit ToUnicode-Tabellen
+auflöst; fehlt die Summe im PDF, kommt sie aus einem „Total“-Blatt der Tabelle; alles von Hand
+korrigierbar) → **Spalten zuordnen** (bei XLSX wird das Blatt mit den Sendungen erkannt, weitere
+Blätter sind als Reiter wählbar; Zuschläge auf einem zweiten Blatt — etwa der Energiezuschlag je
+Paket — werden über die Sendungsnummer je Position dazugerechnet; Trennzeichen und Spalten werden
 erkannt, unsere Nummer `NE-…` auch mitten in einer Referenzspalte; die Zuordnung wird je Carrier
-als Profil gemerkt) → **Prüfung** je Zeile:
+als Profil gemerkt) → **Zuordnung zur Bestellung** über unsere Nummer, die Carrier-Sendungsnummer
+(`carrier_sendungsnummer`, kommt mit der Carrier-Anbindung) oder die Kundenreferenz → **Prüfung**
+je Zeile:
 
 | Befund | Bedeutung | Folge |
 |---|---|---|
@@ -48,6 +54,17 @@ Mail mit gebuchter und gewogener Klasse. Die Originalbestellung speichert das Ca
 den tatsächlichen Einkauf und die Carrier-Sendungsnummer (Marge). „Beanstandung CSV“ exportiert
 alle beanstandeten Zeilen für den Lieferanten. Dateien liegen im Datenverzeichnis unter
 `lieferantenrechnungen/`.
+
+### Einkaufspreise importieren
+
+Unter Routingmatrix → „Einkaufspreise importieren“ lässt sich die Preisliste eines Carriers als
+XLSX oder CSV einlesen (Zeilen = Länder in Deutsch, Englisch oder ISO-Code, Spalten =
+Gewichtsgrenzen wie „<5kg“). Die Vorschau zeigt je Zelle den neuen Einkauf und den bisherigen
+Wert; beim Übernehmen bekommen bestehende Routing-Zeilen des Carriers den neuen Einkauf (der
+Verkauf bleibt), fehlende Zeilen werden mit Verkauf = Einkauf + Aufschlag angelegt, fehlende
+Gewichtsklassen (z. B. 1, 3, 15, 25 kg) entstehen automatisch, 30 kg trifft die Klasse bis
+31,5 kg, unbekannte Länder kommen inaktiv dazu. Zellen, deren Verkauf nicht über dem Einkauf
+liegt, werden gemeldet.
 
 ## Rechte
 

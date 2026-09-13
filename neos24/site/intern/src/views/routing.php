@@ -4,7 +4,7 @@ $aktiveKlassen = array_filter($klassen, static fn (array $g): bool => (int) $g['
 ?>
 <header class="kopfzeile">
   <div><span class="eyebrow">Routingmatrix</span><h1 class="h1">Zielland × Gewichtsklasse → Carrier</h1></div>
-  <p class="leise">Je Zelle bis zu drei Carrier nach Priorität. Priorität 1 steht auf der Startseite und im Checkout; fällt sie aus, rückt die nächste nach. Verkauf netto, Privatkunden + <?= $mwst ?> % MwSt.</p>
+  <div class="kopf-aktionen"><p class="leise">Je Zelle bis zu drei Carrier nach Priorität. Priorität 1 steht auf der Startseite und im Checkout; fällt sie aus, rückt die nächste nach. Verkauf netto, Privatkunden + <?= $mwst ?> % MwSt.</p><?php if (darf('routing', 'bearbeiten')) { ?><a class="knopf knopf--leise knopf--klein" href="<?= e(url('routing/einkauf')) ?>">Einkaufspreise importieren</a><?php } ?></div>
 </header>
 <div class="karte karte--tabelle">
   <?php if ($aktiveKlassen === []) { ?><p class="leer">Keine aktive Gewichtsklasse — unter <a href="<?= e(url('preise')) ?>">Preise &amp; Zielländer</a> anlegen.</p><?php } else { ?>

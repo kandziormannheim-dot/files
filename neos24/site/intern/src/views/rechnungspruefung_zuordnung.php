@@ -1,9 +1,15 @@
 <header class="kopfzeile">
   <div><a class="zurueck" href="<?= e(url('rechnungspruefung')) ?>">← Rechnungsprüfung</a><h1 class="h1">Spalten zuordnen</h1></div>
-  <p class="leise"><?= e($r['carrier'] ?? '') ?> · <?= e($r['nummer'] ?: 'Rechnung #' . $r['id']) ?> · <?= count($csv['zeilen']) ?> Zeilen, Trenner <code><?= $csv['trenner'] === "\t" ? 'Tab' : e($csv['trenner']) ?></code></p>
+  <p class="leise"><?= e($r['carrier'] ?? '') ?> · <?= e($r['nummer'] ?: 'Rechnung #' . $r['id']) ?> · <?= count($csv['zeilen']) ?> Zeilen<?= $csv['trenner'] !== '' ? ', Trenner <code>' . ($csv['trenner'] === "\t" ? 'Tab' : e($csv['trenner'])) . '</code>' : '' ?></p>
 </header>
+<?php if (count($blaetter) > 1) { ?>
+<nav class="reiter" aria-label="Blätter">
+  <?php foreach ($blaetter as $i => $b) { ?><a href="<?= e(url('rechnungspruefung/' . $r['id'] . '/zuordnung', ['blatt' => $b['name']])) ?>" class="<?= $i === $blattIndex ? 'aktiv' : '' ?>"><?= e($b['name']) ?> <span class="leise">(<?= count($b['zeilen']) ?>)</span></a><?php } ?>
+</nav>
+<?php } ?>
 <form method="post" action="<?= e(url('rechnungspruefung/' . $r['id'] . '/zuordnung')) ?>" class="formular">
   <?= csrfFeld() ?>
+  <input type="hidden" name="blatt" value="<?= e($csv['name']) ?>">
   <div class="spalten spalten--2-1">
     <div class="karte karte--tabelle">
       <h2 class="h2">Vorschau (erste 8 Zeilen)</h2>
@@ -23,6 +29,12 @@
             <?php foreach ($csv['kopf'] as $i => $kname) { ?><option value="<?= $i ?>" <?= (int) ($vorschlag[$feld] ?? -1) === $i ? 'selected' : '' ?>><?= e($kname) ?> (#<?= $i + 1 ?>)</option><?php } ?>
           </select>
         </div>
+      <?php } ?>
+      <?php if (count($blaetter) > 1) { ?>
+      <div class="feld"><label for="sp-zuschlag-blatt">Zuschläge aus anderem Blatt (je Sendungsnummer)</label>
+        <select id="sp-zuschlag-blatt" name="zuschlag_blatt"><option value="">— keine —</option><?php foreach ($blaetter as $i => $b) { if ($i === $blattIndex) { continue; } ?><option value="<?= e($b['name']) ?>" <?= $zuschlagBlatt === $b['name'] ? 'selected' : '' ?>><?= e($b['name']) ?></option><?php } ?></select>
+        <span class="leise">Spalten mit „Surcharge“, „Zuschlag“, „Fee“ werden je Sendung addiert — nur wenn oben keine Zuschlagsspalte gewählt ist.</span>
+      </div>
       <?php } ?>
       <div class="feld"><label for="sp-einheit">Gewicht in</label><select id="sp-einheit" name="einheit"><option value="kg" <?= $einheit === 'kg' ? 'selected' : '' ?>>Kilogramm (4,5)</option><option value="g" <?= $einheit === 'g' ? 'selected' : '' ?>>Gramm (4500)</option></select></div>
       <label class="schalter"><input type="checkbox" name="profil" value="1" checked> Zuordnung für <?= e($r['carrier'] ?? 'diesen Carrier') ?> merken</label>

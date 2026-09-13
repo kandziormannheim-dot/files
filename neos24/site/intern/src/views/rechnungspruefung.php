@@ -36,7 +36,7 @@
     <form method="post" action="<?= e(url('rechnungspruefung')) ?>" enctype="multipart/form-data" class="formular">
       <?= csrfFeld() ?>
       <div class="feld"><label for="lr-carrier">Carrier (Rechnungssteller)</label><select id="lr-carrier" name="carrier_id" required><option value="">— wählen —</option><?php foreach ($carrier as $c) { ?><option value="<?= (int) $c['id'] ?>"><?= e($c['name']) ?></option><?php } ?></select></div>
-      <div class="feld"><label for="lr-csv">CSV mit den Sendungen (Pflicht)</label><input id="lr-csv" name="csv" type="file" accept=".csv,.txt,text/csv,text/plain" required></div>
+      <div class="feld"><label for="lr-csv">Tabelle mit den Sendungen — CSV oder XLSX (Pflicht)</label><input id="lr-csv" name="csv" type="file" accept=".csv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required></div>
       <div class="feld"><label for="lr-pdf">Rechnung als PDF (Beleg, Kopfdaten werden gelesen)</label><input id="lr-pdf" name="pdf" type="file" accept=".pdf,application/pdf"></div>
       <details>
         <summary class="leise">Kopfdaten von Hand (sonst aus dem PDF)</summary>
@@ -45,7 +45,7 @@
       </details>
       <button class="knopf knopf--primaer" type="submit">Hochladen und Spalten zuordnen</button>
     </form>
-    <p class="leise" style="margin-top:.75rem">Erwartet wird je Zeile eine Sendung mit unserer Nummer (NE-…) oder der Carrier-Sendungsnummer, dem berechneten Gewicht und dem Nettobetrag. Trennzeichen und Spalten werden erkannt; die Zuordnung wird je Carrier gemerkt. Toleranz beim Einkaufspreis: <?= e(euro(rpToleranzCent())) ?>.</p>
+    <p class="leise" style="margin-top:.75rem">Erwartet wird je Zeile eine Sendung mit unserer Nummer (NE-…), unserer Kundenreferenz oder der Carrier-Sendungsnummer, dem berechneten Gewicht und dem Nettobetrag. Bei XLSX wird das Blatt mit den Sendungen erkannt, Zuschläge auf einem zweiten Blatt (z. B. Energiezuschlag je Paket) werden je Sendung dazugerechnet. Trennzeichen und Spalten werden erkannt; die Zuordnung wird je Carrier gemerkt. Toleranz beim Einkaufspreis: <?= e(euro(rpToleranzCent())) ?>.</p>
   </div>
   <?php } ?>
 </div>

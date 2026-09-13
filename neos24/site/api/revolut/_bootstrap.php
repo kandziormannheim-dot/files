@@ -657,6 +657,12 @@ function schemaAnlegen(PDO $db): void
             erstellt        TEXT NOT NULL
         );
     SQL);
+    $spalten = array_column($db->query('PRAGMA table_info(lieferantenrechnungen)')->fetchAll(), 'name');
+    foreach (['blatt' => "TEXT NOT NULL DEFAULT ''", 'zuschlag_blatt' => "TEXT NOT NULL DEFAULT ''", 'zuschlag_json' => "TEXT NOT NULL DEFAULT '{}'"] as $spalte => $typ) {
+        if (!in_array($spalte, $spalten, true)) {
+            $db->exec("ALTER TABLE lieferantenrechnungen ADD COLUMN $spalte $typ");
+        }
+    }
 
     preiseSaeen($db);
 }
@@ -1158,3 +1164,4 @@ function perSmtpSenden(array $konfig, string $von, string $an, string $rohmail):
 
 require_once __DIR__ . '/../../lib/versand.php';
 require_once __DIR__ . '/../../lib/rechnungspruefung.php';
+require_once __DIR__ . '/../../lib/einkauf_import.php';

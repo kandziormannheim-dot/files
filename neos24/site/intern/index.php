@@ -413,6 +413,73 @@ if ($pfad === '/routing') {
     ansicht('routing', ['titel' => 'Routingmatrix', 'laender' => laenderAlle(), 'klassen' => gewichtsklassenAlle(), 'matrix' => routingMatrix(), 'mwst' => (int) konfig()['mwstSatz'], 'aktiv' => 'routing']);
 }
 
+if ($pfad === '/routing/einkauf' || $pfad === '/routing/einkauf/uebernehmen' || $pfad === '/routing/einkauf/verwerfen') {
+    rechtErzwingen('routing', 'bearbeiten');
+    if ($pfad === '/routing/einkauf/verwerfen' && $methode === 'POST') {
+        unset($_SESSION['einkauf']);
+        umleiten(url('routing/einkauf'));
+    }
+    if ($pfad === '/routing/einkauf/uebernehmen' && $methode === 'POST') {
+        $vorschau = $_SESSION['einkauf'] ?? null;
+        if ($vorschau === null) {
+            hinweisSetzen('Keine Vorschau — bitte die Preisliste erneut hochladen.', 'fehler');
+            umleiten(url('routing/einkauf'));
+        }
+        try {
+            $z = einkaufUebernehmen((int) $vorschau['carrier_id'], $vorschau['matrix'], (float) str_replace(',', '.', feld('aufschlag', 8)), !empty($_POST['aktiv']), $ich['name']);
+            unset($_SESSION['einkauf']);
+            protokollieren('routing.einkauf_import', 'carrier', (int) $vorschau['carrier_id'], $z);
+            hinweisSetzen('Einkaufspreise übernommen: ' . $z['geaendert'] . ' Zellen geändert, ' . $z['neu'] . ' neue Routing-Zeilen, ' . $z['unveraendert'] . ' unverändert' . ($z['klassen_neu'] > 0 ? ', ' . $z['klassen_neu'] . ' neue Gewichtsklassen' : '') . ($z['laender_neu'] > 0 ? ', ' . $z['laender_neu'] . ' neue Länder (inaktiv, unter Preise & Zielländer freischalten)' : '') . '.' . ($z['verkauf_unter_einkauf'] > 0 ? ' Achtung: bei ' . $z['verkauf_unter_einkauf'] . ' bestehenden Zellen liegt der Verkaufspreis nicht über dem Einkauf — bitte Verkauf prüfen.' : ''));
+        } catch (InvalidArgumentException $e) {
+            hinweisSetzen($e->getMessage(), 'fehler');
+        }
+        umleiten(url('routing'));
+    }
+    if ($methode === 'POST') {
+        try {
+            $carrierId = (int) feld('carrier_id', 10);
+            if ($carrierId <= 0) {
+                throw new InvalidArgumentException('Bitte den Carrier wählen, dessen Einkaufspreise das sind.');
+            }
+            $datei = $_FILES['datei'] ?? null;
+            if ($datei === null || ($datei['error'] ?? 1) !== UPLOAD_ERR_OK || (int) $datei['size'] > 10 * 1024 * 1024) {
+                throw new InvalidArgumentException('Bitte die Preisliste als XLSX oder CSV hochladen (bis 10 MB).');
+            }
+            $tabelle = tabelleLesen((string) $datei['tmp_name'], (string) $datei['name']);
+            $matrix = null;
+            $fehler = '';
+            foreach ($tabelle['blaetter'] as $b) {
+                try {
+                    $matrix = einkaufMatrixLesen($b);
+                    break;
+                } catch (InvalidArgumentException $e) {
+                    $fehler = $e->getMessage();
+                }
+            }
+            if ($matrix === null) {
+                throw new InvalidArgumentException($fehler ?: 'Keine Preismatrix gefunden.');
+            }
+            $_SESSION['einkauf'] = ['carrier_id' => $carrierId, 'matrix' => $matrix, 'datei' => (string) $datei['name']];
+        } catch (InvalidArgumentException $e) {
+            hinweisSetzen($e->getMessage(), 'fehler');
+        }
+        umleiten(url('routing/einkauf'));
+    }
+    $vorschau = $_SESSION['einkauf'] ?? null;
+    $vergleich = [];
+    if ($vorschau !== null) {
+        foreach ($vorschau['matrix']['zeilen'] as $zeile) {
+            foreach ($zeile['preise'] as $gramm => $cent) {
+                $k = einkaufKlasseFuer((int) $gramm, false);
+                $st = $db->prepare('SELECT r.einkauf_cent, r.verkauf_cent FROM routing r WHERE r.land_code = ? AND r.gewichtsklasse_id = ? AND r.carrier_id = ?');
+                $st->execute([$zeile['code'], (int) ($k['id'] ?? 0), $vorschau['carrier_id']]);
+                $vergleich[$zeile['code']][$gramm] = ['klasse' => $k['code'] ?? null, 'alt' => ($alt = $st->fetch()) ? (int) $alt['einkauf_cent'] : null, 'verkauf' => $alt ? (int) $alt['verkauf_cent'] : null];
+            }
+        }
+    }
+    ansicht('routing_einkauf', ['titel' => 'Einkaufspreise importieren', 'carrier' => carrierAlle(), 'vorschau' => $vorschau, 'vergleich' => $vergleich, 'aktiv' => 'routing']);
+}
+
 if ($pfad === '/routing/zelle' || $pfad === '/routing/zelle/loeschen') {
     rechtErzwingen('routing');
     $quelle = $methode === 'POST' ? $_POST : $_GET;
@@ -780,14 +847,14 @@ if ($pfad === '/rechnungspruefung') {
             }
             $csv = $_FILES['csv'] ?? null;
             if ($csv === null || ($csv['error'] ?? 1) !== UPLOAD_ERR_OK || (int) $csv['size'] > 10 * 1024 * 1024) {
-                throw new InvalidArgumentException('Bitte die CSV-Datei der Rechnung hochladen (bis 10 MB).');
+                throw new InvalidArgumentException('Bitte die Tabelle der Rechnung (CSV oder XLSX) hochladen (bis 10 MB).');
             }
             $pdf = $_FILES['pdf'] ?? null;
             $pdfPfad = $pdf !== null && ($pdf['error'] ?? 1) === UPLOAD_ERR_OK && (int) $pdf['size'] <= 20 * 1024 * 1024 ? (string) $pdf['tmp_name'] : null;
             if ($pdfPfad !== null && substr((string) file_get_contents($pdfPfad, false, null, 0, 5), 0, 4) !== '%PDF') {
                 throw new InvalidArgumentException('Die PDF-Datei ist kein PDF.');
             }
-            $id = rpRechnungAnlegen($carrierId, ['csv' => (string) $csv['tmp_name'], 'pdf' => $pdfPfad], ['nummer' => feld('nummer', 40), 'datum' => rpDatumNormalisieren(feld('datum', 12)), 'netto_cent' => centAusEingabe(feld('netto', 14)) ?? 0], $ich['name']);
+            $id = rpRechnungAnlegen($carrierId, ['tabelle' => (string) $csv['tmp_name'], 'tabelle_name' => (string) $csv['name'], 'pdf' => $pdfPfad], ['nummer' => feld('nummer', 40), 'datum' => rpDatumNormalisieren(feld('datum', 12)), 'netto_cent' => centAusEingabe(feld('netto', 14)) ?? 0], $ich['name']);
             protokollieren('lieferantenrechnung.hochgeladen', 'lieferantenrechnung', $id, ['carrier_id' => $carrierId]);
             umleiten(url('rechnungspruefung/' . $id . '/zuordnung'));
         } catch (InvalidArgumentException $e) {
@@ -823,7 +890,9 @@ if (preg_match('#^/rechnungspruefung/(\d+)(?:/(zuordnung|pruefen|status|notiz|ko
         exit;
     }
     if ($aktion === 'zuordnung') {
-        $csv = rpRechnungCsv($r);
+        $blattName = saeubern($_POST['blatt'] ?? $_GET['blatt'] ?? '', 60);
+        $tabelle = rpRechnungTabelle($r, $blattName);
+        $csv = $tabelle['blatt'];
         if ($methode === 'POST') {
             rechtErzwingen('rechnungspruefung', 'bearbeiten');
             $spalten = [];
@@ -832,7 +901,7 @@ if (preg_match('#^/rechnungspruefung/(\d+)(?:/(zuordnung|pruefen|status|notiz|ko
             }
             $einheit = feld('einheit', 2) === 'g' ? 'g' : 'kg';
             try {
-                $n = rpPositionenImportieren($r, $spalten, $einheit);
+                $n = rpPositionenImportieren($r, $spalten, $einheit, $csv['name'], feld('zuschlag_blatt', 60));
                 if (!empty($_POST['profil'])) {
                     rpProfilSpeichern((int) $r['carrier_id'], $spalten, $einheit, $csv['kopf']);
                 }
@@ -846,7 +915,24 @@ if (preg_match('#^/rechnungspruefung/(\d+)(?:/(zuordnung|pruefen|status|notiz|ko
         }
         $gespeichert = json_decode((string) $r['spalten_json'], true) ?: [];
         $vorschlag = $gespeichert !== [] && isset($gespeichert['gewicht']) ? $gespeichert : (rpProfilAnwenden(rpProfilFuerCarrier((int) $r['carrier_id']), $csv['kopf']) ?? rpSpaltenErkennen($csv['kopf'], $csv['zeilen']));
-        ansicht('rechnungspruefung_zuordnung', ['titel' => 'Spalten zuordnen', 'r' => $r, 'csv' => $csv, 'vorschlag' => $vorschlag, 'einheit' => $r['status'] !== 'zuordnung' ? $r['gewicht_einheit'] : rpGewichtEinheitRaten($csv['zeilen'], (int) ($vorschlag['gewicht'] ?? -1)), 'aktiv' => 'rechnungspruefung']);
+        $zuschlagVorschlag = (string) ($r['zuschlag_blatt'] ?? '');
+        if ($zuschlagVorschlag === '' && count($tabelle['blaetter']) > 1 && ($vorschlag['zuschlag'] ?? -1) < 0) {
+            $schluessel = [];
+            foreach ($csv['zeilen'] as $z) {
+                foreach (['sendungsnummer', 'referenz'] as $f) {
+                    if (($vorschlag[$f] ?? -1) >= 0 && trim((string) ($z[$vorschlag[$f]] ?? '')) !== '') {
+                        $schluessel[trim((string) $z[$vorschlag[$f]])] = true;
+                    }
+                }
+            }
+            foreach ($tabelle['blaetter'] as $i => $b) {
+                if ($i !== $tabelle['index'] && ($info = rpZuschlagErkennen($b, $schluessel)) !== null && $info['betraege'] !== []) {
+                    $zuschlagVorschlag = $b['name'];
+                    break;
+                }
+            }
+        }
+        ansicht('rechnungspruefung_zuordnung', ['titel' => 'Spalten zuordnen', 'r' => $r, 'csv' => $csv, 'blaetter' => $tabelle['blaetter'], 'blattIndex' => $tabelle['index'], 'zuschlagBlatt' => $zuschlagVorschlag, 'vorschlag' => $vorschlag, 'einheit' => $r['status'] !== 'zuordnung' ? $r['gewicht_einheit'] : rpGewichtEinheitRaten($csv['zeilen'], (int) ($vorschlag['gewicht'] ?? -1)), 'aktiv' => 'rechnungspruefung']);
     }
     if ($aktion !== '' && $methode === 'POST') {
         rechtErzwingen('rechnungspruefung', $aktion === 'loeschen' ? 'loeschen' : 'bearbeiten');

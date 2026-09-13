@@ -13,6 +13,9 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/tabelle_lesen.php';
+require_once __DIR__ . '/pdf_text.php';
+
 const RP_FELDER = [
     'referenz' => 'Unsere Sendungsnummer (NE-…)',
     'sendungsnummer' => 'Carrier-Sendungsnummer',
@@ -98,24 +101,36 @@ function rpCsvLesen(string $inhalt, string $trenner = ''): array
     return ['kopf' => $kopf, 'zeilen' => $zeilen, 'trenner' => $trenner];
 }
 
-/** Vorschlag, welche CSV-Spalte welches Feld ist (Index je Feld oder -1). */
+/** Vorschlag, welche CSV-Spalte welches Feld ist (Index je Feld oder -1). Je Feld gewinnt das erste Muster, das irgendeine Spalte trifft. */
 function rpSpaltenErkennen(array $kopf, array $zeilen = []): array
 {
     $muster = [
-        'referenz' => '/referenz|reference|kundenref|customer.?ref|auftrag|order|ref\b/i',
-        'sendungsnummer' => '/sendungs?nr|sendungsnummer|tracking|paket|parcel|shipment|barcode|colli|piece/i',
-        'datum' => '/datum|date|versand/i',
-        'zielland' => '/land|country|dest|ziel/i',
-        'gewicht' => '/gewicht|weight|\bkg\b|gramm/i',
-        'betrag' => '/betrag|preis|price|amount|netto|net\b|entgelt|kosten|charge|fee|total/i',
-        'zuschlag' => '/zuschlag|surcharge|maut|toll|fuel|diesel/i',
+        'sendungsnummer' => ['/identcode|sendungs?nr|sendungsnummer|tracking|paketschein|paket-?nr|parcel\s*(no|nr|id)|shipment\s*(no|nr|id)|barcode|awb|waybill/i', '/paket|parcel|shipment|colli|piece/i'],
+        'referenz' => ['/shipper.?s?\s*ref|kundenref|customer.?ref|referenz|reference/i', '/auftrag|order|ref\b/i'],
+        'datum' => ['/versand|ship\s*date|pu\s*date|pickup|abhol|leistungs/i', '/datum|date/i'],
+        'zielland' => ['/dest|ziel|empf|receiver|recipient|to\s*country|delivery\s*country/i', '/\bland\b|country/i'],
+        'gewicht' => ['/abr|bill|abgerech|charge|berechn|effekt|effective/i', '/gewicht|weight|\bwgt|\bwt\b|\bkg\b|gramm/i'],
+        'betrag' => ['/netto|net\b|total|betrag|amount/i', '/preis|price|entgelt|kosten|charge|fee/i'],
+        'zuschlag' => ['/zuschl|surcharge|maut|toll|fuel|diesel|energ/i'],
     ];
     $aus = array_fill_keys(array_keys(RP_FELDER), -1);
-    foreach ($kopf as $i => $name) {
-        foreach ($muster as $feld => $regex) {
-            if ($aus[$feld] === -1 && preg_match($regex, $name)) {
-                $aus[$feld] = $i;
-                break;
+    foreach ($muster as $feld => $liste) {
+        foreach ($liste as $regex) {
+            foreach ($kopf as $i => $name) {
+                $treffer = preg_match($regex, $name) === 1;
+                if ($feld === 'gewicht' && $treffer && !preg_match('/gewicht|weight|wgt|\bwt\b|kg/i', $name)) {
+                    $treffer = false; // „abgerechnet“ nur, wenn es auch ein Gewicht ist
+                }
+                if ($feld === 'zielland' && $treffer && preg_match('/origin|absender|sender|from/i', $name)) {
+                    $treffer = false;
+                }
+                if ($feld === 'betrag' && $treffer && preg_match('/zuschlag|surcharge|weight|gewicht/i', $name)) {
+                    $treffer = false;
+                }
+                if ($treffer && !in_array($i, $aus, true)) {
+                    $aus[$feld] = $i;
+                    break 2;
+                }
             }
         }
     }
@@ -190,151 +205,49 @@ function rpDatumNormalisieren(string $text): string
 
 // ----------------------------------------------------------------------- PDF
 
-/** Text aus einem PDF: pdftotext, wenn vorhanden, sonst eigener Leser für einfache Dateien. */
+/** Text aus einem PDF: pdftotext, wenn vorhanden, sonst eigener Leser (lib/pdf_text.php). */
 function rpPdfText(string $datei): string
 {
     if (!is_file($datei)) {
         return '';
     }
     $bin = trim((string) @shell_exec('command -v pdftotext 2>/dev/null'));
-    if ($bin !== '' && function_exists('exec')) {
+    if ($bin !== '') {
         $aus = @shell_exec($bin . ' -layout ' . escapeshellarg($datei) . ' - 2>/dev/null');
         if (is_string($aus) && trim($aus) !== '') {
             return $aus;
         }
     }
-    $roh = (string) file_get_contents($datei);
-    $text = '';
-    if (preg_match_all('/<<(.*?)>>\s*stream\r?\n(.*?)\r?\nendstream/s', $roh, $treffer, PREG_SET_ORDER)) {
-        foreach ($treffer as $t) {
-            $daten = $t[2];
-            if (str_contains($t[1], 'FlateDecode')) {
-                $ent = @gzuncompress($daten);
-                if ($ent === false) {
-                    $ent = @gzinflate(substr($daten, 2));
-                }
-                if ($ent === false) {
-                    continue;
-                }
-                $daten = $ent;
-            }
-            if (str_contains($t[1], '/Image') || !str_contains($daten, 'BT')) {
-                continue;
-            }
-            $text .= rpPdfInhaltsstrom($daten) . "\n";
-        }
+    try {
+        return pdfTextLesen($datei);
+    } catch (Throwable $e) {
+        error_log('[rechnungspruefung] PDF: ' . $e->getMessage());
+
+        return '';
     }
-
-    return $text;
-}
-
-/** Textoperatoren (Tj, TJ, ', ") eines Inhaltsstroms in lesbaren Text wandeln. */
-function rpPdfInhaltsstrom(string $strom): string
-{
-    $aus = '';
-    $laenge = strlen($strom);
-    $i = 0;
-    $lesenString = static function (string $s, int &$i): string {
-        // $s[$i] === '('
-        $tiefe = 0;
-        $wert = '';
-        for (; $i < strlen($s); $i++) {
-            $c = $s[$i];
-            if ($c === '\\') {
-                $i++;
-                $n = $s[$i] ?? '';
-                if (ctype_digit($n)) {
-                    $okt = $n;
-                    while (strlen($okt) < 3 && ctype_digit($s[$i + 1] ?? '')) {
-                        $okt .= $s[++$i];
-                    }
-                    $wert .= chr((int) octdec($okt));
-                } else {
-                    $wert .= ['n' => "\n", 'r' => "\r", 't' => "\t", 'b' => "\x08", 'f' => "\x0C"][$n] ?? $n;
-                }
-                continue;
-            }
-            if ($c === '(') {
-                $tiefe++;
-                if ($tiefe === 1) {
-                    continue;
-                }
-            }
-            if ($c === ')') {
-                $tiefe--;
-                if ($tiefe === 0) {
-                    $i++;
-
-                    return $wert;
-                }
-            }
-            $wert .= $c;
-        }
-
-        return $wert;
-    };
-    while ($i < $laenge) {
-        $c = $strom[$i];
-        if ($c === '(') {
-            $aus .= $lesenString($strom, $i);
-            continue;
-        }
-        if ($c === '<' && ($strom[$i + 1] ?? '') !== '<') {
-            $ende = strpos($strom, '>', $i);
-            if ($ende === false) {
-                break;
-            }
-            $hex = preg_replace('/[^0-9a-fA-F]/', '', substr($strom, $i + 1, $ende - $i - 1)) ?? '';
-            $aus .= (string) hex2bin(strlen($hex) % 2 ? $hex . '0' : $hex);
-            $i = $ende + 1;
-            continue;
-        }
-        if ($c === '[') {
-            // TJ-Array: Zahlen unter -200 sind Wortabstände
-            $i++;
-            while ($i < $laenge && $strom[$i] !== ']') {
-                if ($strom[$i] === '(') {
-                    $aus .= $lesenString($strom, $i);
-                } elseif (preg_match('/\G\s*(-?\d+(?:\.\d+)?)/', $strom, $m, 0, $i)) {
-                    if ((float) $m[1] < -200) {
-                        $aus .= ' ';
-                    }
-                    $i += strlen($m[0]);
-                } else {
-                    $i++;
-                }
-            }
-            $i++;
-            continue;
-        }
-        if (preg_match('/\G(T\*|Td|TD|Tm|ET|\'|")/', $strom, $m, 0, $i)) {
-            $aus .= "\n";
-            $i += strlen($m[0]);
-            continue;
-        }
-        $i++;
-    }
-    $aus = preg_replace('/[ \t]+\n/', "\n", $aus) ?? $aus;
-    $aus = preg_replace('/\n{2,}/', "\n", $aus) ?? $aus;
-    if (!mb_check_encoding($aus, 'UTF-8')) {
-        $aus = mb_convert_encoding($aus, 'UTF-8', 'Windows-1252');
-    }
-
-    return $aus;
 }
 
 /** Rechnungsnummer, Datum und Nettosumme aus dem PDF-Text raten. */
 function rpPdfKopfdaten(string $text): array
 {
     $aus = ['nummer' => '', 'datum' => '', 'netto_cent' => 0];
-    if (preg_match('/(?:Rechnungs?-?\s?(?:Nr|Nummer|No)\.?|Invoice\s*(?:No|Number|#)\.?|Beleg-?Nr\.?)\s*:?\s*([A-Z0-9][A-Z0-9\-\/.]{2,})/iu', $text, $m)) {
+    $etikett = '(?:Rechnungs?-?\s?(?:Nr|Nummer|No)\.?|Invoice\s*(?:No|Number|Nr|#)\.?|Beleg-?Nr\.?|Document\s*No\.?)';
+    if (preg_match('/' . $etikett . '\s*:?[ \t]*([A-Z0-9][A-Z0-9\-\/.]{3,})/iu', $text, $m) && !preg_match('/^(from|to|date|period)$/i', $m[1])) {
         $aus['nummer'] = rtrim($m[1], '.');
+    } elseif (preg_match('/\b([A-Z]{1,5}-?\d{6,14})\b/', $text, $m)) {
+        $aus['nummer'] = $m[1]; // Nummer steht getrennt vom Etikett (Tabellenlayout)
     }
-    if (preg_match('/(?:Rechnungsdatum|Datum|Invoice\s*date|Date)\s*:?\s*(\d{1,2}\.\d{1,2}\.\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/iu', $text, $m)) {
+    $datumMuster = '(\d{1,2}\.\d{1,2}\.\d{2,4}|\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})';
+    if (preg_match('/(?:Rechnungsdatum|Belegdatum|Datum|Invoice\s*date|Entry\s*date|Date)\s*:?\s*' . $datumMuster . '/iu', $text, $m)) {
+        $aus['datum'] = rpDatumNormalisieren($m[1]);
+    } elseif (preg_match('/' . $datumMuster . '\s*\n?\s*(?:Entry\s*date|Invoice\s*date|Rechnungsdatum|Datum)/iu', $text, $m)) {
+        $aus['datum'] = rpDatumNormalisieren($m[1]);
+    } elseif (preg_match('/' . $datumMuster . '/u', $text, $m)) {
         $aus['datum'] = rpDatumNormalisieren($m[1]);
     }
     $kandidaten = [];
-    if (preg_match_all('/(?:Netto(?:summe|betrag)?|Zwischensumme|Summe\s*netto|Gesamt\s*netto|Subtotal|Net\s*(?:total|amount)|Total\s*net)\s*:?\s*(?:EUR|€)?\s*(-?[\d.,]+)\s*(?:EUR|€)?/iu', $text, $m)) {
+    $betrag = '\s*:?\s*(?:EUR|€)?\s*(-?\d[\d.,]*)\s*(?:EUR|€)?';
+    if (preg_match_all('/(?:Netto(?:summe|betrag)?|Zwischensumme|Summe\s*netto|Gesamt\s*netto|Subtotal|Net\s*(?:total|amount)|Total\s*net|Total\s*amount|Gesamtbetrag|Rechnungsbetrag|Zahlbetrag|Amount\s*due|Grand\s*total)' . $betrag . '/iu', $text, $m)) {
         foreach ($m[1] as $z) {
             $kandidaten[] = (int) round(rpZahl($z) * 100);
         }
@@ -427,22 +340,22 @@ function rpRechnungenAlle(string $status = ''): array
 
 /**
  * Hochgeladene Dateien ablegen und die Rechnung anlegen (Status „zuordnung“).
- * $dateien: ['pdf' => tmp-Pfad|null, 'csv' => tmp-Pfad]. Liefert die ID.
+ * $dateien: ['pdf' => tmp-Pfad|null, 'tabelle' => tmp-Pfad, 'tabelle_name' => Originalname]. Liefert die ID.
  */
 function rpRechnungAnlegen(int $carrierId, array $dateien, array $kopf, string $von): int
 {
-    $csv = (string) file_get_contents($dateien['csv']);
-    $gelesen = rpCsvLesen($csv);
-    if (count($gelesen['kopf']) < 2 || $gelesen['zeilen'] === []) {
-        throw new InvalidArgumentException('Die CSV-Datei hat keine erkennbare Kopfzeile oder keine Datenzeilen.');
+    $tabelle = tabelleLesen($dateien['tabelle'], (string) ($dateien['tabelle_name'] ?? ''));
+    $blatt = rpBlattWaehlen($tabelle['blaetter']);
+    if ($blatt === null) {
+        throw new InvalidArgumentException('Die Datei hat kein Blatt mit einer erkennbaren Kopfzeile und Datenzeilen.');
     }
     $db = datenbank();
-    $db->prepare('INSERT INTO lieferantenrechnungen (carrier_id, nummer, datum, betrag_netto_cent, status, csv_trenner, spalten_json, pdf_text, hochgeladen_von, erstellt, aktualisiert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-       ->execute([$carrierId, '', '', 0, 'zuordnung', $gelesen['trenner'], '{}', '', $von, jetzt(), jetzt()]);
+    $db->prepare('INSERT INTO lieferantenrechnungen (carrier_id, nummer, datum, betrag_netto_cent, status, csv_trenner, spalten_json, pdf_text, hochgeladen_von, erstellt, aktualisiert, blatt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+       ->execute([$carrierId, '', '', 0, 'zuordnung', $tabelle['blaetter'][$blatt]['trenner'] ?: ';', '{}', '', $von, jetzt(), jetzt(), $tabelle['blaetter'][$blatt]['name']]);
     $id = (int) $db->lastInsertId();
     $ordner = rpVerzeichnis();
-    $csvDatei = $id . '.csv';
-    file_put_contents($ordner . '/' . $csvDatei, $csv);
+    $tabDatei = $id . '.' . ($tabelle['art'] === 'xlsx' ? 'xlsx' : 'csv');
+    copy($dateien['tabelle'], $ordner . '/' . $tabDatei);
     $pdfDatei = '';
     $pdfText = '';
     $pdfKopf = ['nummer' => '', 'datum' => '', 'netto_cent' => 0];
@@ -452,26 +365,113 @@ function rpRechnungAnlegen(int $carrierId, array $dateien, array $kopf, string $
         $pdfText = rpPdfText($ordner . '/' . $pdfDatei);
         $pdfKopf = rpPdfKopfdaten($pdfText);
     }
+    if ((int) $pdfKopf['netto_cent'] <= 0) {
+        $pdfKopf['netto_cent'] = rpSummeAusTabelle($tabelle['blaetter']);
+    }
     $db->prepare('UPDATE lieferantenrechnungen SET nummer = ?, datum = ?, betrag_netto_cent = ?, datei_pdf = ?, datei_csv = ?, pdf_text = ?, pdf_kopf_json = ? WHERE id = ?')
        ->execute([
            $kopf['nummer'] !== '' ? $kopf['nummer'] : $pdfKopf['nummer'],
            $kopf['datum'] !== '' ? $kopf['datum'] : $pdfKopf['datum'],
            (int) $kopf['netto_cent'] > 0 ? (int) $kopf['netto_cent'] : (int) $pdfKopf['netto_cent'],
-           $pdfDatei, $csvDatei, mb_substr($pdfText, 0, 20000), json_encode($pdfKopf, JSON_UNESCAPED_UNICODE), $id,
+           $pdfDatei, $tabDatei, mb_substr($pdfText, 0, 20000), json_encode($pdfKopf, JSON_UNESCAPED_UNICODE), $id,
        ]);
 
     return $id;
 }
 
-function rpRechnungCsv(array $rechnung): array
+/** Blatt mit den Sendungen: das mit den meisten Zeilen, bevorzugt mit Gewichts- und Betragsspalte. */
+function rpBlattWaehlen(array $blaetter): ?int
+{
+    $bestes = null;
+    $besteWertung = -1;
+    foreach ($blaetter as $i => $b) {
+        if ($b['kopf'] === [] || $b['zeilen'] === []) {
+            continue;
+        }
+        $erkannt = rpSpaltenErkennen($b['kopf'], $b['zeilen']);
+        $wertung = count($b['zeilen']) + ($erkannt['gewicht'] >= 0 ? 100000 : 0) + ($erkannt['betrag'] >= 0 ? 10000 : 0);
+        if ($wertung > $besteWertung) {
+            $besteWertung = $wertung;
+            $bestes = $i;
+        }
+    }
+
+    return $bestes;
+}
+
+/** Nettosumme aus einem Zusammenfassungsblatt („Total …“-Zeile, größter Betrag). */
+function rpSummeAusTabelle(array $blaetter): int
+{
+    $max = 0;
+    foreach ($blaetter as $b) {
+        foreach ($b['zeilen'] as $z) {
+            if (preg_match('/\b(total|gesamt|summe|netto)\b/i', implode(' ', $z))) {
+                foreach ($z as $wert) {
+                    if (preg_match('/^-?\d[\d.,]*$/', trim($wert))) {
+                        $max = max($max, (int) round(rpZahl($wert) * 100));
+                    }
+                }
+            }
+        }
+    }
+
+    return $max;
+}
+
+/** Tabelle einer Rechnung: alle Blätter plus das gewählte als 'blatt'. */
+function rpRechnungTabelle(array $rechnung, string $blattName = ''): array
 {
     $datei = rpVerzeichnis() . '/' . $rechnung['datei_csv'];
+    $tabelle = is_file($datei) ? tabelleLesen($datei, (string) $rechnung['datei_csv']) : ['art' => 'csv', 'blaetter' => []];
+    $gewuenscht = $blattName !== '' ? $blattName : (string) ($rechnung['blatt'] ?? '');
+    $index = null;
+    foreach ($tabelle['blaetter'] as $i => $b) {
+        if ($b['name'] === $gewuenscht) {
+            $index = $i;
+        }
+    }
+    $index ??= rpBlattWaehlen($tabelle['blaetter']) ?? 0;
+    $tabelle['index'] = $index;
+    $tabelle['blatt'] = $tabelle['blaetter'][$index] ?? ['name' => '', 'kopf' => [], 'zeilen' => [], 'trenner' => ';'];
 
-    return rpCsvLesen(is_file($datei) ? (string) file_get_contents($datei) : '', (string) $rechnung['csv_trenner']);
+    return $tabelle;
+}
+
+/** Zuschlagsblatt: Schlüsselspalte (Sendungsnummer/Referenz) und Betragsspalten erkennen. */
+function rpZuschlagErkennen(array $blatt, array $schluesselWerte): ?array
+{
+    if ($blatt['kopf'] === [] || $blatt['zeilen'] === []) {
+        return null;
+    }
+    $treffer = [];
+    foreach ($blatt['kopf'] as $i => $_) {
+        $n = 0;
+        foreach (array_slice($blatt['zeilen'], 0, 200) as $z) {
+            if (isset($schluesselWerte[trim((string) ($z[$i] ?? ''))])) {
+                $n++;
+            }
+        }
+        if ($n > 0) {
+            $treffer[$i] = $n;
+        }
+    }
+    if ($treffer === []) {
+        return null;
+    }
+    arsort($treffer);
+    $schluessel = (int) array_key_first($treffer);
+    $betraege = [];
+    foreach ($blatt['kopf'] as $i => $name) {
+        if ($i !== $schluessel && preg_match('/zuschlag|surcharge|fuel|energy|energie|maut|toll|fee|gebühr|gebuehr/i', $name) && !preg_match('/delivery\s*fee|porto|basis|base|freight/i', $name)) {
+            $betraege[] = $i;
+        }
+    }
+
+    return ['schluessel' => $schluessel, 'betraege' => $betraege];
 }
 
 /** Zuordnung übernehmen, Positionen (neu) einlesen und prüfen. */
-function rpPositionenImportieren(array $rechnung, array $spalten, string $einheit): int
+function rpPositionenImportieren(array $rechnung, array $spalten, string $einheit, string $blattName = '', string $zuschlagBlatt = ''): int
 {
     if (($spalten['referenz'] ?? -1) < 0 && ($spalten['sendungsnummer'] ?? -1) < 0) {
         throw new InvalidArgumentException('Bitte mindestens die Spalte mit unserer Sendungsnummer oder der Carrier-Sendungsnummer zuordnen.');
@@ -479,18 +479,48 @@ function rpPositionenImportieren(array $rechnung, array $spalten, string $einhei
     if (($spalten['gewicht'] ?? -1) < 0 || ($spalten['betrag'] ?? -1) < 0) {
         throw new InvalidArgumentException('Gewicht und Betrag müssen zugeordnet sein — ohne sie gibt es nichts zu prüfen.');
     }
-    $csv = rpRechnungCsv($rechnung);
+    $tabelle = rpRechnungTabelle($rechnung, $blattName);
+    $csv = $tabelle['blatt'];
+    $wert = static fn (array $z, string $feld): string => ($spalten[$feld] ?? -1) >= 0 ? (string) ($z[$spalten[$feld]] ?? '') : '';
+    // Zuschläge aus einem anderen Blatt je Sendungsnummer/Referenz zusammenrechnen
+    $zuschlaege = [];
+    $zuschlagInfo = null;
+    if ($zuschlagBlatt !== '' && ($spalten['zuschlag'] ?? -1) < 0) {
+        foreach ($tabelle['blaetter'] as $b) {
+            if ($b['name'] !== $zuschlagBlatt) {
+                continue;
+            }
+            $schluessel = [];
+            foreach ($csv['zeilen'] as $z) {
+                foreach (['sendungsnummer', 'referenz'] as $f) {
+                    $v = trim($wert($z, $f));
+                    if ($v !== '') {
+                        $schluessel[$v] = true;
+                    }
+                }
+            }
+            $zuschlagInfo = rpZuschlagErkennen($b, $schluessel);
+            if ($zuschlagInfo !== null) {
+                foreach ($b['zeilen'] as $z) {
+                    $k = trim((string) ($z[$zuschlagInfo['schluessel']] ?? ''));
+                    foreach ($zuschlagInfo['betraege'] as $bi) {
+                        $zuschlaege[$k] = ($zuschlaege[$k] ?? 0) + (int) round(rpZahl((string) ($z[$bi] ?? '')) * 100);
+                    }
+                }
+                $zuschlagInfo['blatt'] = $b['name'];
+                $zuschlagInfo['spalten'] = array_map(static fn (int $i): string => (string) ($b['kopf'][$i] ?? ''), $zuschlagInfo['betraege']);
+            }
+        }
+    }
     $db = datenbank();
     $db->beginTransaction();
     try {
         $db->prepare('DELETE FROM lieferantenpositionen WHERE rechnung_id = ?')->execute([$rechnung['id']]);
         $st = $db->prepare('INSERT INTO lieferantenpositionen (rechnung_id, zeile, sendungsnummer, referenz, datum, zielland, gewicht_gramm, betrag_cent, zuschlag_cent, roh_json, befund, nachberechnung_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-        $wert = static fn (array $z, string $feld): string => ($spalten[$feld] ?? -1) >= 0 ? (string) ($z[$spalten[$feld]] ?? '') : '';
         $n = 0;
         foreach ($csv['zeilen'] as $nr => $z) {
-            $referenz = $wert($z, 'referenz');
+            $referenz = trim($wert($z, 'referenz'));
             if (!preg_match('/NE-\d{4}-[0-9A-F]{8}/i', $referenz, $m)) {
-                // Nummer irgendwo in der Zeile?
                 foreach ($z as $feld) {
                     if (preg_match('/NE-\d{4}-[0-9A-F]{8}/i', (string) $feld, $m)) {
                         break;
@@ -501,21 +531,22 @@ function rpPositionenImportieren(array $rechnung, array $spalten, string $einhei
             unset($m);
             $gewicht = rpZahl($wert($z, 'gewicht'));
             $gramm = (int) round($einheit === 'g' ? $gewicht : $gewicht * 1000);
+            $sendungsnummer = trim($wert($z, 'sendungsnummer'));
+            $zuschlag = ($spalten['zuschlag'] ?? -1) >= 0 ? (int) round(rpZahl($wert($z, 'zuschlag')) * 100) : (int) ($zuschlaege[$sendungsnummer] ?? $zuschlaege[$referenz] ?? 0);
             $roh = [];
             foreach ($csv['kopf'] as $i => $name) {
                 $roh[$name] = $z[$i] ?? '';
             }
             $st->execute([
-                $rechnung['id'], $nr + 2, $wert($z, 'sendungsnummer'), $referenz, rpDatumNormalisieren($wert($z, 'datum')),
+                $rechnung['id'], $nr + 2, $sendungsnummer, $referenz, rpDatumNormalisieren($wert($z, 'datum')),
                 strtoupper(substr(trim($wert($z, 'zielland')), 0, 2)), $gramm,
-                (int) round(rpZahl($wert($z, 'betrag')) * 100), (int) round(rpZahl($wert($z, 'zuschlag')) * 100),
+                (int) round(rpZahl($wert($z, 'betrag')) * 100), $zuschlag,
                 json_encode($roh, JSON_UNESCAPED_UNICODE), 'nicht_zugeordnet', 'keine',
             ]);
             $n++;
         }
-        $nachName = [];
-        $db->prepare("UPDATE lieferantenrechnungen SET spalten_json = ?, gewicht_einheit = ?, status = 'geprueft', aktualisiert = ? WHERE id = ?")
-           ->execute([json_encode($spalten), $einheit, jetzt(), $rechnung['id']]);
+        $db->prepare("UPDATE lieferantenrechnungen SET spalten_json = ?, gewicht_einheit = ?, blatt = ?, zuschlag_blatt = ?, zuschlag_json = ?, status = 'geprueft', aktualisiert = ? WHERE id = ?")
+           ->execute([json_encode($spalten), $einheit, $csv['name'], $zuschlagInfo !== null ? $zuschlagBlatt : '', json_encode($zuschlagInfo ?? new stdClass(), JSON_UNESCAPED_UNICODE), jetzt(), $rechnung['id']]);
         $db->commit();
     } catch (Throwable $e) {
         $db->rollBack();
@@ -598,8 +629,14 @@ function rpRechnungPruefen(int $rechnungId): array
             $b = bestellungLaden('ext_ref', $p['referenz']);
         }
         if ($b === null && $p['sendungsnummer'] !== '') {
-            $st = $db->prepare('SELECT * FROM bestellungen WHERE carrier_sendungsnummer = ? LIMIT 1');
+            $st = $db->prepare("SELECT * FROM bestellungen WHERE carrier_sendungsnummer = ? AND carrier_sendungsnummer <> '' ORDER BY id LIMIT 1");
             $st->execute([$p['sendungsnummer']]);
+            $b = $st->fetch() ?: null;
+        }
+        if ($b === null && $p['referenz'] !== '') {
+            // Kundenreferenz (eigene Auftragsnummer) oder Carrier-Nummer in der Referenzspalte
+            $st = $db->prepare("SELECT * FROM bestellungen WHERE (referenz = ? AND referenz <> '') OR (carrier_sendungsnummer = ? AND carrier_sendungsnummer <> '') ORDER BY id DESC LIMIT 1");
+            $st->execute([$p['referenz'], $p['referenz']]);
             $b = $st->fetch() ?: null;
         }
         $e = rpPositionBewerten($p, $b, (string) $rechnung['carrier'], $gesehen);
@@ -621,7 +658,7 @@ function rpPositionBewerten(array $p, ?array $b, string $carrier, array $gesehen
     $e = ['gk_bestellt' => '', 'gk_ist' => '', 'einkauf_soll' => 0, 'differenz' => 0, 'verkauf_bestellt' => 0, 'verkauf_ist' => 0, 'nachberechnung' => 0, 'nachberechnung_status' => 'keine', 'befund' => 'nicht_zugeordnet', 'hinweis' => ''];
     $betrag = (int) $p['betrag_cent'];
     if ($b === null) {
-        $e['hinweis'] = $p['referenz'] !== '' ? 'Nummer ' . $p['referenz'] . ' gibt es nicht.' : 'Keine NEOS-Sendungsnummer in der Zeile.';
+        $e['hinweis'] = $p['referenz'] !== '' ? 'Referenz ' . $p['referenz'] . ($p['sendungsnummer'] !== '' ? ' / Carrier-Nr. ' . $p['sendungsnummer'] : '') . ' passt zu keiner Bestellung.' : ($p['sendungsnummer'] !== '' ? 'Carrier-Nr. ' . $p['sendungsnummer'] . ' ist keiner Bestellung zugeordnet.' : 'Keine Sendungsnummer in der Zeile.');
 
         return $e;
     }
