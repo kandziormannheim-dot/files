@@ -1,0 +1,28 @@
+{
+  "lektionen": [
+    { "slug": "01-rechtsrahmen", "titel": "Binnenschifffahrtsfunk — Rechtsrahmen, RAINWAT und Zeugnisse",
+      "kurz": "Wer den Binnenschifffahrtsfunk regelt, was die Regionale Vereinbarung RAINWAT festlegt und wann du das UBI brauchst.",
+      "dauerMin": 15, "module": ["grundlagen"] },
+    { "slug": "02-verkehrskreise", "titel": "Die vier Verkehrskreise und ihre Kanäle",
+      "kurz": "Schiff–Schiff, nautische Information, Schiff–Hafenbehörde und Funkverkehr an Bord — und welche Kanäle dazugehören.",
+      "dauerMin": 20, "module": ["verkehrskreise"] },
+    { "slug": "03-anlage-atis", "titel": "Die Funkanlage: ATIS, Leistung, Abhörpflicht, Zulassung",
+      "kurz": "Was eine Binnenfunkanlage können muss, wie ATIS dich kennzeichnet und welche Pflichten mit der Anlage kommen.",
+      "dauerMin": 20, "module": ["anlage-atis"] },
+    { "slug": "04-verkehrsabwicklung", "titel": "Verkehrsabwicklung: Anruf, Buchstabiertafel, Sprechdisziplin",
+      "kurz": "Wie ein Anruf aufgebaut ist, wie du buchstabierst und welche Regeln den Funkverkehr kurz und klar halten.",
+      "dauerMin": 20, "module": ["verkehrskreise"] },
+    { "slug": "05-notverkehr", "titel": "Not-, Dringlichkeits- und Sicherheitsverkehr binnen",
+      "kurz": "MAYDAY, PAN PAN und SÉCURITÉ auf der Binnenwasserstraße — auf Deutsch, ohne DSC, mit klarem Aufbau.",
+      "dauerMin": 25, "module": ["notverkehr"] },
+    { "slug": "06-praxis", "titel": "Praxis auf dem Revier: Schleusen, Brücken, Revierzentralen, Begegnungen",
+      "kurz": "Typische Funkgespräche des Alltags — von der Schleusenanmeldung bis zur Begegnungsabsprache und zum Wahrschauen.",
+      "dauerMin": 20, "module": ["verkehrskreise", "anlage-atis"] },
+    { "slug": "07-grenzueberschreitend", "titel": "Grenzüberschreitend: Rhein, Donau, Niederlande und Belgien",
+      "kurz": "Was sich ändert, wenn du die Landesgrenze überfährst — Sprache, Kanäle, Zeugnisse und nationale Besonderheiten.",
+      "dauerMin": 15, "module": ["grundlagen", "verkehrskreise"] },
+    { "slug": "08-pruefung", "titel": "Die UBI-Prüfung: schriftlich, Diktat, Praxis",
+      "kurz": "Wie die Prüfung abläuft, was in den drei Teilen verlangt wird und wie du dich gezielt vorbereitest.",
+      "dauerMin": 10, "module": ["grundlagen", "notverkehr"] }
+  ]
+}

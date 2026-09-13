@@ -1,0 +1,182 @@
+{
+  "zertifikat": "fkn",
+  "quelle": { "name": "Beispielfragen, selbst verfasst", "stand": "2026-09", "amtlich": false },
+  "module": [
+    { "id": "recht", "titel": "Rechtsgrundlagen" },
+    { "id": "signalmittel", "titel": "Seenotsignalmittel" },
+    { "id": "handhabung", "titel": "Handhabung" },
+    { "id": "lagerung", "titel": "Lagerung, Erwerb und Entsorgung" }
+  ],
+  "fragen": [
+    {
+      "id": "fkn-001",
+      "nr": 1,
+      "modul": "recht",
+      "text": "Auf welcher gesetzlichen Grundlage beruht der Fachkundenachweis für Seenotsignalmittel?",
+      "antworten": [
+        "Auf dem Sprengstoffgesetz und der Ersten Verordnung zum Sprengstoffgesetz (1. SprengV)",
+        "Auf der Schiffssicherheitsverordnung",
+        "Auf dem Waffengesetz",
+        "Auf den Kollisionsverhütungsregeln"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Pyrotechnische Seenotsignalmittel sind explosionsgefährliche Stoffe im Sinne des Sprengstoffgesetzes. Die 1. SprengV regelt, wer welche Kategorien mit welchem Nachweis erwerben und verwenden darf.",
+      "lektion": "01-rechtsgrundlagen",
+      "beispiel": true
+    },
+    {
+      "id": "fkn-002",
+      "nr": 2,
+      "modul": "recht",
+      "text": "Wofür benötigst du den Fachkundenachweis für Seenotsignalmittel?",
+      "antworten": [
+        "Für Erwerb, Besitz und Verwendung pyrotechnischer Seenotsignalmittel, die nicht frei verkäuflich sind",
+        "Für das Führen eines Sportbootes auf Seeschifffahrtsstraßen",
+        "Für die Teilnahme am Seefunkdienst",
+        "Für den Kauf von Silvesterfeuerwerk der Kategorie F2"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Der FKN ist ein Sachkundenachweis nach Sprengstoffrecht. Er berechtigt zum Erwerb und Umgang mit den nicht frei verkäuflichen pyrotechnischen Seenotsignalmitteln, ersetzt aber keinen Führerschein oder Funkschein.",
+      "lektion": "01-rechtsgrundlagen",
+      "beispiel": true
+    },
+    {
+      "id": "fkn-003",
+      "nr": 3,
+      "modul": "recht",
+      "text": "Du zündest auf einem Hafenfest zur Unterhaltung eine rote Handfackel. Wie ist das rechtlich zu bewerten?",
+      "antworten": [
+        "Der Missbrauch eines Notzeichens ist verboten und strafbar; außerdem können Rettungskräfte unnötig alarmiert werden",
+        "Erlaubt, solange du den Fachkundenachweis besitzt",
+        "Erlaubt, wenn der Hafenmeister vorher informiert wurde",
+        "Erlaubt, weil im Hafen keine Seenotrettung ausgelöst wird"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Rote Signale sind Notzeichen und dürfen ausschließlich in echter Not verwendet werden. Wer sie missbräuchlich zündet, macht sich strafbar und trägt gegebenenfalls die Kosten eines Fehleinsatzes.",
+      "lektion": "01-rechtsgrundlagen",
+      "beispiel": true
+    },
+    {
+      "id": "fkn-004",
+      "nr": 4,
+      "modul": "signalmittel",
+      "text": "Welches Seenotsignalmittel erzielt die größte Sichtweite?",
+      "antworten": [
+        "Die rote Fallschirmsignalrakete",
+        "Die rote Handfackel",
+        "Das orangefarbene Rauchsignal",
+        "Die weiße Handfackel"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Die Fallschirmsignalrakete steigt mehrere hundert Meter hoch und schwebt am Fallschirm herab. Sie ist deshalb das Mittel der Wahl, um überhaupt erst auf sich aufmerksam zu machen — auch über den Horizont hinweg.",
+      "lektion": "02-signalmittel",
+      "beispiel": true
+    },
+    {
+      "id": "fkn-005",
+      "nr": 5,
+      "modul": "signalmittel",
+      "text": "Welche Bedeutung hat eine weiße Handfackel?",
+      "antworten": [
+        "Sie dient dazu, auf sich aufmerksam zu machen, etwa als Kollisionswarnung — sie ist kein Notzeichen",
+        "Sie ist ein Notzeichen für den Einsatz bei Tag",
+        "Sie zeigt an, dass ein Schiff manövrierunfähig ist",
+        "Sie fordert Schlepphilfe an"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Rot bedeutet Not, weiß bedeutet Aufmerksamkeit. Mit einer weißen Fackel machst du ein anderes Fahrzeug auf dich aufmerksam, wenn eine Kollision droht, ohne einen Notfall zu melden.",
+      "lektion": "02-signalmittel",
+      "beispiel": true
+    },
+    {
+      "id": "fkn-006",
+      "nr": 6,
+      "modul": "signalmittel",
+      "text": "Ein Rettungshubschrauber nähert sich bei Tag und klarer Sicht. Welches Signal ist am besten geeignet, um deine Position anzuzeigen?",
+      "antworten": [
+        "Ein orangefarbenes Rauchsignal",
+        "Eine rote Fallschirmsignalrakete",
+        "Eine weiße Handfackel",
+        "Eine Signalpistole mit roter Patrone, gezielt in Richtung des Hubschraubers"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Bei Tag ist orangefarbener Rauch weithin sichtbar und zeigt der Besatzung zugleich die Windrichtung. Raketen und Signalpatronen dürfen nie in Richtung eines Hubschraubers abgefeuert werden.",
+      "lektion": "03-notzeichen",
+      "beispiel": true
+    },
+    {
+      "id": "fkn-007",
+      "nr": 7,
+      "modul": "handhabung",
+      "text": "In welche Richtung wird eine Fallschirmsignalrakete abgeschossen?",
+      "antworten": [
+        "Nach Lee, mit leichtem Winkel gegen den Wind, damit die Rakete zum Schiff zurückgetrieben wird",
+        "Genau senkrecht nach oben",
+        "Nach Luv, flach über das Wasser",
+        "In Richtung des nächsten Schiffes, damit es das Signal sicher sieht"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Nach Lee gerichtet fliegen Rakete und Funken vom Schiff weg; der leichte Winkel gegen den Wind sorgt dafür, dass der Wind das schwebende Signal über das Schiff zurückträgt. Niemals auf Personen, Schiffe oder Hubschrauber zielen.",
+      "lektion": "04-handhabung",
+      "beispiel": true
+    },
+    {
+      "id": "fkn-008",
+      "nr": 8,
+      "modul": "handhabung",
+      "text": "Eine Handfackel zündet nach dem Auslösen nicht. Wie verhältst du dich richtig?",
+      "antworten": [
+        "Die Fackel mindestens 30 Sekunden vom Körper weg nach Lee gerichtet halten, dann über Bord werfen oder gesichert ablegen — nicht in den Zünder schauen",
+        "Sofort den Zünder öffnen und nachsehen, was klemmt",
+        "Die Fackel unmittelbar wieder in den Behälter zurücklegen",
+        "Erneut kräftig am Abzug reißen, bis sie zündet"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Ein Versager kann verzögert zünden. Deshalb Abstand halten, die Fackel mindestens 30 Sekunden nicht anfassen oder untersuchen und sie danach so entsorgen, dass niemand gefährdet wird.",
+      "lektion": "07-gefahren",
+      "beispiel": true
+    },
+    {
+      "id": "fkn-009",
+      "nr": 9,
+      "modul": "lagerung",
+      "text": "Wie lagerst du Seenotsignalmittel an Bord richtig?",
+      "antworten": [
+        "Trocken, kühl, in einem wasserdichten Behälter, für die Besatzung schnell erreichbar und vor unbefugtem Zugriff geschützt",
+        "Im Motorraum, damit sie immer warm und trocken bleiben",
+        "Lose in der Backskiste zwischen Fendern und Leinen",
+        "Im Cockpit offen sichtbar, damit jeder Gast sie sofort findet"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Feuchtigkeit und Hitze machen Pyrotechnik unzuverlässig. Zugleich müssen die Mittel im Notfall in Sekunden greifbar sein — und Kinder oder Unbefugte dürfen nicht herankommen.",
+      "lektion": "05-lagerung",
+      "beispiel": true
+    },
+    {
+      "id": "fkn-010",
+      "nr": 10,
+      "modul": "lagerung",
+      "text": "Deine Signalraketen haben das Verfallsdatum überschritten. Was tust du damit?",
+      "antworten": [
+        "Rückgabe an den Fachhandel oder einen Fachbetrieb zur fachgerechten Entsorgung",
+        "Bei nächster Gelegenheit auf See abschießen, um sie loszuwerden",
+        "In den Hausmüll geben, gut verpackt",
+        "In der Kajüte weiterlagern, bis sie nicht mehr benötigt werden"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Abgelaufene Signalmittel gehören weder in den Hausmüll noch auf See verschossen — beides ist verboten. Händler und Fachbetriebe nehmen sie zurück und entsorgen sie fachgerecht.",
+      "lektion": "06-erwerb-entsorgung",
+      "beispiel": true
+    }
+  ]
+}

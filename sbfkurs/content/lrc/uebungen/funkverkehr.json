@@ -1,0 +1,45 @@
+{
+  "uebungen": [
+    {
+      "id": "mf-notruf-2182", "typ": "lueckentext", "titel": "Notruf und Notmeldung auf 2182 kHz",
+      "einleitung": "Die Yacht ALBATROS (MMSI 211234560) hat 40 sm westlich von Helgoland Feuer im Maschinenraum. Der DSC-Notalarm auf 2187,5 kHz ist abgesetzt, jetzt folgt der Sprechfunk auf 2182 kHz. An Bord sind vier Personen.",
+      "text": "{{1}} {{1}} {{1}}\nTHIS IS {{2}} {{2}} {{2}}\nMMSI {{3}}\n{{1}} {{2}} MMSI {{3}}\nPOSITION {{4}}\n{{5}}\nI REQUIRE IMMEDIATE ASSISTANCE\n{{6}} PERSONS ON BOARD\n{{7}}",
+      "luecken": {
+        "1": { "loesung": ["MAYDAY"], "hinweis": "das Notzeichen" },
+        "2": { "loesung": ["ALBATROS"] },
+        "3": { "loesung": ["211234560"] },
+        "4": { "loesung": ["40 NM WEST OF HELGOLAND", "40 MILES WEST OF HELGOLAND", "40 NAUTICAL MILES WEST OF HELGOLAND"], "hinweis": "Entfernung und Richtung vom Bezugspunkt" },
+        "5": { "loesung": ["FIRE IN ENGINE ROOM", "I AM ON FIRE", "WE ARE ON FIRE", "FIRE IN THE ENGINE ROOM"], "hinweis": "Art der Not" },
+        "6": { "loesung": ["FOUR", "4"] },
+        "7": { "loesung": ["OVER"] }
+      }
+    },
+    {
+      "id": "radio-medical-pan-pan", "typ": "lueckentext", "titel": "Radio-Medical-Anfrage als Dringlichkeitsmeldung",
+      "einleitung": "Auf der Yacht SEEWOLF (MMSI 211345670) hat sich ein Crewmitglied den Unterarm gebrochen und hat starke Schmerzen. Du bist 120 sm nordwestlich von Borkum und rufst Bremen Rescue auf 2182 kHz, um funkärztlichen Rat zu erhalten.",
+      "text": "{{1}} {{1}} {{1}}\n{{2}} {{2}} {{2}}\nTHIS IS {{3}} {{3}} {{3}}\nMMSI {{4}}\nPOSITION {{5}}\nONE CREW MEMBER HAS A {{6}} ARM AND SEVERE PAIN\nI REQUIRE {{7}}\n{{8}}",
+      "luecken": {
+        "1": { "loesung": ["PAN PAN", "PANPAN"], "hinweis": "das Dringlichkeitszeichen" },
+        "2": { "loesung": ["BREMEN RESCUE"], "hinweis": "die gerufene Station, dreimal" },
+        "3": { "loesung": ["SEEWOLF"] },
+        "4": { "loesung": ["211345670"] },
+        "5": { "loesung": ["120 NM NORTHWEST OF BORKUM", "120 MILES NORTHWEST OF BORKUM", "120 NAUTICAL MILES NORTHWEST OF BORKUM", "120 NM NORTH WEST OF BORKUM"] },
+        "6": { "loesung": ["BROKEN", "FRACTURED"] },
+        "7": { "loesung": ["MEDICAL ADVICE", "RADIO MEDICAL ADVICE"], "hinweis": "was du brauchst" },
+        "8": { "loesung": ["OVER"] }
+      }
+    },
+    {
+      "id": "hf-dsc-notalarm-ablauf", "typ": "reihenfolge", "titel": "Ablauf eines DSC-Notalarms auf Kurzwelle",
+      "einleitung": "Du bist im Seegebiet A3 ohne Satellitenterminal und musst einen Notalarm über Kurzwelle absetzen. Bringe die Schritte bis zur Sprechfunk-Notmeldung in die richtige Reihenfolge.",
+      "elemente": [
+        "Am DSC-Controller DISTRESS wählen, Art der Not eingeben, Position und Zeit prüfen oder eingeben",
+        "Sendeversuch wählen: Einzelfrequenz (z. B. 8414,5 kHz) oder Mehrfrequenz auf mehreren HF-DSC-Notfrequenzen",
+        "Notalarm auslösen: DISTRESS-Taste mindestens drei Sekunden gedrückt halten",
+        "Anlage wechselt auf die zugehörige Sprechfunk-Notfrequenz (z. B. 8291 kHz), Empfang der DSC-Quittung einer Küstenfunkstelle abwarten",
+        "Auf der Sprechfunk-Notfrequenz die Notmeldung absetzen: MAYDAY, THIS IS, Name, MMSI, Position, Art der Not, Hilfe, Personen an Bord, OVER"
+      ],
+      "loesung": [0, 1, 2, 3, 4]
+    }
+  ]
+}

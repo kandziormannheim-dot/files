@@ -1,0 +1,23 @@
+{
+  "id": "ubi",
+  "titel": "UBI — UKW-Sprechfunkzeugnis Binnenschifffahrtsfunk",
+  "kurz": "Sprechfunkzeugnis für den Betrieb einer UKW-Funkanlage auf Binnenschifffahrtsstraßen nach der Regionalen Vereinbarung RAINWAT.",
+  "reihenfolge": 2,
+  "freigeschaltet": true,
+  "praxis": ["funkverkehr", "buchstabieren"],
+  "trainer": { "sicherAb": 2 },
+  "pruefung": {
+    "_zuPruefen": "Zahlen nach bestem Wissen; gegen die aktuelle Prüfungsordnung abgleichen.",
+    "fragenProBogen": 22,
+    "zeitMinuten": 30,
+    "mindestRichtig": 17,
+    "fragenMischen": true,
+    "antwortenMischen": true,
+    "amtlicheBoegen": "boegen.json",
+    "zusammensetzung": { "grundlagen": 6, "verkehrskreise": 7, "anlage-atis": 5, "notverkehr": 4 },
+    "weitereTeile": [
+      { "id": "diktat", "titel": "Aufnahme einer deutschen Notmeldung nach Diktat", "simuliert": null },
+      { "id": "praxis", "titel": "Praktische Prüfung am Gerät", "simuliert": null }
+    ]
+  }
+}

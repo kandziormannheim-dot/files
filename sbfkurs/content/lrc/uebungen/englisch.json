@@ -1,0 +1,18 @@
+{
+  "uebungen": [
+    {
+      "id": "en-de-01", "richtung": "en-de", "titel": "Sturmwarnung über SafetyNET",
+      "quelle": "SECURITE SECURITE SECURITE. ALL SHIPS IN METAREA ONE. THIS IS BREMEN RESCUE. GALE WARNING. WIND NORTHWEST FORCE EIGHT INCREASING TO STORM FORCE TEN WITHIN THE NEXT SIX HOURS IN SEA AREA GERMAN BIGHT. WAVE HEIGHT FOUR TO SIX METRES. VISIBILITY POOR IN RAIN SHOWERS. SMALL VESSELS ARE ADVISED TO SEEK SHELTER. OUT.",
+      "musterloesung": "Sicherheitsmeldung an alle Schiffe im METAREA I von Bremen Rescue: Sturmwarnung. Wind Nordwest Stärke 8, in den nächsten sechs Stunden auf Sturm Stärke 10 zunehmend, im Seegebiet Deutsche Bucht. Wellenhöhe vier bis sechs Meter. Sicht schlecht in Regenschauern. Kleinen Fahrzeugen wird empfohlen, Schutz zu suchen.",
+      "schluesselwoerter": [["Sturmwarnung", "Starkwindwarnung", "Warnung"], ["Nordwest", "NW"], ["zunehmend", "auffrischend", "zunimmt"], ["Deutsche Bucht", "Deutschen Bucht"], ["Wellenhöhe", "Wellen", "Seegang"], ["Schutz", "Schutzhafen", "Hafen"]],
+      "mindestTreffer": 4
+    },
+    {
+      "id": "de-en-01", "richtung": "de-en", "titel": "Anfrage nach funkärztlichem Rat",
+      "quelle": "Ein Besatzungsmitglied ist auf Deck gestürzt. Es ist bei Bewusstsein, hat aber starke Schmerzen im linken Bein und kann nicht stehen. Das Bein ist geschwollen. Wir benötigen funkärztlichen Rat. Unsere Position ist 55 Grad 20 Minuten Nord, 006 Grad 40 Minuten Ost. Wir sind ungefähr zehn Stunden vom nächsten Hafen entfernt.",
+      "musterloesung": "One crew member has fallen on deck. He is conscious but has severe pain in his left leg and cannot stand. The leg is swollen. We require medical advice. Our position is 55 degrees 20 minutes north, 006 degrees 40 minutes east. We are approximately ten hours from the nearest port.",
+      "schluesselwoerter": [["fallen", "fell", "fall"], ["conscious"], ["pain"], ["leg"], ["swollen", "swelling"], ["medical advice", "radio medical", "medical assistance"], ["position"]],
+      "mindestTreffer": 5
+    }
+  ]
+}
