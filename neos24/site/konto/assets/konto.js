@@ -211,6 +211,14 @@
       });
     }
 
+    /* Unterkunde (Rechnungsempfänger) wechseln: Seite mit dessen Preisliste und Absender neu laden */
+    var unterkundeWahl = sendung.querySelector('[data-unterkunde-wahl]');
+    if (unterkundeWahl) {
+      unterkundeWahl.addEventListener('change', function () {
+        window.location.href = unterkundeWahl.getAttribute('data-url') + '?unterkunde=' + encodeURIComponent(unterkundeWahl.value);
+      });
+    }
+
     /* Adressbuch: Empfänger bzw. Absender vorbelegen */
     sendung.querySelectorAll('[data-adresswahl]').forEach(function (wahl) {
       var rolle = wahl.getAttribute('data-adresswahl');

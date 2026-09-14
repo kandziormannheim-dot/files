@@ -66,13 +66,16 @@ function abweichungsquote(array $kunde, int $anzahl = 20): array
     return ['gramm' => $gramm, 'prozent' => $prozent, 'anzahl' => count($zeilen), 'warnen' => count($zeilen) >= 2 && ($gramm >= 300 || $prozent >= 15)];
 }
 
-/** Standard-Absender: Adressbuch-Standard, sonst Firma bzw. gespeicherte Absenderadresse. */
-function standardAbsender(array $kunde, ?array $firma): array
+/** Standard-Absender: Adressbuch-Standard, sonst Unterkunde, sonst Firma bzw. gespeicherte Absenderadresse. */
+function standardAbsender(array $kunde, ?array $firma, ?array $unterkunde = null): array
 {
     foreach (adressenAlle($kunde, 'absender') as $a) {
         if ((int) $a['standard'] === 1) {
             return $a;
         }
+    }
+    if ($unterkunde !== null && (string) $unterkunde['strasse'] !== '') {
+        return ['name' => $unterkunde['name'], 'firma' => '', 'strasse' => $unterkunde['strasse'], 'plz' => $unterkunde['plz'], 'ort' => $unterkunde['ort'], 'land' => $unterkunde['land'] ?: 'DE', 'email' => '', 'telefon' => ''];
     }
     if ($firma !== null) {
         return ['name' => $firma['name'], 'firma' => '', 'strasse' => $firma['strasse'], 'plz' => $firma['plz'], 'ort' => $firma['ort'], 'land' => $firma['land'] ?: 'DE', 'email' => '', 'telefon' => ''];
@@ -86,10 +89,19 @@ function standardAbsender(array $kunde, ?array $firma): array
 
 if ($pfad === '/sendungen/neu') {
     $fehler = [];
-    $preislisteId = preislisteFuerKonto($ich);
+    // Unterkunde (Rechnungsempfänger): fest zugeordnet, aus ?unterkunde= (Wechsel lädt die Preise neu) oder aus dem Formular
+    $unterkundeId = $festerUnterkunde > 0 ? $festerUnterkunde : (int) ($_POST['unterkunde_id'] ?? $_GET['unterkunde'] ?? ($ich['unterkunde_id'] ?? 0));
+    $unterkunde = null;
+    foreach ($unterkunden as $u) {
+        if ((int) $u['id'] === $unterkundeId) {
+            $unterkunde = $u;
+        }
+    }
+    $unterkundeId = $unterkunde !== null ? (int) $unterkunde['id'] : 0;
+    $preislisteId = preislisteFuerKonto(['unterkunde_id' => $unterkundeId] + $ich);
     $abweichung = abweichungsquote($ich);
     $werte = ['zielland' => '', 'gewicht_kg' => '', 'laenge' => '', 'breite' => '', 'hoehe' => '', 'carrier' => '', 'referenz' => '', 'zusatz' => [], 'abholung_datum' => '', 'abholung_fenster' => '9-13', 'versicherung_wert' => '', 'nachnahme' => '', 'zahlungsart' => $business ? 'rechnung' : 'revolut', 'adresse_speichern' => false, 'gewicht_geprueft' => false,
-        'absender' => standardAbsender($ich, $firma), 'empfaenger' => ['name' => '', 'firma' => '', 'strasse' => '', 'plz' => '', 'ort' => '', 'email' => '', 'telefon' => '']];
+        'unterkunde_id' => $unterkundeId, 'absender' => standardAbsender($ich, $firma, $unterkunde), 'empfaenger' => ['name' => '', 'firma' => '', 'strasse' => '', 'plz' => '', 'ort' => '', 'email' => '', 'telefon' => '']];
     if ($methode === 'POST') {
         foreach (['zielland', 'gewicht_kg', 'laenge', 'breite', 'hoehe', 'carrier', 'referenz', 'abholung_datum', 'abholung_fenster', 'versicherung_wert', 'nachnahme', 'zahlungsart'] as $k) {
             $werte[$k] = feld($k, 100);
@@ -111,7 +123,7 @@ if ($pfad === '/sendungen/neu') {
             'abholung' => ['datum' => $werte['abholung_datum'], 'fenster' => $werte['abholung_fenster']],
             'versicherung_wert_cent' => centAusEingabe($werte['versicherung_wert']) ?? 0, 'nachnahme_cent' => centAusEingabe($werte['nachnahme']) ?? 0,
             'email' => $ich['email'], 'absender' => $werte['absender'], 'empfaenger' => $werte['empfaenger'], 'referenz' => $werte['referenz'],
-            'kunde_id' => $ich['id'], 'firma_id' => $firma['id'] ?? null, 'preisliste_id' => $preislisteId, 'zahlungsart' => $zahlungsart, 'angelegt_von' => $ich['name'],
+            'kunde_id' => $ich['id'], 'firma_id' => $firma['id'] ?? null, 'unterkunde_id' => $unterkundeId ?: null, 'preisliste_id' => $preislisteId, 'zahlungsart' => $zahlungsart, 'angelegt_von' => $ich['name'],
             'adresse_speichern' => $werte['adresse_speichern'],
         ]);
         if (isset($ergebnis['bestellung'])) {
@@ -135,7 +147,8 @@ if ($pfad === '/sendungen/neu') {
         }
     }
     ansicht('sendung_neu', ['titel' => t('neu.titel'), 'werte' => $werte, 'fehler' => $fehler, 'meldung' => $meldung ?? ($fehler !== [] ? t('neu.fehler') : null), 'angebote' => angeboteFuerFormular(sprache(), $preislisteId),
-        'adressen' => adressenAlle($ich), 'vorlagen' => vorlagenAlle($ich), 'guthaben' => guthabenStand($ich), 'zahlungBereit' => zahlungBereit(), 'business' => $business, 'abweichung' => $abweichung, 'preisliste' => $preislisteId !== null, 'aktiv' => 'neu']);
+        'adressen' => adressenAlle($ich), 'vorlagen' => vorlagenAlle($ich), 'guthaben' => guthabenStand($ich), 'zahlungBereit' => zahlungBereit(), 'business' => $business, 'abweichung' => $abweichung, 'preisliste' => $preislisteId !== null,
+        'unterkunden' => $festerUnterkunde > 0 ? [] : $unterkunden, 'unterkunde' => $unterkunde, 'aktiv' => 'neu']);
 }
 
 // ------------------------------------------------------------------ Bezahlen
@@ -386,9 +399,9 @@ if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import
     if ($pfad === '/import/vorlage.csv') {
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="neos-import-vorlage.csv"');
-        echo "zielland;gewicht_kg;name;firma;strasse;plz;ort;email;telefon;referenz;carrier;zusatz\n";
-        echo "FR;1,2;Marie Curie;;Rue de Rivoli 2;75001;Paris;marie@example.com;;AUF-1001;;versicherung\n";
-        echo "DE;4,5;Hans Meier;Meier GmbH;Hauptstr. 3;10115;Berlin;;;AUF-1002;DPD;\n";
+        echo "zielland;gewicht_kg;name;firma;strasse;plz;ort;email;telefon;referenz;carrier;zusatz;unterkunde\n";
+        echo "FR;1,2;Marie Curie;;Rue de Rivoli 2;75001;Paris;marie@example.com;;AUF-1001;;versicherung;\n";
+        echo "DE;4,5;Hans Meier;Meier GmbH;Hauptstr. 3;10115;Berlin;;;AUF-1002;DPD;;" . ($unterkunden[0]['nummer'] ?? '') . "\n";
         exit;
     }
     if ($pfad === '/import/verwerfen' && $methode === 'POST') {
@@ -399,11 +412,16 @@ if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import
         $zeilen = $_SESSION['import'] ?? [];
         unset($_SESSION['import']);
         $anzahl = 0;
+        $standardUnterkunde = $festerUnterkunde > 0 ? $festerUnterkunde : (int) feld('unterkunde_id', 10);
+        $unterkundenNachId = array_column($unterkunden, null, 'id');
         foreach ($zeilen as $z) {
             if ($z['fehler'] !== []) {
                 continue;
             }
-            $e = bestellungAnlegen($z['p'] + ['email' => $ich['email'], 'absender' => standardAbsender($ich, $firma), 'kunde_id' => $ich['id'], 'firma_id' => $firma['id'], 'preisliste_id' => preislisteFuerKonto($ich), 'zahlungsart' => 'rechnung', 'angelegt_von' => $ich['name'] . ' (CSV)', 'sprache' => sprache()]);
+            $uId = (int) ($z['unterkunde_id'] ?? 0) > 0 ? (int) $z['unterkunde_id'] : $standardUnterkunde;
+            $u = $unterkundenNachId[$uId] ?? null;
+            $e = bestellungAnlegen($z['p'] + ['email' => $ich['email'], 'absender' => standardAbsender($ich, $firma, $u), 'kunde_id' => $ich['id'], 'firma_id' => $firma['id'], 'unterkunde_id' => $u !== null ? (int) $u['id'] : null,
+                'preisliste_id' => preislisteFuerKonto(['unterkunde_id' => $u !== null ? (int) $u['id'] : 0] + $ich), 'zahlungsart' => 'rechnung', 'angelegt_von' => $ich['name'] . ' (CSV)', 'sprache' => sprache()]);
             if (isset($e['bestellung'])) {
                 $anzahl++;
             }
@@ -460,7 +478,22 @@ if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import
                 if (in_array('abholung', $p['zusatz'], true)) {
                     $fehler[] = 'abholung'; // Abholtermin gibt es im Import nicht — einzeln anlegen
                 }
-                $vorschau[] = ['nr' => $nr + 2, 'p' => $p, 'gk' => $gk, 'preis' => $preis, 'fehler' => $fehler];
+                // Spalte „unterkunde“: Nummer (K-100001-02) oder Name eines aktiven Unterkunden; Mitarbeiter mit fester Zuordnung: immer der eigene
+                $unterkundeId = 0;
+                $uWunsch = trim((string) ($z['unterkunde'] ?? ''));
+                if ($festerUnterkunde > 0) {
+                    $unterkundeId = $festerUnterkunde;
+                } elseif ($uWunsch !== '') {
+                    foreach ($unterkunden as $u) {
+                        if (strcasecmp($u['nummer'], $uWunsch) === 0 || strcasecmp($u['name'], $uWunsch) === 0) {
+                            $unterkundeId = (int) $u['id'];
+                        }
+                    }
+                    if ($unterkundeId === 0) {
+                        $fehler[] = 'unterkunde';
+                    }
+                }
+                $vorschau[] = ['nr' => $nr + 2, 'p' => $p, 'gk' => $gk, 'preis' => $preis, 'fehler' => $fehler, 'unterkunde_id' => $unterkundeId];
             }
             if ($vorschau === []) {
                 $meldung = t('import.keine');
@@ -470,7 +503,7 @@ if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import
             }
         }
     }
-    ansicht('import', ['titel' => t('import.titel'), 'vorschau' => $vorschau, 'meldung' => $meldung, 'aktiv' => 'import']);
+    ansicht('import', ['titel' => t('import.titel'), 'vorschau' => $vorschau, 'meldung' => $meldung, 'unterkunden' => $festerUnterkunde > 0 ? [] : $unterkunden, 'aktiv' => 'import']);
 }
 
 // ------------------------------------------------------------------ Guthaben

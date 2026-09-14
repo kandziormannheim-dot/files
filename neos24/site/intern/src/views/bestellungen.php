@@ -31,7 +31,7 @@
         <td><span class="status status--vs-<?= e($z['versandstatus']) ?>"><?= e(versandstatusName((string) $z['versandstatus'])) ?></span><?= !empty($ab['datum']) ? '<br><span class="leise">Abholung ' . e(datumLesbar($ab['datum'])) . ', ' . e(str_replace('-', '–', $ab['fenster'] ?? '')) . ' Uhr</span>' : '' ?></td>
         <td><span class="flagge"><?= e($z['zielland']) ?></span><?= e($z['gewichtsklasse']) ?></td>
         <td><?= e($z['carrier'] ?? '—') ?></td>
-        <td><?= e($z['email']) ?><?= !empty($z['firma']) ? '<br><span class="leise">' . e($z['firma']) . '</span>' : '' ?></td>
+        <td><?= e($z['email']) ?><?= !empty($z['firma']) ? '<br><span class="leise">' . e($z['firma']) . (!empty($z['unterkunde']) ? ' ↳ ' . e($z['unterkunde']) : '') . '</span>' : '' ?><?= !empty($z['kundennummer']) ? '<br><span class="mono leise">' . e($z['kundennummer']) . '</span>' : '' ?></td>
         <td><?= ['rechnung' => 'Rechnung', 'guthaben' => 'Guthaben'][$z['zahlungsart']] ?? 'Revolut' ?></td>
         <td class="mono rechts"><?= e(euro((int) $z['betrag_cent'])) ?></td>
         <td class="mono rechts leise"><?= e(zeitAnzeigen($z['erstellt'])) ?></td>

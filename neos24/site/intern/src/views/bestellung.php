@@ -28,6 +28,11 @@ $zahlungsartName = ['rechnung' => 'Auf Rechnung (Sammelrechnung)', 'guthaben' =>
           <?php if ((int) $b['nachnahme_cent'] > 0) { ?><dt>Nachnahme</dt><dd class="mono"><?= e(euro((int) $b['nachnahme_cent'])) ?></dd><?php } ?>
           <?php if (!empty($abholung['datum'])) { ?><dt>Abholung</dt><dd><strong><?= e(datumLesbar($abholung['datum'])) ?></strong>, <?= e(str_replace('-', '–', $abholung['fenster'] ?? '')) ?> Uhr beim Absender</dd><?php } ?>
           <dt>Sprache</dt><dd><?= e(strtoupper((string) $b['sprache'])) ?></dd>
+          <?php if ($firma !== null) { $uk = (int) ($b['unterkunde_id'] ?? 0) > 0 ? unterkundeLaden((int) $b['unterkunde_id']) : null; ?>
+          <dt>Kunde</dt><dd><a href="<?= e(url('kunden/firmen/' . $firma['id'])) ?>"><?= e($firma['name']) ?></a> <span class="mono leise"><?= e($firma['kundennummer']) ?></span><?= $uk !== null ? '<br><a href="' . e(url('kunden/unterkunden/' . $uk['id'])) . '">↳ ' . e($uk['name']) . '</a> <span class="mono leise">' . e($uk['nummer']) . '</span>' : '' ?></dd>
+          <?php } elseif ($kunde !== null && $kunde['art'] === 'privat') { ?>
+          <dt>Kunde</dt><dd><a href="<?= e(url('kunden/privat/' . $kunde['id'])) ?>"><?= e($kunde['name'] ?: $kunde['email']) ?></a> <span class="mono leise"><?= e($kunde['kundennummer']) ?></span></dd>
+          <?php } ?>
         </dl>
         <dl class="liste">
           <dt>Porto netto</dt><dd class="mono"><?= e(euro((int) $b['netto_cent'] - (int) $b['zusatz_cent'])) ?></dd>
@@ -105,6 +110,7 @@ $zahlungsartName = ['rechnung' => 'Auf Rechnung (Sammelrechnung)', 'guthaben' =>
         <dt>Zahlungsart</dt><dd><?= e($zahlungsartName) ?></dd>
         <?php if ($b['zahlungsart'] === 'revolut') { ?><dt>Revolut-Order</dt><dd class="mono"><?= e($b['revolut_id'] ?? '—') ?></dd><dt>Bezahlt am</dt><dd><?= e(zeitAnzeigen($b['bezahlt'])) ?></dd><?php } ?>
         <?php if ($b['zahlungsart'] === 'rechnung') { ?><dt>Rechnung</dt><dd><?= $b['rechnung_id'] ? '<a href="' . e(url('rechnungen/' . $b['rechnung_id'])) . '">Rechnung ansehen</a>' : 'noch offen' ?></dd><?php } ?>
+        <?php if ((int) ($b['odoo_id'] ?? 0) > 0) { ?><dt>Odoo</dt><dd><?= odooLink('sale.order', (int) $b['odoo_id']) !== '' ? '<a href="' . e(odooLink('sale.order', (int) $b['odoo_id'])) . '" target="_blank" rel="noopener">' . e($b['odoo_nummer'] ?: 'Auftrag #' . $b['odoo_id']) . '</a>' : e($b['odoo_nummer'] ?: 'Auftrag #' . $b['odoo_id']) ?></dd><?php } elseif (odooAktiv() && in_array($b['status'], ['beauftragt', 'bezahlt'], true)) { ?><dt>Odoo</dt><dd class="leise">Verkaufsauftrag folgt (Warteschlange)</dd><?php } ?>
         <?php if ((string) ($b['lexware_id'] ?? '') !== '') { ?><dt>Lexware</dt><dd><?= e($b['lexware_nummer'] ?: 'übergeben') ?><?= $b['lexware_status'] !== '' ? ' <span class="leise">' . e($b['lexware_status']) . '</span>' : '' ?><?= is_file(lexwarePdfPfad((string) $b['lexware_id'])) ? ' · <a href="' . e(url('bestellungen/' . $b['ext_ref'] . '/rechnung.pdf')) . '" target="_blank" rel="noopener">PDF</a>' : '' ?></dd><?php } elseif (lexwareAktiv() && !$b['firma_id'] && in_array($b['status'], ['bezahlt', 'beauftragt'], true)) { ?><dt>Lexware</dt><dd class="leise">Rechnung folgt (Warteschlange)</dd><?php } ?>
         <dt>Aktualisiert</dt><dd><?= e(zeitAnzeigen($b['aktualisiert'])) ?></dd>
       </dl>

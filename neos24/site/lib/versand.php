@@ -445,6 +445,12 @@ function bestellungAnlegen(array $p): array
     $brutto = bruttoCent($netto);
     $kundeId = isset($p['kunde_id']) && (int) $p['kunde_id'] > 0 ? (int) $p['kunde_id'] : null;
     $firmaId = isset($p['firma_id']) && (int) $p['firma_id'] > 0 ? (int) $p['firma_id'] : null;
+    // Unterkunde (Rechnungsempfänger innerhalb der Firma) nur, wenn er zur Firma gehört und aktiv ist
+    $unterkundeId = null;
+    if ($firmaId !== null && isset($p['unterkunde_id']) && (int) $p['unterkunde_id'] > 0) {
+        $u = unterkundeLaden((int) $p['unterkunde_id']);
+        $unterkundeId = $u !== null && (int) $u['firma_id'] === $firmaId && (int) $u['aktiv'] === 1 ? (int) $u['id'] : null;
+    }
     $status = $zahlungsart === 'revolut' ? 'offen' : 'beauftragt';
     $kontoFuerGuthaben = ['id' => $kundeId ?? 0, 'art' => $firmaId ? 'business' : 'privat', 'firma_id' => $firmaId];
     if ($zahlungsart === 'guthaben' && guthabenStand($kontoFuerGuthaben) < $brutto) {
@@ -465,10 +471,10 @@ function bestellungAnlegen(array $p): array
             (ext_ref, status, netto_cent, mwst_cent, betrag_cent, waehrung, zielland, gewichtsklasse, carrier, einkauf_cent,
              email, sprache, absender_json, empfaenger_json, ereignisse_json, erstellt, aktualisiert,
              kunde_id, firma_id, zahlungsart, referenz, art, retoure_zu, gewicht_gramm, masse_json, zusatz_json, zusatz_cent,
-             versandstatus, abholung_json, versicherung_cent, nachnahme_cent, preisliste_id, volumen_gramm)
+             versandstatus, abholung_json, versicherung_cent, nachnahme_cent, preisliste_id, volumen_gramm, unterkunde_id)
         VALUES
             (:ref, :status, :netto, :mwst, :brutto, 'EUR', :land, :gk, :carrier, :einkauf, :email, :sprache, :abs, :emp, :ev, :t, :t,
-             :kunde, :firma, :zahlungsart, :referenz, :art, :retoure_zu, :gewicht, :masse, :zusatz, :zusatz_cent, 'angelegt', :abholung, :vers, :nn, :liste, :volumen)
+             :kunde, :firma, :zahlungsart, :referenz, :art, :retoure_zu, :gewicht, :masse, :zusatz, :zusatz_cent, 'angelegt', :abholung, :vers, :nn, :liste, :volumen, :unterkunde)
     SQL)->execute([
         ':ref' => $extRef, ':status' => $status, ':netto' => $netto, ':mwst' => $brutto - $netto, ':brutto' => $brutto,
         ':land' => $zielland, ':gk' => $gk, ':carrier' => $angebot['carrier'], ':einkauf' => $angebot['einkauf'],
@@ -479,7 +485,7 @@ function bestellungAnlegen(array $p): array
         ':art' => $art, ':retoure_zu' => isset($p['retoure_zu']) ? (int) $p['retoure_zu'] : null,
         ':gewicht' => $gewicht, ':masse' => json_encode($masse), ':zusatz' => json_encode($zusatz['liste'], JSON_UNESCAPED_UNICODE), ':zusatz_cent' => $zusatz['netto'],
         ':abholung' => json_encode($abholung ?? new stdClass()), ':vers' => $versicherungWert, ':nn' => $nachnahme,
-        ':liste' => $preislisteId, ':volumen' => $volumen,
+        ':liste' => $preislisteId, ':volumen' => $volumen, ':unterkunde' => $unterkundeId,
     ]);
     $bestellung = bestellungLaden('ext_ref', $extRef);
     sendungsereignis((int) $bestellung['id'], 'angelegt', '', 'system', (string) ($p['angelegt_von'] ?? ''));
@@ -500,6 +506,7 @@ function bestellungAnlegen(array $p): array
         } catch (Throwable $e) {
             error_log('[versand] Bestätigungsmail: ' . $e->getMessage());
         }
+        syncMarkieren('bestellungen', (int) $bestellung['id'], ['auftrag']);
     }
     if (!empty($p['adresse_speichern']) && ($kundeId || $firmaId)) {
         adresseSpeichern(['id' => $kundeId ?? 0, 'art' => $firmaId ? 'business' : 'privat', 'firma_id' => $firmaId], 'empfaenger', $empfaenger);
@@ -753,7 +760,8 @@ function retoureAnlegen(array $kunde, array $original, string $zahlungsart, stri
         'referenz' => 'Retoure ' . $original['ext_ref'],
         'kunde_id' => $kunde['id'],
         'firma_id' => $kunde['firma_id'] ?? null,
-        'preisliste_id' => preislisteFuerKonto($kunde),
+        'unterkunde_id' => $original['unterkunde_id'] ?? null,
+        'preisliste_id' => preislisteFuerKonto(['firma_id' => $kunde['firma_id'] ?? null, 'kunde_id' => $kunde['id'], 'unterkunde_id' => $original['unterkunde_id'] ?? null]),
         'zahlungsart' => $zahlungsart,
         'art' => 'retoure',
         'retoure_zu' => (int) $original['id'],

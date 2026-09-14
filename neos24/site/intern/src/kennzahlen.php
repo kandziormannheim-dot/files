@@ -72,8 +72,13 @@ function kennzahlen(): array
     $lieferantenOffen = (int) $db->query("SELECT COUNT(*) FROM lieferantenrechnungen WHERE status IN ('zuordnung','geprueft')")->fetchColumn();
     $nachberechnungOffen = (int) $db->query("SELECT COALESCE(SUM(nachberechnung_cent),0) FROM lieferantenpositionen WHERE nachberechnung_status = 'offen'")->fetchColumn();
     $lexware = lexwareAuftraegeOffen();
+    $sync = syncStatus();
 
     return [
+        'syncFehler' => $sync['fehler'],
+        'syncOffen' => $sync['offen'],
+        'syncKonflikte' => $sync['konflikte'],
+        'syncSysteme' => $sync['systeme'],
         'heute' => $zaehle($heute),
         'tage7' => $zaehle($tage7),
         'tage30' => $zaehle($tage30),

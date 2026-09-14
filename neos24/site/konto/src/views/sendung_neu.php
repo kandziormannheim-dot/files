@@ -23,6 +23,23 @@ $zusatzAlle = $daten['zusatz'];
   <script type="application/json" id="adressen-daten"><?= json_encode(['absender' => $absenderBuch, 'empfaenger' => $empfaengerBuch, 'vorlagen' => array_map(static fn (array $v): array => $v + ['zusatz' => json_decode((string) $v['zusatz_json'], true) ?: []], $vorlagen)], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
   <div class="k-spalten k-spalten--2-1">
     <div>
+      <?php if ($business && ($unterkunden !== [] || $unterkunde !== null)) { ?>
+      <div class="card">
+        <div class="k-karte-kopf"><h2 class="h3"><?= e(t('unterkunde.abrechnen')) ?></h2><span class="k-klein"><?= e(t('kundennummer')) ?> <span class="k-mono"><?= e($unterkunde['nummer'] ?? ($firma['kundennummer'] ?? '')) ?></span></span></div>
+        <?php if ($unterkunden !== []) { ?>
+        <div class="field">
+          <select id="s-unterkunde" name="unterkunde_id" data-unterkunde-wahl data-url="<?= e(url('sendungen/neu')) ?>" aria-label="<?= e(t('unterkunde.abrechnen')) ?>">
+            <option value="0"><?= e(t('unterkunde.hauptfirma')) ?> · <?= e($firma['name'] ?? '') ?> (<?= e($firma['kundennummer'] ?? '') ?>)</option>
+            <?php foreach ($unterkunden as $u) { ?><option value="<?= (int) $u['id'] ?>" <?= (int) $werte['unterkunde_id'] === (int) $u['id'] ? 'selected' : '' ?>><?= e($u['name']) ?> (<?= e($u['nummer']) ?>)</option><?php } ?>
+          </select>
+          <span class="k-klein"><?= e(t('unterkunde.hinweis')) ?></span>
+        </div>
+        <?php } else { ?>
+        <input type="hidden" name="unterkunde_id" value="<?= (int) $werte['unterkunde_id'] ?>">
+        <p class="k-text"><?= e(t('unterkunde.fest', $unterkunde['name'] . ' (' . $unterkunde['nummer'] . ')')) ?></p>
+        <?php } ?>
+      </div>
+      <?php } ?>
       <div class="card">
         <h2 class="h3"><?= e(t('neu.paket')) ?></h2>
         <div class="form-row form-row--2">

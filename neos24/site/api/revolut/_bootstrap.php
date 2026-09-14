@@ -97,6 +97,13 @@ function konfig(): array
             'host' => '', 'port' => 993, 'benutzer' => '', 'passwort' => '', 'ordner' => 'INBOX',
             'erledigtOrdner' => '', 'absender' => [],   // 'rechnung@carrier.de' => 'DHL'
         ],
+        'kundennummer' => ['praefix' => 'K-', 'start' => 100001], // NEOS vergibt: K-100001, Unterkunden K-100001-01
+        'odoo' => [                         // Odoo CRM (selbst gehostet / Odoo.sh), JSON-RPC mit API-Key
+            'aktiv' => false, 'url' => '', 'datenbank' => '', 'benutzer' => '', 'apiKey' => '',
+            'zeitlimit' => 20, 'produktVersand' => 'NEOS-VERSAND', 'auftraege' => true, 'rechnungsInfo' => true,
+            'webhookGeheimnis' => '', 'companyId' => 0,
+        ],
+        'sync' => ['abholenMinuten' => 30], // Rückrichtung (Odoo/Lexware → Plattform) höchstens alle n Minuten je Cron-Lauf
         'basisUrl' => '',
         'absender' => '',
         'absenderName' => 'NEOS',
@@ -728,6 +735,75 @@ function schemaAnlegen(PDO $db): void
     spaltenErgaenzen($db, 'bestellungen', ['preisliste_id' => 'INTEGER', 'volumen_gramm' => 'INTEGER NOT NULL DEFAULT 0', 'beleg_datei' => "TEXT NOT NULL DEFAULT ''",
         'lexware_id' => "TEXT NOT NULL DEFAULT ''", 'lexware_nummer' => "TEXT NOT NULL DEFAULT ''", 'lexware_status' => "TEXT NOT NULL DEFAULT ''", 'erinnert' => 'TEXT']);
     spaltenErgaenzen($db, 'rechnungen', ['lexware_id' => "TEXT NOT NULL DEFAULT ''", 'lexware_nummer' => "TEXT NOT NULL DEFAULT ''", 'lexware_status' => "TEXT NOT NULL DEFAULT ''", 'lexware_pdf' => "TEXT NOT NULL DEFAULT ''"]);
+
+    // Kundennummern, Unterkunden (Firmengruppe, Standorte) und Synchronisation mit Lexware Office und Odoo
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS zaehler (
+            name TEXT PRIMARY KEY,
+            wert INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS unterkunden (
+            id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+            firma_id             INTEGER NOT NULL REFERENCES firmen(id),
+            nummer               TEXT NOT NULL UNIQUE,
+            laufnummer           INTEGER NOT NULL,
+            name                 TEXT NOT NULL,
+            strasse              TEXT NOT NULL DEFAULT '',
+            plz                  TEXT NOT NULL DEFAULT '',
+            ort                  TEXT NOT NULL DEFAULT '',
+            land                 TEXT NOT NULL DEFAULT 'DE',
+            ust_id               TEXT NOT NULL DEFAULT '',
+            rechnungs_email      TEXT NOT NULL DEFAULT '',
+            zahlungsziel_tage    INTEGER,
+            preisliste_id        INTEGER,
+            aktiv                INTEGER NOT NULL DEFAULT 1,
+            lexware_kontakt_id   TEXT NOT NULL DEFAULT '',
+            lexware_kundennummer TEXT NOT NULL DEFAULT '',
+            odoo_id              INTEGER NOT NULL DEFAULT 0,
+            synchronisiert       TEXT,
+            sync_json            TEXT NOT NULL DEFAULT '{}',
+            notiz                TEXT NOT NULL DEFAULT '',
+            erstellt             TEXT NOT NULL,
+            aktualisiert         TEXT NOT NULL,
+            UNIQUE (firma_id, laufnummer)
+        );
+        CREATE TABLE IF NOT EXISTS sync_auftraege (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            system        TEXT NOT NULL,
+            art           TEXT NOT NULL,
+            bezug_tabelle TEXT NOT NULL,
+            bezug_id      INTEGER NOT NULL,
+            status        TEXT NOT NULL DEFAULT 'offen',
+            versuche      INTEGER NOT NULL DEFAULT 0,
+            fehler_text   TEXT NOT NULL DEFAULT '',
+            erstellt      TEXT NOT NULL,
+            erledigt      TEXT
+        );
+        CREATE INDEX IF NOT EXISTS sync_auftraege_status ON sync_auftraege (status, erstellt);
+        CREATE INDEX IF NOT EXISTS sync_auftraege_bezug ON sync_auftraege (bezug_tabelle, bezug_id);
+        CREATE TABLE IF NOT EXISTS sync_konflikte (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            system        TEXT NOT NULL,
+            bezug_tabelle TEXT NOT NULL,
+            bezug_id      INTEGER NOT NULL,
+            feld          TEXT NOT NULL,
+            lokal         TEXT NOT NULL DEFAULT '',
+            entfernt      TEXT NOT NULL DEFAULT '',
+            gewonnen      TEXT NOT NULL,
+            erledigt      INTEGER NOT NULL DEFAULT 0,
+            zeit          TEXT NOT NULL
+        );
+    SQL);
+    $syncSpalten = ['lexware_kundennummer' => "TEXT NOT NULL DEFAULT ''", 'odoo_id' => 'INTEGER NOT NULL DEFAULT 0', 'synchronisiert' => 'TEXT', 'sync_json' => "TEXT NOT NULL DEFAULT '{}'"];
+    spaltenErgaenzen($db, 'firmen', ['kundennummer' => "TEXT NOT NULL DEFAULT ''"] + $syncSpalten);
+    spaltenErgaenzen($db, 'kunden', ['kundennummer' => "TEXT NOT NULL DEFAULT ''", 'unterkunde_id' => 'INTEGER'] + $syncSpalten);
+    spaltenErgaenzen($db, 'bestellungen', ['unterkunde_id' => 'INTEGER', 'odoo_id' => 'INTEGER NOT NULL DEFAULT 0', 'odoo_nummer' => "TEXT NOT NULL DEFAULT ''"]);
+    spaltenErgaenzen($db, 'rechnungen', ['unterkunde_id' => 'INTEGER', 'odoo_info' => "TEXT NOT NULL DEFAULT ''"]);
+    spaltenErgaenzen($db, 'preislisten', ['unterkunde_id' => 'INTEGER']);
+    $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS firmen_kundennummer ON firmen (kundennummer) WHERE kundennummer <> \'\'');
+    $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS kunden_kundennummer ON kunden (kundennummer) WHERE kundennummer <> \'\'');
+    $db->exec('CREATE INDEX IF NOT EXISTS bestellungen_unterkunde ON bestellungen (unterkunde_id)');
+    kundennummernNachtragen($db);
     spaltenErgaenzen($db, 'carrier', ['gewichtsgebuehr_cent' => 'INTEGER NOT NULL DEFAULT 0', 'volumenfaktor' => 'INTEGER NOT NULL DEFAULT 5000']);
     spaltenErgaenzen($db, 'lieferantenpositionen', ['gebuehr_cent' => 'INTEGER NOT NULL DEFAULT 0']);
     spaltenErgaenzen($db, 'lieferantenrechnungen', ['gutschrift_cent' => 'INTEGER NOT NULL DEFAULT 0', 'gutschrift_nummer' => "TEXT NOT NULL DEFAULT ''", 'gutschrift_datum' => "TEXT NOT NULL DEFAULT ''"]);
@@ -1305,3 +1381,6 @@ require_once __DIR__ . '/../../lib/rechnungspruefung.php';
 require_once __DIR__ . '/../../lib/einkauf_import.php';
 require_once __DIR__ . '/../../lib/nachberechnung_pdf.php';
 require_once __DIR__ . '/../../lib/lexware.php';
+require_once __DIR__ . '/../../lib/kundennummern.php';
+require_once __DIR__ . '/../../lib/odoo.php';
+require_once __DIR__ . '/../../lib/sync.php';

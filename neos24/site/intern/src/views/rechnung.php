@@ -17,7 +17,9 @@
   <div>
     <div class="karte karte--ink">
       <dl class="liste liste--ink">
-        <dt>Firma</dt><dd><?= e($r['firma']) ?></dd>
+        <dt>Firma</dt><dd><a href="<?= e(url('kunden/firmen/' . $r['firma_id'])) ?>"><?= e($r['firma']) ?></a></dd>
+        <?php if ($r['unterkunde_id']) { ?><dt>Empfänger</dt><dd><a href="<?= e(url('kunden/unterkunden/' . $r['unterkunde_id'])) ?>"><?= e($r['unterkunde']) ?></a></dd><?php } ?>
+        <dt>Kundennummer</dt><dd class="mono"><?= e($r['kundennummer']) ?></dd>
         <dt>Zeitraum</dt><dd><?= e(datumAnzeigen($r['zeitraum_von'])) ?> – <?= e(datumAnzeigen(gmdate('Y-m-d\TH:i:s\Z', strtotime((string) $r['zeitraum_bis']) - 1))) ?></dd>
         <dt>Netto</dt><dd class="mono"><?= e(euro((int) $r['netto_cent'])) ?></dd>
         <dt>MwSt.</dt><dd class="mono"><?= e(euro((int) $r['mwst_cent'])) ?></dd>
@@ -25,6 +27,7 @@
         <dt>Fällig</dt><dd><?= e(datumAnzeigen($r['faellig'] . 'T00:00:00Z')) ?></dd>
         <dt>Erstellt</dt><dd><?= e(zeitAnzeigen($r['erstellt'])) ?> von <?= e($r['erstellt_von']) ?></dd>
         <?php if (lexwareAktiv()) { ?><dt>Lexware</dt><dd><?= $r['lexware_id'] !== '' ? e($r['lexware_nummer'] ?: 'übergeben') . ($r['lexware_status'] !== '' ? ' <span class="leise">' . e($r['lexware_status']) . '</span>' : '') : '<span class="leise">noch nicht übergeben</span>' ?></dd><?php } ?>
+        <?php if (odooAktiv() || $r['odoo_info'] !== '') { ?><dt>Odoo</dt><dd><?= $r['odoo_info'] !== '' ? '<span class="ja">✓</span> <span class="leise">' . e($r['odoo_info']) . '</span>' : '<span class="leise">Notiz am Partner folgt</span>' ?></dd><?php } ?>
       </dl>
     </div>
     <?php if (lexwareAktiv() && $r['lexware_id'] === '' && darf('rechnungen', 'bearbeiten')) { ?>

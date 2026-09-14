@@ -43,7 +43,8 @@ gemerkt in Sitzung und Konto).
 ## Datentrennung
 
 Alles läuft über `src/sendungen.php`. Jede Abfrage bekommt den angemeldeten Kunden und filtert
-**immer** — Privatkunde `kunde_id = ?`, Geschäftskunde `firma_id = ?`. Eine fremde Bestellnummer
+**immer** — Privatkunde `kunde_id = ?`, Geschäftskunde `firma_id = ?`; ein Mitarbeiter mit fest
+zugeordnetem Unterkunden zusätzlich `unterkunde_id = ?` (auch bei Rechnungen). Eine fremde Bestellnummer
 ergibt 404, ein fremdes Rechnungs-PDF 404, eine Firmenfunktion für Privatkunden 403, die
 Benutzerverwaltung für Mitarbeiter 403. Rechnungs-PDFs liegen außerhalb des Webroots
 (`daten/rechnungen/`) und werden nur über `konto/rechnungen/{Nummer}.pdf` nach Firmenprüfung
@@ -108,20 +109,35 @@ Lexware-Nummer und liefert das Lexware-PDF (Sammelrechnungen unter „Rechnungen
 bezahlter Bestellung „Rechnung (PDF)“ im Bestell-Detail). Bis die Übergabe erfolgt ist, steht
 „wird erstellt“.
 
+**Kundennummer und Unterkunden:** Jedes Konto hat eine Kundennummer (Firma `K-100001`,
+Privatkunde eigene Nummer; Übersicht, Firma, Einstellungen, Rechnungen). Hat das Team unter der
+Firma Unterkunden angelegt (weitere Unternehmen der Gruppe, Standorte — `K-100001-01`, `-02` …),
+wählt der Inhaber bei jeder Sendung „Abrechnen für“ (Hauptfirma oder Unterkunde; der Wechsel
+lädt Preisliste und Absender des Unterkunden), Listen und Rechnungen lassen sich danach filtern,
+der CSV-Import kennt die Spalte `unterkunde` (Nummer oder Name) oder eine Auswahl für alle
+Zeilen. Ein Mitarbeiter, den das Team fest einem Unterkunden zugeordnet hat, bucht nur für
+diesen und sieht nur dessen Sendungen und Rechnungen. Die Seite „Firma“ listet die Unterkunden
+(nur lesend — Anlage und Pflege durch NEOS).
+
 ## Geschäftskunden: Ablauf
 
 1. Anfrage über das Kontaktformular landet im Dashboard (Kunden & Anfragen).
-2. Team klickt „Firmenkonto anlegen“ (Firma, Anschrift, Rechnungs-E-Mail, Inhaber) → Einladung
-   per Mail, Anfrage → „Konto angelegt“.
+2. Team klickt „Firmenkonto anlegen“ (Firma, Anschrift, Rechnungs-E-Mail, Inhaber) → Kundennummer,
+   Einladung per Mail, Anfrage → „Konto angelegt“; optional Unterkunden anlegen und Mitarbeiter
+   zuordnen.
 3. Inhaber setzt Passwort, ergänzt unter „Firma“ die Anschrift (Absender), lädt Mitarbeiter ein.
 4. Sendungen werden im Portal beauftragt: Status `beauftragt`, `zahlungsart rechnung`,
-   Nettopreis, Carrier und Einkaufspreis aus der Routingmatrix zum Zeitpunkt der Buchung.
-5. Zum Monatsende erzeugt das Team je Firma die Sammelrechnung (Dashboard → Firma → „Rechnung
-   erzeugen“): mit Lexware Office vergibt Lexware Nummer und PDF (Kontakt der Firma, netto,
-   Zahlungsziel), sonst Nummer `NR-<Jahr>-<lfd. Nummer>` und PDF nach `daten/rechnungen/`;
-   Sendungen bekommen `rechnung_id`, Mail mit PDF (und Nachweisen zu Nachberechnungen) an die
-   Rechnungs-E-Mail. Status bezahlt kommt aus Lexware (Cron/Webhook) oder wird im Dashboard
-   gesetzt; Stornieren gibt die Sendungen wieder zur Abrechnung frei.
+   Nettopreis, Carrier und Einkaufspreis aus der Routingmatrix zum Zeitpunkt der Buchung,
+   `unterkunde_id` des gewählten Rechnungsempfängers.
+5. Zum Monatsende erzeugt das Team je Rechnungsempfänger (Firma oder Unterkunde) die
+   Sammelrechnung (Dashboard → Firma → „Rechnung erzeugen“ mit „Abrechnen für“ oder Seite des
+   Unterkunden): mit Lexware Office vergibt Lexware Nummer und PDF (Kontakt des Empfängers, netto,
+   dessen Zahlungsziel, Kundennummer in der Einleitung), sonst Nummer `NR-<Jahr>-<lfd. Nummer>`
+   und PDF nach `daten/rechnungen/` (mit Kundennummer); Sendungen bekommen `rechnung_id`, Mail
+   mit PDF (und Nachweisen zu Nachberechnungen) an die Rechnungs-E-Mail des Empfängers. Status
+   bezahlt kommt aus Lexware (Cron/Webhook) oder wird im Dashboard gesetzt; Stornieren gibt die
+   Sendungen wieder zur Abrechnung frei. Stammdaten und Sendungen laufen parallel nach Odoo (siehe
+   `intern/README.md`, Synchronisation).
 
 Absender, Bankverbindung und Pflichtangaben der Rechnung stehen in der Konfiguration unter
 `firma`; `rechnung.zahlungszielTage` und das Zahlungsziel je Firma bestimmen die Fälligkeit.
@@ -142,7 +158,9 @@ lib/versand.php        Angebote je Zelle, Zusatzleistungen, bestellungAnlegen(),
                        Versandstatus/Ereignisse, Tracking, Adressbuch, Vorlagen, Retouren, Reklamationen
 lib/carrier.php        Carrier-Schnittstelle (Label, Abholung, Tracking) — noch Stubs
 lib/label_pdf.php      NEOS-Label (Code 128) als PDF, A6 einzeln oder A4 vierfach
-lib/kunden.php         Konten, Firmen, Anmeldelinks, Einladungs-/Link-Mails
+lib/kunden.php         Konten, Firmen, Unterkunden, Rechnungsempfänger, Anmeldelinks, Einladungs-/Link-Mails
+lib/kundennummern.php  Kundennummern (Zähler, Unterkunden-Nummern, Migration)
+lib/sync.php, lib/odoo.php  Synchronisation der Stammdaten mit Lexware Office und Odoo (Warteschlange, Rückrichtung, Konflikte)
 lib/rechnungen.php     Sammelrechnung erzeugen, Nummernkreis, Status (mit Lexware: Übergabe statt eigener Nummer)
 lib/rechnung_pdf.php   PDF mit FPDF (lib/pdf/, vendored) — Rückfallebene ohne Lexware
 lib/preislisten.php    Kundenpreislisten (je Konto eine Matrix), Anzeige- und Angebotsfunktionen

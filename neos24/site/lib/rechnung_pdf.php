@@ -18,9 +18,16 @@ function pdfText(string $text): string
     return $umgewandelt === false ? preg_replace('/[^\x20-\x7E\n]/', '?', $text) ?? '' : $umgewandelt;
 }
 
-/** PDF schreiben; liefert den Dateipfad. */
+/**
+ * PDF schreiben; liefert den Dateipfad. $firma ist der Rechnungsempfänger
+ * (rechnungsempfaenger(): Unterkunde oder Firma — name, strasse, plz, ort,
+ * land, ust_id, kundennummer; eine Firmenzeile funktioniert weiterhin).
+ */
 function rechnungPdfErzeugen(array $rechnung, array $firma, array $positionen): string
 {
+    if (!isset($firma['kundennummer']) && isset($rechnung['firma_id'])) {
+        $firma = rechnungsempfaenger($rechnung);
+    }
     $k = konfig();
     $abs = $k['firma'];
     $mwstSatz = (int) $k['mwstSatz'];
@@ -54,7 +61,7 @@ function rechnungPdfErzeugen(array $rechnung, array $firma, array $positionen): 
     $pdf->SetTextColor(0, 0, 0);
     $pdf->Ln(2);
     $pdf->SetFont('Helvetica', '', 10);
-    $anschrift = array_filter([$firma['name'], $firma['strasse'], trim($firma['plz'] . ' ' . $firma['ort']), $firma['land'] !== 'DE' ? $landName((string) $firma['land']) : '']);
+    $anschrift = array_filter([$firma['name'], ($firma['unterkunde'] ?? null) !== null ? (string) ($firma['firma']['name'] ?? '') : '', $firma['strasse'], trim($firma['plz'] . ' ' . $firma['ort']), $firma['land'] !== 'DE' ? $landName((string) $firma['land']) : '']);
     $y = $pdf->GetY();
     foreach ($anschrift as $zeile) {
         $pdf->Cell(100, 5, pdfText((string) $zeile), 0, 1);
@@ -63,6 +70,7 @@ function rechnungPdfErzeugen(array $rechnung, array $firma, array $positionen): 
     // Kopfdaten rechts
     $pdf->SetXY(120, $y);
     $kopf = [
+        ['Kundennummer', (string) ($firma['kundennummer'] ?? '')],
         ['Rechnungsnummer', (string) $rechnung['nummer']],
         ['Rechnungsdatum', datumAnzeigen($rechnung['erstellt'])],
         ['Leistungszeitraum', datumAnzeigen($rechnung['zeitraum_von']) . ' – ' . datumAnzeigen(gmdate('Y-m-d\TH:i:s\Z', strtotime((string) $rechnung['zeitraum_bis']) - 1))],
@@ -72,6 +80,9 @@ function rechnungPdfErzeugen(array $rechnung, array $firma, array $positionen): 
         $kopf[] = ['USt-ID Kunde', (string) $firma['ust_id']];
     }
     foreach ($kopf as [$bez, $wert]) {
+        if ($wert === '') {
+            continue;
+        }
         $pdf->SetX(120);
         $pdf->SetFont('Helvetica', '', 8);
         $pdf->SetTextColor(110, 110, 110);
@@ -136,7 +147,7 @@ function rechnungPdfErzeugen(array $rechnung, array $firma, array $positionen): 
     $pdf->Ln(6);
 
     $pdf->SetFont('Helvetica', '', 9);
-    $pdf->MultiCell(0, 5, pdfText('Bitte überweisen Sie den Rechnungsbetrag bis zum ' . datumAnzeigen($rechnung['faellig'] . 'T00:00:00Z') . ' unter Angabe der Rechnungsnummer ' . $rechnung['nummer'] . '.'));
+    $pdf->MultiCell(0, 5, pdfText('Bitte überweisen Sie den Rechnungsbetrag bis zum ' . datumAnzeigen($rechnung['faellig'] . 'T00:00:00Z') . ' unter Angabe der Rechnungsnummer ' . $rechnung['nummer'] . (($firma['kundennummer'] ?? '') !== '' ? ' und Ihrer Kundennummer ' . $firma['kundennummer'] : '') . '.'));
     if ((string) $abs['iban'] !== '') {
         $pdf->Ln(2);
         $pdf->Cell(0, 5, pdfText('Bankverbindung: ' . implode(' · ', array_filter([$abs['bank'], 'IBAN ' . $abs['iban'], $abs['bic'] !== '' ? 'BIC ' . $abs['bic'] : '']))), 0, 1);

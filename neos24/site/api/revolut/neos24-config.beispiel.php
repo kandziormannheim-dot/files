@@ -101,6 +101,30 @@ return [
         'absender' => ['rechnung@example-carrier.de' => 'DHL'],
     ],
 
+    // Kundennummern vergibt die Plattform: Präfix + fortlaufende Zahl ab „start“ (K-100001);
+    // Unterkunden einer Firma bekommen die Laufnummer angehängt (K-100001-01).
+    'kundennummer' => ['praefix' => 'K-', 'start' => 100001],
+
+    // Odoo CRM (selbst gehostet oder Odoo.sh, Version 14 oder neuer) per JSON-RPC.
+    // benutzer = Login des technischen Benutzers, apiKey = dessen API-Schlüssel (Odoo: Einstellungen → Sicherheit).
+    // Kunden, Unterkunden und Ansprechpartner werden als res.partner gespiegelt (ref = Kundennummer),
+    // beauftragte Sendungen als Verkaufsaufträge, Rechnungen als Notiz am Partner; Änderungen an
+    // Partnern in Odoo werden zurückgeholt (jüngere Änderung gewinnt): php intern/aufgaben.php sync
+    'odoo' => [
+        'aktiv' => false,
+        'url' => 'https://odoo.example.com',
+        'datenbank' => 'neos',
+        'benutzer' => 'api@neos24.com',
+        'apiKey' => '',
+        'produktVersand' => 'NEOS-VERSAND',                // Interne Referenz des Produkts für Versandzeilen (wird bei Bedarf angelegt)
+        'auftraege' => true,                               // Sendungen als sale.order übergeben
+        'rechnungsInfo' => true,                           // Rechnungen als Nachricht (mit PDF) am Partner
+        'webhookGeheimnis' => '',                          // Query-Parameter „g“ für api/odoo/webhook.php (Odoo: Automatisierte Aktion → Webhook)
+        'companyId' => 0,                                  // Odoo-Unternehmen bei Multi-Company, 0 = Standard
+        'zeitlimit' => 20,
+    ],
+    'sync' => ['abholenMinuten' => 30],                    // Rückrichtung höchstens alle n Minuten (Cron läuft öfter)
+
     // Öffentliche Adresse der Seite ohne Schrägstrich am Ende; wird für die
     // Rücksprung-URL nach 3-D-Secure gebraucht.
     'basisUrl' => 'https://neos24.com',

@@ -120,40 +120,97 @@ function lexwareDatum(?string $iso = null): string
 
 // --------------------------------------------------------------- Kontakte
 
-/** Firma als Kunde in Lexware anlegen oder aktualisieren; liefert die Kontakt-ID. */
-function lexwareKontaktSichern(array $firma): string
+/** Kontaktdaten für Lexware aus Firma, Unterkunde oder Privatkunde. */
+function lexwareKontaktDaten(array $z, string $tabelle): array
 {
-    $id = (string) ($firma['lexware_kontakt_id'] ?? '');
-    $daten = [
-        'roles' => ['customer' => new stdClass()],
-        'company' => array_filter(['name' => (string) $firma['name'], 'vatRegistrationId' => (string) ($firma['ust_id'] ?? '')], static fn ($v): bool => $v !== ''),
-        'addresses' => ['billing' => [array_filter(['street' => (string) $firma['strasse'], 'zip' => (string) $firma['plz'], 'city' => (string) $firma['ort'], 'countryCode' => strtoupper((string) ($firma['land'] ?: 'DE'))], static fn ($v): bool => $v !== '')]],
-    ];
-    if ((string) ($firma['rechnungs_email'] ?? '') !== '') {
-        $daten['emailAddresses'] = ['business' => [(string) $firma['rechnungs_email']]];
+    $adresse = static fn (array $a): array => array_filter(['street' => (string) ($a['strasse'] ?? ''), 'zip' => (string) ($a['plz'] ?? ''), 'city' => (string) ($a['ort'] ?? ''), 'countryCode' => strtoupper((string) ($a['land'] ?? '') ?: 'DE')], static fn ($v): bool => $v !== '');
+    $daten = ['roles' => ['customer' => new stdClass()]];
+    if ($tabelle === 'kunden') {
+        $abs = json_decode((string) ($z['absender_json'] ?? '{}'), true) ?: [];
+        $name = trim((string) ($z['name'] ?? '')) !== '' ? trim((string) $z['name']) : (string) $z['email'];
+        $teile = preg_split('/\s+/', $name) ?: [$name];
+        $nachname = count($teile) > 1 ? array_pop($teile) : $name;
+        $daten['person'] = array_filter(['firstName' => count($teile) > 1 || $nachname !== $name ? implode(' ', $teile) : '', 'lastName' => $nachname], static fn ($v): bool => $v !== '');
+        $daten['addresses'] = ['billing' => [$adresse($abs + ['land' => $abs['land'] ?? 'DE'])]];
+        $daten['emailAddresses'] = ['private' => [(string) $z['email']]];
+        $daten['note'] = 'NEOS Kundennummer ' . $z['kundennummer'];
+
+        return $daten;
     }
+    $nummer = (string) ($tabelle === 'unterkunden' ? $z['nummer'] : $z['kundennummer']);
+    $daten['company'] = array_filter(['name' => (string) $z['name'], 'vatRegistrationId' => (string) ($z['ust_id'] ?? '')], static fn ($v): bool => $v !== '');
+    // Firmenbenutzer als Ansprechpartner (beim Unterkunden nur die ihm zugeordneten, bei der Firma alle ohne Zuordnung)
+    $st = datenbank()->prepare("SELECT name, email, firmenrolle FROM kunden WHERE firma_id = ? AND aktiv = 1 AND art = 'business' AND " . ($tabelle === 'unterkunden' ? 'unterkunde_id = ?' : 'unterkunde_id IS NULL') . ' ORDER BY firmenrolle, name LIMIT 20');
+    $st->execute($tabelle === 'unterkunden' ? [(int) $z['firma_id'], (int) $z['id']] : [(int) $z['id']]);
+    $personen = [];
+    foreach ($st->fetchAll() as $i => $b) {
+        $teile = preg_split('/\s+/', trim((string) $b['name'])) ?: [];
+        $nachname = $teile !== [] ? array_pop($teile) : (string) $b['email'];
+        $personen[] = array_filter(['firstName' => implode(' ', $teile), 'lastName' => $nachname, 'emailAddress' => (string) $b['email'], 'primary' => $i === 0], static fn ($v): bool => $v !== '');
+    }
+    if ($personen !== []) {
+        $daten['company']['contactPersons'] = $personen;
+    }
+    $daten['addresses'] = ['billing' => [$adresse($z)]];
+    if ((string) ($z['rechnungs_email'] ?? '') !== '') {
+        $daten['emailAddresses'] = ['business' => [(string) $z['rechnungs_email']]];
+    }
+    $daten['note'] = 'NEOS Kundennummer ' . $nummer . ($tabelle === 'unterkunden' ? ' (Unterkunde von ' . ($z['firma'] ?? '') . ')' : '');
+
+    return $daten;
+}
+
+/**
+ * Firma, Unterkunde oder Privatkunde als Kunde in Lexware anlegen oder
+ * aktualisieren. Speichert Kontakt-ID und die von Lexware vergebene
+ * Kundennummer am Datensatz; liefert den Kontakt (id, version, updatedDate,
+ * roles.customer.number). $tabelle: firmen | unterkunden | kunden.
+ */
+function lexwareKontaktSichern(array $z, string $tabelle = 'firmen'): array
+{
+    if (!in_array($tabelle, ['firmen', 'unterkunden', 'kunden'], true)) {
+        throw new LexwareFehler('Unbekannte Tabelle für Lexware-Kontakt: ' . $tabelle);
+    }
+    $id = (string) ($z['lexware_kontakt_id'] ?? '');
+    $daten = lexwareKontaktDaten($z, $tabelle);
+    $kontakt = null;
     if ($id !== '') {
         try {
             $alt = lexwareAnfrage('GET', '/contacts/' . rawurlencode($id))['daten'];
             $daten['version'] = (int) ($alt['version'] ?? 0);
             lexwareAnfrage('PUT', '/contacts/' . rawurlencode($id), $daten);
-
-            return $id;
+            $kontakt = lexwareAnfrage('GET', '/contacts/' . rawurlencode($id))['daten'];
         } catch (LexwareFehler $e) {
             if ($e->status !== 404) {
                 throw $e;
             }
+            $id = '';
         }
     }
-    $daten['version'] = 0;
-    $antwort = lexwareAnfrage('POST', '/contacts', $daten)['daten'];
-    $id = (string) ($antwort['id'] ?? '');
     if ($id === '') {
-        throw new LexwareFehler('Lexware: Kontakt ohne ID angelegt');
+        $daten['version'] = 0;
+        $antwort = lexwareAnfrage('POST', '/contacts', $daten)['daten'];
+        $id = (string) ($antwort['id'] ?? '');
+        if ($id === '') {
+            throw new LexwareFehler('Lexware: Kontakt ohne ID angelegt');
+        }
+        $kontakt = lexwareAnfrage('GET', '/contacts/' . rawurlencode($id))['daten'];
     }
-    datenbank()->prepare('UPDATE firmen SET lexware_kontakt_id = ?, aktualisiert = ? WHERE id = ?')->execute([$id, jetzt(), $firma['id']]);
+    $nummer = (string) ($kontakt['roles']['customer']['number'] ?? '');
+    datenbank()->prepare("UPDATE $tabelle SET lexware_kontakt_id = ?, lexware_kundennummer = CASE WHEN ? <> '' THEN ? ELSE lexware_kundennummer END WHERE id = ?")->execute([$id, $nummer, $nummer, $z['id']]);
 
-    return $id;
+    return ['id' => $id, 'version' => (int) ($kontakt['version'] ?? 0), 'updatedDate' => (string) ($kontakt['updatedDate'] ?? ''), 'nummer' => $nummer];
+}
+
+/** Kontakt-ID des Rechnungsempfängers (Unterkunde oder Firma) — legt ihn bei Bedarf an. */
+function lexwareKontaktFuerEmpfaenger(array $empfaenger): string
+{
+    if ($empfaenger['lexware_kontakt_id'] !== '') {
+        return (string) $empfaenger['lexware_kontakt_id'];
+    }
+    $zeile = $empfaenger['tabelle'] === 'unterkunden' ? $empfaenger['unterkunde'] : $empfaenger['firma'];
+
+    return (string) lexwareKontaktSichern($zeile, $empfaenger['tabelle'])['id'];
 }
 
 /** Rechnungsadresse ohne Kontakt (Privatkunden) aus einer Adresse der Bestellung. */
@@ -392,7 +449,8 @@ function lexwareSammelrechnungUebergeben(array $r): void
     if ($firma === null) {
         throw new LexwareFehler('Firma der Rechnung fehlt');
     }
-    $kontaktId = lexwareKontaktSichern($firma);
+    $empfaenger = rechnungsempfaenger($r);
+    $kontaktId = lexwareKontaktFuerEmpfaenger($empfaenger);
     $positionen = [];
     foreach (rechnungPositionen((int) $r['id']) as $p) {
         $positionen[] = lexwareZeileFuerBestellung($p) + ['cent' => (int) $p['netto_cent']];
@@ -401,10 +459,12 @@ function lexwareSammelrechnungUebergeben(array $r): void
         throw new LexwareFehler('Rechnung ohne Positionen');
     }
     $bis = gmdate('Y-m-d\TH:i:s\Z', strtotime((string) $r['zeitraum_bis']) - 1);
+    $einleitung = trim((string) (lexwareKonfig()['einleitung'] ?? ''));
     $beleg = lexwareRechnungAnlegen([
         'contactId' => $kontaktId, 'taxType' => 'net', 'datum' => (string) $r['erstellt'],
-        'zahlungsziel' => (int) $firma['zahlungsziel_tage'], 'leistung_von' => (string) $r['zeitraum_von'], 'leistung_bis' => $bis,
-        'titel' => 'Rechnung', 'vermerk' => 'Sammelrechnung für Sendungen über das NEOS-Kundenportal im Zeitraum ' . datumAnzeigen($r['zeitraum_von']) . ' – ' . datumAnzeigen($bis) . '.',
+        'zahlungsziel' => (int) $empfaenger['zahlungsziel_tage'], 'leistung_von' => (string) $r['zeitraum_von'], 'leistung_bis' => $bis,
+        'titel' => 'Rechnung', 'einleitung' => trim('Kundennummer ' . $empfaenger['kundennummer'] . ($empfaenger['tabelle'] === 'unterkunden' ? ' (' . $empfaenger['name'] . ', ' . $firma['name'] . ')' : '') . "\n" . $einleitung),
+        'vermerk' => 'Sammelrechnung für Sendungen über das NEOS-Kundenportal im Zeitraum ' . datumAnzeigen($r['zeitraum_von']) . ' – ' . datumAnzeigen($bis) . '.',
     ], $positionen);
     $db = datenbank();
     $nummer = $beleg['nummer'] !== '' ? $beleg['nummer'] : $r['nummer'];
@@ -456,12 +516,19 @@ function lexwareBestellungUebergeben(array $b): void
         }
     }
     $zahlung = $b['zahlungsart'] === 'guthaben' ? 'Bezahlt aus NEOS-Guthaben' : 'Bezahlt per Revolut am ' . datumAnzeigen($b['bezahlt'] ?? $b['aktualisiert']);
-    $beleg = lexwareRechnungAnlegen([
-        'address' => lexwareAdresse($abs + ['name' => $abs['name'] ?? ($kunde['name'] ?? ''), 'land' => $abs['land'] ?? 'DE']),
+    $kopf = [
         'taxType' => 'gross', 'datum' => (string) ($b['bezahlt'] ?? $b['aktualisiert']), 'zahlungsziel' => 0,
         'zahlungsbedingung' => $zahlung . ' — es ist keine Zahlung mehr offen.',
         'leistung_von' => (string) $b['erstellt'], 'titel' => 'Rechnung', 'vermerk' => $zahlung . '. Bestellnummer ' . $b['ext_ref'] . '.',
-    ], $positionen);
+    ];
+    if ($kunde !== null && $kunde['art'] === 'privat') {
+        // Registrierter Privatkunde: eigener Kontakt in Lexware (mit Kundennummer)
+        $kopf['contactId'] = $kunde['lexware_kontakt_id'] !== '' ? (string) $kunde['lexware_kontakt_id'] : (string) lexwareKontaktSichern($kunde, 'kunden')['id'];
+        $kopf['einleitung'] = trim('Kundennummer ' . $kunde['kundennummer'] . "\n" . trim((string) (lexwareKonfig()['einleitung'] ?? '')));
+    } else {
+        $kopf['address'] = lexwareAdresse($abs + ['name' => $abs['name'] ?? ($kunde['name'] ?? ''), 'land' => $abs['land'] ?? 'DE']);
+    }
+    $beleg = lexwareRechnungAnlegen($kopf, $positionen);
     $db = datenbank();
     $db->prepare('UPDATE bestellungen SET lexware_id = ?, lexware_nummer = ?, lexware_status = ?, aktualisiert = ? WHERE id = ?')->execute([$beleg['id'], $beleg['nummer'], $beleg['status'], jetzt(), $b['id']]);
     try {
@@ -482,11 +549,16 @@ function lexwareGutschriftFuerBestellung(array $b, string $grund = ''): void
     $abs = json_decode((string) $b['absender_json'], true) ?: [];
     $kopf = ['datum' => jetzt(), 'titel' => 'Gutschrift', 'vermerk' => 'Gutschrift zu ' . ($b['lexware_nummer'] ?: 'Position ' . $b['ext_ref']) . ($grund !== '' ? ': ' . $grund : '.')];
     if ($firma !== null) {
-        $kopf['contactId'] = lexwareKontaktSichern($firma);
+        $kopf['contactId'] = lexwareKontaktFuerEmpfaenger(rechnungsempfaenger($b));
         $kopf['taxType'] = 'net';
         $cent = (int) $b['netto_cent'];
     } else {
-        $kopf['address'] = lexwareAdresse($abs);
+        $kunde = $b['kunde_id'] ? kundeLaden((int) $b['kunde_id']) : null;
+        if ($kunde !== null && $kunde['art'] === 'privat' && $kunde['lexware_kontakt_id'] !== '') {
+            $kopf['contactId'] = (string) $kunde['lexware_kontakt_id'];
+        } else {
+            $kopf['address'] = lexwareAdresse($abs);
+        }
         $kopf['taxType'] = 'gross';
         $cent = (int) $b['betrag_cent'];
     }
@@ -541,22 +613,27 @@ function lexwareStatusAbgleichen(): int
     return $n;
 }
 
-/** Webhook-Abonnements anlegen (invoice.status.changed, payment.changed); liefert die Antworten. */
+/** Webhook-Abonnements anlegen (invoice.status.changed, payment.changed, contact.changed); liefert die Antworten. */
 function lexwareEinrichten(string $callbackUrl): array
 {
     $aus = [];
-    foreach (['invoice.status.changed', 'payment.changed'] as $ereignis) {
+    foreach (['invoice.status.changed', 'payment.changed', 'contact.changed'] as $ereignis) {
         $aus[$ereignis] = lexwareAnfrage('POST', '/event-subscriptions', ['eventType' => $ereignis, 'callbackUrl' => $callbackUrl])['daten'];
     }
 
     return $aus;
 }
 
-/** Webhook-Nutzlast verarbeiten: nie der Nutzlast trauen, immer den Beleg nachladen. */
+/** Webhook-Nutzlast verarbeiten: nie der Nutzlast trauen, immer den Beleg bzw. Kontakt nachladen. */
 function lexwareWebhookVerarbeiten(array $nutzlast): void
 {
     $id = (string) ($nutzlast['resourceId'] ?? '');
     if ($id === '' || !lexwareAktiv()) {
+        return;
+    }
+    if (str_starts_with((string) ($nutzlast['eventType'] ?? ''), 'contact.')) {
+        syncAbholenEinzeln('lexware', $id);
+
         return;
     }
     $st = datenbank()->prepare('SELECT * FROM rechnungen WHERE lexware_id = ?');

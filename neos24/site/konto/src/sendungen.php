@@ -8,20 +8,44 @@
 
 declare(strict_types=1);
 
-/** WHERE-Bedingung und Werte für den Geltungsbereich des Kunden. */
-function bereich(array $kunde): array
+/**
+ * WHERE-Bedingung und Werte für den Geltungsbereich des Kunden. Ein
+ * Mitarbeiter mit fest zugeordnetem Unterkunden sieht nur dessen Sendungen;
+ * Inhaber sehen alles und können mit $unterkunde filtern (>0 = Unterkunde,
+ * -1 = nur Hauptfirma).
+ */
+function bereich(array $kunde, ?int $unterkunde = null): array
 {
     if ($kunde['art'] === 'business' && (int) $kunde['firma_id'] > 0) {
-        return ['b.firma_id = ?', [(int) $kunde['firma_id']]];
+        $wo = 'b.firma_id = ?';
+        $werte = [(int) $kunde['firma_id']];
+        $fest = festerUnterkunde($kunde);
+        if ($fest > 0) {
+            $wo .= ' AND b.unterkunde_id = ?';
+            $werte[] = $fest;
+        } elseif ($unterkunde !== null && $unterkunde > 0) {
+            $wo .= ' AND b.unterkunde_id = ?';
+            $werte[] = $unterkunde;
+        } elseif ($unterkunde !== null && $unterkunde < 0) {
+            $wo .= ' AND b.unterkunde_id IS NULL';
+        }
+
+        return [$wo, $werte];
     }
 
     return ['b.kunde_id = ? AND b.firma_id IS NULL', [(int) $kunde['id']]];
 }
 
-/** Eigene Bestellungen, neueste zuerst; liefert [zeilen, gesamt]. */
-function eigeneBestellungen(array $kunde, int $limit = 50, int $offset = 0, string $status = '', string $suche = ''): array
+/** Fest zugeordneter Unterkunde eines Mitarbeiters (0 = keiner bzw. Inhaber wählt frei). */
+function festerUnterkunde(array $kunde): int
 {
-    [$wo, $werte] = bereich($kunde);
+    return ($kunde['firmenrolle'] ?? '') !== 'inhaber' ? (int) ($kunde['unterkunde_id'] ?? 0) : 0;
+}
+
+/** Eigene Bestellungen, neueste zuerst; liefert [zeilen, gesamt]. */
+function eigeneBestellungen(array $kunde, int $limit = 50, int $offset = 0, string $status = '', string $suche = '', ?int $unterkunde = null): array
+{
+    [$wo, $werte] = bereich($kunde, $unterkunde);
     if ($status !== '') {
         $wo .= ' AND b.status = ?';
         $werte[] = $status;
@@ -34,7 +58,7 @@ function eigeneBestellungen(array $kunde, int $limit = 50, int $offset = 0, stri
     $st = $db->prepare('SELECT COUNT(*) FROM bestellungen b WHERE ' . $wo);
     $st->execute($werte);
     $gesamt = (int) $st->fetchColumn();
-    $st = $db->prepare('SELECT b.*, k.name AS angelegt_von FROM bestellungen b LEFT JOIN kunden k ON k.id = b.kunde_id WHERE ' . $wo . ' ORDER BY b.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset);
+    $st = $db->prepare('SELECT b.*, k.name AS angelegt_von, u.nummer AS unterkunde_nummer, u.name AS unterkunde FROM bestellungen b LEFT JOIN kunden k ON k.id = b.kunde_id LEFT JOIN unterkunden u ON u.id = b.unterkunde_id WHERE ' . $wo . ' ORDER BY b.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset);
     $st->execute($werte);
 
     return [$st->fetchAll(), $gesamt];
@@ -44,7 +68,7 @@ function eigeneBestellungen(array $kunde, int $limit = 50, int $offset = 0, stri
 function eigeneBestellung(array $kunde, string $extRef): ?array
 {
     [$wo, $werte] = bereich($kunde);
-    $st = datenbank()->prepare('SELECT b.*, k.name AS angelegt_von, r.nummer AS rechnung_nummer FROM bestellungen b LEFT JOIN kunden k ON k.id = b.kunde_id LEFT JOIN rechnungen r ON r.id = b.rechnung_id WHERE b.ext_ref = ? AND ' . $wo);
+    $st = datenbank()->prepare('SELECT b.*, k.name AS angelegt_von, r.nummer AS rechnung_nummer, u.nummer AS unterkunde_nummer, u.name AS unterkunde FROM bestellungen b LEFT JOIN kunden k ON k.id = b.kunde_id LEFT JOIN rechnungen r ON r.id = b.rechnung_id LEFT JOIN unterkunden u ON u.id = b.unterkunde_id WHERE b.ext_ref = ? AND ' . $wo);
     $st->execute(array_merge([$extRef], $werte));
     $z = $st->fetch();
 

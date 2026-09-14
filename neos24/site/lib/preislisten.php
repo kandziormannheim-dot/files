@@ -23,7 +23,7 @@ function preislisteLaden(int $id): ?array
         return null;
     }
     if (!array_key_exists($id, $cache)) {
-        $st = datenbank()->prepare('SELECT p.*, f.name AS firma, k.name AS kunde_name, k.email AS kunde_email FROM preislisten p LEFT JOIN firmen f ON f.id = p.firma_id LEFT JOIN kunden k ON k.id = p.kunde_id WHERE p.id = ?');
+        $st = datenbank()->prepare('SELECT p.*, COALESCE(f.name, uf.name) AS firma, k.name AS kunde_name, k.email AS kunde_email, u.name AS unterkunde, u.nummer AS unterkunde_nummer FROM preislisten p LEFT JOIN firmen f ON f.id = p.firma_id LEFT JOIN kunden k ON k.id = p.kunde_id LEFT JOIN unterkunden u ON u.id = p.unterkunde_id LEFT JOIN firmen uf ON uf.id = u.firma_id WHERE p.id = ?');
         $st->execute([$id]);
         $z = $st->fetch();
         $cache[$id] = is_array($z) ? $z : null;
@@ -39,13 +39,23 @@ function preislistenCacheLeeren(): void
 }
 
 /**
- * Aktive Preisliste eines Kontos: Firma vor Kunde. $konto braucht id und/oder
- * firma_id (Portal-Konto, Kunden- oder Firmenzeile, Bestellung).
+ * Aktive Preisliste eines Kontos: Unterkunde vor Firma vor Kunde. $konto braucht
+ * id und/oder firma_id, optional unterkunde_id (Portal-Konto, Kunden- oder
+ * Firmenzeile, Bestellung).
  */
 function preislisteFuerKonto(array $konto): ?int
 {
     $db = datenbank();
     $firmaId = (int) ($konto['firma_id'] ?? 0);
+    $unterkundeId = (int) ($konto['unterkunde_id'] ?? 0);
+    if ($firmaId > 0 && $unterkundeId > 0) {
+        $st = $db->prepare('SELECT u.preisliste_id FROM unterkunden u JOIN preislisten p ON p.id = u.preisliste_id AND p.aktiv = 1 WHERE u.id = ? AND u.firma_id = ?');
+        $st->execute([$unterkundeId, $firmaId]);
+        $id = $st->fetchColumn();
+        if ($id !== false && (int) $id > 0) {
+            return (int) $id;
+        }
+    }
     if ($firmaId > 0) {
         $st = $db->prepare('SELECT f.preisliste_id FROM firmen f JOIN preislisten p ON p.id = f.preisliste_id AND p.aktiv = 1 WHERE f.id = ?');
         $st->execute([$firmaId]);
@@ -73,7 +83,7 @@ function preislisteFuerBestellung(array $b): ?int
         return $id;
     }
 
-    return preislisteFuerKonto(['firma_id' => $b['firma_id'] ?? null, 'kunde_id' => $b['kunde_id'] ?? null]);
+    return preislisteFuerKonto(['firma_id' => $b['firma_id'] ?? null, 'kunde_id' => $b['kunde_id'] ?? null, 'unterkunde_id' => $b['unterkunde_id'] ?? null]);
 }
 
 /** Zusatzleistungspreise einer Liste: code => cent. */
@@ -132,27 +142,29 @@ function preislisteMatrix(int $id): array
  * Liste anlegen (genau eine je Konto) und alle aktiven Routing-Zeilen mit
  * Verkauf × (1 + Prozent/100) übernehmen. Liefert die ID.
  */
-function preislisteAnlegen(?int $kundeId, ?int $firmaId, string $name, float $prozent, string $von, string $fehlend = 'standard'): int
+function preislisteAnlegen(?int $kundeId, ?int $firmaId, string $name, float $prozent, string $von, string $fehlend = 'standard', ?int $unterkundeId = null): int
 {
-    if (($kundeId ?? 0) <= 0 && ($firmaId ?? 0) <= 0) {
-        throw new InvalidArgumentException('Preisliste braucht einen Kunden oder eine Firma.');
+    if (($kundeId ?? 0) <= 0 && ($firmaId ?? 0) <= 0 && ($unterkundeId ?? 0) <= 0) {
+        throw new InvalidArgumentException('Preisliste braucht einen Kunden, eine Firma oder einen Unterkunden.');
     }
     $db = datenbank();
-    $st = $db->prepare('SELECT id FROM preislisten WHERE ' . ($firmaId ? 'firma_id = ?' : 'kunde_id = ?'));
-    $st->execute([$firmaId ?: $kundeId]);
+    // Ein Unterkunde hat seine eigene Liste; die Firma bleibt Rückfallebene
+    [$tabelle, $spalte, $bezugId] = $unterkundeId ? ['unterkunden', 'unterkunde_id', $unterkundeId] : ($firmaId ? ['firmen', 'firma_id', $firmaId] : ['kunden', 'kunde_id', $kundeId]);
+    $st = $db->prepare("SELECT id FROM preislisten WHERE $spalte = ?");
+    $st->execute([$bezugId]);
     if ($st->fetchColumn() !== false) {
         throw new InvalidArgumentException('Dieses Konto hat schon eine Preisliste.');
     }
     $db->beginTransaction();
     try {
-        $db->prepare('INSERT INTO preislisten (name, kunde_id, firma_id, fehlend, aktiv, erstellt, aktualisiert, aktualisiert_von) VALUES (?, ?, ?, ?, 1, ?, ?, ?)')
-           ->execute([$name !== '' ? $name : 'Kundenpreisliste', $firmaId ? null : $kundeId, $firmaId ?: null, $fehlend === 'nicht' ? 'nicht' : 'standard', jetzt(), jetzt(), $von]);
+        $db->prepare('INSERT INTO preislisten (name, kunde_id, firma_id, unterkunde_id, fehlend, aktiv, erstellt, aktualisiert, aktualisiert_von) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)')
+           ->execute([$name !== '' ? $name : 'Kundenpreisliste', $tabelle === 'kunden' ? $kundeId : null, $tabelle === 'firmen' ? $firmaId : null, $unterkundeId ?: null, $fehlend === 'nicht' ? 'nicht' : 'standard', jetzt(), jetzt(), $von]);
         $id = (int) $db->lastInsertId();
         $einfuegen = $db->prepare('INSERT INTO preislisten_preise (preisliste_id, land_code, gewichtsklasse_id, carrier_id, netto_cent) VALUES (?, ?, ?, ?, ?)');
         foreach ($db->query('SELECT land_code, gewichtsklasse_id, carrier_id, verkauf_cent FROM routing WHERE aktiv = 1') as $r) {
             $einfuegen->execute([$id, $r['land_code'], $r['gewichtsklasse_id'], $r['carrier_id'], (int) round((int) $r['verkauf_cent'] * (1 + $prozent / 100))]);
         }
-        $db->prepare('UPDATE ' . ($firmaId ? 'firmen' : 'kunden') . ' SET preisliste_id = ?, aktualisiert = ? WHERE id = ?')->execute([$id, jetzt(), $firmaId ?: $kundeId]);
+        $db->prepare("UPDATE $tabelle SET preisliste_id = ?, aktualisiert = ? WHERE id = ?")->execute([$id, jetzt(), $bezugId]);
         $db->commit();
     } catch (Throwable $e) {
         $db->rollBack();
@@ -276,6 +288,7 @@ function preislisteLoeschen(int $id): void
     $db = datenbank();
     $db->prepare('UPDATE firmen SET preisliste_id = NULL WHERE preisliste_id = ?')->execute([$id]);
     $db->prepare('UPDATE kunden SET preisliste_id = NULL WHERE preisliste_id = ?')->execute([$id]);
+    $db->prepare('UPDATE unterkunden SET preisliste_id = NULL WHERE preisliste_id = ?')->execute([$id]);
     $db->prepare('DELETE FROM preislisten_preise WHERE preisliste_id = ?')->execute([$id]);
     $db->prepare('DELETE FROM preislisten_zusatz WHERE preisliste_id = ?')->execute([$id]);
     $db->prepare('DELETE FROM preislisten WHERE id = ?')->execute([$id]);
@@ -321,9 +334,9 @@ function preislisteFuerAnzeige(?int $preislisteId): array
 function preislistenAlle(): array
 {
     return datenbank()->query(<<<'SQL'
-        SELECT p.*, f.name AS firma, k.name AS kunde_name, k.email AS kunde_email,
+        SELECT p.*, COALESCE(f.name, uf.name) AS firma, k.name AS kunde_name, k.email AS kunde_email, u.name AS unterkunde, u.nummer AS unterkunde_nummer,
                (SELECT COUNT(*) FROM preislisten_preise x WHERE x.preisliste_id = p.id) AS zellen
-        FROM preislisten p LEFT JOIN firmen f ON f.id = p.firma_id LEFT JOIN kunden k ON k.id = p.kunde_id
+        FROM preislisten p LEFT JOIN firmen f ON f.id = p.firma_id LEFT JOIN kunden k ON k.id = p.kunde_id LEFT JOIN unterkunden u ON u.id = p.unterkunde_id LEFT JOIN firmen uf ON uf.id = u.firma_id
         ORDER BY p.aktiv DESC, p.id DESC
     SQL)->fetchAll();
 }

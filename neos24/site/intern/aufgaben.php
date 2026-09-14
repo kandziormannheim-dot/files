@@ -7,6 +7,7 @@
  *   php intern/aufgaben.php lexware einrichten <Basis-URL>   Webhook-Abonnements bei Lexware anlegen
  *   php intern/aufgaben.php erinnern             Erinnerung an offene Nachberechnungen (Revolut)
  *   php intern/aufgaben.php postfach             Carrier-Rechnungen aus dem IMAP-Postfach einlesen
+ *   php intern/aufgaben.php sync [abholen]       Stammdaten → Lexware/Odoo (Warteschlange), Rückrichtung abholen („abholen“ erzwingt)
  *   php intern/aufgaben.php alle                 alles nacheinander
  *
  * Beispiel-Cron (stündlich): 0 * * * * cd /pfad/httpdocs && php intern/aufgaben.php alle >> ../neos24-daten/aufgaben.log 2>&1
@@ -26,8 +27,8 @@ require_once dirname(__DIR__) . '/lib/postfach.php';
 $aufgabe = (string) ($argv[1] ?? '');
 $ausgabe = static fn (string $zeile) => fwrite(STDOUT, gmdate('Y-m-d H:i:s') . ' ' . $zeile . "\n");
 
-if (!in_array($aufgabe, ['lexware', 'erinnern', 'postfach', 'alle'], true)) {
-    fwrite(STDERR, "Aufruf: php intern/aufgaben.php lexware|erinnern|postfach|alle\n");
+if (!in_array($aufgabe, ['lexware', 'erinnern', 'postfach', 'sync', 'alle'], true)) {
+    fwrite(STDERR, "Aufruf: php intern/aufgaben.php lexware|erinnern|postfach|sync|alle\n");
     exit(1);
 }
 datenbank();
@@ -61,6 +62,22 @@ if ($aufgabe === 'lexware' || $aufgabe === 'alle') {
 
 if ($aufgabe === 'erinnern' || $aufgabe === 'alle') {
     $ausgabe('erinnern: ' . rpErinnerungenSenden() . ' Erinnerung(en) verschickt');
+}
+
+if ($aufgabe === 'sync' || $aufgabe === 'alle') {
+    if (syncSysteme() === []) {
+        $ausgabe('sync: kein System aktiv (lexware.aktiv / odoo.aktiv in der Konfiguration)');
+    } else {
+        // Erst zurückholen, dann hinschieben: so entscheidet bei beidseitigen Änderungen der Zeitstempel, nicht die Reihenfolge
+        $a = syncAbholen(($argv[2] ?? '') === 'abholen');
+        if ($a['uebersprungen']) {
+            $ausgabe('sync: Rückrichtung übersprungen (zuletzt vor weniger als ' . (int) konfig()['sync']['abholenMinuten'] . ' Minuten)');
+        } else {
+            $ausgabe('sync: Rückrichtung — Odoo ' . $a['odoo'] . ', Lexware ' . $a['lexware'] . ' Datensatz/-sätze geprüft' . (isset($a['odoo_fehler']) ? ' · Odoo: ' . $a['odoo_fehler'] : '') . (isset($a['lexware_fehler']) ? ' · Lexware: ' . $a['lexware_fehler'] : ''));
+        }
+        $z = syncAuftraegeAbarbeiten(200);
+        $ausgabe('sync: Warteschlange ' . $z['erledigt'] . ' erledigt, ' . $z['fehler'] . ' Fehler (' . implode(', ', syncSysteme()) . ')');
+    }
 }
 
 if ($aufgabe === 'postfach' || $aufgabe === 'alle') {

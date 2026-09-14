@@ -10,7 +10,7 @@
 </nav>
 <form class="werkzeuge" method="get" action="<?= e(url('kunden')) ?>">
   <input type="hidden" name="reiter" value="<?= e($reiter) ?>">
-  <input type="search" name="q" value="<?= e($q) ?>" placeholder="<?= ['anfragen' => 'Name, E-Mail, Firma', 'firmen' => 'Firma, Ort, E-Mail', 'privatkunden' => 'Name, E-Mail'][$reiter] ?>" aria-label="Suche">
+  <input type="search" name="q" value="<?= e($q) ?>" placeholder="<?= ['anfragen' => 'Name, E-Mail, Firma', 'firmen' => 'Kundennummer, Firma, Unterkunde, Ort, E-Mail', 'privatkunden' => 'Kundennummer, Name, E-Mail'][$reiter] ?>" aria-label="Suche">
   <?php if ($reiter === 'anfragen') { ?>
   <select name="status" aria-label="Status">
     <option value="">Alle Status</option>
@@ -42,11 +42,12 @@
   </table>
   <?php } elseif ($reiter === 'firmen') { ?>
   <table class="tabelle">
-    <thead><tr><th>Firma</th><th>Ort</th><th>Rechnungs-E-Mail</th><th class="rechts">Benutzer</th><th class="rechts">Sendungen</th><th class="rechts">Offene Rechnungen</th><th>Aktiv</th><th></th></tr></thead>
+    <thead><tr><th>Kunden-Nr.</th><th>Firma</th><th>Ort</th><th>Rechnungs-E-Mail</th><th class="rechts">Benutzer</th><th class="rechts">Sendungen</th><th class="rechts">Offene Rechnungen</th><th>Aktiv</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($zeilen as $f) { ?>
       <tr class="<?= (int) $f['aktiv'] === 1 ? '' : 'inaktiv' ?>">
-        <td><a href="<?= e(url('kunden/firmen/' . $f['id'])) ?>"><?= e($f['name']) ?></a></td>
+        <td class="mono"><?= e($f['kundennummer']) ?></td>
+        <td><a href="<?= e(url('kunden/firmen/' . $f['id'])) ?>"><?= e($f['name']) ?></a><?php foreach ($f['treffer_unterkunden'] ?? [] as $u) { ?><br><a class="leise mono" href="<?= e(url('kunden/firmen/' . $f['id'])) ?>">↳ <?= e($u['nummer']) ?> <?= e($u['name']) ?></a><?php } ?></td>
         <td><?= e(trim($f['plz'] . ' ' . $f['ort'])) ?></td>
         <td><?= e($f['rechnungs_email'] ?: '—') ?></td>
         <td class="mono rechts"><?= (int) $f['benutzer'] ?></td>
@@ -60,10 +61,11 @@
   </table>
   <?php } else { ?>
   <table class="tabelle">
-    <thead><tr><th>Name</th><th>E-Mail</th><th>Bestätigt</th><th>Passwort</th><th class="rechts">Bestellungen</th><th class="rechts">Umsatz brutto</th><th class="rechts">Guthaben</th><th class="rechts">Letzte Anmeldung</th><th></th></tr></thead>
+    <thead><tr><th>Kunden-Nr.</th><th>Name</th><th>E-Mail</th><th>Bestätigt</th><th>Passwort</th><th class="rechts">Bestellungen</th><th class="rechts">Umsatz brutto</th><th class="rechts">Guthaben</th><th class="rechts">Letzte Anmeldung</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($zeilen as $k) { ?>
       <tr class="<?= (int) $k['aktiv'] === 1 ? '' : 'inaktiv' ?>">
+        <td class="mono"><?= e($k['kundennummer']) ?></td>
         <td><?= e($k['name']) ?><?= (int) $k['aktiv'] === 1 ? '' : ' <span class="pille pille--warn">geschlossen</span>' ?></td>
         <td><?= e($k['email']) ?></td>
         <td><?= (int) $k['email_bestaetigt'] === 1 ? '<span class="ja">✓</span>' : '<span class="nein">–</span>' ?></td>

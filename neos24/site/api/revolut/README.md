@@ -100,6 +100,14 @@ Zeitstempel älter als 5 Minuten → 401, unbekanntes Zielland → 422, fremde H
   die Bestätigungsmail gehängt wird und im Portal abrufbar ist; ohne Lexware nennt die
   Bestätigungsmail nur Betrag und MwSt.
 
+## Kundennummern, Odoo, Synchronisation
+
+Konfiguration `kundennummer` (Präfix, Startwert), `odoo` (URL, Datenbank, Benutzer, API-Key,
+Produkt für Versandzeilen, Webhook-Geheimnis) und `sync.abholenMinuten`; siehe
+`neos24-config.beispiel.php` und `intern/README.md` (Synchronisation). Die Kundennummer vergibt die
+Plattform (`lib/kundennummern.php`), Lexware vergibt zusätzlich seine eigene, Odoo bekommt die
+NEOS-Nummer als `res.partner.ref`. Cron: `php intern/aufgaben.php sync` (in `alle` enthalten).
+
 ## Mails mit Anhang
 
 `mailSenden($an, $betreff, $koerper, $anhaenge)` verschickt Anhänge (`[['name', 'datei'|'inhalt',

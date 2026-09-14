@@ -1,7 +1,7 @@
 <header class="k-kopfzeile">
-  <div><span class="eyebrow eyebrow--magenta"><?= e(t('portal')) ?></span><h1 class="h2"><?= e(t('firma.titel')) ?></h1><p class="k-text"><?= e(t('firma.text')) ?></p></div>
+  <div><span class="eyebrow eyebrow--magenta"><?= e(t('portal')) ?></span><h1 class="h2"><?= e(t('firma.titel')) ?></h1><p class="k-text"><?= e(t('firma.text')) ?> <?= e(t('kundennummer')) ?>: <strong class="k-mono"><?= e($firma['kundennummer']) ?></strong></p></div>
 </header>
-<div class="k-spalten">
+<div class="k-spalten k-spalten--2-1">
   <div class="card">
     <?php if ($fehler !== null) { ?><p class="k-hinweis k-hinweis--fehler" role="alert"><?= e($fehler) ?></p><?php } ?>
     <form method="post" action="<?= e(url('firma')) ?>" class="form k-form" novalidate>
@@ -19,5 +19,14 @@
       <div class="field"><label for="f-rechnung"><?= e(t('firma.rechnungs_email')) ?></label><input id="f-rechnung" name="rechnungs_email" type="email" value="<?= e($firma['rechnungs_email']) ?>"></div>
       <button class="btn btn--primary" type="submit"><?= e(t('firma.speichern')) ?></button>
     </form>
+  </div>
+  <div class="card card--ink">
+    <h2 class="h3"><?= e(t('firma.unterkunden')) ?></h2>
+    <p class="k-text" style="margin:.5rem 0 1rem"><?= e(t('firma.unterkunden.text')) ?></p>
+    <?php if (($unterkunden ?? []) === []) { ?><p class="k-klein"><?= e(t('firma.unterkunden.keine')) ?></p><?php } else { ?>
+    <ul class="checklist">
+      <?php foreach ($unterkunden as $u) { ?><li><span class="k-mono"><?= e($u['nummer']) ?></span> <?= e($u['name']) ?><?= (int) $u['aktiv'] === 1 ? '' : ' <span class="k-klein">(inaktiv)</span>' ?><br><span class="k-klein"><?= e(trim($u['strasse'] . ', ' . $u['plz'] . ' ' . $u['ort'], ', ')) ?><?= $u['rechnungs_email'] !== '' ? ' · ' . e($u['rechnungs_email']) : '' ?></span></li><?php } ?>
+    </ul>
+    <?php } ?>
   </div>
 </div>

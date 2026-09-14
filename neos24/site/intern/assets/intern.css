@@ -264,3 +264,8 @@ code { font-family: var(--font-mono); font-size: .85em; background: var(--ink-80
 .lr-inline input { font: inherit; font-size: .8rem; padding: .3rem .45rem; border: 1.5px solid var(--ink-200); border-radius: 8px; width: 7.5rem; }
 .lr-pdftext { font-family: var(--font-mono); font-size: .72rem; white-space: pre-wrap; max-height: 24rem; overflow: auto; margin-top: .75rem; color: var(--ink-600); }
 .werkzeuge select[name="befund"] { font-size: .85rem; }
+
+/* Unterkunden-Zuordnung je Benutzer (Auswahl + Knöpfe dürfen umbrechen) */
+.firma-benutzer .zeilen-aktionen { white-space: normal; display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; justify-content: flex-end; }
+.firma-benutzer .zeilen-aktionen select { font-size: .85rem; max-width: 220px; }
+.karte--ink .scrollen .tabelle th { letter-spacing: .04em; font-size: .7rem; }

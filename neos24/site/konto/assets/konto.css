@@ -164,3 +164,4 @@
   .k-liste dt { margin-top: .4rem; }
 }
 @media (min-width: 640px) { .form-row--2 { grid-template-columns: 1fr 1fr; } }
+.k-werkzeuge select { flex: 0 1 auto; max-width: 100%; min-width: 0; }

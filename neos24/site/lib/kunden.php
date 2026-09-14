@@ -41,29 +41,34 @@ function kundeAnlegen(array $daten): int
         throw new InvalidArgumentException('email');
     }
     $db = datenbank();
+    $art = ($daten['art'] ?? 'privat') === 'business' ? 'business' : 'privat';
     $db->prepare(<<<'SQL'
-        INSERT INTO kunden (art, email, name, firma_id, firmenrolle, passwort_hash, email_bestaetigt, aktiv, sprache, erstellt, aktualisiert)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+        INSERT INTO kunden (art, email, name, firma_id, unterkunde_id, firmenrolle, passwort_hash, email_bestaetigt, aktiv, sprache, kundennummer, erstellt, aktualisiert)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
     SQL)->execute([
-        ($daten['art'] ?? 'privat') === 'business' ? 'business' : 'privat',
+        $art,
         $email,
         trim((string) ($daten['name'] ?? '')),
         isset($daten['firma_id']) ? (int) $daten['firma_id'] : null,
+        isset($daten['unterkunde_id']) && (int) $daten['unterkunde_id'] > 0 ? (int) $daten['unterkunde_id'] : null,
         (string) ($daten['firmenrolle'] ?? ''),
         isset($daten['passwort']) && $daten['passwort'] !== '' ? password_hash((string) $daten['passwort'], PASSWORD_DEFAULT) : null,
         (int) ($daten['email_bestaetigt'] ?? 0),
         ($daten['sprache'] ?? 'de') === 'en' ? 'en' : 'de',
+        $art === 'privat' ? kundennummerNeu($db) : '',   // Firmenbenutzer haben keine eigene Nummer
         jetzt(),
         jetzt(),
     ]);
+    $id = (int) $db->lastInsertId();
+    syncMarkieren('kunden', $id);
 
-    return (int) $db->lastInsertId();
+    return $id;
 }
 
 /** Einzelne Felder eines Kontos setzen (nur bekannte Spalten). */
 function kundeAktualisieren(int $id, array $felder): void
 {
-    $erlaubt = ['name', 'passwort_hash', 'email_bestaetigt', 'aktiv', 'sprache', 'absender_json', 'fehlversuche', 'gesperrt_bis', 'letzte_anmeldung', 'firmenrolle'];
+    $erlaubt = ['name', 'passwort_hash', 'email_bestaetigt', 'aktiv', 'sprache', 'absender_json', 'fehlversuche', 'gesperrt_bis', 'letzte_anmeldung', 'firmenrolle', 'unterkunde_id'];
     $setzen = [];
     $werte = [];
     foreach ($felder as $spalte => $wert) {
@@ -75,10 +80,23 @@ function kundeAktualisieren(int $id, array $felder): void
     if ($setzen === []) {
         return;
     }
-    $setzen[] = 'aktualisiert = ?';
-    $werte[] = jetzt();
+    // Nur Stammdaten zählen als Änderung für die Synchronisation (nicht Anmeldezeit, Fehlversuche, Passwort)
+    $stammdaten = array_intersect(array_keys($felder), ['name', 'aktiv', 'absender_json', 'firmenrolle', 'unterkunde_id']) !== [];
+    if ($stammdaten) {
+        $setzen[] = 'aktualisiert = ?';
+        $werte[] = jetzt();
+    }
     $werte[] = $id;
     datenbank()->prepare('UPDATE kunden SET ' . implode(', ', $setzen) . ' WHERE id = ?')->execute($werte);
+    if ($stammdaten) {
+        syncMarkieren('kunden', $id);
+    }
+}
+
+/** Anzeigename mit Kundennummer: „Karla Kundin (K-100002)“ bzw. Firma/Unterkunde. */
+function kundennummerVon(array $zeile): string
+{
+    return (string) ($zeile['nummer'] ?? $zeile['kundennummer'] ?? '');
 }
 
 /** Bestellungen derselben E-Mail (Privatkunden-Checkout) dem Konto zuordnen. */
@@ -145,8 +163,8 @@ function firmaAnlegen(array $daten, string $von): int
     }
     $db = datenbank();
     $db->prepare(<<<'SQL'
-        INSERT INTO firmen (name, strasse, plz, ort, land, ust_id, rechnungs_email, zahlungsziel_tage, aktiv, anfrage_id, freigeschaltet_von, erstellt, aktualisiert)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
+        INSERT INTO firmen (name, strasse, plz, ort, land, ust_id, rechnungs_email, zahlungsziel_tage, aktiv, anfrage_id, freigeschaltet_von, kundennummer, erstellt, aktualisiert)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)
     SQL)->execute([
         $name,
         trim((string) ($daten['strasse'] ?? '')),
@@ -158,11 +176,14 @@ function firmaAnlegen(array $daten, string $von): int
         (int) ($daten['zahlungsziel_tage'] ?? konfig()['rechnung']['zahlungszielTage']),
         isset($daten['anfrage_id']) && (int) $daten['anfrage_id'] > 0 ? (int) $daten['anfrage_id'] : null,
         $von,
+        kundennummerNeu($db),
         jetzt(),
         jetzt(),
     ]);
+    $id = (int) $db->lastInsertId();
+    syncMarkieren('firmen', $id);
 
-    return (int) $db->lastInsertId();
+    return $id;
 }
 
 function firmaAktualisieren(int $id, array $felder): void
@@ -183,6 +204,134 @@ function firmaAktualisieren(int $id, array $felder): void
     $werte[] = jetzt();
     $werte[] = $id;
     datenbank()->prepare('UPDATE firmen SET ' . implode(', ', $setzen) . ' WHERE id = ?')->execute($werte);
+    syncMarkieren('firmen', $id);
+}
+
+// ------------------------------------------------------------------ Unterkunden
+
+/**
+ * Unterkunden: weitere Unternehmen einer Firmengruppe oder Standorte unter
+ * der Kundennummer der Firma (K-100001-01). Jeder Unterkunde ist eigener
+ * Rechnungsempfänger mit eigener Adresse, USt-ID, Rechnungs-Mail, optional
+ * eigenem Zahlungsziel und eigener Preisliste. Angelegt nur durch NEOS.
+ */
+function unterkundeLaden(int $id): ?array
+{
+    if ($id <= 0) {
+        return null;
+    }
+    $st = datenbank()->prepare('SELECT u.*, f.name AS firma, f.kundennummer AS firma_kundennummer FROM unterkunden u JOIN firmen f ON f.id = u.firma_id WHERE u.id = ?');
+    $st->execute([$id]);
+    $z = $st->fetch();
+
+    return is_array($z) ? $z : null;
+}
+
+function unterkundeNachNummer(string $nummer): ?array
+{
+    $st = datenbank()->prepare('SELECT u.*, f.name AS firma, f.kundennummer AS firma_kundennummer FROM unterkunden u JOIN firmen f ON f.id = u.firma_id WHERE u.nummer = ?');
+    $st->execute([strtoupper(trim($nummer))]);
+    $z = $st->fetch();
+
+    return is_array($z) ? $z : null;
+}
+
+/** Unterkunden einer Firma (mit Sendungs- und Rechnungszahl), aktive zuerst. */
+function unterkundenDerFirma(int $firmaId, bool $nurAktive = false): array
+{
+    $st = datenbank()->prepare(<<<'SQL'
+        SELECT u.*,
+               (SELECT COUNT(*) FROM bestellungen b WHERE b.unterkunde_id = u.id AND b.status = 'beauftragt') AS sendungen,
+               (SELECT COUNT(*) FROM rechnungen r WHERE r.unterkunde_id = u.id AND r.status = 'offen') AS offene_rechnungen,
+               (SELECT COUNT(*) FROM kunden k WHERE k.unterkunde_id = u.id AND k.aktiv = 1) AS benutzer
+        FROM unterkunden u WHERE u.firma_id = ? AND (? = 0 OR u.aktiv = 1)
+        ORDER BY u.aktiv DESC, u.laufnummer
+    SQL);
+    $st->execute([$firmaId, $nurAktive ? 1 : 0]);
+
+    return $st->fetchAll();
+}
+
+/** Unterkunde anlegen; $daten: name, strasse, plz, ort, land, ust_id, rechnungs_email, zahlungsziel_tage (leer = Firma), notiz. */
+function unterkundeAnlegen(int $firmaId, array $daten, string $von): int
+{
+    $firma = firmaLaden($firmaId);
+    if ($firma === null) {
+        throw new InvalidArgumentException('Firma nicht gefunden.');
+    }
+    $name = trim((string) ($daten['name'] ?? ''));
+    if (mb_strlen($name) < 2) {
+        throw new InvalidArgumentException('Bitte einen Namen für den Unterkunden angeben.');
+    }
+    $db = datenbank();
+    $db->beginTransaction();
+    try {
+        $st = $db->prepare('SELECT COALESCE(MAX(laufnummer), 0) + 1 FROM unterkunden WHERE firma_id = ?');
+        $st->execute([$firmaId]);
+        $lauf = (int) $st->fetchColumn();
+        $db->prepare(<<<'SQL'
+            INSERT INTO unterkunden (firma_id, nummer, laufnummer, name, strasse, plz, ort, land, ust_id, rechnungs_email, zahlungsziel_tage, aktiv, notiz, erstellt, aktualisiert)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
+        SQL)->execute([
+            $firmaId, unterkundenNummer((string) $firma['kundennummer'], $lauf), $lauf, $name,
+            trim((string) ($daten['strasse'] ?? '')), trim((string) ($daten['plz'] ?? '')), trim((string) ($daten['ort'] ?? '')),
+            strtoupper(trim((string) ($daten['land'] ?? $firma['land']))) ?: 'DE', trim((string) ($daten['ust_id'] ?? '')),
+            mb_strtolower(trim((string) ($daten['rechnungs_email'] ?? ''))),
+            isset($daten['zahlungsziel_tage']) && $daten['zahlungsziel_tage'] !== '' ? max(0, (int) $daten['zahlungsziel_tage']) : null,
+            trim((string) ($daten['notiz'] ?? '')), jetzt(), jetzt(),
+        ]);
+        $id = (int) $db->lastInsertId();
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollBack();
+        throw $e;
+    }
+    syncMarkieren('unterkunden', $id);
+
+    return $id;
+}
+
+function unterkundeAktualisieren(int $id, array $felder): void
+{
+    $erlaubt = ['name', 'strasse', 'plz', 'ort', 'land', 'ust_id', 'rechnungs_email', 'zahlungsziel_tage', 'preisliste_id', 'aktiv', 'notiz'];
+    $setzen = [];
+    $werte = [];
+    foreach ($felder as $spalte => $wert) {
+        if (in_array($spalte, $erlaubt, true)) {
+            $setzen[] = "$spalte = ?";
+            $werte[] = $wert;
+        }
+    }
+    if ($setzen === []) {
+        return;
+    }
+    $setzen[] = 'aktualisiert = ?';
+    $werte[] = jetzt();
+    $werte[] = $id;
+    datenbank()->prepare('UPDATE unterkunden SET ' . implode(', ', $setzen) . ' WHERE id = ?')->execute($werte);
+    syncMarkieren('unterkunden', $id);
+}
+
+/**
+ * Rechnungsempfänger einer Bestellung oder Rechnung: der Unterkunde, sonst die
+ * Firma. Liefert name, strasse, plz, ort, land, ust_id, rechnungs_email,
+ * zahlungsziel_tage, kundennummer, lexware_kontakt_id, tabelle ('unterkunden'|'firmen'), id.
+ */
+function rechnungsempfaenger(array $bezug): array
+{
+    $firma = firmaLaden((int) ($bezug['firma_id'] ?? 0));
+    if ($firma === null) {
+        throw new InvalidArgumentException('Firma nicht gefunden.');
+    }
+    $u = (int) ($bezug['unterkunde_id'] ?? 0) > 0 ? unterkundeLaden((int) $bezug['unterkunde_id']) : null;
+    if ($u === null) {
+        return ['tabelle' => 'firmen', 'id' => (int) $firma['id'], 'firma' => $firma, 'unterkunde' => null, 'name' => $firma['name'], 'strasse' => $firma['strasse'], 'plz' => $firma['plz'], 'ort' => $firma['ort'], 'land' => $firma['land'] ?: 'DE',
+            'ust_id' => $firma['ust_id'], 'rechnungs_email' => $firma['rechnungs_email'], 'zahlungsziel_tage' => (int) $firma['zahlungsziel_tage'], 'kundennummer' => (string) $firma['kundennummer'], 'lexware_kontakt_id' => (string) $firma['lexware_kontakt_id']];
+    }
+
+    return ['tabelle' => 'unterkunden', 'id' => (int) $u['id'], 'firma' => $firma, 'unterkunde' => $u, 'name' => $u['name'], 'strasse' => $u['strasse'], 'plz' => $u['plz'], 'ort' => $u['ort'], 'land' => $u['land'] ?: 'DE',
+        'ust_id' => $u['ust_id'], 'rechnungs_email' => $u['rechnungs_email'] !== '' ? $u['rechnungs_email'] : $firma['rechnungs_email'],
+        'zahlungsziel_tage' => $u['zahlungsziel_tage'] !== null ? (int) $u['zahlungsziel_tage'] : (int) $firma['zahlungsziel_tage'], 'kundennummer' => (string) $u['nummer'], 'lexware_kontakt_id' => (string) $u['lexware_kontakt_id']];
 }
 
 /**

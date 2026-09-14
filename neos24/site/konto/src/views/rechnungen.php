@@ -5,12 +5,14 @@
 <div class="card k-karte-tabelle">
   <?php if ($zeilen === []) { ?><p class="k-leer"><?= e(t('rechnungen.keine')) ?></p><?php } else { ?>
   <div class="k-scroll"><table class="table k-tabelle">
-    <thead><tr><th><?= e(t('rechnungen.nummer')) ?></th><th><?= e(t('liste.status')) ?></th><th><?= e(t('rechnungen.zeitraum')) ?></th><th><?= e(t('rechnungen.positionen')) ?></th><th><?= e(t('detail.netto')) ?></th><th><?= e(t('detail.brutto')) ?></th><th><?= e(t('rechnungen.faellig')) ?></th><th></th></tr></thead>
+    <?php $unterkunden = $unterkunden ?? []; ?>
+    <thead><tr><th><?= e(t('rechnungen.nummer')) ?></th><th><?= e(t('liste.status')) ?></th><?php if ($unterkunden !== []) { ?><th><?= e(t('rechnungen.empfaenger')) ?></th><?php } ?><th><?= e(t('rechnungen.zeitraum')) ?></th><th><?= e(t('rechnungen.positionen')) ?></th><th><?= e(t('detail.netto')) ?></th><th><?= e(t('detail.brutto')) ?></th><th><?= e(t('rechnungen.faellig')) ?></th><th></th></tr></thead>
     <tbody>
     <?php foreach ($zeilen as $r) { ?>
       <tr>
         <td><a class="k-mono" href="<?= e(url('rechnungen/' . $r['nummer'])) ?>"><?= e($r['nummer']) ?></a><br><span class="k-klein"><?= e(datumAnzeigen($r['erstellt'], $sp)) ?></span></td>
         <td><?= statusPille((string) $r['status'], t('rechnungen.status.' . $r['status'])) ?></td>
+        <?php if ($unterkunden !== []) { ?><td><?= e($r['unterkunde'] ?: t('unterkunde.hauptfirma')) ?><br><span class="k-klein k-mono"><?= e($r['kundennummer']) ?></span></td><?php } ?>
         <td><?= e(datumAnzeigen($r['zeitraum_von'], $sp)) ?> – <?= e(datumAnzeigen(gmdate('Y-m-d\TH:i:s\Z', strtotime((string) $r['zeitraum_bis']) - 1), $sp)) ?></td>
         <td class="k-mono"><?= (int) $r['positionen'] ?></td>
         <td class="k-mono"><?= e(euro((int) $r['netto_cent'], $sp)) ?></td>

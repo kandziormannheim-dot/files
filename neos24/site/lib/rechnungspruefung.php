@@ -915,15 +915,16 @@ function rpNachberechnungBuchen(array $p, string $von, ?int $betragCent = null):
         INSERT INTO bestellungen
             (ext_ref, status, netto_cent, mwst_cent, betrag_cent, waehrung, zielland, gewichtsklasse, carrier, einkauf_cent,
              email, sprache, absender_json, empfaenger_json, ereignisse_json, erstellt, aktualisiert,
-             kunde_id, firma_id, zahlungsart, referenz, art, gewicht_gramm, versandstatus, nachberechnung_zu, nachberechnung_json, preisliste_id)
+             kunde_id, firma_id, zahlungsart, referenz, art, gewicht_gramm, versandstatus, nachberechnung_zu, nachberechnung_json, preisliste_id, unterkunde_id)
         VALUES (:ref, :status, :netto, :mwst, :brutto, 'EUR', :land, :gk, :carrier, 0, :email, :sprache, :abs, :emp, :ev, :t, :t,
-             :kunde, :firma, :zahlungsart, :referenz, 'nachberechnung', :gewicht, 'zugestellt', :zu, :grund, :liste)
+             :kunde, :firma, :zahlungsart, :referenz, 'nachberechnung', :gewicht, 'zugestellt', :zu, :grund, :liste, :unterkunde)
     SQL)->execute([
         ':ref' => $extRef, ':status' => $status, ':netto' => $netto, ':mwst' => $brutto - $netto, ':brutto' => $brutto,
         ':land' => $b['zielland'], ':gk' => $p['gk_ist'] ?: $b['gewichtsklasse'], ':carrier' => $b['carrier'], ':email' => $b['email'], ':sprache' => $b['sprache'],
         ':abs' => $b['absender_json'], ':emp' => $b['empfaenger_json'], ':ev' => json_encode([$ereignis], JSON_UNESCAPED_UNICODE), ':t' => jetzt(),
         ':kunde' => $b['kunde_id'], ':firma' => $b['firma_id'], ':zahlungsart' => $zahlungsart, ':referenz' => 'Nachberechnung ' . $b['ext_ref'],
         ':gewicht' => (int) $p['gewicht_gramm'], ':zu' => $b['id'], ':grund' => json_encode($grund, JSON_UNESCAPED_UNICODE), ':liste' => $grund['preisliste_id'],
+        ':unterkunde' => $b['unterkunde_id'] ?? null,
     ]);
     $neu = bestellungLaden('ext_ref', $extRef);
     if ($zahlungsart === 'guthaben') {

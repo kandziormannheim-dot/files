@@ -228,6 +228,12 @@ if ($methode === 'POST') {
     csrfPruefen();
 }
 $firma = $ich['art'] === 'business' ? firmaLaden((int) $ich['firma_id']) : null;
+// Unterkunden der Firma (Firmengruppe, Standorte): Inhaber wählen je Sendung, Mitarbeiter mit fester Zuordnung buchen nur für ihren
+$unterkunden = $firma !== null ? unterkundenDerFirma((int) $firma['id'], true) : [];
+$festerUnterkunde = $firma !== null ? festerUnterkunde($ich) : 0;
+if ($festerUnterkunde > 0 && !in_array($festerUnterkunde, array_map('intval', array_column($unterkunden, 'id')), true)) {
+    $festerUnterkunde = 0; // deaktiviert → wieder Hauptfirma
+}
 
 if ($pfad === '/passwort') {
     $fehler = null;
@@ -270,9 +276,11 @@ if ($pfad === '/bestellungen' || $pfad === '/sendungen') {
     }
     $status = saeubern($_GET['status'] ?? '', 20);
     $q = saeubern($_GET['q'] ?? '', 60);
+    $unterkundeFilter = isset($_GET['unterkunde']) && $_GET['unterkunde'] !== '' ? (int) $_GET['unterkunde'] : null;
     $seite = seiteLesen();
-    [$zeilen, $gesamt] = eigeneBestellungen($ich, 50, ($seite - 1) * 50, $status, $q);
-    ansicht('bestellungen', ['titel' => t($pfad === '/sendungen' ? 'nav.sendungen' : 'nav.bestellungen'), 'zeilen' => $zeilen, 'gesamt' => $gesamt, 'seite' => $seite, 'status' => $status, 'q' => $q, 'pfad' => ltrim($pfad, '/'), 'aktiv' => ltrim($pfad, '/')]);
+    [$zeilen, $gesamt] = eigeneBestellungen($ich, 50, ($seite - 1) * 50, $status, $q, $unterkundeFilter);
+    ansicht('bestellungen', ['titel' => t($pfad === '/sendungen' ? 'nav.sendungen' : 'nav.bestellungen'), 'zeilen' => $zeilen, 'gesamt' => $gesamt, 'seite' => $seite, 'status' => $status, 'q' => $q, 'pfad' => ltrim($pfad, '/'),
+        'unterkunden' => $festerUnterkunde > 0 ? [] : $unterkunden, 'unterkundeFilter' => $unterkundeFilter, 'aktiv' => ltrim($pfad, '/')]);
 }
 
 if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})$#', $pfad, $t)) {
@@ -302,13 +310,13 @@ if ($pfad === '/preise') {
 
 if ($pfad === '/rechnungen') {
     $firma = businessErzwingen($ich);
-    ansicht('rechnungen', ['titel' => t('rechnungen.titel'), 'zeilen' => rechnungenDerFirma((int) $firma['id']), 'aktiv' => 'rechnungen']);
+    ansicht('rechnungen', ['titel' => t('rechnungen.titel'), 'zeilen' => rechnungenDerFirma((int) $firma['id'], $festerUnterkunde), 'unterkunden' => $unterkunden, 'aktiv' => 'rechnungen']);
 }
 
 if (preg_match('#^/rechnungen/([A-Za-z0-9][A-Za-z0-9_-]{1,60})(\.pdf)?$#', $pfad, $t)) {
     $firma = businessErzwingen($ich);
     $r = rechnungNachNummer($t[1]);
-    if ($r === null || (int) $r['firma_id'] !== (int) $firma['id']) {
+    if ($r === null || (int) $r['firma_id'] !== (int) $firma['id'] || ($festerUnterkunde > 0 && (int) $r['unterkunde_id'] !== $festerUnterkunde)) {
         fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
     }
     if (isset($t[2])) {
@@ -371,7 +379,7 @@ if ($pfad === '/firma') {
             umleiten(url('firma'));
         }
     }
-    ansicht('firma', ['titel' => t('firma.titel'), 'firma' => $firma, 'fehler' => $fehler, 'aktiv' => 'firma']);
+    ansicht('firma', ['titel' => t('firma.titel'), 'firma' => $firma, 'fehler' => $fehler, 'unterkunden' => unterkundenDerFirma((int) $firma['id']), 'aktiv' => 'firma']);
 }
 
 // --------------------------------------------------------------- Einstellungen

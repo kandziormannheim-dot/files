@@ -108,13 +108,37 @@ Liste (Angebote, Preise-Seite, CSV-Import), jede Bestellung merkt sich `preislis
 Rechnungsprüfung rechnet Nachberechnungen mit denselben Konditionen. Tabellen `preislisten`,
 `preislisten_preise`, `preislisten_zusatz`; `lib/preislisten.php`.
 
+### Kundennummern und Unterkunden
+
+Jede Firma und jeder registrierte Privatkunde bekommt beim Anlegen eine Kundennummer aus dem
+Zähler der Plattform (`kundennummer.praefix` + fortlaufende Zahl ab `kundennummer.start`, z. B.
+`K-100001`; `lib/kundennummern.php`, Tabelle `zaehler`). Bestehende Konten bekommen sie beim ersten
+Start nachträglich in Reihenfolge ihrer Anlage. Firmenbenutzer haben keine eigene Nummer — sie
+gehören zur Firma. Die Nummer steht in allen Listen, auf Rechnung, Nachweis und Mails und ist im
+Dashboard suchbar (Kunden, Bestellungen).
+
+Unter einer Firma legt das Team **Unterkunden** an (Firma → „Unterkunden“ → „Unterkunde anlegen“):
+weitere Unternehmen der Gruppe oder Standorte mit Nummer `K-100001-01`, `-02` … Jeder Unterkunde
+ist eigener Rechnungsempfänger — eigene Anschrift, USt-ID, Rechnungs-E-Mail, optional eigenes
+Zahlungsziel und eigene Preisliste (sonst gilt die Firma) — mit eigenem Kontakt in Lexware und
+Odoo. Sendungen tragen `bestellungen.unterkunde_id`: Inhaber wählen im Portal je Sendung
+„Abrechnen für“, Mitarbeiter mit fester Zuordnung (Firma → Benutzer → Auswahl) buchen nur für
+ihren Unterkunden und sehen nur dessen Sendungen und Rechnungen. Die Sammelrechnung wird je
+Empfänger erzeugt (Firma → „Abrechnen für“ bzw. Seite des Unterkunden) und enthält nur dessen
+Sendungen; Retouren und Nachberechnungen übernehmen den Unterkunden der Originalsendung.
+Guthaben und Adressbuch bleiben je Firma. Tabelle `unterkunden`, Funktionen in `lib/kunden.php`
+(`unterkundeAnlegen`, `rechnungsempfaenger`).
+
 ## Lexware Office
 
 Ist `lexware.aktiv` mit API-Key gesetzt, vergibt Lexware Office die Rechnungsnummern und erzeugt
-die PDFs (`lib/lexware.php`): Sammelrechnungen der Firmen (Kontakt in Lexware, netto, Zahlungsziel
-der Firma, je Sendung eine Zeile), bezahlte Privatkunden-Bestellungen (Adresse ohne Kontakt,
-brutto, Vermerk „bezahlt per Revolut/Guthaben“) und Nachberechnungen als Rechnung, Stornos als
-Gutschrift. Jeder Vorgang landet in der Warteschlange `lexware_auftraege` und wird sofort (best
+die PDFs (`lib/lexware.php`): Sammelrechnungen der Firmen und Unterkunden (Kontakt des
+Rechnungsempfängers in Lexware, netto, dessen Zahlungsziel, je Sendung eine Zeile, Kundennummer
+in der Einleitung), bezahlte Privatkunden-Bestellungen (registrierte Kunden mit eigenem Kontakt,
+Gäste mit Adresse; brutto, Vermerk „bezahlt per Revolut/Guthaben“) und Nachberechnungen als
+Rechnung, Stornos als Gutschrift. Kontakte legt die Synchronisation an (siehe unten); die von
+Lexware vergebene Kundennummer (`roles.customer.number`, nur lesbar) wird als
+`lexware_kundennummer` gespeichert und in der Karte „Systeme“ gezeigt. Jeder Vorgang landet in der Warteschlange `lexware_auftraege` und wird sofort (best
 effort) sowie per Cron `php intern/aufgaben.php lexware` abgearbeitet — ein Ausfall der API
 blockiert nichts, nichts wird doppelt angelegt. Rechnungen zeigen unter „Rechnungen“ Lexware-Nummer
 und -Status; fehlgeschlagene Übergaben stehen in der Warteschlange (Übersicht-Kachel) und lassen
@@ -124,6 +148,39 @@ sich nachholen. Der Zahlungsstatus kommt per Cron (`/payments`) oder Webhook
 bleibt es bei eigener Nummer `NR-…` und eigenem PDF. Belege und Mails an Kunden enthalten keine
 Lieferantenangaben. Vor Go-live die Feldnamen gegen die aktuelle Lexware-Doku prüfen
 (`developers.lexware.io`); Basis-URL `lexware.basisUrl`.
+
+## Synchronisation mit Lexware Office und Odoo
+
+Modul „Synchronisation“ (`/sync`, eigenes Recht). Kundenstammdaten laufen in beide Richtungen
+(`lib/sync.php`, Warteschlange `sync_auftraege`, Konflikte `sync_konflikte`):
+
+- **Hinrichtung:** Jede Änderung an Firma, Unterkunde, Privatkunde oder Firmenbenutzer
+  (`syncMarkieren()` in `firmaAnlegen/Aktualisieren`, `kundeAnlegen/Aktualisieren`,
+  `unterkundeAnlegen/Aktualisieren`) legt je aktivem System einen Auftrag an, der sofort (best
+  effort) und per Cron `php intern/aufgaben.php sync` abgearbeitet wird. Lexware: Firmen und
+  Unterkunden als Firmenkontakt mit den Benutzern als Ansprechpartnern, Privatkunden als
+  Personenkontakt. Odoo (`lib/odoo.php`, JSON-RPC mit API-Key, Odoo 14 oder neuer, selbst gehostet
+  oder Odoo.sh): Firma, Unterkunde (`parent_id` = Firma) und Privatkunde als `res.partner` mit
+  `ref` = Kundennummer, Firmenbenutzer als Ansprechpartner; beauftragte oder bezahlte Sendungen
+  als bestätigte Verkaufsaufträge (`sale.order`, Produkt `odoo.produktVersand`, Storno →
+  storniert); Rechnungen als Notiz mit PDF am Partner — gebucht wird nur in Lexware, Odoo bekommt
+  keine `account.move`.
+- **Rückrichtung:** Der Cron holt geänderte Partner aus Odoo (`write_date`) und Kontakte aus
+  Lexware (`version`/`updatedDate`) höchstens alle `sync.abholenMinuten` (Rückholung läuft vor der
+  Warteschlange). Regel: **die jüngere Änderung gewinnt**. Änderten beide Seiten seit dem letzten
+  Abgleich, gewinnt die jüngere, und das Feld landet als Konflikt im Modul (erledigen nach
+  Prüfung). Übernommene Werte werden an das jeweils andere System weitergereicht. Webhooks
+  beschleunigen das: `api/lexware/webhook.php` (Ereignis `contact.changed`, Abo per `aufgaben.php
+  lexware einrichten`) und `api/odoo/webhook.php` (Odoo: Automatisierte Aktion → Webhook auf
+  `res.partner`; Geheimnis `odoo.webhookGeheimnis` als Parameter `g`). Nutzlasten werden nie direkt
+  übernommen, der Datensatz wird immer nachgeladen. Neue Partner, die nur in Odoo angelegt wurden,
+  werden nicht importiert — Kunden entstehen in der Plattform, damit sie Nummer und Zugang haben.
+  E-Mail-Änderungen an Privatkunden werden nur übernommen, wenn die Adresse gültig und frei ist
+  (sie ist der Anmeldename).
+- **Dashboard:** Karte „Systeme“ an Firma, Unterkunde und Privatkunde (Kundennummer,
+  Lexware-Kundennummer, Odoo-Partner mit Link, „Jetzt abgleichen“), Modul `/sync` mit Warteschlange,
+  Konflikten, „Alle Kunden neu übergeben“ (nach Einrichtung eines Systems) und „Jetzt aus den
+  Systemen holen“, Kachel in der Übersicht; Bestellung und Rechnung zeigen Odoo-Auftrag bzw. Notiz.
 
 ### Einkaufspreise importieren
 
@@ -187,9 +244,10 @@ Selbsttest ohne Anmeldung: `intern/status` liefert `{"ok":true,"dienst":"intern"
 
 Alles liegt in `bestellungen.sqlite` im Datenverzeichnis (`daten` in der Konfiguration, außerhalb
 des Webroots). Tabellen des Dashboards: `laender`, `gewichtsklassen`, `carrier`, `routing`,
-`anfragen`, `benutzer`, `rollen`, `rechte`, `protokoll`; dazu die des Kundenportals `kunden`,
-`firmen`, `anmeldelinks`, `rechnungen`, `zusatzleistungen`, `sendungsereignisse`, `adressen`,
-`paketvorlagen`, `guthaben_buchungen`, `aufladungen`, `reklamationen` (siehe `konto/README.md`);
+`anfragen`, `benutzer`, `rollen`, `rechte`, `protokoll`, `zaehler`, `sync_auftraege`,
+`sync_konflikte`; dazu die des Kundenportals `kunden`, `firmen`, `unterkunden`, `anmeldelinks`,
+`rechnungen`, `zusatzleistungen`, `sendungsereignisse`, `adressen`, `paketvorlagen`,
+`guthaben_buchungen`, `aufladungen`, `reklamationen` (siehe `konto/README.md`);
 das Schema legt `datenbank()` in `api/revolut/_bootstrap.php` an. Beim ersten Start ohne Länder
 wird `api/revolut/preise.php` einmalig als Saatgut übernommen (Länder, Gewichtsklassen 2 bis
 31,5 kg mit Aufschlag, Carrier, Routing-Zeilen mit Einkauf 0, vier Zusatzleistungen). Danach ist

@@ -39,6 +39,7 @@
   <?php if (!$business) { ?>
   <div class="card">
     <h2 class="h3"><?= e(t('uebersicht.absender')) ?></h2>
+    <p class="k-klein"><?= e(t('kundennummer')) ?> <span class="k-mono"><?= e($ich['kundennummer'] ?? '') ?></span></p>
     <p class="k-klein"><?= e(t('uebersicht.absender.text')) ?></p>
     <?php if (($absender['name'] ?? '') === '' && ($absender['strasse'] ?? '') === '') { ?>
       <p class="k-text" style="margin-top:.75rem"><?= e(t('uebersicht.absender.fehlt')) ?></p>
@@ -50,6 +51,7 @@
   <?php } else { ?>
   <div class="card card--ink">
     <h2 class="h3"><?= e($firma['name']) ?></h2>
+    <p class="k-klein" style="margin-top:.25rem"><?= e(t('kundennummer')) ?> <span class="k-mono"><?= e($firma['kundennummer']) ?></span><?= (int) ($ich['unterkunde_id'] ?? 0) > 0 && ($u = unterkundeLaden((int) $ich['unterkunde_id'])) !== null ? ' · ' . e($u['name']) . ' <span class="k-mono">' . e($u['nummer']) . '</span>' : '' ?></p>
     <p class="k-text" style="margin-top:.5rem"><?= e($firma['strasse']) ?><br><?= e(trim($firma['plz'] . ' ' . $firma['ort'])) ?></p>
     <ul class="checklist">
       <li><?= e(t('nav.preise')) ?>: <a href="<?= e(url('preise')) ?>"><?= e(t('uebersicht.alle')) ?></a></li>

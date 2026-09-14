@@ -71,7 +71,7 @@ $laufzeit = $landInfo['klassen'][$b['gewichtsklasse']]['laufzeit'][$sp] ?? '—'
         <dt><?= e(t('detail.gewicht')) ?></dt><dd><?= e(preisliste()['gewichtsklassen'][$b['gewichtsklasse']][$sp] ?? $b['gewichtsklasse']) ?></dd>
         <dt><?= e(t('liste.carrier')) ?></dt><dd><?= e($b['carrier'] ?? '—') ?></dd>
         <dt><?= e(t('detail.laufzeit')) ?></dt><dd><?= e($laufzeit) ?></dd>
-        <?php if ($business) { ?><dt><?= e(t('liste.referenz')) ?></dt><dd><?= e($b['referenz'] ?: '—') ?></dd><dt><?= e(t('liste.angelegt_von')) ?></dt><dd><?= e($b['angelegt_von'] ?? '—') ?></dd><?php } ?>
+        <?php if ($business) { ?><dt><?= e(t('liste.referenz')) ?></dt><dd><?= e($b['referenz'] ?: '—') ?></dd><dt><?= e(t('liste.angelegt_von')) ?></dt><dd><?= e($b['angelegt_von'] ?? '—') ?></dd><?php if (!empty($b['unterkunde_nummer'])) { ?><dt><?= e(t('liste.fuer')) ?></dt><dd><?= e($b['unterkunde']) ?> <span class="k-klein k-mono"><?= e($b['unterkunde_nummer']) ?></span></dd><?php } ?><?php } ?>
         <?php $masse = json_decode((string) ($b['masse_json'] ?? '{}'), true) ?: []; $zusatz = json_decode((string) ($b['zusatz_json'] ?? '[]'), true) ?: []; $abholung = json_decode((string) ($b['abholung_json'] ?? '{}'), true) ?: []; ?>
         <dt><?= e(t('detail.gewicht_masse')) ?></dt><dd><?= (int) $b['gewicht_gramm'] > 0 ? e(number_format((int) $b['gewicht_gramm'] / 1000, 2, $sp === 'en' ? '.' : ',', '') . ' kg') : '—' ?><?= !empty($masse['l']) ? e(' · ' . $masse['l'] . ' × ' . $masse['b'] . ' × ' . $masse['h'] . ' cm') : '' ?></dd>
         <dt><?= e(t('detail.zusatz')) ?></dt><dd><?= $zusatz !== [] ? e(implode(', ', array_map(static fn (array $z): string => $z['name'][$sp] ?? $z['code'], $zusatz))) : e(t('detail.keine')) ?></dd>

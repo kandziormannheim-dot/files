@@ -9,6 +9,7 @@
       <?= csrfFeld() ?>
       <div class="field"><label for="e-name"><?= e(t('einstellungen.name')) ?></label><input id="e-name" name="name" type="text" value="<?= e($ich['name']) ?>" minlength="2" required></div>
       <div class="field"><label><?= e(t('login.email')) ?></label><input type="email" value="<?= e($ich['email']) ?>" readonly></div>
+      <?php if ($ich['art'] === 'privat') { ?><div class="field"><label><?= e(t('kundennummer')) ?></label><input type="text" class="k-mono" value="<?= e($ich['kundennummer'] ?? '') ?>" readonly></div><?php } ?>
       <div class="field"><label for="e-sprache"><?= e(t('einstellungen.sprache')) ?></label><select id="e-sprache" name="sprache"><option value="de" <?= $ich['sprache'] === 'de' ? 'selected' : '' ?>>Deutsch</option><option value="en" <?= $ich['sprache'] === 'en' ? 'selected' : '' ?>>English</option></select></div>
       <button class="btn btn--primary" type="submit"><?= e(t('einstellungen.speichern')) ?></button>
     </form>

@@ -24,7 +24,7 @@
       <tr>
         <td><a class="mono" href="<?= e(url('rechnungen/' . $r['id'])) ?>"><?= $entwurf ? '<span class="leise">wird erstellt</span>' : e($r['nummer']) ?></a></td>
         <td><?= statusPille((string) $r['status'], rechnungStatusName((string) $r['status'])) ?></td>
-        <td><a href="<?= e(url('kunden/firmen/' . $r['firma_id'])) ?>"><?= e($r['firma']) ?></a></td>
+        <td><a href="<?= e(url('kunden/firmen/' . $r['firma_id'])) ?>"><?= e($r['firma']) ?></a><?= $r['unterkunde_id'] ? '<br><a class="leise" href="' . e(url('kunden/unterkunden/' . $r['unterkunde_id'])) . '">↳ ' . e($r['unterkunde']) . '</a>' : '' ?><br><span class="mono leise"><?= e($r['kundennummer']) ?></span></td>
         <td><?= e(datumAnzeigen($r['zeitraum_von'])) ?> – <?= e(datumAnzeigen(gmdate('Y-m-d\TH:i:s\Z', strtotime((string) $r['zeitraum_bis']) - 1))) ?></td>
         <td class="mono rechts"><?= (int) $r['positionen'] ?></td>
         <td class="mono rechts"><?= e(euro((int) $r['netto_cent'])) ?></td>

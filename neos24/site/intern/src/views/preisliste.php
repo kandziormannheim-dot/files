@@ -1,6 +1,6 @@
 <?php
 $darfB = darf('kunden', 'bearbeiten');
-$konto = $liste['firma_id'] ? $liste['firma'] : ($liste['kunde_name'] ?: $liste['kunde_email']);
+$konto = $liste['unterkunde_id'] ? $liste['unterkunde'] . ' (' . $liste['unterkunde_nummer'] . ')' : ($liste['firma_id'] ? $liste['firma'] : ($liste['kunde_name'] ?: $liste['kunde_email']));
 $eigene = 0;
 foreach ($matrix as $land) { foreach ($land as $zelle) { foreach ($zelle as $a) { if ($a['liste'] !== null) { $eigene++; } } } }
 ?>

@@ -141,15 +141,15 @@ if ($pfad === '/bestellungen') {
         $wo[] = "b.abholung_json LIKE '%\"datum\":\"2%' AND b.status IN ('bezahlt','beauftragt')";
     }
     if ($q !== '') {
-        $wo[] = '(b.ext_ref LIKE ? OR b.email LIKE ? OR b.zielland = ? OR b.revolut_id = ? OR b.referenz LIKE ? OR f.name LIKE ?)';
-        array_push($werte, '%' . $q . '%', '%' . $q . '%', strtoupper($q), $q, '%' . $q . '%', '%' . $q . '%');
+        $wo[] = '(b.ext_ref LIKE ? OR b.email LIKE ? OR b.zielland = ? OR b.revolut_id = ? OR b.referenz LIKE ? OR f.name LIKE ? OR f.kundennummer LIKE ? OR u.nummer LIKE ? OR pk.kundennummer LIKE ?)';
+        array_push($werte, '%' . $q . '%', '%' . $q . '%', strtoupper($q), $q, '%' . $q . '%', '%' . $q . '%', $q . '%', $q . '%', $q . '%');
     }
-    $sql = ' FROM bestellungen b LEFT JOIN firmen f ON f.id = b.firma_id' . ($wo !== [] ? ' WHERE ' . implode(' AND ', $wo) : '');
+    $sql = ' FROM bestellungen b LEFT JOIN firmen f ON f.id = b.firma_id LEFT JOIN unterkunden u ON u.id = b.unterkunde_id LEFT JOIN kunden pk ON pk.id = b.kunde_id' . ($wo !== [] ? ' WHERE ' . implode(' AND ', $wo) : '');
     $st = $db->prepare('SELECT COUNT(*)' . $sql);
     $st->execute($werte);
     $gesamt = (int) $st->fetchColumn();
     $seite = seiteLesen();
-    $st = $db->prepare('SELECT b.*, f.name AS firma' . $sql . ' ORDER BY ' . ($abholung ? "json_extract(b.abholung_json, '$.datum'), " : '') . 'b.id DESC LIMIT 50 OFFSET ' . (($seite - 1) * 50));
+    $st = $db->prepare('SELECT b.*, f.name AS firma, COALESCE(u.nummer, f.kundennummer, pk.kundennummer) AS kundennummer, u.name AS unterkunde' . $sql . ' ORDER BY ' . ($abholung ? "json_extract(b.abholung_json, '$.datum'), " : '') . 'b.id DESC LIMIT 50 OFFSET ' . (($seite - 1) * 50));
     $st->execute($werte);
     ansicht('bestellungen', ['titel' => 'Bestellungen & Sendungen', 'zeilen' => $st->fetchAll(), 'gesamt' => $gesamt, 'seite' => $seite, 'status' => $status, 'versand' => $versand, 'abholung' => $abholung, 'q' => $q, 'aktiv' => 'bestellungen']);
 }
@@ -589,12 +589,25 @@ if ($pfad === '/kunden') {
         $st->execute($werte);
         $zeilen = $st->fetchAll();
     } elseif ($reiter === 'firmen') {
-        $zeilen = array_values(array_filter(firmenAlle(), static fn (array $f): bool => $q === '' || stripos($f['name'] . ' ' . $f['ort'] . ' ' . $f['rechnungs_email'], $q) !== false));
+        // Suche nach Kundennummer trifft auch Unterkunden (K-100001-02 → Firma K-100001)
+        $unterkundenTreffer = [];
+        if ($q !== '') {
+            $st = $db->prepare('SELECT firma_id, nummer, name FROM unterkunden WHERE nummer LIKE ? OR name LIKE ?');
+            $st->execute(['%' . $q . '%', '%' . $q . '%']);
+            foreach ($st->fetchAll() as $u) {
+                $unterkundenTreffer[(int) $u['firma_id']][] = $u;
+            }
+        }
+        $zeilen = array_values(array_filter(firmenAlle(), static fn (array $f): bool => $q === '' || isset($unterkundenTreffer[(int) $f['id']]) || stripos($f['name'] . ' ' . $f['ort'] . ' ' . $f['rechnungs_email'] . ' ' . $f['kundennummer'], $q) !== false));
+        foreach ($zeilen as &$f) {
+            $f['treffer_unterkunden'] = $unterkundenTreffer[(int) $f['id']] ?? [];
+        }
+        unset($f);
         $gesamt = count($zeilen);
     } else {
-        $sql = $q !== '' ? ' WHERE (k.email LIKE ? OR k.name LIKE ?)' : '';
-        $werte = $q !== '' ? ['%' . $q . '%', '%' . $q . '%'] : [];
-        $st = $db->prepare("SELECT COUNT(*) FROM kunden k WHERE k.art = 'privat'" . ($q !== '' ? ' AND (k.email LIKE ? OR k.name LIKE ?)' : ''));
+        $sql = $q !== '' ? ' WHERE (k.email LIKE ? OR k.name LIKE ? OR k.kundennummer LIKE ?)' : '';
+        $werte = $q !== '' ? ['%' . $q . '%', '%' . $q . '%', '%' . $q . '%'] : [];
+        $st = $db->prepare("SELECT COUNT(*) FROM kunden k WHERE k.art = 'privat'" . ($q !== '' ? ' AND (k.email LIKE ? OR k.name LIKE ? OR k.kundennummer LIKE ?)' : ''));
         $st->execute($werte);
         $gesamt = (int) $st->fetchColumn();
         $st = $db->prepare(<<<'SQL'
@@ -602,7 +615,7 @@ if ($pfad === '/kunden') {
                    (SELECT COALESCE(SUM(betrag_cent),0) FROM bestellungen b WHERE b.kunde_id = k.id AND b.status IN ('bezahlt','beauftragt')) AS umsatz,
                    (SELECT COALESCE(SUM(betrag_cent),0) FROM guthaben_buchungen g WHERE g.kunde_id = k.id AND g.firma_id IS NULL) AS guthaben
             FROM kunden k WHERE k.art = 'privat'
-        SQL . ($q !== '' ? ' AND (k.email LIKE ? OR k.name LIKE ?)' : '') . ' ORDER BY k.id DESC LIMIT 50 OFFSET ' . (($seite - 1) * 50));
+        SQL . ($q !== '' ? ' AND (k.email LIKE ? OR k.name LIKE ? OR k.kundennummer LIKE ?)' : '') . ' ORDER BY k.id DESC LIMIT 50 OFFSET ' . (($seite - 1) * 50));
         $st->execute($werte);
         $zeilen = $st->fetchAll();
     }
@@ -648,7 +661,7 @@ if ($pfad === '/kunden/firmen/neu') {
     ansicht('firma_form', ['titel' => 'Firmenkonto anlegen', 'werte' => $werte, 'fehler' => $fehler, 'anfrage' => $anfrage, 'aktiv' => 'kunden']);
 }
 
-if (preg_match('#^/kunden/firmen/(\d+)(?:/(daten|einladen|benutzer|rechnung|aktiv))?$#', $pfad, $t)) {
+if (preg_match('#^/kunden/firmen/(\d+)(?:/(daten|einladen|benutzer|rechnung|aktiv|unterkunde|sync))?$#', $pfad, $t)) {
     rechtErzwingen('kunden');
     $firma = firmaLaden((int) $t[1]);
     if ($firma === null) {
@@ -663,12 +676,26 @@ if (preg_match('#^/kunden/firmen/(\d+)(?:/(daten|einladen|benutzer|rechnung|akti
                 if ($zeitraum === null) {
                     throw new InvalidArgumentException('Bitte einen Monat wählen.');
                 }
-                $r = rechnungErzeugen((int) $firma['id'], $zeitraum[0], $zeitraum[1], $ich['name']);
-                protokollieren('rechnung.erzeugt', 'rechnung', $r['nummer'], ['firma' => $firma['name'], 'brutto' => $r['brutto_cent']]);
+                $unterkundeId = (int) feld('unterkunde_id', 10) ?: null;
+                $r = rechnungErzeugen((int) $firma['id'], $zeitraum[0], $zeitraum[1], $ich['name'], $unterkundeId);
+                protokollieren('rechnung.erzeugt', 'rechnung', $r['nummer'], ['firma' => $firma['name'], 'unterkunde' => $r['unterkunde_nummer'] ?? null, 'brutto' => $r['brutto_cent']]);
                 hinweisSetzen('Rechnung ' . $r['nummer'] . ' erzeugt (' . euro((int) $r['brutto_cent']) . ' brutto) und per Mail angekündigt.');
                 umleiten(url('rechnungen/' . $r['id']));
             }
+            if ($aktion === 'sync') {
+                rechtErzwingen('kunden', 'bearbeiten');
+                hinweisSetzen(syncJetzt('firmen', $firma));
+                umleiten(url('kunden/firmen/' . $firma['id']));
+            }
             rechtErzwingen('kunden', 'bearbeiten');
+            if ($aktion === 'unterkunde') {
+                $id = unterkundeAnlegen((int) $firma['id'], ['name' => feld('name', 120), 'strasse' => feld('strasse', 120), 'plz' => feld('plz', 12), 'ort' => feld('ort', 80), 'land' => strtoupper(feld('land', 2)) ?: $firma['land'],
+                    'ust_id' => feld('ust_id', 30), 'rechnungs_email' => feld('rechnungs_email', 254), 'zahlungsziel_tage' => feld('zahlungsziel_tage', 4), 'notiz' => feld('notiz', 200)], $ich['name']);
+                $u = unterkundeLaden($id);
+                protokollieren('unterkunde.angelegt', 'unterkunde', $id, ['firma' => $firma['name'], 'nummer' => $u['nummer'] ?? '']);
+                hinweisSetzen('Unterkunde ' . ($u['nummer'] ?? '') . ' angelegt.');
+                umleiten(url('kunden/unterkunden/' . $id));
+            }
             if ($aktion === 'daten') {
                 $daten = ['name' => feld('name', 120), 'strasse' => feld('strasse', 120), 'plz' => feld('plz', 12), 'ort' => feld('ort', 80), 'land' => strtoupper(feld('land', 2)) ?: 'DE', 'ust_id' => feld('ust_id', 30), 'rechnungs_email' => mb_strtolower(feld('rechnungs_email', 254)), 'zahlungsziel_tage' => max(0, (int) feld('zahlungsziel_tage', 4))];
                 if (mb_strlen($daten['name']) < 2) {
@@ -695,6 +722,14 @@ if (preg_match('#^/kunden/firmen/(\d+)(?:/(daten|einladen|benutzer|rechnung|akti
                 if ($was === 'einladen') {
                     firmenBenutzerEinladen($firma, (string) $kunde['email'], (string) $kunde['name'], (string) $kunde['firmenrolle'], (string) $kunde['sprache']);
                     hinweisSetzen('Einladung erneut verschickt.');
+                } elseif ($was === 'unterkunde') {
+                    $uId = (int) feld('unterkunde_id', 10);
+                    $u = $uId > 0 ? unterkundeLaden($uId) : null;
+                    if ($uId > 0 && ($u === null || (int) $u['firma_id'] !== (int) $firma['id'])) {
+                        throw new InvalidArgumentException('Unterkunde gehört nicht zu dieser Firma.');
+                    }
+                    kundeAktualisieren((int) $kunde['id'], ['unterkunde_id' => $uId > 0 ? $uId : null]);
+                    hinweisSetzen($u !== null ? $kunde['name'] . ' ist jetzt ' . $u['nummer'] . ' (' . $u['name'] . ') zugeordnet.' : $kunde['name'] . ' bucht wieder für die Hauptfirma.');
                 } else {
                     kundeAktualisieren((int) $kunde['id'], ['aktiv' => $was === 'aktivieren' ? 1 : 0]);
                     hinweisSetzen('Benutzer ' . ($was === 'aktivieren' ? 'aktiviert' : 'deaktiviert') . '.');
@@ -714,35 +749,98 @@ if (preg_match('#^/kunden/firmen/(\d+)(?:/(daten|einladen|benutzer|rechnung|akti
     }
     $guthabenKonto = ['id' => 0, 'art' => 'business', 'firma_id' => (int) $firma['id']];
     ansicht('firma', ['titel' => $firma['name'], 'firma' => $firma, 'benutzer' => firmenBenutzer((int) $firma['id']), 'sendungen' => $st->fetchAll(), 'rechnungen' => rechnungenDerFirma((int) $firma['id']), 'monate' => $monate,
+        'unterkunden' => unterkundenDerFirma((int) $firma['id']), 'sync' => syncKarte('firmen', $firma),
         'guthaben' => guthabenStand($guthabenKonto), 'buchungen' => guthabenBuchungen($guthabenKonto, 10), 'aktiv' => 'kunden']);
 }
 
-if (preg_match('#^/kunden/privat/(\d+)$#', $pfad, $t)) {
+// Unterkunden: weitere Unternehmen einer Firmengruppe oder Standorte, eigene Rechnungsempfänger unter der Kundennummer der Firma
+if (preg_match('#^/kunden/unterkunden/(\d+)(?:/(daten|aktiv|rechnung|sync))?$#', $pfad, $t)) {
+    rechtErzwingen('kunden');
+    $u = unterkundeLaden((int) $t[1]);
+    if ($u === null) {
+        fehlerSeite(404, 'Nicht gefunden', 'Diesen Unterkunden gibt es nicht.');
+    }
+    $firma = firmaLaden((int) $u['firma_id']);
+    $aktion = $t[2] ?? '';
+    if ($aktion !== '' && $methode === 'POST') {
+        try {
+            if ($aktion === 'rechnung') {
+                rechtErzwingen('rechnungen', 'bearbeiten');
+                $zeitraum = monatsZeitraum(feld('monat', 7));
+                if ($zeitraum === null) {
+                    throw new InvalidArgumentException('Bitte einen Monat wählen.');
+                }
+                $r = rechnungErzeugen((int) $u['firma_id'], $zeitraum[0], $zeitraum[1], $ich['name'], (int) $u['id']);
+                protokollieren('rechnung.erzeugt', 'rechnung', $r['nummer'], ['firma' => $firma['name'] ?? '', 'unterkunde' => $u['nummer'], 'brutto' => $r['brutto_cent']]);
+                hinweisSetzen('Rechnung ' . $r['nummer'] . ' für ' . $u['nummer'] . ' erzeugt (' . euro((int) $r['brutto_cent']) . ' brutto) und per Mail angekündigt.');
+                umleiten(url('rechnungen/' . $r['id']));
+            }
+            rechtErzwingen('kunden', 'bearbeiten');
+            if ($aktion === 'daten') {
+                $daten = ['name' => feld('name', 120), 'strasse' => feld('strasse', 120), 'plz' => feld('plz', 12), 'ort' => feld('ort', 80), 'land' => strtoupper(feld('land', 2)) ?: 'DE', 'ust_id' => feld('ust_id', 30), 'rechnungs_email' => mb_strtolower(feld('rechnungs_email', 254)),
+                    'zahlungsziel_tage' => feld('zahlungsziel_tage', 4) === '' ? null : max(0, (int) feld('zahlungsziel_tage', 4)), 'notiz' => feld('notiz', 200)];
+                if (mb_strlen($daten['name']) < 2) {
+                    throw new InvalidArgumentException('Bitte einen Namen angeben.');
+                }
+                unterkundeAktualisieren((int) $u['id'], $daten);
+                protokollieren('unterkunde.geaendert', 'unterkunde', (int) $u['id']);
+                hinweisSetzen('Unterkunde gespeichert.');
+            } elseif ($aktion === 'aktiv') {
+                $neu = (int) $u['aktiv'] === 1 ? 0 : 1;
+                unterkundeAktualisieren((int) $u['id'], ['aktiv' => $neu]);
+                protokollieren('unterkunde.' . ($neu ? 'aktiviert' : 'deaktiviert'), 'unterkunde', (int) $u['id']);
+                hinweisSetzen($neu ? 'Unterkunde aktiviert.' : 'Unterkunde deaktiviert — neue Sendungen können ihm nicht mehr zugeordnet werden.');
+            } elseif ($aktion === 'sync') {
+                hinweisSetzen(syncJetzt('unterkunden', $u));
+            }
+        } catch (InvalidArgumentException $e) {
+            hinweisSetzen($e->getMessage(), 'fehler');
+        }
+        umleiten(url('kunden/unterkunden/' . $u['id']));
+    }
+    $st = $db->prepare('SELECT b.*, k.name AS angelegt_von FROM bestellungen b LEFT JOIN kunden k ON k.id = b.kunde_id WHERE b.unterkunde_id = ? ORDER BY b.id DESC LIMIT 20');
+    $st->execute([$u['id']]);
+    $bn = $db->prepare('SELECT * FROM kunden WHERE unterkunde_id = ? ORDER BY name');
+    $bn->execute([$u['id']]);
+    $monate = [];
+    for ($i = 0; $i < 6; $i++) {
+        $monate[] = gmdate('Y-m', strtotime('first day of -' . $i . ' month'));
+    }
+    ansicht('unterkunde', ['titel' => $u['name'] . ' · ' . $u['nummer'], 'u' => $u, 'firma' => $firma, 'benutzer' => $bn->fetchAll(), 'sendungen' => $st->fetchAll(), 'rechnungen' => rechnungenDerFirma((int) $u['firma_id'], (int) $u['id']), 'monate' => $monate, 'sync' => syncKarte('unterkunden', $u), 'aktiv' => 'kunden']);
+}
+
+if (preg_match('#^/kunden/privat/(\d+)(?:/(sync))?$#', $pfad, $t)) {
     rechtErzwingen('kunden');
     $kunde = kundeLaden((int) $t[1]);
     if ($kunde === null || $kunde['art'] !== 'privat') {
         fehlerSeite(404, 'Nicht gefunden', 'Diesen Privatkunden gibt es nicht.');
     }
+    if (($t[2] ?? '') === 'sync' && $methode === 'POST') {
+        rechtErzwingen('kunden', 'bearbeiten');
+        hinweisSetzen(syncJetzt('kunden', $kunde));
+        umleiten(url('kunden/privat/' . $kunde['id']));
+    }
     $st = $db->prepare('SELECT * FROM bestellungen WHERE kunde_id = ? ORDER BY id DESC LIMIT 20');
     $st->execute([$kunde['id']]);
     $rk = $db->prepare('SELECT r.*, b.ext_ref FROM reklamationen r JOIN bestellungen b ON b.id = r.bestellung_id WHERE r.kunde_id = ? AND r.firma_id IS NULL ORDER BY r.id DESC');
     $rk->execute([$kunde['id']]);
-    ansicht('privatkunde', ['titel' => $kunde['name'], 'kunde' => $kunde, 'bestellungen' => $st->fetchAll(), 'guthaben' => guthabenStand($kunde), 'buchungen' => guthabenBuchungen($kunde, 20), 'reklamationen' => $rk->fetchAll(), 'aktiv' => 'kunden']);
+    ansicht('privatkunde', ['titel' => $kunde['name'], 'kunde' => $kunde, 'bestellungen' => $st->fetchAll(), 'guthaben' => guthabenStand($kunde), 'buchungen' => guthabenBuchungen($kunde, 20), 'reklamationen' => $rk->fetchAll(), 'sync' => syncKarte('kunden', $kunde), 'aktiv' => 'kunden']);
 }
 
-// Kundenpreislisten: je Firma oder Privatkunde eine eigene Matrix
+// Kundenpreislisten: je Firma, Unterkunde oder Privatkunde eine eigene Matrix
 if ($pfad === '/kunden/preisliste/anlegen' && $methode === 'POST') {
     rechtErzwingen('kunden', 'bearbeiten');
     $firmaId = (int) feld('firma_id', 10) ?: null;
     $kundeId = (int) feld('kunde_id', 10) ?: null;
+    $unterkundeId = (int) feld('unterkunde_id', 10) ?: null;
     try {
-        $id = preislisteAnlegen($firmaId ? null : $kundeId, $firmaId, feld('name', 80), (float) str_replace(',', '.', feld('prozent', 8)), $ich['name'], feld('fehlend', 10));
-        protokollieren('preisliste.angelegt', 'preisliste', $id, ['firma_id' => $firmaId, 'kunde_id' => $kundeId, 'prozent' => feld('prozent', 8)]);
+        $id = preislisteAnlegen($firmaId || $unterkundeId ? null : $kundeId, $unterkundeId ? null : $firmaId, feld('name', 80), (float) str_replace(',', '.', feld('prozent', 8)), $ich['name'], feld('fehlend', 10), $unterkundeId);
+        protokollieren('preisliste.angelegt', 'preisliste', $id, ['firma_id' => $firmaId, 'kunde_id' => $kundeId, 'unterkunde_id' => $unterkundeId, 'prozent' => feld('prozent', 8)]);
         hinweisSetzen('Preisliste angelegt — alle Zellen aus der Routingmatrix übernommen. Jetzt einzelne Preise anpassen oder eine Datei importieren.');
         umleiten(url('kunden/preisliste/' . $id));
     } catch (InvalidArgumentException $e) {
         hinweisSetzen($e->getMessage(), 'fehler');
-        umleiten(url($firmaId ? 'kunden/firmen/' . $firmaId : 'kunden/privat/' . $kundeId));
+        umleiten(url($unterkundeId ? 'kunden/unterkunden/' . $unterkundeId : ($firmaId ? 'kunden/firmen/' . $firmaId : 'kunden/privat/' . $kundeId)));
     }
 }
 
@@ -752,7 +850,7 @@ if (preg_match('#^/kunden/preisliste/(\d+)(?:/(zellen|zusatz|einstellungen|impor
     if ($liste === null) {
         fehlerSeite(404, 'Nicht gefunden', 'Diese Preisliste gibt es nicht.');
     }
-    $zurueck = $liste['firma_id'] ? url('kunden/firmen/' . $liste['firma_id']) : url('kunden/privat/' . $liste['kunde_id']);
+    $zurueck = $liste['unterkunde_id'] ? url('kunden/unterkunden/' . $liste['unterkunde_id']) : ($liste['firma_id'] ? url('kunden/firmen/' . $liste['firma_id']) : url('kunden/privat/' . $liste['kunde_id']));
     $aktion = $t[2] ?? '';
     if ($aktion !== '' && $methode === 'POST') {
         rechtErzwingen('kunden', $aktion === 'loeschen' ? 'loeschen' : 'bearbeiten');
@@ -977,6 +1075,84 @@ if (preg_match('#^/reklamationen/(\d+)(?:/(status|storno))?$#', $pfad, $t)) {
         umleiten(url('reklamationen/' . $r['id']));
     }
     ansicht('reklamation', ['titel' => 'Reklamation #' . $r['id'], 'r' => $r, 'b' => bestellungLaden('id', (string) $r['bestellung_id']), 'aktiv' => 'reklamationen']);
+}
+
+// ------------------------------------------------------------- Synchronisation
+
+/** „Jetzt abgleichen“ für einen Datensatz: hinschieben und zurückholen; liefert den Hinweistext. */
+function syncJetzt(string $tabelle, array $zeile): string
+{
+    if (syncSysteme() === []) {
+        return 'Kein System aktiv — lexware.aktiv oder odoo.aktiv in der Konfiguration setzen.';
+    }
+    syncMarkieren($tabelle, (int) $zeile['id']);
+    $z = syncAuftraegeAbarbeiten(10);
+    $meldungen = ['Übergeben: ' . $z['erledigt'] . ' erledigt, ' . $z['fehler'] . ' Fehler'];
+    foreach (syncSysteme() as $system) {
+        $neu = syncZeileLaden($tabelle, (int) $zeile['id']) ?? $zeile;
+        $kennung = $system === 'odoo' ? (string) (int) ($neu['odoo_id'] ?? 0) : (string) ($neu['lexware_kontakt_id'] ?? '');
+        if ($kennung === '' || $kennung === '0') {
+            continue;
+        }
+        try {
+            syncAbholenEinzeln($system, $kennung);
+            $meldungen[] = ucfirst($system) . ' abgeholt';
+        } catch (Throwable $e) {
+            $meldungen[] = ucfirst($system) . ': ' . $e->getMessage();
+        }
+    }
+
+    return implode(' · ', $meldungen) . '.';
+}
+
+if ($pfad === '/sync' || preg_match('#^/sync/(auftrag|konflikt|alle|abholen|nachholen)$#', $pfad, $t)) {
+    rechtErzwingen('sync');
+    $aktion = $t[1] ?? '';
+    if ($aktion !== '' && $methode === 'POST') {
+        rechtErzwingen('sync', 'bearbeiten');
+        try {
+            if ($aktion === 'auftrag') {
+                $id = (int) feld('id', 10);
+                $db->prepare("UPDATE sync_auftraege SET status = 'offen', versuche = 0 WHERE id = ? AND status <> 'erledigt'")->execute([$id]);
+                $z = syncAuftraegeAbarbeiten(5);
+                hinweisSetzen('Auftrag erneut ausgeführt: ' . $z['erledigt'] . ' erledigt, ' . $z['fehler'] . ' Fehler.');
+            } elseif ($aktion === 'nachholen') {
+                $db->exec("UPDATE sync_auftraege SET status = 'offen', versuche = 0 WHERE status = 'fehler'");
+                $z = syncAuftraegeAbarbeiten(200);
+                hinweisSetzen('Warteschlange abgearbeitet: ' . $z['erledigt'] . ' erledigt, ' . $z['fehler'] . ' Fehler.');
+            } elseif ($aktion === 'konflikt') {
+                $db->prepare('UPDATE sync_konflikte SET erledigt = 1 WHERE id = ?')->execute([(int) feld('id', 10)]);
+                hinweisSetzen('Konflikt als erledigt markiert.');
+            } elseif ($aktion === 'alle') {
+                $n = syncAlleVormerken();
+                $z = syncAuftraegeAbarbeiten(200);
+                protokollieren('sync.alle', 'sync', '', ['aufträge' => $n]);
+                hinweisSetzen($n . ' Kundendatensätze vorgemerkt, ' . $z['erledigt'] . ' sofort übergeben, ' . $z['fehler'] . ' Fehler — Rest per Cron.');
+            } elseif ($aktion === 'abholen') {
+                $a = syncAbholen(true);
+                hinweisSetzen('Rückrichtung: Odoo ' . $a['odoo'] . ', Lexware ' . $a['lexware'] . ' Datensatz/-sätze geprüft.' . (isset($a['odoo_fehler']) ? ' Odoo: ' . $a['odoo_fehler'] : '') . (isset($a['lexware_fehler']) ? ' Lexware: ' . $a['lexware_fehler'] : ''));
+            }
+        } catch (Throwable $e) {
+            hinweisSetzen($e->getMessage(), 'fehler');
+        }
+        umleiten(url('sync'));
+    }
+    $konflikte = $db->query(<<<'SQL'
+        SELECT k.*, COALESCE(f.name, u.name, ku.name, ku.email) AS bezug_name, COALESCE(f.kundennummer, u.nummer, ku.kundennummer) AS bezug_nummer
+        FROM sync_konflikte k
+        LEFT JOIN firmen f ON k.bezug_tabelle = 'firmen' AND f.id = k.bezug_id
+        LEFT JOIN unterkunden u ON k.bezug_tabelle = 'unterkunden' AND u.id = k.bezug_id
+        LEFT JOIN kunden ku ON k.bezug_tabelle = 'kunden' AND ku.id = k.bezug_id
+        ORDER BY k.erledigt, k.id DESC LIMIT 100
+    SQL)->fetchAll();
+    $auftraege = $db->query("SELECT * FROM sync_auftraege WHERE status <> 'erledigt' ORDER BY id DESC LIMIT 100")->fetchAll();
+    $erledigt = $db->query("SELECT * FROM sync_auftraege WHERE status = 'erledigt' ORDER BY id DESC LIMIT 20")->fetchAll();
+    $stand = ['firmen' => $db->query("SELECT COUNT(*) AS n, SUM(CASE WHEN odoo_id > 0 THEN 1 ELSE 0 END) AS odoo, SUM(CASE WHEN lexware_kontakt_id <> '' THEN 1 ELSE 0 END) AS lexware FROM firmen")->fetch(),
+        'unterkunden' => $db->query("SELECT COUNT(*) AS n, SUM(CASE WHEN odoo_id > 0 THEN 1 ELSE 0 END) AS odoo, SUM(CASE WHEN lexware_kontakt_id <> '' THEN 1 ELSE 0 END) AS lexware FROM unterkunden")->fetch(),
+        'kunden' => $db->query("SELECT COUNT(*) AS n, SUM(CASE WHEN odoo_id > 0 THEN 1 ELSE 0 END) AS odoo, SUM(CASE WHEN lexware_kontakt_id <> '' THEN 1 ELSE 0 END) AS lexware FROM kunden WHERE art = 'privat'")->fetch(),
+        'benutzer' => $db->query("SELECT COUNT(*) AS n, SUM(CASE WHEN odoo_id > 0 THEN 1 ELSE 0 END) AS odoo, 0 AS lexware FROM kunden WHERE art = 'business'")->fetch(),
+        'bestellungen' => $db->query("SELECT COUNT(*) AS n, SUM(CASE WHEN odoo_id > 0 THEN 1 ELSE 0 END) AS odoo, 0 AS lexware FROM bestellungen WHERE status IN ('beauftragt','bezahlt')")->fetch()];
+    ansicht('sync', ['titel' => 'Synchronisation', 'status' => syncStatus(), 'auftraege' => $auftraege, 'erledigt' => $erledigt, 'konflikte' => $konflikte, 'stand' => $stand, 'aktiv' => 'sync']);
 }
 
 // ------------------------------------------------------------ Rechnungsprüfung

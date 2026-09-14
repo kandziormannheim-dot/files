@@ -1,6 +1,6 @@
 <?php $abs = json_decode((string) ($kunde['absender_json'] ?? '{}'), true) ?: []; ?>
 <header class="kopfzeile">
-  <div><a class="zurueck" href="<?= e(url('kunden', ['reiter' => 'privatkunden'])) ?>">← Privatkunden</a><h1 class="h1"><?= e($kunde['name']) ?><?= (int) $kunde['aktiv'] === 1 ? '' : ' <span class="pille pille--warn">geschlossen</span>' ?></h1></div>
+  <div><a class="zurueck" href="<?= e(url('kunden', ['reiter' => 'privatkunden'])) ?>">← Privatkunden</a><h1 class="h1"><?= e($kunde['name']) ?> <span class="mono leise" style="font-size:.7em"><?= e($kunde['kundennummer']) ?></span><?= (int) $kunde['aktiv'] === 1 ? '' : ' <span class="pille pille--warn">geschlossen</span>' ?></h1></div>
   <?php if (darf('bestellungen')) { ?><a class="knopf knopf--leise" href="<?= e(url('bestellungen', ['q' => $kunde['email']])) ?>">Alle Bestellungen</a><?php } ?>
 </header>
 <div class="spalten spalten--2-1">
@@ -44,6 +44,7 @@
     <div class="karte karte--ink">
       <h2 class="h2">Konto</h2>
       <dl class="liste liste--ink">
+        <dt>Kundennummer</dt><dd class="mono"><strong><?= e($kunde['kundennummer']) ?></strong></dd>
         <dt>E-Mail</dt><dd><a href="mailto:<?= e($kunde['email']) ?>"><?= e($kunde['email']) ?></a></dd>
         <dt>Bestätigt</dt><dd><?= (int) $kunde['email_bestaetigt'] === 1 ? 'ja' : 'nein' ?></dd>
         <dt>Passwort</dt><dd><?= $kunde['passwort_hash'] !== null ? 'gesetzt' : 'nur Anmeldelink' ?></dd>
@@ -53,6 +54,7 @@
         <?php if ($abs !== []) { ?><dt>Absender</dt><dd><?= e($abs['name'] ?? '') ?><br><?= e($abs['strasse'] ?? '') ?><br><?= e(trim(($abs['plz'] ?? '') . ' ' . ($abs['ort'] ?? ''))) ?></dd><?php } ?>
       </dl>
     </div>
+    <?php $syncUrl = url('kunden/privat/' . $kunde['id'] . '/sync'); require __DIR__ . '/systeme_karte.php'; ?>
     <div class="karte">
       <div class="karte-kopf"><h2 class="h2">Preisliste</h2><?php if ($kunde['preisliste_id']) { ?><a class="knopf knopf--leise knopf--klein" href="<?= e(url('kunden/preisliste/' . $kunde['preisliste_id'])) ?>">Bearbeiten</a><?php } ?></div>
       <?php if ($kunde['preisliste_id']) { $pl = preislisteLaden((int) $kunde['preisliste_id']); ?>
