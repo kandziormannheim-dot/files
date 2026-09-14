@@ -17,8 +17,12 @@
 declare(strict_types=1);
 
 return [
-    // Aufschlag je Klasse in Cent auf den Nettopreis des Landes (nur für das Säen).
+    // Kategorien: brief (Brief/Dokumente), paket, palette (nur auf Anfrage, keine Klassen).
+    // Aufschlag je Klasse in Cent auf den Nettopreis des Landes (Paket bis 2 kg); Briefklassen liegen darunter.
     'gewichtsklassen' => [
+        'brief-50' => ['de' => 'Brief bis 50 g', 'en' => 'Letter up to 50 g', 'max_gramm' => 50, 'aufschlag' => -110, 'kategorie' => 'brief'],
+        'brief-500' => ['de' => 'Dokumente bis 500 g', 'en' => 'Documents up to 500 g', 'max_gramm' => 500, 'aufschlag' => -60, 'kategorie' => 'brief'],
+        'brief-2kg' => ['de' => 'Dokumente bis 2 kg', 'en' => 'Documents up to 2 kg', 'max_gramm' => 2000, 'aufschlag' => -20, 'kategorie' => 'brief'],
         '2kg' => ['de' => 'bis 2 kg', 'en' => 'up to 2 kg', 'max_gramm' => 2000, 'aufschlag' => 0],
         '5kg' => ['de' => 'bis 5 kg', 'en' => 'up to 5 kg', 'max_gramm' => 5000, 'aufschlag' => 180],
         '10kg' => ['de' => 'bis 10 kg', 'en' => 'up to 10 kg', 'max_gramm' => 10000, 'aufschlag' => 390],
@@ -36,5 +40,15 @@ return [
         'IT' => ['name' => ['de' => 'Italien', 'en' => 'Italy'],          'carrier' => 'GLS, Poste Italiane',    'laufzeit' => ['de' => '2–4 Werktage', 'en' => '2–4 working days'], 'netto' => 285],
         'ES' => ['name' => ['de' => 'Spanien', 'en' => 'Spain'],          'carrier' => 'Correos',                'laufzeit' => ['de' => '2–4 Werktage', 'en' => '2–4 working days'], 'netto' => 295],
         'PT' => ['name' => ['de' => 'Portugal', 'en' => 'Portugal'],      'carrier' => 'CTT',                    'laufzeit' => ['de' => '3–5 Werktage', 'en' => '3–5 working days'], 'netto' => 310],
+        // Weltweit (PLATZHALTER — Konditionen im Dashboard pflegen; Nicht-EU-Ziele mit Zollhinweis)
+        'CH' => ['name' => ['de' => 'Schweiz', 'en' => 'Switzerland'],           'carrier' => 'DHL Express, UPS',       'laufzeit' => ['de' => '2–3 Werktage', 'en' => '2–3 working days'], 'netto' => 890],
+        'GB' => ['name' => ['de' => 'Großbritannien', 'en' => 'United Kingdom'], 'carrier' => 'DHL Express, UPS',       'laufzeit' => ['de' => '2–4 Werktage', 'en' => '2–4 working days'], 'netto' => 790],
+        'TR' => ['name' => ['de' => 'Türkei', 'en' => 'Türkiye'],                'carrier' => 'DHL Express, UPS',       'laufzeit' => ['de' => '3–5 Werktage', 'en' => '3–5 working days'], 'netto' => 1290],
+        'US' => ['name' => ['de' => 'USA', 'en' => 'United States'],             'carrier' => 'DHL Express, UPS, FedEx', 'laufzeit' => ['de' => '3–6 Werktage', 'en' => '3–6 working days'], 'netto' => 1990],
+        'CA' => ['name' => ['de' => 'Kanada', 'en' => 'Canada'],                 'carrier' => 'DHL Express, UPS, FedEx', 'laufzeit' => ['de' => '4–7 Werktage', 'en' => '4–7 working days'], 'netto' => 2090],
+        'AE' => ['name' => ['de' => 'Vereinigte Arabische Emirate', 'en' => 'United Arab Emirates'], 'carrier' => 'DHL Express, FedEx', 'laufzeit' => ['de' => '3–6 Werktage', 'en' => '3–6 working days'], 'netto' => 2190],
+        'CN' => ['name' => ['de' => 'China', 'en' => 'China'],                   'carrier' => 'DHL Express, UPS, FedEx', 'laufzeit' => ['de' => '4–8 Werktage', 'en' => '4–8 working days'], 'netto' => 2290],
+        'JP' => ['name' => ['de' => 'Japan', 'en' => 'Japan'],                   'carrier' => 'DHL Express, FedEx',     'laufzeit' => ['de' => '4–7 Werktage', 'en' => '4–7 working days'], 'netto' => 2390],
+        'AU' => ['name' => ['de' => 'Australien', 'en' => 'Australia'],          'carrier' => 'DHL Express, UPS, FedEx', 'laufzeit' => ['de' => '5–9 Werktage', 'en' => '5–9 working days'], 'netto' => 2590],
     ],
 ];

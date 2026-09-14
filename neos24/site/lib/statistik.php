@@ -29,6 +29,7 @@ const STATISTIK_DIMENSIONEN = [
     'kundenart' => 'Kundenart',
     'zahlungsart' => 'Zahlungsart',
     'gewichtsklasse' => 'Gewichtsklasse',
+    'kategorie' => 'Kategorie',
     'art' => 'Auftragsart',
     'status' => 'Status',
     'versandstatus' => 'Versandstatus',
@@ -225,6 +226,7 @@ function statistikDimensionSql(string $dim): string
         'kundenart' => "CASE WHEN b.firma_id IS NOT NULL THEN 'Geschäftskunde' ELSE 'Privatkunde' END",
         'zahlungsart' => 'b.zahlungsart',
         'gewichtsklasse' => 'b.gewichtsklasse',
+        'kategorie' => "COALESCE(b.kategorie, 'paket')",
         'art' => 'b.art',
         'status' => 'b.status',
         'versandstatus' => 'b.versandstatus',
@@ -249,6 +251,9 @@ function statistikDimensionName(string $dim, string $wert): string
     }
     if ($dim === 'art') {
         return ['sendung' => 'Sendung', 'retoure' => 'Retoure', 'nachberechnung' => 'Nachberechnung'][$wert] ?? $wert;
+    }
+    if ($dim === 'kategorie') {
+        return kategorieName($wert);
     }
     if ($dim === 'versandstatus' && defined('VERSANDSTATUS')) {
         return VERSANDSTATUS[$wert]['de'] ?? $wert;

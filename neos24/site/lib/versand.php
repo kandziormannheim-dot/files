@@ -88,15 +88,31 @@ function volumengewichtGramm(array $masse, int $faktor): int
 }
 
 /** Gewichtsklasse zu einem Gewicht in Gramm: die kleinste, die noch passt. */
-function gewichtsklasseFuerGewicht(int $gramm): ?string
+function gewichtsklasseFuerGewicht(int $gramm, string $kategorie = 'paket'): ?string
 {
+    $kategorie = isset(KATEGORIEN[$kategorie]) ? $kategorie : 'paket';
     foreach (preisliste()['gewichtsklassen'] as $code => $gk) {
+        if (($gk['kategorie'] ?? 'paket') !== $kategorie) {
+            continue;
+        }
         if ((int) $gk['max_gramm'] <= 0 || (int) $gk['max_gramm'] >= $gramm) {
             return (string) $code;
         }
     }
 
     return null;
+}
+
+/** Kategorie einer Gewichtsklasse (paket, wenn unbekannt). */
+function kategorieDerKlasse(string $gewichtsklasse): string
+{
+    return (string) (preisliste()['gewichtsklassen'][$gewichtsklasse]['kategorie'] ?? 'paket');
+}
+
+/** Gewichtsklassen einer Kategorie in Reihenfolge. */
+function gewichtsklassenDerKategorie(string $kategorie): array
+{
+    return array_filter(preisliste()['gewichtsklassen'], static fn (array $gk): bool => ($gk['kategorie'] ?? 'paket') === $kategorie);
 }
 
 // ---------------------------------------------------------- Zusatzleistungen
@@ -347,10 +363,18 @@ function bestellungAnlegen(array $p): array
     $carrier = saeubern($p['carrier'] ?? '', 60);
     $preislisteId = isset($p['preisliste_id']) && (int) $p['preisliste_id'] > 0 ? (int) $p['preisliste_id'] : null;
     $gk = saeubern($p['gewichtsklasse'] ?? '', 12);
-    // Volumengewicht (L·B·H / Faktor des Carriers) hebt die Klasse an, wenn es das reale Gewicht übersteigt.
+    // Kategorie: brief (Brief/Dokumente) oder paket; Palette ist nicht buchbar (nur Anfrage). Eine angegebene Klasse legt die Kategorie fest.
+    if (($p['kategorie'] ?? '') !== '' && !in_array($p['kategorie'], ['brief', 'paket'], true)) {
+        return ['fehler' => ['kategorie']];
+    }
+    $kategorie = in_array($p['kategorie'] ?? '', ['brief', 'paket'], true) ? (string) $p['kategorie'] : 'paket';
+    if ($gk !== '' && isset(preisliste()['gewichtsklassen'][$gk])) {
+        $kategorie = kategorieDerKlasse($gk);
+    }
+    // Volumengewicht (L·B·H / Faktor des Carriers) hebt die Klasse an, wenn es das reale Gewicht übersteigt — nur bei Paketen.
     $volumen = 0;
     if ($gk === '' && $gewicht > 0) {
-        $vorlaeufig = (string) gewichtsklasseFuerGewicht($gewicht);
+        $vorlaeufig = (string) gewichtsklasseFuerGewicht($gewicht, $kategorie);
         $faktor = 5000;
         foreach ($vorlaeufig !== '' ? angeboteFuer($zielland, $vorlaeufig, $preislisteId) : [] as $a) {
             if ($carrier === '' || $a['carrier'] === $carrier) {
@@ -358,11 +382,11 @@ function bestellungAnlegen(array $p): array
                 break;
             }
         }
-        $volumen = volumengewichtGramm($masse, $faktor);
-        $gk = (string) gewichtsklasseFuerGewicht(max($gewicht, $volumen));
+        $volumen = $kategorie === 'paket' ? volumengewichtGramm($masse, $faktor) : 0;
+        $gk = (string) gewichtsklasseFuerGewicht(max($gewicht, $volumen), $kategorie);
     }
     if ($gk === '') {
-        $gk = (string) array_key_first(preisliste()['gewichtsklassen']);
+        $gk = (string) (array_key_first(gewichtsklassenDerKategorie($kategorie)) ?? array_key_first(preisliste()['gewichtsklassen']));
     }
     $zahlungsart = in_array($p['zahlungsart'] ?? '', ['revolut', 'rechnung', 'guthaben'], true) ? $p['zahlungsart'] : 'revolut';
     $art = ($p['art'] ?? 'sendung') === 'retoure' ? 'retoure' : 'sendung';
@@ -471,10 +495,10 @@ function bestellungAnlegen(array $p): array
             (ext_ref, status, netto_cent, mwst_cent, betrag_cent, waehrung, zielland, gewichtsklasse, carrier, einkauf_cent,
              email, sprache, absender_json, empfaenger_json, ereignisse_json, erstellt, aktualisiert,
              kunde_id, firma_id, zahlungsart, referenz, art, retoure_zu, gewicht_gramm, masse_json, zusatz_json, zusatz_cent,
-             versandstatus, abholung_json, versicherung_cent, nachnahme_cent, preisliste_id, volumen_gramm, unterkunde_id)
+             versandstatus, abholung_json, versicherung_cent, nachnahme_cent, preisliste_id, volumen_gramm, unterkunde_id, kategorie)
         VALUES
             (:ref, :status, :netto, :mwst, :brutto, 'EUR', :land, :gk, :carrier, :einkauf, :email, :sprache, :abs, :emp, :ev, :t, :t,
-             :kunde, :firma, :zahlungsart, :referenz, :art, :retoure_zu, :gewicht, :masse, :zusatz, :zusatz_cent, 'angelegt', :abholung, :vers, :nn, :liste, :volumen, :unterkunde)
+             :kunde, :firma, :zahlungsart, :referenz, :art, :retoure_zu, :gewicht, :masse, :zusatz, :zusatz_cent, 'angelegt', :abholung, :vers, :nn, :liste, :volumen, :unterkunde, :kategorie)
     SQL)->execute([
         ':ref' => $extRef, ':status' => $status, ':netto' => $netto, ':mwst' => $brutto - $netto, ':brutto' => $brutto,
         ':land' => $zielland, ':gk' => $gk, ':carrier' => $angebot['carrier'], ':einkauf' => $angebot['einkauf'],
@@ -485,7 +509,7 @@ function bestellungAnlegen(array $p): array
         ':art' => $art, ':retoure_zu' => isset($p['retoure_zu']) ? (int) $p['retoure_zu'] : null,
         ':gewicht' => $gewicht, ':masse' => json_encode($masse), ':zusatz' => json_encode($zusatz['liste'], JSON_UNESCAPED_UNICODE), ':zusatz_cent' => $zusatz['netto'],
         ':abholung' => json_encode($abholung ?? new stdClass()), ':vers' => $versicherungWert, ':nn' => $nachnahme,
-        ':liste' => $preislisteId, ':volumen' => $volumen, ':unterkunde' => $unterkundeId,
+        ':liste' => $preislisteId, ':volumen' => $volumen, ':unterkunde' => $unterkundeId, ':kategorie' => $kategorie,
     ]);
     $bestellung = bestellungLaden('ext_ref', $extRef);
     sendungsereignis((int) $bestellung['id'], 'angelegt', '', 'system', (string) ($p['angelegt_von'] ?? ''));
@@ -881,6 +905,7 @@ function retoureAnlegen(array $kunde, array $original, string $zahlungsart, stri
         'sprache' => $original['sprache'],
         'zielland' => $zielland,
         'gewichtsklasse' => $original['gewichtsklasse'],
+        'kategorie' => (string) ($original['kategorie'] ?? 'paket'),
         'gewicht_gramm' => (int) $original['gewicht_gramm'],
         'email' => $kunde['email'],
         'absender' => $emp,
@@ -988,4 +1013,73 @@ function reklamationFortschreiben(array $r, string $status, string $antwort, int
         guthabenBuchen($kunde, 'erstattung', $erstattungCent, 'Erstattung Reklamation #' . $r['id'] . ' (' . $r['ext_ref'] . ')', (int) $r['bestellung_id']);
         $db->prepare('UPDATE reklamationen SET erstattet_gebucht = 1 WHERE id = ?')->execute([$r['id']]);
     }
+}
+
+// ------------------------------------------------------------ Palettenanfrage
+
+/**
+ * Palettenanfrage speichern und das Postfach benachrichtigen — Paletten sind
+ * nur auf Anfrage buchbar. Gemeinsam für Startseite (api/anfrage.php) und
+ * Kundenportal (/sendungen/palette).
+ *
+ * $p: art (business|privat), name, firma, email, sprache, nachricht, zielland,
+ *     anzahl, palettenart, gewicht (kg), abholung, firma_id (optional),
+ *     kundennummer (optional, nur zur Anzeige).
+ *
+ * Liefert die ID der Anfrage.
+ */
+function palettenanfrageAnlegen(array $p): int
+{
+    $sprache = ($p['sprache'] ?? 'de') === 'en' ? 'en' : 'de';
+    $art = ($p['art'] ?? 'business') === 'privat' ? 'privat' : 'business';
+    $name = saeubern($p['name'] ?? '', 100);
+    $firma = saeubern($p['firma'] ?? '', 120);
+    $email = mb_strtolower(saeubern($p['email'] ?? '', 254));
+    $gewicht = saeubern($p['gewicht'] ?? '', 20);
+    $zielland = strtoupper(saeubern($p['zielland'] ?? '', 2));
+    $eckdaten = [
+        ($sprache === 'en' ? 'Pallets' : 'Paletten') => saeubern($p['anzahl'] ?? '', 5),
+        ($sprache === 'en' ? 'Type' : 'Palettenart') => saeubern($p['palettenart'] ?? '', 60),
+        ($sprache === 'en' ? 'Weight' : 'Gewicht') => $gewicht !== '' ? $gewicht . ' kg' : '',
+        ($sprache === 'en' ? 'Pickup' : 'Abholung') => saeubern($p['abholung'] ?? '', 120),
+        ($sprache === 'en' ? 'Destination' : 'Ziel') => $zielland !== '' ? $zielland . (landIstEu($zielland) ? '' : ($sprache === 'en' ? ' (non-EU, customs)' : ' (Drittland, Zoll)')) : '',
+        ($sprache === 'en' ? 'Customer no.' : 'Kundennummer') => saeubern($p['kundennummer'] ?? '', 40),
+    ];
+    $kopf = [];
+    foreach ($eckdaten as $k => $v) {
+        if ($v !== '') {
+            $kopf[] = $k . ': ' . $v;
+        }
+    }
+    $nachricht = trim(($sprache === 'en' ? 'PALLET REQUEST' : 'PALETTENANFRAGE') . "\n" . implode("\n", $kopf) . "\n\n" . saeubern($p['nachricht'] ?? '', 4000));
+    $volumen = saeubern($p['volumen'] ?? '', 40);
+    if ($volumen === '') {
+        $volumen = $sprache === 'en' ? 'Pallet' : 'Palette';
+    }
+    $db = datenbank();
+    $db->prepare('INSERT INTO anfragen (art, typ, name, firma, email, volumen, nachricht, sprache, status, firma_id, erstellt, aktualisiert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+       ->execute([$art, 'palette', $name, $firma, $email, $volumen, $nachricht, $sprache, 'neu', !empty($p['firma_id']) ? (int) $p['firma_id'] : null, jetzt(), jetzt()]);
+    $id = (int) $db->lastInsertId();
+
+    $konfig = konfig();
+    $an = (string) ($konfig['kopie'] !== '' ? $konfig['kopie'] : $konfig['absender']);
+    if ($an !== '') {
+        try {
+            mailSenden($an, 'Palettenanfrage von ' . $name . ($firma !== '' ? ' (' . $firma . ')' : ''), implode("\n", [
+                'Neue Palettenanfrage (' . strtoupper($sprache) . ', ' . ($art === 'privat' ? 'Privatkunde' : 'Business') . (!empty($p['firma_id']) ? ', Kundenportal' : ', Startseite') . ')',
+                '',
+                'Name:      ' . $name,
+                'Firma:     ' . ($firma !== '' ? $firma : '—'),
+                'E-Mail:    ' . $email,
+                '',
+                $nachricht,
+                '',
+                'Im Dashboard: ' . rtrim((string) $konfig['basisUrl'], '/') . '/intern/kunden/anfragen/' . $id,
+            ]));
+        } catch (Throwable $e) {
+            error_log('[anfrage] Benachrichtigung fehlgeschlagen: ' . $e->getMessage());
+        }
+    }
+
+    return $id;
 }

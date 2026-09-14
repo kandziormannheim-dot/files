@@ -43,15 +43,23 @@ foreach ($p['laender'] as $code => $land) {
     if ($klassen === []) {
         continue;
     }
-    $erste = reset($klassen);
+    // „ab“-Werte je Kategorie: kleinste Klasse mit Preis (Paket bleibt der Hauptwert)
+    $ab = [];
+    foreach ($klassen as $gk => $zelle) {
+        $kat = (string) ($p['gewichtsklassen'][$gk]['kategorie'] ?? 'paket');
+        $ab[$kat] ??= $zelle;
+    }
+    $erste = $ab['paket'] ?? reset($klassen);
     $laender[] = [
         'code' => $code,
         'name' => $land['name'][$sprache],
+        'eu' => (bool) ($land['eu'] ?? landIstEu((string) $code)),
         'carrier' => $erste['carrier'],
         'laufzeit' => $erste['laufzeit'],
         'netto' => $erste['netto'],
         'mwst' => $erste['mwst'],
         'brutto' => $erste['brutto'],
+        'ab' => $ab,
         'klassen' => $klassen,
     ];
 }
@@ -64,6 +72,8 @@ antworten(200, [
     'modus' => checkoutModus(),
     'waehrung' => $p['waehrung'],
     'mwst' => (int) $p['mwstSatz'],
+    'kategorien' => array_map(static fn (array $k): string => $k[$sprache], $p['kategorien']),
     'gewichtsklassen' => array_map(static fn (array $g): string => $g[$sprache], $p['gewichtsklassen']),
+    'klassen' => array_map(static fn (array $g): array => ['name' => $g[$sprache], 'kategorie' => (string) ($g['kategorie'] ?? 'paket'), 'max_gramm' => (int) $g['max_gramm']], $p['gewichtsklassen']),
     'laender' => $laender,
 ]);

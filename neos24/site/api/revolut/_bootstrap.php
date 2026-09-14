@@ -135,6 +135,26 @@ function jetzt(): string
     return gmdate('Y-m-d\TH:i:s\Z');
 }
 
+/** Sendungskategorien: Brief/Dokumente und Paket sind buchbar (eigene Gewichtsklassen), Palette nur auf Anfrage. */
+const KATEGORIEN = [
+    'brief' => ['de' => 'Brief / Dokumente', 'en' => 'Letter / documents'],
+    'paket' => ['de' => 'Paket', 'en' => 'Parcel'],
+    'palette' => ['de' => 'Palette', 'en' => 'Pallet'],
+];
+
+/** EU-Mitgliedstaaten — alle anderen Zielländer sind Drittländer mit Zollabwicklung. */
+const EU_LAENDER = ['AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK'];
+
+function landIstEu(string $code): bool
+{
+    return in_array(strtoupper($code), EU_LAENDER, true);
+}
+
+function kategorieName(string $kategorie, string $sprache = 'de'): string
+{
+    return KATEGORIEN[$kategorie][$sprache === 'en' ? 'en' : 'de'] ?? $kategorie;
+}
+
 // ------------------------------------------------------------------- Herkunft
 
 /**
@@ -818,6 +838,9 @@ function schemaAnlegen(PDO $db): void
     spaltenErgaenzen($db, 'firmen', ['kundennummer' => "TEXT NOT NULL DEFAULT ''"] + $syncSpalten);
     spaltenErgaenzen($db, 'kunden', ['kundennummer' => "TEXT NOT NULL DEFAULT ''", 'unterkunde_id' => 'INTEGER'] + $syncSpalten);
     spaltenErgaenzen($db, 'kunden', ['gruppe_id' => 'INTEGER']); // Benutzergruppe mit Rechten je Bereich (NULL = alle Rechte)
+    spaltenErgaenzen($db, 'gewichtsklassen', ['kategorie' => "TEXT NOT NULL DEFAULT 'paket'"]); // brief | paket (palette nur auf Anfrage)
+    spaltenErgaenzen($db, 'bestellungen', ['kategorie' => "TEXT NOT NULL DEFAULT 'paket'"]);
+    spaltenErgaenzen($db, 'anfragen', ['typ' => "TEXT NOT NULL DEFAULT ''"]); // '' | palette
     spaltenErgaenzen($db, 'bestellungen', ['unterkunde_id' => 'INTEGER', 'odoo_id' => 'INTEGER NOT NULL DEFAULT 0', 'odoo_nummer' => "TEXT NOT NULL DEFAULT ''"]);
     spaltenErgaenzen($db, 'rechnungen', ['unterkunde_id' => 'INTEGER', 'odoo_info' => "TEXT NOT NULL DEFAULT ''"]);
     spaltenErgaenzen($db, 'preislisten', ['unterkunde_id' => 'INTEGER']);
@@ -840,6 +863,8 @@ function schemaAnlegen(PDO $db): void
     }
 
     preiseSaeen($db);
+
+    kategorienNachtragen($db);
 }
 
 /** Spalten nachträglich ergänzen (CREATE TABLE IF NOT EXISTS greift bei bestehenden Tabellen nicht). */
@@ -871,8 +896,8 @@ function preiseSaeen(PDO $db): void
         $aufschlag = [];
         $sort = 10;
         foreach ($saat['gewichtsklassen'] as $code => $gk) {
-            $db->prepare('INSERT INTO gewichtsklassen (code, name_de, name_en, max_gramm, aktiv, sortierung) VALUES (?, ?, ?, ?, 1, ?)')
-               ->execute([$code, $gk['de'], $gk['en'], $gk['max_gramm'] ?? 0, $sort]);
+            $db->prepare('INSERT INTO gewichtsklassen (code, name_de, name_en, max_gramm, aktiv, sortierung, kategorie) VALUES (?, ?, ?, ?, 1, ?, ?)')
+               ->execute([$code, $gk['de'], $gk['en'], $gk['max_gramm'] ?? 0, $sort, ($gk['kategorie'] ?? 'paket') === 'brief' ? 'brief' : 'paket']);
             $gkIds[$code] = (int) $db->lastInsertId();
             $aufschlag[$code] = (int) ($gk['aufschlag'] ?? 0);
             $sort += 10;
@@ -898,7 +923,83 @@ function preiseSaeen(PDO $db): void
                         INSERT INTO routing (land_code, gewichtsklasse_id, carrier_id, prioritaet, laufzeit_de, laufzeit_en,
                                              einkauf_cent, verkauf_cent, aktiv, aktualisiert, aktualisiert_von)
                         VALUES (?, ?, ?, ?, ?, ?, 0, ?, 1, ?, 'saatgut')
-                    SQL)->execute([$code, $gkId, $carrierId($name), $i + 1, $land['laufzeit']['de'], $land['laufzeit']['en'], (int) $land['netto'] + $aufschlag[$gkCode] + $i * 15, $jetzt]);
+                    SQL)->execute([$code, $gkId, $carrierId($name), $i + 1, $land['laufzeit']['de'], $land['laufzeit']['en'], max(50, (int) $land['netto'] + $aufschlag[$gkCode] + $i * 15), $jetzt]);
+                }
+            }
+        }
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollBack();
+        throw $e;
+    }
+}
+
+/**
+ * Bestehende Datenbanken ergänzen: Briefklassen (Kategorie brief) mit
+ * Routing-Zeilen je aktivem Land (Carrier der kleinsten Paketklasse, Preis
+ * darunter) und die weltweiten Zielländer aus preise.php, die noch fehlen —
+ * alles als Platzhalter, gepflegt wird im Dashboard.
+ */
+function kategorienNachtragen(PDO $db): void
+{
+    $saat = require __DIR__ . '/preise.php';
+    $jetzt = jetzt();
+    $hatBrief = (int) $db->query("SELECT COUNT(*) FROM gewichtsklassen WHERE kategorie = 'brief'")->fetchColumn() > 0;
+    $vorhandeneLaender = array_column($db->query('SELECT code FROM laender')->fetchAll(), 'code');
+    $fehlendeLaender = array_diff(array_keys($saat['laender']), $vorhandeneLaender);
+    if ($hatBrief && $fehlendeLaender === []) {
+        return;
+    }
+    $carrierId = static function (string $name) use ($db): int {
+        $st = $db->prepare('SELECT id FROM carrier WHERE name = ?');
+        $st->execute([$name]);
+        $id = $st->fetchColumn();
+        if ($id !== false) {
+            return (int) $id;
+        }
+        $db->prepare('INSERT INTO carrier (name, aktiv) VALUES (?, 1)')->execute([$name]);
+
+        return (int) $db->lastInsertId();
+    };
+    $klassen = [];
+    foreach ($db->query('SELECT id, code, kategorie FROM gewichtsklassen ORDER BY sortierung, id')->fetchAll() as $gk) {
+        $klassen[$gk['code']] = $gk;
+    }
+    $db->beginTransaction();
+    try {
+        if (!$hatBrief) {
+            $sort = 1;
+            foreach ($saat['gewichtsklassen'] as $code => $gk) {
+                if (($gk['kategorie'] ?? 'paket') !== 'brief' || isset($klassen[$code])) {
+                    continue;
+                }
+                $db->prepare('INSERT INTO gewichtsklassen (code, name_de, name_en, max_gramm, aktiv, sortierung, kategorie) VALUES (?, ?, ?, ?, 1, ?, ?)')
+                   ->execute([$code, $gk['de'], $gk['en'], $gk['max_gramm'] ?? 0, $sort++, 'brief']);
+                $klassen[$code] = ['id' => (int) $db->lastInsertId(), 'code' => $code, 'kategorie' => 'brief'];
+                // Routing je Land: Carrier und Laufzeit der kleinsten Paketklasse, Preis mit Aufschlag (mindestens 50 Cent)
+                $zeilen = $db->query("SELECT r.land_code, r.carrier_id, r.prioritaet, r.laufzeit_de, r.laufzeit_en, r.verkauf_cent FROM routing r JOIN gewichtsklassen g ON g.id = r.gewichtsklasse_id WHERE g.kategorie = 'paket' AND g.id = (SELECT id FROM gewichtsklassen WHERE kategorie = 'paket' AND aktiv = 1 ORDER BY max_gramm, sortierung LIMIT 1) AND r.aktiv = 1")->fetchAll();
+                foreach ($zeilen as $r) {
+                    $db->prepare('INSERT INTO routing (land_code, gewichtsklasse_id, carrier_id, prioritaet, laufzeit_de, laufzeit_en, einkauf_cent, verkauf_cent, aktiv, aktualisiert, aktualisiert_von) VALUES (?, ?, ?, ?, ?, ?, 0, ?, 1, ?, ?)')
+                       ->execute([$r['land_code'], $klassen[$code]['id'], $r['carrier_id'], $r['prioritaet'], $r['laufzeit_de'], $r['laufzeit_en'], max(50, (int) $r['verkauf_cent'] + (int) ($gk['aufschlag'] ?? 0)), $jetzt, 'migration']);
+                }
+            }
+            // Weltweite Ziele der Saat, die schon inaktiv vorhanden sind (z. B. aus einem Einkaufsimport), einmalig freischalten
+            $platzhalter = implode(',', array_fill(0, count($saat['laender']), '?'));
+            $db->prepare('UPDATE laender SET aktiv = 1 WHERE aktiv = 0 AND code IN (' . $platzhalter . ')')->execute(array_keys($saat['laender']));
+        }
+        $sort = (int) $db->query('SELECT COALESCE(MAX(sortierung), 0) FROM laender')->fetchColumn() + 10;
+        foreach ($fehlendeLaender as $code) {
+            $land = $saat['laender'][$code];
+            $db->prepare('INSERT INTO laender (code, name_de, name_en, aktiv, sortierung) VALUES (?, ?, ?, 1, ?)')->execute([$code, $land['name']['de'], $land['name']['en'], $sort]);
+            $sort += 10;
+            $namen = array_values(array_filter(array_map('trim', explode(',', (string) $land['carrier']))));
+            foreach ($saat['gewichtsklassen'] as $gkCode => $gk) {
+                if (!isset($klassen[$gkCode])) {
+                    continue;
+                }
+                foreach (array_slice($namen, 0, 3) as $i => $name) {
+                    $db->prepare('INSERT INTO routing (land_code, gewichtsklasse_id, carrier_id, prioritaet, laufzeit_de, laufzeit_en, einkauf_cent, verkauf_cent, aktiv, aktualisiert, aktualisiert_von) VALUES (?, ?, ?, ?, ?, ?, 0, ?, 1, ?, ?)')
+                       ->execute([$code, $klassen[$gkCode]['id'], $carrierId($name), $i + 1, $land['laufzeit']['de'], $land['laufzeit']['en'], max(50, (int) $land['netto'] + (int) ($gk['aufschlag'] ?? 0) + $i * 15), $jetzt, 'migration']);
                 }
             }
         }
@@ -976,7 +1077,7 @@ function preisliste(): array
     $db = datenbank();
     $klassen = [];
     foreach ($db->query('SELECT * FROM gewichtsklassen WHERE aktiv = 1 ORDER BY sortierung, id') as $gk) {
-        $klassen[$gk['code']] = ['de' => $gk['name_de'], 'en' => $gk['name_en'], 'id' => (int) $gk['id'], 'max_gramm' => (int) $gk['max_gramm']];
+        $klassen[$gk['code']] = ['de' => $gk['name_de'], 'en' => $gk['name_en'], 'id' => (int) $gk['id'], 'max_gramm' => (int) $gk['max_gramm'], 'kategorie' => (string) ($gk['kategorie'] ?? 'paket')];
     }
     $laender = [];
     $zeilen = $db->query(<<<'SQL'
@@ -991,7 +1092,7 @@ function preisliste(): array
     SQL);
     foreach ($zeilen as $z) {
         $code = (string) $z['code'];
-        $laender[$code] ??= ['name' => ['de' => $z['name_de'], 'en' => $z['name_en']], 'carrier' => '', 'laufzeit' => ['de' => '', 'en' => ''], 'netto' => 0, 'klassen' => []];
+        $laender[$code] ??= ['name' => ['de' => $z['name_de'], 'en' => $z['name_en']], 'carrier' => '', 'laufzeit' => ['de' => '', 'en' => ''], 'netto' => 0, 'eu' => landIstEu($code), 'klassen' => []];
         if (!isset($laender[$code]['klassen'][$z['gk']])) {
             $laender[$code]['klassen'][$z['gk']] = [
                 'carrier' => (string) $z['carrier'],
@@ -1005,8 +1106,9 @@ function preisliste(): array
         }
     }
     foreach ($laender as $code => $land) {
-        foreach ($klassen as $gkCode => $_) {
-            if (isset($land['klassen'][$gkCode])) {
+        // „ab“-Werte: kleinste Paketklasse (Briefklassen haben eigene „ab“-Werte in angebot.php)
+        foreach ($klassen as $gkCode => $klasse) {
+            if ($klasse['kategorie'] === 'paket' && isset($land['klassen'][$gkCode])) {
                 $erste = $land['klassen'][$gkCode];
                 $laender[$code]['carrier'] = $erste['carrier'];
                 $laender[$code]['laufzeit'] = $erste['laufzeit'];
@@ -1018,6 +1120,7 @@ function preisliste(): array
     $preise = [
         'waehrung' => 'EUR',
         'mwstSatz' => (int) konfig()['mwstSatz'],
+        'kategorien' => KATEGORIEN,
         'gewichtsklassen' => $klassen,
         'laender' => $laender,
     ];

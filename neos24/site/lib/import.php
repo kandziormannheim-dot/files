@@ -24,12 +24,25 @@ const IMPORT_SYNONYME = [
     'carrier' => ['carrier', 'dienstleister', 'versender', 'service', 'transporteur'],
     'zusatz' => ['zusatz', 'zusatzleistungen', 'extras', 'optionen', 'options', 'services'],
     'unterkunde' => ['unterkunde', 'kostenstelle', 'standort', 'subaccount', 'costcentre', 'costcenter', 'kundennummer'],
+    'kategorie' => ['kategorie', 'category', 'typ', 'type', 'sendungsart', 'produkt', 'product', 'versandart'],
 ];
 
 const IMPORT_PFLICHT = ['zielland', 'gewicht', 'name', 'strasse', 'plz', 'ort'];
 
 /** Reihenfolge der Fehlercodes für Anzeige und Bericht. */
-const IMPORT_FEHLER = ['gewicht', 'zielland', 'carrier', 'name', 'strasse', 'plz', 'ort', 'email', 'abholung', 'unterkunde', 'dublette', 'dublette_datei'];
+const IMPORT_FEHLER = ['gewicht', 'zielland', 'carrier', 'name', 'strasse', 'plz', 'ort', 'email', 'abholung', 'unterkunde', 'dublette', 'dublette_datei', 'kategorie', 'palette'];
+
+/** Kategorie aus Zelle: brief | paket | palette | '' (unbekannt). */
+function importKategorie(string $roh): string
+{
+    $s = mb_strtolower(trim($roh));
+    if ($s === '') { return 'paket'; }
+    if (preg_match('/^(brief|dokument|document|letter|doc|warenpost|brief\/dokumente|briefe)/u', $s)) { return 'brief'; }
+    if (preg_match('/^(paket|parcel|package|päckchen|paeckchen|pkt)/u', $s)) { return 'paket'; }
+    if (preg_match('/^(palette|pallet|pal)/u', $s)) { return 'palette'; }
+
+    return '';
+}
 
 /** Spaltenname normalisieren: „Gewicht (kg)“ → gewichtkg, „Straße“ → strasse. */
 function importSpaltenname(string $s): string
@@ -164,15 +177,21 @@ function importZeilenPruefen(array $kunde, array $kopf, array $zeilen, array $un
             continue;
         }
         $w = static fn (string $feld): string => isset($index[$feld]) ? trim((string) ($z[$index[$feld]] ?? '')) : '';
+        $kategorie = importKategorie($w('kategorie'));
         $gramm = isset($index['gewicht_g']) && $w('gewicht_g') !== '' ? importGewichtGramm($w('gewicht_g'), true) : importGewichtGramm($w('gewicht_kg'));
         $zusatz = array_values(array_filter(array_map(static fn (string $s): string => strtolower(trim($s)), preg_split('/[,;|]/', $w('zusatz')) ?: [])));
         $p = [
             'zielland' => importLandCode($w('zielland'), $laender), 'gewicht_gramm' => $gramm, 'carrier' => $w('carrier'), 'zusatz' => $zusatz,
             'empfaenger' => ['name' => $w('name'), 'firma' => $w('firma'), 'strasse' => $w('strasse'), 'plz' => $w('plz'), 'ort' => $w('ort'), 'email' => $w('email'), 'telefon' => $w('telefon')],
-            'referenz' => mb_substr($w('referenz'), 0, 60),
+            'referenz' => mb_substr($w('referenz'), 0, 60), 'kategorie' => $kategorie === '' || $kategorie === 'palette' ? 'paket' : $kategorie,
         ];
         $fehler = [];
-        $gk = $gramm > 0 ? gewichtsklasseFuerGewicht($gramm) : null;
+        if ($kategorie === '') {
+            $fehler[] = 'kategorie';
+        } elseif ($kategorie === 'palette') {
+            $fehler[] = 'palette';
+        }
+        $gk = $gramm > 0 ? gewichtsklasseFuerGewicht($gramm, $p['kategorie']) : null;
         if ($gk === null) {
             $fehler[] = 'gewicht';
         }
@@ -262,10 +281,11 @@ function importFehlerCsv(array $kopf, array $vorschau, callable $text): string
 function importVorlage(string $unterkundeNummer = ''): array
 {
     return [
-        'kopf' => ['zielland', 'gewicht_kg', 'name', 'firma', 'strasse', 'plz', 'ort', 'email', 'telefon', 'referenz', 'carrier', 'zusatz', 'unterkunde'],
+        'kopf' => ['kategorie', 'zielland', 'gewicht_kg', 'name', 'firma', 'strasse', 'plz', 'ort', 'email', 'telefon', 'referenz', 'carrier', 'zusatz', 'unterkunde'],
         'zeilen' => [
-            ['FR', '1,2', 'Marie Curie', '', 'Rue de Rivoli 2', '75001', 'Paris', 'marie@example.com', '', 'AUF-1001', '', 'versicherung', ''],
-            ['DE', '4,5', 'Hans Meier', 'Meier GmbH', 'Hauptstr. 3', '10115', 'Berlin', '', '', 'AUF-1002', 'DPD', '', $unterkundeNummer],
+            ['paket', 'FR', '1,2', 'Marie Curie', '', 'Rue de Rivoli 2', '75001', 'Paris', 'marie@example.com', '', 'AUF-1001', '', 'versicherung', ''],
+            ['paket', 'DE', '4,5', 'Hans Meier', 'Meier GmbH', 'Hauptstr. 3', '10115', 'Berlin', '', '', 'AUF-1002', 'DPD', '', $unterkundeNummer],
+            ['brief', 'US', '0,3', 'Jane Doe', 'Doe Inc.', '5th Avenue 1', '10001', 'New York', 'jane@example.com', '', 'AUF-1003', '', '', ''],
         ],
     ];
 }

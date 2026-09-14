@@ -635,6 +635,21 @@ table { border-collapse: collapse; width: 100%; }
 .checkout-block { margin: 0; padding: 1.25rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); display: grid; gap: 1rem; }
 .checkout-block legend { font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--coral); padding: 0 .4rem; }
 .checkout-block .hint { font-size: var(--text-sm); color: var(--ink-500); }
+.label-text { font-weight: 600; font-size: var(--text-sm); }
+.kategorie-wahl { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+.kategorie-option { display: grid; gap: .1rem; padding: .7rem .8rem; border: 1.5px solid var(--line); border-radius: var(--radius-sm); cursor: pointer; background: var(--white); position: relative; }
+.kategorie-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.kategorie-option b { font-size: var(--text-sm); }
+.kategorie-option small { font-size: var(--text-xs); color: var(--ink-500); }
+.kategorie-option:has(input:checked) { border-color: var(--ink); background: var(--ink); color: var(--white); }
+.kategorie-option:has(input:checked) small { color: var(--ink-300); }
+.kategorie-option:has(input:focus-visible) { box-shadow: 0 0 0 4px rgba(41,211,245,.35); }
+.palette-panel { display: grid; gap: 1rem; padding-top: .25rem; }
+.palette-state--error { color: #b3005f; background: rgba(255,38,161,.08); border: 1px solid rgba(255,38,161,.35); }
+.palette-state--success { color: var(--ink); background: rgba(41,211,245,.1); border: 1px solid rgba(41,211,245,.45); }
+.palette-state--success b { color: #0a7f9a; font-family: var(--font-display); }
+.checkout.is-palette .checkout-summary, #paket.is-palette .checkout-block:not(:first-of-type), #parcel.is-palette .checkout-block:not(:first-of-type), .is-palette .checkout-summary { display: none; }
+@media (max-width: 560px) { .kategorie-wahl { grid-template-columns: 1fr; } }
 .checkout-block .hint b { color: var(--ink); font-weight: 600; }
 .form-row--plz { grid-template-columns: 1fr; }
 .checkout-honey { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }

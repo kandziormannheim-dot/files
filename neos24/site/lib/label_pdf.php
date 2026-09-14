@@ -117,7 +117,7 @@ function labelZeichnen(FPDF $pdf, array $b, float $x0, float $y0): void
     $pdf->SetFont('Helvetica', '', 8);
     $pdf->SetXY($x0 + 5, $y);
     $zeilen = [
-        'Gewichtsklasse ' . $b['gewichtsklasse'] . ((int) $b['gewicht_gramm'] > 0 ? ' · ' . number_format((int) $b['gewicht_gramm'] / 1000, 2, ',', '') . ' kg' : ''),
+        kategorieName((string) ($b['kategorie'] ?? 'paket')) . ' · Gewichtsklasse ' . $b['gewichtsklasse'] . ((int) $b['gewicht_gramm'] > 0 ? ' · ' . number_format((int) $b['gewicht_gramm'] / 1000, 2, ',', '') . ' kg' : ''),
         $zusatz !== [] ? 'Leistungen: ' . implode(', ', array_map(static fn (array $z): string => $z['name']['de'] ?? $z['code'], $zusatz)) : '',
         (string) $b['referenz'] !== '' ? 'Referenz: ' . $b['referenz'] : '',
         (int) $b['nachnahme_cent'] > 0 ? 'Nachnahme: ' . number_format((int) $b['nachnahme_cent'] / 100, 2, ',', '.') . ' EUR' : '',

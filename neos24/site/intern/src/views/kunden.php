@@ -29,7 +29,7 @@
     <?php foreach ($zeilen as $z) { ?>
       <tr>
         <td><?= statusPille((string) $z['status'], anfrageStatusName((string) $z['status'])) ?></td>
-        <td><?= $z['art'] === 'privat' ? 'Privat' : 'Business' ?></td>
+        <td><?= $z['art'] === 'privat' ? 'Privat' : 'Business' ?><?= ($z['typ'] ?? '') === 'palette' ? ' <span class="pille">Palette</span>' : '' ?></td>
         <td><a href="<?= e(url('kunden/anfragen/' . $z['id'])) ?>"><?= e($z['name']) ?></a></td>
         <td><?= e($z['firma'] ?: '—') ?><?= !empty($z['firma_id']) ? ' <a class="leise" href="' . e(url('kunden/firmen/' . $z['firma_id'])) . '">→ Konto</a>' : '' ?></td>
         <td><?= e($z['email']) ?></td>

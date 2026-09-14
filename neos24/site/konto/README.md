@@ -11,7 +11,7 @@ gemerkt in Sitzung und Konto).
 |---|---|---|
 | Konto entsteht | selbst über „Registrieren“ (E-Mail wird per Link bestätigt) | vom NEOS-Team im Dashboard freigeschaltet, Inhaber per Einladung |
 | Bestellungen / Sendungen | alle Bestellungen, die mit der bestätigten E-Mail bezahlt wurden | alle Sendungen der Firma, von allen Firmenbenutzern |
-| Neue Sendung | im Portal (oder über die Startseite): Carrier-Vergleich, Zusatzleistungen, Abholung; Zahlung per Revolut oder Guthaben | im Portal: Carrier-Vergleich, Zusatzleistungen, Abholung; auf Rechnung oder vom Guthaben |
+| Neue Sendung | im Portal (oder über die Startseite): Kategorie Brief / Dokumente oder Paket, Ziel weltweit (Zollhinweis außerhalb der EU), Carrier-Vergleich, Zusatzleistungen, Abholung; Zahlung per Revolut oder Guthaben. Paletten nur per Palettenanfrage | im Portal: wie links; auf Rechnung oder vom Guthaben |
 | Labels | NEOS-Label (PDF A6) je Sendung, Sammeldruck A4 aus der Liste | wie links |
 | Tracking | Verlauf in der Sendung; öffentlich unter `konto/tracking` (Nummer + PLZ des Empfängers) | wie links |
 | Adressbuch, Paketvorlagen | eigenes Adressbuch je Konto (Empfänger, Absender, Standard-Absender), CSV-Export und Import (CSV/XLSX); Vorlagen mit Gewicht, Maßen, Zusatzleistungen | eigenes Adressbuch je Benutzer plus „Firmenadressen“, die ein Benutzer für alle freigibt (ändern darf Ersteller oder Inhaber); Paketvorlagen firmenweit |
@@ -59,8 +59,13 @@ Absenderadresse eines angemeldeten Privatkunden zur Vorbelegung — nur mit gül
 Das Formular „Neue Sendung“ (`konto/sendungen/neu`, beide Kundengruppen) zeigt zu Zielland und
 Gewicht **alle aktiven Carrier** der Routingmatrix-Zelle mit Nettopreis, Bruttopreis und
 Laufzeit; Priorität 1 ist als „Empfohlen“ vorausgewählt (`angeboteFuer()` in `lib/versand.php`).
-Das Gewicht in kg wird der kleinsten passenden Gewichtsklasse zugeordnet
-(`gewichtsklasseFuerGewicht()`, Maximalgewicht je Klasse aus dem Dashboard). Zusatzleistungen
+Zuerst wählt der Kunde die **Kategorie**: Brief / Dokumente (Klassen bis 2 kg, kein Volumengewicht,
+keine Maße) oder Paket; **Palette** führt zur Palettenanfrage (`konto/sendungen/palette`: Ziel,
+Anzahl, Art, Gewicht, Abholung, Nachricht → Anfrage `typ = palette` mit Kundennummer im Dashboard und
+Mail ans Postfach, `palettenanfrageAnlegen()` in `lib/versand.php`; Business: Recht Versand
+bearbeiten). Das Gewicht in kg wird der kleinsten passenden Gewichtsklasse **der Kategorie**
+zugeordnet (`gewichtsklasseFuerGewicht()`, Maximalgewicht je Klasse aus dem Dashboard); Zielländer
+außerhalb der EU sind mit * markiert und zeigen den Zollhinweis (`landIstEu()`). Zusatzleistungen
 (Versicherung mit Warenwert, Abholung mit Werktag ab morgen und Zeitfenster, Nachnahme mit
 Betrag, SMS) kommen aus der Tabelle `zusatzleistungen`, die das Dashboard unter „Preise“ pflegt.
 Die Summe (Porto + Zusatz = netto, MwSt., brutto) rechnet `konto.js` live und der Server beim
@@ -126,7 +131,9 @@ freigegeben.
 **Sendungsimport (Firmen):** CSV oder XLSX (`lib/tabelle_lesen.php`, erstes Blatt mit Daten),
 Spaltennamen tolerant (`lib/import.php`, `IMPORT_SYNONYME`: `zielland|land|country`,
 `gewicht_kg|gewicht|weight`, `gewicht_g|gramm`, `name|empfaenger|recipient`, `strasse|straße|street`,
-`plz|zip|postcode`, `ort|stadt|city`, `referenz|ref|order`, `unterkunde|kostenstelle` …), Ländernamen
+`plz|zip|postcode`, `ort|stadt|city`, `referenz|ref|order`, `unterkunde|kostenstelle`,
+`kategorie|category|typ` mit Werten brief / paket — leer = Paket, palette ist ein Fehler „nur auf
+Anfrage“ …), Ländernamen
 DE/EN werden zu ISO-Codes, Gewichte als „1,2“, „1.2 kg“, „1200 g“ oder „1.200 g“. Fehlende
 Pflichtspalten werden genannt. Jede Zeile wird trocken geprüft (Gewichtsklasse, Preis, Adresse,
 E-Mail, Unterkunde); eine Referenz, zu der die Firma in den letzten 30 Tagen schon eine Sendung hat

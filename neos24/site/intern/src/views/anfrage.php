@@ -5,7 +5,7 @@
 <div class="spalten spalten--2-1">
   <div>
     <div class="karte">
-      <div class="karte-kopf"><h2 class="h2">Nachricht</h2><span class="leise"><?= $a['art'] === 'privat' ? 'Privatkunde' : 'Business' ?> · <?= e(strtoupper((string) $a['sprache'])) ?> · <?= e(zeitAnzeigen($a['erstellt'])) ?></span></div>
+      <div class="karte-kopf"><h2 class="h2"><?= ($a['typ'] ?? '') === 'palette' ? 'Palettenanfrage' : 'Nachricht' ?></h2><span class="leise"><?= ($a['typ'] ?? '') === 'palette' ? '<span class="pille">Palette</span> · ' : '' ?><?= $a['art'] === 'privat' ? 'Privatkunde' : 'Business' ?> · <?= e(strtoupper((string) $a['sprache'])) ?> · <?= e(zeitAnzeigen($a['erstellt'])) ?></span></div>
       <dl class="liste">
         <dt>E-Mail</dt><dd><a href="mailto:<?= e($a['email']) ?>"><?= e($a['email']) ?></a></dd>
         <?php if ($a['volumen'] !== '') { ?><dt>Sendungen / Monat</dt><dd><?= e($a['volumen']) ?></dd><?php } ?>

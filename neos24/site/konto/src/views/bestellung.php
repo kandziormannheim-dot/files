@@ -68,6 +68,7 @@ $laufzeit = $landInfo['klassen'][$b['gewichtsklasse']]['laufzeit'][$sp] ?? '—'
       <div class="k-karte-kopf"><h2 class="h3"><?= e(t('detail.sendung')) ?></h2><span class="k-klein"><?= e(zeitAnzeigen($b['erstellt'], $sp)) ?></span></div>
       <dl class="k-liste">
         <dt><?= e(t('liste.ziel')) ?></dt><dd><span class="flag"><?= e($b['zielland']) ?></span><?= e($land) ?></dd>
+        <dt><?= e(t('neu.kategorie')) ?></dt><dd><?= e(kategorieName((string) ($b['kategorie'] ?? 'paket'), $sp)) ?></dd>
         <dt><?= e(t('detail.gewicht')) ?></dt><dd><?= e(preisliste()['gewichtsklassen'][$b['gewichtsklasse']][$sp] ?? $b['gewichtsklasse']) ?></dd>
         <dt><?= e(t('liste.carrier')) ?></dt><dd><?= e($b['carrier'] ?? '—') ?></dd>
         <dt><?= e(t('detail.laufzeit')) ?></dt><dd><?= e($laufzeit) ?></dd>

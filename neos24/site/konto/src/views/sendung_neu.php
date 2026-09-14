@@ -42,13 +42,21 @@ $zusatzAlle = $daten['zusatz'];
       <?php } ?>
       <div class="card">
         <h2 class="h3"><?= e(t('neu.paket')) ?></h2>
+        <fieldset class="k-kategorie <?= $f('kategorie') ?>">
+          <legend class="k-klein"><?= e(t('neu.kategorie')) ?></legend>
+          <?php foreach (['brief', 'paket'] as $kat) { ?>
+            <label class="k-kategorie-option"><input type="radio" name="kategorie" value="<?= e($kat) ?>" <?= $werte['kategorie'] === $kat ? 'checked' : '' ?>> <span><strong><?= e($daten['kategorien'][$kat] ?? $kat) ?></strong><br><span class="k-klein"><?= e(t('neu.kategorie.' . $kat)) ?></span></span></label>
+          <?php } ?>
+          <a class="k-kategorie-option k-kategorie-option--link" href="<?= e(url('sendungen/palette')) ?>"><span><strong><?= e($daten['kategorien']['palette'] ?? 'Palette') ?></strong><br><span class="k-klein"><?= e(t('neu.kategorie.palette')) ?></span></span></a>
+        </fieldset>
         <div class="form-row form-row--2">
           <div class="field <?= $f('zielland') ?>">
             <label for="s-land"><?= e(t('neu.zielland')) ?></label>
             <select id="s-land" name="zielland" required>
               <option value=""><?= e(t('neu.bitte_waehlen')) ?></option>
-              <?php foreach ($daten['laender'] as $code => $land) { ?><option value="<?= e($code) ?>" <?= $werte['zielland'] === $code ? 'selected' : '' ?>><?= e($land['name']) ?></option><?php } ?>
+              <?php foreach ($daten['laender'] as $code => $land) { ?><option value="<?= e($code) ?>" <?= $werte['zielland'] === $code ? 'selected' : '' ?>><?= e($land['name']) ?><?= empty($land['eu']) ? ' *' : '' ?></option><?php } ?>
             </select>
+            <span class="k-klein" data-zoll hidden><?= e(t('neu.zoll')) ?></span>
           </div>
           <div class="field <?= $f('gewicht') ?>">
             <label for="s-gewicht"><?= e(t('neu.gewicht_kg')) ?></label>
@@ -57,7 +65,7 @@ $zusatzAlle = $daten['zusatz'];
           </div>
         </div>
         <div class="form-row form-row--2">
-          <div class="field">
+          <div class="field" data-nur-paket>
             <label for="s-laenge"><?= e(t('neu.masse')) ?></label>
             <div class="k-masse"><input id="s-laenge" name="laenge" type="number" min="0" max="200" value="<?= e($werte['laenge']) ?>" placeholder="L" aria-label="L"><span>×</span><input name="breite" type="number" min="0" max="200" value="<?= e($werte['breite']) ?>" placeholder="B" aria-label="B"><span>×</span><input name="hoehe" type="number" min="0" max="200" value="<?= e($werte['hoehe']) ?>" placeholder="H" aria-label="H"></div>
             <span class="k-klein" data-volumen><?= e(t('neu.volumen.hinweis')) ?></span>

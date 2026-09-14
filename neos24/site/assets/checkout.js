@@ -13,6 +13,11 @@
   var form = sec.querySelector('.checkout');
   var land = form.querySelector('[name="zielland"]');
   var gewicht = form.querySelector('[name="gewichtsklasse"]');
+  var kategorieWahl = form.querySelectorAll('[name="kategorie"]');
+  var kategorie = function () { var r = form.querySelector('[name="kategorie"]:checked'); return r ? r.value : 'paket'; };
+  var palettePanel = sec.querySelector('[data-palette]');
+  var zollHinweis = sec.querySelector('[data-zoll]');
+  var kategorieHinweis = sec.querySelector('[data-kategorie-hinweis]');
   var payBtn = form.querySelector('.checkout-pay');
   var errBox = form.querySelector('.checkout-state--error');
   var okBox = form.querySelector('.checkout-state--success');
@@ -40,19 +45,79 @@
     sum('mwst').textContent = has ? fmt(b - netto) : '—';
     sum('brutto').textContent = has ? fmt(b) : '—';
     form.querySelectorAll('[data-zielland]').forEach(function (el) { el.textContent = has ? o.textContent : '—'; });
-    payBtn.disabled = !has || !bereit;
+    payBtn.disabled = !has || !bereit || kategorie() === 'palette';
+    /* Zollhinweis für Ziele außerhalb der EU */
+    if (zollHinweis) {
+      var eu = has && angebot ? angebot.laender.some(function (l) { return l.code === o.value && l.eu; }) : true;
+      zollHinweis.hidden = !has || eu;
+    }
   };
   land.addEventListener('change', update);
   update();
+  kategorieWahl.forEach(function (r) { r.addEventListener('change', function () { kategorieAnwenden(); }); }); // kategorieAnwenden wird weiter unten definiert
+
+  /* Palette: Angebot anfragen (api/anfrage.php, typ = palette) ------------- */
+  var paletteKnopf = sec.querySelector('[data-palette-senden]');
+  if (paletteKnopf && palettePanel) {
+    var pFehler = palettePanel.querySelector('[data-palette-fehler]');
+    var pOk = palettePanel.querySelector('[data-palette-ok]');
+    var pv = function (n) { var el = palettePanel.querySelector('[name="' + n + '"]'); return el ? el.value.trim() : ''; };
+    paletteKnopf.addEventListener('click', function () {
+      pFehler.hidden = true;
+      var name = pv('palette_name'), email = pv('palette_email');
+      if (name.length < 2 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { pFehler.textContent = msg('invalid'); pFehler.hidden = false; return; }
+      paletteKnopf.disabled = true;
+      var privat = document.documentElement.getAttribute('data-audience') === 'private';
+      fetch(api.replace(/\/revolut$/, '') + '/anfrage.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ sprache: lang, art: privat ? 'privat' : 'business', typ: 'palette', name: name, email: email, zielland: land.value,
+          palette_anzahl: pv('palette_anzahl'), palette_art: pv('palette_art'), palette_gewicht: pv('palette_gewicht'), palette_abholung: pv('palette_abholung'), nachricht: pv('palette_nachricht') })
+      })
+        .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
+        .then(function (res) {
+          paletteKnopf.disabled = false;
+          if (res.d && res.d.ok) { pOk.hidden = false; paletteKnopf.hidden = true; return; }
+          pFehler.textContent = res.status === 429 ? msg('toomany') : msg('invalid'); pFehler.hidden = false;
+        })
+        .catch(function () { paletteKnopf.disabled = false; pFehler.textContent = msg('network'); pFehler.hidden = false; });
+    });
+  }
 
   /* Verbindliche Preise vom Server (Dashboard → Routingmatrix): überschreibt
      die Werte im Markup, baut Zielland-/Gewichtsauswahl und die Preistabelle
      (#preise / #pricing) neu. Ohne Backend bleiben die Markup-Werte. ------- */
   var angebot = null;
   var preis = function (cent) { return '€' + (cent / 100).toFixed(2).replace('.', lang === 'de' ? ',' : '.'); };
+  /* Gewichtsklassen der gewählten Kategorie in die Auswahl schreiben (Brief/Dokumente oder Paket) */
+  var klassenFuellen = function () {
+    if (!gewicht || !angebot || !angebot.klassen) return;
+    var kat = kategorie() === 'brief' ? 'brief' : 'paket';
+    var aktuell = gewicht.value;
+    gewicht.innerHTML = '';
+    Object.keys(angebot.klassen).forEach(function (code) {
+      if (angebot.klassen[code].kategorie !== kat) return;
+      var o = document.createElement('option'); o.value = code; o.textContent = angebot.klassen[code].name; gewicht.appendChild(o);
+    });
+    if (angebot.klassen[aktuell] && angebot.klassen[aktuell].kategorie === kat) gewicht.value = aktuell;
+  };
+  var kategorieAnwenden = function () {
+    var kat = kategorie();
+    var palette = kat === 'palette';
+    sec.classList.toggle('is-palette', palette);
+    if (palettePanel) palettePanel.hidden = !palette;
+    if (kategorieHinweis) kategorieHinweis.hidden = palette;
+    if (gewicht) gewicht.closest('.field').hidden = palette;
+    if (!palette) klassenFuellen();
+    applyKlasse();
+  };
   var applyKlasse = function () {
     if (!angebot) return;
     var gk = gewicht ? gewicht.value : '2kg';
+    if (kategorie() === 'palette') { /* alle Länder wählbar, Preise bleiben leer */
+      angebot.laender.forEach(function (l) { var o = land.querySelector('option[value="' + l.code + '"]'); if (o) { o.disabled = false; o.hidden = false; o.removeAttribute('data-netto'); } });
+      update();
+      return;
+    }
     var erste = null;
     angebot.laender.forEach(function (l) {
       var o = land.querySelector('option[value="' + l.code + '"]');
@@ -80,10 +145,15 @@
       var c1 = td(); var flag = document.createElement('span'); flag.className = 'flag'; flag.textContent = l.code; c1.appendChild(flag); c1.appendChild(document.createTextNode(l.name));
       td().textContent = l.carrier;
       td().textContent = l.laufzeit;
-      var c4 = td(); c4.className = 'price';
-      var sm = document.createElement('small'); sm.textContent = ab; c4.appendChild(sm);
-      var b = document.createElement('span'); b.setAttribute('data-for', 'business'); b.textContent = preis(l.netto); c4.appendChild(b);
-      var p = document.createElement('span'); p.setAttribute('data-for', 'private'); p.textContent = preis(l.brutto); c4.appendChild(p);
+      var preisZelle = function (z) {
+        var c = td(); c.className = 'price';
+        if (!z) { c.textContent = '—'; return; }
+        var sm = document.createElement('small'); sm.textContent = ab; c.appendChild(sm);
+        var b = document.createElement('span'); b.setAttribute('data-for', 'business'); b.textContent = preis(z.netto); c.appendChild(b);
+        var p = document.createElement('span'); p.setAttribute('data-for', 'private'); p.textContent = preis(z.brutto); c.appendChild(p);
+      };
+      preisZelle(l.ab && l.ab.brief);
+      preisZelle(l.ab && l.ab.paket ? l.ab.paket : { netto: l.netto, brutto: l.brutto });
       body.appendChild(tr);
     });
     void tpl;
@@ -93,14 +163,11 @@
     .then(function (d) {
       if (!d || !d.ok || !d.laender) return;
       mwst = d.mwst; modus = d.modus; bereit = !!d.bereit; angebot = d;
-      if (gewicht && d.gewichtsklassen) {
-        var aktuell = gewicht.value;
-        gewicht.innerHTML = '';
-        Object.keys(d.gewichtsklassen).forEach(function (code) { var o = document.createElement('option'); o.value = code; o.textContent = d.gewichtsklassen[code]; gewicht.appendChild(o); });
-        if (d.gewichtsklassen[aktuell]) gewicht.value = aktuell;
+      if (gewicht && d.klassen) {
+        klassenFuellen();
         gewicht.addEventListener('change', applyKlasse);
       }
-      applyKlasse();
+      kategorieAnwenden();
       buildTable(d);
       if (!bereit) showError(msg('unavailable'));
     })
@@ -186,6 +253,7 @@
     var payload = {
       sprache: lang,
       zielland: land.value,
+      kategorie: kategorie(),
       gewichtsklasse: gewicht ? gewicht.value : '2kg',
       email: val('email'),
       firma: val('firma'),

@@ -11,9 +11,9 @@ gepflegt wird.
 |---|---|
 | **Übersicht** | Bestellungen heute / 7 / 30 Tage, Umsatz brutto und netto, Marge (Verkauf netto − Einkauf), Statusanteile, Sendungen je Kalenderwoche, Top-Zielländer, Top-Carrier, neue Anfragen, letzte Bestellungen — alles aus der Tabelle `bestellungen`, nichts geschätzt |
 | **Bestellungen & Sendungen** | Liste mit Status-, Versandstatus- und Abholungsfilter und Suche (Nummer, E-Mail, Referenz, Firma); Detail mit Adressen, Gewicht/Maßen, Zusatzleistungen, Abholtermin, Beträgen, Sendungsverlauf (sieht der Kunde) und internem Verlauf; Versandstatus mit Ort und Text eintragen, Label (PDF) ansehen oder neu erzeugen, Status bei Revolut abfragen, Bestellstatus manuell setzen, löschen (nur offen / fehlgeschlagen / storniert) |
-| **Preise & Zielländer** | Zielländer (Code, Name DE/EN, aktiv, Sortierung), Gewichtsklassen (Kürzel, Name DE/EN, Maximalgewicht), Carrier, Zusatzleistungen (Kürzel, Name und Beschreibung DE/EN, Nettopreis, aktiv) — anlegen, ändern, deaktivieren, löschen (nur ohne Routing-Zeilen) |
-| **Routingmatrix** | Zielland × Gewichtsklasse → bis zu drei Carrier mit Priorität 1/2/3, Laufzeit DE/EN, Einkaufs- und Verkaufspreis (netto). **Priorität 1 ist der Carrier, den die Startseite zeigt und der Checkout verkauft.** Fällt er aus (Carrier deaktiviert, Zeile inaktiv), rückt die nächste Priorität nach. Leere Zelle = für diese Gewichtsklasse nicht angeboten |
-| **Kunden & Anfragen** | Anfragen des Kontaktformulars (Status, Notiz, Bearbeiter, „Firmenkonto anlegen“), Firmen (Daten, Benutzer einladen/deaktivieren, Sendungen, Rechnungen, Sammelrechnung erzeugen, Guthaben mit Buchungen) und registrierte Privatkunden (Detail mit Bestellungen, Guthaben, Reklamationen) |
+| **Preise & Zielländer** | Zielländer (Code, Name DE/EN, aktiv, Sortierung), Gewichtsklassen (Kürzel, **Kategorie** Brief / Dokumente oder Paket, Name DE/EN, Maximalgewicht), Carrier, Zusatzleistungen (Kürzel, Name und Beschreibung DE/EN, Nettopreis, aktiv) — anlegen, ändern, deaktivieren, löschen (nur ohne Routing-Zeilen) |
+| **Routingmatrix** | Zielland × Gewichtsklasse → bis zu drei Carrier mit Priorität 1/2/3, Laufzeit DE/EN, Einkaufs- und Verkaufspreis (netto). **Priorität 1 ist der Carrier, den die Startseite zeigt und der Checkout verkauft.** Fällt er aus (Carrier deaktiviert, Zeile inaktiv), rückt die nächste Priorität nach. Leere Zelle = für diese Gewichtsklasse nicht angeboten. Spalten nach Kategorie gruppiert (Brief / Dokumente, Paket); Ziele außerhalb der EU tragen die Pille „Zoll“. Paletten haben keine Gewichtsklassen — sie laufen nur über Anfragen |
+| **Kunden & Anfragen** | Anfragen des Kontaktformulars und **Palettenanfragen** (Pille „Palette“, Eckdaten Anzahl/Art/Gewicht/Abholung/Ziel/Kundennummer in der Nachricht; Status, Notiz, Bearbeiter, „Firmenkonto anlegen“), Firmen (Daten, Benutzer einladen/deaktivieren, Sendungen, Rechnungen, Sammelrechnung erzeugen, Guthaben mit Buchungen) und registrierte Privatkunden (Detail mit Bestellungen, Guthaben, Reklamationen) |
 | **Rechnungen** | Alle Sammelrechnungen mit Status offen / bezahlt / storniert, PDF, Positionen; Stornieren gibt die Sendungen wieder zur Abrechnung frei |
 | **Reklamationen** | Reklamationen aus dem Kundenportal: Status neu / in Prüfung / anerkannt / erstattet / abgelehnt, Antwort an den Kunden (optional per Mail), Erstattung — wird bei „Erstattet“ einmalig als Guthaben gebucht |
 | **Statistiken & Berichte** | Kennzahlen mit Vorperiodenvergleich (Sendungen, Umsatz, Einkauf, Marge, Ø Netto, Zustellquote, Laufzeit, Nachberechnungen, Reklamationen, aktive Kunden, offene Posten), Berichte Zeitverlauf, Carrier, Zielländer, Kunden, Finanzen, Reklamationen, Guthaben mit Diagrammen (Inline-SVG, ohne Abhängigkeiten) und Tabellen, freier **Pivot-Bericht** (Zeilen × Spalten × Kennzahl, Top N, Diagrammart) mit gespeicherten Berichten, Filter Zeitraum/Kunde/Unterkunde/Carrier/Land/Zahlungsart, Export CSV/XLSX — siehe unten |
@@ -160,7 +160,7 @@ löschen braucht „bearbeiten“). Kern in `lib/statistik.php`, Diagramme in `i
   (Umsatz/Einkauf/Marge, Zahlungs- und Auftragsarten, Sammelrechnungen je Monat, offene Posten je
   Kunde mit Überfälligkeit), Reklamationen (Art, Status, Quote je Carrier, Bearbeitungsdauer,
   Verlauf), Guthaben (Bestand, Aufladungen je Monat, Buchungen nach Art).
-- **Pivot-Bericht:** Zeilen-Dimension × optionale Spalten-Dimension × Kennzahl — Dimensionen Monat,
+- **Pivot-Bericht:** Zeilen-Dimension × optionale Spalten-Dimension × Kennzahl — Dimensionen Kategorie, Monat,
   Kalenderwoche, Tag, Wochentag, Carrier, Zielland, Kunde, Unterkunde, Kundenart, Zahlungsart,
   Gewichtsklasse, Auftragsart, Status, Versandstatus, Preisliste; Kennzahlen Sendungen, Umsatz netto
   und brutto, Einkauf, Marge, Marge %, Ø Netto, Ø Gewicht, Retouren, Nachberechnungen (Anzahl und €),
@@ -293,9 +293,13 @@ des Webroots). Tabellen des Dashboards: `laender`, `gewichtsklassen`, `carrier`,
 `rechnungen`, `zusatzleistungen`, `sendungsereignisse`, `adressen`, `paketvorlagen`,
 `guthaben_buchungen`, `aufladungen`, `reklamationen` (siehe `konto/README.md`);
 das Schema legt `datenbank()` in `api/revolut/_bootstrap.php` an. Beim ersten Start ohne Länder
-wird `api/revolut/preise.php` einmalig als Saatgut übernommen (Länder, Gewichtsklassen 2 bis
-31,5 kg mit Aufschlag, Carrier, Routing-Zeilen mit Einkauf 0, vier Zusatzleistungen). Danach ist
-die Datenbank die einzige Preisquelle.
+wird `api/revolut/preise.php` einmalig als Saatgut übernommen (Länder weltweit — EU-Kernländer plus
+Schweiz, Großbritannien, Türkei, USA, Kanada, VAE, China, Japan, Australien als Platzhalterpreise —,
+Gewichtsklassen Brief 50 g / 500 g / 2 kg und Paket 2 bis 31,5 kg mit Aufschlag, Carrier,
+Routing-Zeilen mit Einkauf 0, vier Zusatzleistungen). Danach ist die Datenbank die einzige
+Preisquelle. Bestehende Datenbanken ergänzt `kategorienNachtragen()` einmalig um die Briefklassen
+(Routing aus der kleinsten Paketklasse je Land mit Abschlag), die fehlenden weltweiten Ziele und
+schaltet die Ziele der Saat frei, die schon inaktiv vorhanden waren (z. B. aus einem Einkaufsimport).
 
 Die Startseite holt sich Preise über `api/revolut/angebot.php` (Cache 5 Minuten) und baut die
 Preistabelle und die Checkout-Auswahl damit neu; ohne PHP bleiben die Werte im Markup als

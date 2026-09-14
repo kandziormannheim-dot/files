@@ -21,6 +21,7 @@ $zahlungsartName = ['rechnung' => 'Auf Rechnung (Sammelrechnung)', 'guthaben' =>
       <div class="spalten spalten--2">
         <dl class="liste">
           <dt>Zielland</dt><dd><span class="flagge"><?= e($b['zielland']) ?></span><?= e($land) ?></dd>
+          <dt>Kategorie</dt><dd><?= e(kategorieName((string) ($b['kategorie'] ?? 'paket'))) ?><?= landIstEu((string) $b['zielland']) ? '' : ' <span class="pille" title="Drittland — Zollabwicklung durch den Carrier">Zoll</span>' ?></dd>
           <dt>Gewicht</dt><dd><?= e($b['gewichtsklasse']) ?><?= (int) $b['gewicht_gramm'] > 0 ? ' · ' . e(number_format((int) $b['gewicht_gramm'] / 1000, 2, ',', '')) . ' kg' : '' ?><?= !empty($masse['l']) ? ' · ' . e($masse['l'] . ' × ' . $masse['b'] . ' × ' . $masse['h'] . ' cm') : '' ?></dd>
           <dt>Carrier</dt><dd><?= e($b['carrier'] ?? '— (vor Routingmatrix)') ?></dd>
           <dt>Zusatzleistungen</dt><dd><?= $zusatz !== [] ? e(implode(', ', array_map(static fn (array $z): string => ($z['name']['de'] ?? $z['code']) . ' (' . euro((int) $z['preis']) . ')', $zusatz))) : '—' ?></dd>

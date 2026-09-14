@@ -85,19 +85,34 @@
     var guthabenText = sendung.querySelector('[data-guthaben-text]');
     var absenden = sendung.querySelector('button[type="submit"]');
 
+    /* Kategorie (Brief / Paket): Gewichtsklassen und Volumengewicht gelten je Kategorie; Paletten laufen über die Anfrage-Seite */
+    var kategorieWahl = Array.prototype.slice.call(sendung.querySelectorAll('input[name="kategorie"]'));
+    var kategorie = function () {
+      var r = kategorieWahl.filter(function (x) { return x.checked; })[0];
+      return r ? r.value : 'paket';
+    };
     var klasseFuer = function (gramm) {
-      var codes = Object.keys(daten.gewichtsklassen);
+      var codes = Object.keys(daten.gewichtsklassen), kat = kategorie();
       for (var i = 0; i < codes.length; i++) {
-        var max = daten.gewichtsklassen[codes[i]].max_gramm;
-        if (max <= 0 || max >= gramm) return codes[i];
+        var gk = daten.gewichtsklassen[codes[i]];
+        if ((gk.kategorie || 'paket') !== kat) continue;
+        if (gk.max_gramm <= 0 || gk.max_gramm >= gramm) return codes[i];
       }
       return null;
+    };
+    var zollText = sendung.querySelector('[data-zoll]');
+    var nurPaket = Array.prototype.slice.call(sendung.querySelectorAll('[data-nur-paket]'));
+    var kategorieAnwenden = function () {
+      var paket = kategorie() === 'paket';
+      nurPaket.forEach(function (el) { el.hidden = !paket; });
+      if (zollText) { var l = daten.laender[land.value]; zollText.hidden = !(l && l.eu === false); }
     };
     var volumenText = sendung.querySelector('[data-volumen]');
     var volumenVorlage = sendung.getAttribute('data-volumen-text') || '%s';
     var volumenHinweis = volumenText ? volumenText.textContent : '';
     /* Volumengewicht: L·B·H (cm) / Faktor des Carriers (kg) — hebt die Klasse an, wenn es das reale Gewicht übersteigt */
     var volumenGramm = function (faktor) {
+      if (kategorie() !== 'paket') return 0;
       var l = parseInt(sendung.querySelector('[name="laenge"]').value, 10) || 0;
       var b = parseInt(sendung.querySelector('[name="breite"]').value, 10) || 0;
       var h = parseInt(sendung.querySelector('[name="hoehe"]').value, 10) || 0;
@@ -131,6 +146,7 @@
     };
 
     var angeboteZeichnen = function () {
+      kategorieAnwenden();
       var gk = aktuelleKlasse();
       klasseText.textContent = gk ? daten.gewichtsklassen[gk].name : '';
       var liste = aktuelleAngebote();
@@ -192,6 +208,7 @@
 
     land.addEventListener('change', angeboteZeichnen);
     gewicht.addEventListener('input', angeboteZeichnen);
+    kategorieWahl.forEach(function (r) { r.addEventListener('change', angeboteZeichnen); });
     ['laenge', 'breite', 'hoehe'].forEach(function (n) { var el = sendung.querySelector('[name="' + n + '"]'); if (el) el.addEventListener('input', angeboteZeichnen); });
     angebote.addEventListener('change', summen);
     zusatzBoxen.forEach(function (cb) { cb.addEventListener('change', summen); });

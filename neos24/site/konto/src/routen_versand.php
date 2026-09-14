@@ -18,9 +18,12 @@ $listenPfad = $business ? 'sendungen' : 'bestellungen';
 function angeboteFuerFormular(string $sprache, ?int $preislisteId = null): array
 {
     $p = preisliste();
-    $aus = ['gewichtsklassen' => [], 'laender' => [], 'zusatz' => [], 'mwst' => (int) $p['mwstSatz'], 'preisliste' => $preislisteId !== null];
+    $aus = ['gewichtsklassen' => [], 'kategorien' => [], 'laender' => [], 'zusatz' => [], 'mwst' => (int) $p['mwstSatz'], 'preisliste' => $preislisteId !== null];
+    foreach (KATEGORIEN as $k => $namen) {
+        $aus['kategorien'][$k] = $namen[$sprache];
+    }
     foreach ($p['gewichtsklassen'] as $code => $gk) {
-        $aus['gewichtsklassen'][$code] = ['name' => $gk[$sprache], 'max_gramm' => (int) $gk['max_gramm']];
+        $aus['gewichtsklassen'][$code] = ['name' => $gk[$sprache], 'max_gramm' => (int) $gk['max_gramm'], 'kategorie' => (string) ($gk['kategorie'] ?? 'paket')];
     }
     foreach ($p['laender'] as $code => $land) {
         $klassen = [];
@@ -31,7 +34,7 @@ function angeboteFuerFormular(string $sprache, ?int $preislisteId = null): array
             }
         }
         if ($klassen !== []) {
-            $aus['laender'][$code] = ['name' => $land['name'][$sprache], 'klassen' => $klassen];
+            $aus['laender'][$code] = ['name' => $land['name'][$sprache], 'eu' => (bool) ($land['eu'] ?? landIstEu((string) $code)), 'klassen' => $klassen];
         }
     }
     foreach (zusatzleistungen(true, $preislisteId) as $code => $z) {
@@ -103,11 +106,17 @@ if ($pfad === '/sendungen/neu') {
     $unterkundeId = $unterkunde !== null ? (int) $unterkunde['id'] : 0;
     $preislisteId = preislisteFuerKonto(['unterkunde_id' => $unterkundeId] + $ich);
     $abweichung = abweichungsquote($ich);
-    $werte = ['zielland' => '', 'gewicht_kg' => '', 'laenge' => '', 'breite' => '', 'hoehe' => '', 'carrier' => '', 'referenz' => '', 'zusatz' => [], 'abholung_datum' => '', 'abholung_fenster' => '9-13', 'versicherung_wert' => '', 'nachnahme' => '', 'zahlungsart' => $business ? 'rechnung' : 'revolut', 'adresse_speichern' => false, 'gewicht_geprueft' => false,
+    $werte = ['kategorie' => 'paket', 'zielland' => '', 'gewicht_kg' => '', 'laenge' => '', 'breite' => '', 'hoehe' => '', 'carrier' => '', 'referenz' => '', 'zusatz' => [], 'abholung_datum' => '', 'abholung_fenster' => '9-13', 'versicherung_wert' => '', 'nachnahme' => '', 'zahlungsart' => $business ? 'rechnung' : 'revolut', 'adresse_speichern' => false, 'gewicht_geprueft' => false,
         'unterkunde_id' => $unterkundeId, 'absender' => standardAbsender($ich, $firma, $unterkunde), 'empfaenger' => ['name' => '', 'firma' => '', 'strasse' => '', 'plz' => '', 'ort' => '', 'email' => '', 'telefon' => '']];
+    if (in_array($_GET['kategorie'] ?? '', ['brief', 'paket'], true)) {
+        $werte['kategorie'] = $_GET['kategorie'];
+    }
     if ($methode === 'POST') {
-        foreach (['zielland', 'gewicht_kg', 'laenge', 'breite', 'hoehe', 'carrier', 'referenz', 'abholung_datum', 'abholung_fenster', 'versicherung_wert', 'nachnahme', 'zahlungsart'] as $k) {
+        foreach (['kategorie', 'zielland', 'gewicht_kg', 'laenge', 'breite', 'hoehe', 'carrier', 'referenz', 'abholung_datum', 'abholung_fenster', 'versicherung_wert', 'nachnahme', 'zahlungsart'] as $k) {
             $werte[$k] = feld($k, 100);
+        }
+        if (!in_array($werte['kategorie'], ['brief', 'paket'], true)) {
+            $werte['kategorie'] = 'paket';
         }
         $werte['zusatz'] = is_array($_POST['zusatz'] ?? null) ? array_map('strval', $_POST['zusatz']) : [];
         $werte['adresse_speichern'] = !empty($_POST['adresse_speichern']);
@@ -121,7 +130,7 @@ if ($pfad === '/sendungen/neu') {
         $zahlungsart = $business ? (in_array($werte['zahlungsart'], ['rechnung', 'guthaben'], true) ? $werte['zahlungsart'] : 'rechnung') : (in_array($werte['zahlungsart'], ['revolut', 'guthaben'], true) ? $werte['zahlungsart'] : 'revolut');
         $gramm = (int) round((float) str_replace(',', '.', $werte['gewicht_kg']) * 1000);
         $ergebnis = $abweichung['warnen'] && !$werte['gewicht_geprueft'] ? ['fehler' => ['gewicht_bestaetigt']] : bestellungAnlegen([
-            'sprache' => sprache(), 'zielland' => $werte['zielland'], 'gewicht_gramm' => $gramm, 'carrier' => $werte['carrier'],
+            'sprache' => sprache(), 'kategorie' => $werte['kategorie'], 'zielland' => $werte['zielland'], 'gewicht_gramm' => $gramm, 'carrier' => $werte['carrier'],
             'zusatz' => $werte['zusatz'], 'masse' => ['l' => (int) $werte['laenge'], 'b' => (int) $werte['breite'], 'h' => (int) $werte['hoehe']],
             'abholung' => ['datum' => $werte['abholung_datum'], 'fenster' => $werte['abholung_fenster']],
             'versicherung_wert_cent' => centAusEingabe($werte['versicherung_wert']) ?? 0, 'nachnahme_cent' => centAusEingabe($werte['nachnahme']) ?? 0,
@@ -151,7 +160,39 @@ if ($pfad === '/sendungen/neu') {
     }
     ansicht('sendung_neu', ['titel' => t('neu.titel'), 'werte' => $werte, 'fehler' => $fehler, 'meldung' => $meldung ?? ($fehler !== [] ? t('neu.fehler') : null), 'angebote' => angeboteFuerFormular(sprache(), $preislisteId),
         'adressen' => adressenAlle($ich), 'vorlagen' => vorlagenAlle($ich), 'guthaben' => guthabenStand($ich), 'zahlungBereit' => zahlungBereit(), 'business' => $business, 'abweichung' => $abweichung, 'preisliste' => $preislisteId !== null,
-        'unterkunden' => $festerUnterkunde > 0 ? [] : $unterkunden, 'unterkunde' => $unterkunde, 'aktiv' => 'neu']);
+        'unterkunden' => $festerUnterkunde > 0 ? [] : $unterkunden, 'unterkunde' => $unterkunde, 'firma' => $firma, 'aktiv' => 'neu']);
+}
+
+// ------------------------------------------------------------ Palettenanfrage
+// Paletten sind nur auf Anfrage buchbar: Formular → Anfrage (typ palette) im Dashboard + Mail ans Postfach.
+
+if ($pfad === '/sendungen/palette') {
+    if ($business) {
+        kundenRechtErzwingen('versand', 'bearbeiten');
+    }
+    $fehler = [];
+    $werte = ['zielland' => '', 'anzahl' => '1', 'palettenart' => '', 'gewicht' => '', 'abholung' => '', 'nachricht' => ''];
+    if ($methode === 'POST') {
+        foreach (array_keys($werte) as $k) {
+            $werte[$k] = feld($k, $k === 'nachricht' ? 4000 : 120);
+        }
+        if (!begrenzungPruefen('anfrage')) {
+            $fehler[] = 'zu-viele';
+        } elseif ($werte['zielland'] === '' || (int) $werte['anzahl'] <= 0) {
+            $fehler[] = 'zielland';
+        } else {
+            $id = palettenanfrageAnlegen(['art' => $ich['art'], 'name' => $ich['name'], 'firma' => $firma['name'] ?? '', 'email' => $ich['email'], 'sprache' => sprache(), 'nachricht' => $werte['nachricht'],
+                'zielland' => $werte['zielland'], 'anzahl' => $werte['anzahl'], 'palettenart' => $werte['palettenart'], 'gewicht' => $werte['gewicht'], 'abholung' => $werte['abholung'],
+                'firma_id' => $firma['id'] ?? null, 'kundennummer' => $firma['kundennummer'] ?? ($ich['kundennummer'] ?? '')]);
+            hinweisSetzen(t('palette.gesendet', (string) $id));
+            umleiten(url($listenPfad));
+        }
+    }
+    $laender = [];
+    foreach (preisliste()['laender'] as $code => $land) {
+        $laender[$code] = ['name' => $land['name'][sprache()], 'eu' => (bool) ($land['eu'] ?? landIstEu((string) $code))];
+    }
+    ansicht('sendung_palette', ['titel' => t('palette.titel'), 'werte' => $werte, 'fehler' => $fehler, 'meldung' => $fehler === [] ? null : t(in_array('zu-viele', $fehler, true) ? 'palette.fehler.zu_viele' : 'palette.fehler.zielland'), 'laender' => $laender, 'business' => $business, 'aktiv' => 'neu']);
 }
 
 // ------------------------------------------------------------------ Bezahlen

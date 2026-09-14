@@ -720,7 +720,7 @@ function rpPositionBewerten(array $p, ?array $b, string $carrier, array $gesehen
         $hinweise[] = 'Bestellt über ' . $b['carrier'] . ', abgerechnet von ' . $carrier . '.';
     }
     $gramm = (int) $p['gewicht_gramm'];
-    $gkIst = $gramm > 0 ? gewichtsklasseFuerGewicht($gramm) : $e['gk_bestellt'];
+    $gkIst = $gramm > 0 ? gewichtsklasseFuerGewicht($gramm, (string) ($b['kategorie'] ?? kategorieDerKlasse((string) $e['gk_bestellt']))) : $e['gk_bestellt'];
     if ($gkIst === null) {
         $e['befund'] = 'unbekannte_klasse';
         $e['gk_ist'] = '';

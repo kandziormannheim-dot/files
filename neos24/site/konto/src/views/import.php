@@ -51,7 +51,7 @@
     <?php $uNummern = array_column($unterkunden, 'nummer', 'id'); foreach ($vorschau as $z) { $p = $z['p']; ?>
       <tr class="<?= $z['fehler'] !== [] ? 'k-fehlerzeile' : '' ?>">
         <td class="k-mono"><?= (int) $z['nr'] ?></td>
-        <td><?php if ($p['zielland'] !== '') { ?><span class="flag"><?= e($p['zielland']) ?></span><?php } else { ?>—<?php } ?><?= e($z['gk'] ?? '') ?></td>
+        <td><?php if ($p['zielland'] !== '') { ?><span class="flag"><?= e($p['zielland']) ?></span><?php } else { ?>—<?php } ?><?= e($z['gk'] ?? '') ?><?= ($p['kategorie'] ?? 'paket') === 'brief' ? ' <span class="k-klein">' . e(kategorieName('brief', $sp)) . '</span>' : '' ?></td>
         <td class="k-mono"><?= $p['gewicht_gramm'] > 0 ? e(number_format($p['gewicht_gramm'] / 1000, 2, $sp === 'en' ? '.' : ',', '')) : '—' ?></td>
         <td><?= e($p['empfaenger']['name']) ?><br><span class="k-klein"><?= e($p['empfaenger']['strasse']) ?>, <?= e(trim($p['empfaenger']['plz'] . ' ' . $p['empfaenger']['ort'])) ?></span></td>
         <td><?= e($p['referenz'] !== '' ? $p['referenz'] : '—') ?></td>

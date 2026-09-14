@@ -4,7 +4,7 @@
  * Bestellung anlegen (POST, JSON) und bei Revolut eine Order eröffnen.
  *
  * Eingabe:
- *   { "sprache": "de", "zielland": "FR", "gewichtsklasse": "2kg", "carrier": "" (optional),
+ *   { "sprache": "de", "zielland": "FR", "gewichtsklasse": "2kg", "kategorie": "paket"|"brief" (optional), "carrier": "" (optional),
  *     "zusatz": ["versicherung", …] (optional), "abholung": {datum, fenster} (bei Abholung),
  *     "email": "…", "absender": {name, strasse, plz, ort},
  *     "empfaenger": {name, strasse, plz, ort}, "firma": "" (Honigtopf) }
@@ -64,6 +64,7 @@ try {
         'sprache' => $sprache,
         'zielland' => $daten['zielland'] ?? '',
         'gewichtsklasse' => $daten['gewichtsklasse'] ?? '2kg',
+        'kategorie' => saeubern($daten['kategorie'] ?? '', 10), // brief | paket; Palette lehnt bestellungAnlegen ab (nur Anfrage)
         'carrier' => $daten['carrier'] ?? '',
         'zusatz' => is_array($daten['zusatz'] ?? null) ? $daten['zusatz'] : [],
         'abholung' => is_array($daten['abholung'] ?? null) ? $daten['abholung'] : [],

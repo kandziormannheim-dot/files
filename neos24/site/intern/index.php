@@ -359,7 +359,8 @@ if (preg_match('#^/preise/(land|gewichtsklasse|carrier)(/loeschen)?$#', $pfad, $
                 $nameEn = feld('name_en', 60);
                 $gramm = (int) feld('max_gramm', 8);
                 $sortierung = (int) feld('sortierung', 6);
-                if (!preg_match('/^[a-z0-9]{1,12}$/', $code) || $nameDe === '' || $nameEn === '') {
+                $kategorie = feld('kategorie', 10) === 'brief' ? 'brief' : 'paket'; // Paletten laufen nur über Anfragen, nicht über Gewichtsklassen
+                if (!preg_match('/^[a-z0-9-]{1,12}$/', $code) || $nameDe === '' || $nameEn === '') {
                     throw new InvalidArgumentException('Kürzel (Kleinbuchstaben/Ziffern, z. B. 5kg) und beide Namen sind Pflicht.');
                 }
                 $vorhanden = gewichtsklasseNachCode($code);
@@ -367,14 +368,14 @@ if (preg_match('#^/preise/(land|gewichtsklasse|carrier)(/loeschen)?$#', $pfad, $
                     if ($vorhanden !== null && (int) $vorhanden['id'] !== $id) {
                         throw new InvalidArgumentException('Das Kürzel ist schon vergeben.');
                     }
-                    $db->prepare('UPDATE gewichtsklassen SET code = ?, name_de = ?, name_en = ?, max_gramm = ?, aktiv = ?, sortierung = ? WHERE id = ?')->execute([$code, $nameDe, $nameEn, $gramm, $aktiv, $sortierung, $id]);
-                    protokollieren('gewichtsklasse.geaendert', 'gewichtsklasse', $id, ['code' => $code, 'aktiv' => $aktiv]);
+                    $db->prepare('UPDATE gewichtsklassen SET code = ?, name_de = ?, name_en = ?, max_gramm = ?, aktiv = ?, sortierung = ?, kategorie = ? WHERE id = ?')->execute([$code, $nameDe, $nameEn, $gramm, $aktiv, $sortierung, $kategorie, $id]);
+                    protokollieren('gewichtsklasse.geaendert', 'gewichtsklasse', $id, ['code' => $code, 'aktiv' => $aktiv, 'kategorie' => $kategorie]);
                 } else {
                     if ($vorhanden !== null) {
                         throw new InvalidArgumentException('Das Kürzel ist schon vergeben.');
                     }
-                    $db->prepare('INSERT INTO gewichtsklassen (code, name_de, name_en, max_gramm, aktiv, sortierung) VALUES (?, ?, ?, ?, ?, ?)')->execute([$code, $nameDe, $nameEn, $gramm, $aktiv, $sortierung ?: 100]);
-                    protokollieren('gewichtsklasse.angelegt', 'gewichtsklasse', (int) $db->lastInsertId(), ['code' => $code]);
+                    $db->prepare('INSERT INTO gewichtsklassen (code, name_de, name_en, max_gramm, aktiv, sortierung, kategorie) VALUES (?, ?, ?, ?, ?, ?, ?)')->execute([$code, $nameDe, $nameEn, $gramm, $aktiv, $sortierung ?: 100, $kategorie]);
+                    protokollieren('gewichtsklasse.angelegt', 'gewichtsklasse', (int) $db->lastInsertId(), ['code' => $code, 'kategorie' => $kategorie]);
                 }
                 hinweisSetzen('Gewichtsklasse „' . $code . '“ gespeichert.');
             }

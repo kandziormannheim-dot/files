@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NEOS – Shipping that thinks ahead. Parcel shipping across Europe for shops and private customers</title>
-  <meta name="description" content="One login, 100+ delivery partners, up to 55% cheaper. NEOS ships parcels from shops and private customers to 27 countries – one point of contact, one tracking link, returns included.">
+  <title>NEOS – Shipping that thinks ahead. Letters, parcels and pallets worldwide for shops and private customers</title>
+  <meta name="description" content="One login, 100+ delivery partners, up to 55% cheaper. NEOS ships letters, parcels and pallets from shops and private customers worldwide – one point of contact, one tracking link, returns included.">
   <link rel="canonical" href="https://neos24.com/en/">
   <link rel="alternate" hreflang="de" href="https://neos24.com/">
   <link rel="alternate" hreflang="en" href="https://neos24.com/en/">
@@ -14,7 +14,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="NEOS">
   <meta property="og:title" content="NEOS – Shipping that thinks ahead.">
-  <meta property="og:description" content="One login, 100+ delivery partners, up to 55% cheaper. Parcel shipping across Europe for shops and private customers.">
+  <meta property="og:description" content="One login, 100+ delivery partners, up to 55% cheaper. Worldwide shipping for shops and private customers: letters/documents, parcels, pallets.">
   <meta property="og:url" content="https://neos24.com/en/">
   <meta property="og:locale" content="en_GB">
   <meta property="og:locale:alternate" content="de_DE">
@@ -32,8 +32,8 @@
     "alternateName": "NEOS",
     "url": "https://neos24.com/",
     "email": "info@neos24.com",
-    "description": "Cross-border last-mile shipping for e-commerce and private customers across Europe. 100+ delivery partners, 27 countries.",
-    "areaServed": "Europe"
+    "description": "Cross-border last-mile shipping for e-commerce and private customers worldwide. 100+ delivery partners, letters/documents, parcels and pallets.",
+    "areaServed": "Worldwide"
   }
   </script>
 </head>
@@ -107,11 +107,11 @@
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="orbits" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="container">
-      <span class="pill" data-for="business">Cross-border last mile · Europe</span>
-      <span class="pill" data-for="private">Parcel shipping · Europe</span>
+      <span class="pill" data-for="business">Cross-border last mile · worldwide</span>
+      <span class="pill" data-for="private">Letter · Parcel · Pallet · worldwide</span>
       <h1 class="h1" id="hero-title">Shipping that<br>thinks ahead.</h1>
-      <p class="lede" data-for="business">One login, over 100 delivery partners, up to 55% cheaper. NEOS connects your shop to the last mile across Europe — and you keep a single point of contact.</p>
-      <p class="lede" data-for="private">Pay for postage online, print the label or get a QR code on your phone, drop off or have it collected — 27 countries, no account, no base fee.</p>
+      <p class="lede" data-for="business">One login, over 100 delivery partners, up to 55% cheaper. NEOS connects your shop to the last mile worldwide — letters/documents, parcels or pallets, and you keep a single point of contact.</p>
+      <p class="lede" data-for="private">Pay for postage online, print the label or get a QR code on your phone, drop off or have it collected — letter, parcel or pallet, worldwide, no account, no base fee.</p>
       <div class="hero-actions" data-for="business">
         <a class="btn btn--primary btn--lg" href="#contact">Start for free <span class="arrow" aria-hidden="true">→</span></a>
         <a class="btn btn--ghost btn--lg" href="#how-it-works">How it works</a>
@@ -166,6 +166,14 @@
         <div class="checkout-form">
           <fieldset class="checkout-block">
             <legend>Shipment</legend>
+            <div class="field">
+              <span class="label-text">What are you sending?</span>
+              <div class="kategorie-wahl" role="radiogroup" aria-label="Category">
+                <label class="kategorie-option"><input type="radio" name="kategorie" value="brief"><b>Letter / documents</b><small>up to 2 kg</small></label>
+                <label class="kategorie-option"><input type="radio" name="kategorie" value="paket" checked><b>Parcel</b><small>up to 31.5 kg</small></label>
+                <label class="kategorie-option"><input type="radio" name="kategorie" value="palette"><b>Pallet</b><small>on request</small></label>
+              </div>
+            </div>
             <div class="form-row">
               <div class="field">
                 <label for="p-land">Destination</label>
@@ -176,21 +184,50 @@
                   <option value="NL" data-netto="210" data-carrier="PostNL" data-laufzeit="1–2 working days">Netherlands</option>
                   <option value="BE" data-netto="220" data-carrier="bpost" data-laufzeit="1–2 working days">Belgium</option>
                   <option value="FR" data-netto="240" data-carrier="Colissimo, Chronopost" data-laufzeit="2–3 working days">France</option>
-                  <option value="AT" data-netto="255" data-carrier="DPD, Austrian Post" data-laufzeit="1–2 working days">Austria</option>
+                  <option value="AT" data-netto="255" data-carrier="DPD, Österreichische Post" data-laufzeit="1–2 working days">Austria</option>
                   <option value="IT" data-netto="285" data-carrier="GLS, Poste Italiane" data-laufzeit="2–4 working days">Italy</option>
                   <option value="ES" data-netto="295" data-carrier="Correos" data-laufzeit="2–4 working days">Spain</option>
                   <option value="PT" data-netto="310" data-carrier="CTT" data-laufzeit="3–5 working days">Portugal</option>
+                  <option value="CH" data-netto="890" data-carrier="DHL Express, UPS" data-laufzeit="2–3 working days">Switzerland</option>
+                  <option value="GB" data-netto="790" data-carrier="DHL Express, UPS" data-laufzeit="2–4 working days">United Kingdom</option>
+                  <option value="TR" data-netto="1290" data-carrier="DHL Express, UPS" data-laufzeit="3–5 working days">Türkiye</option>
+                  <option value="US" data-netto="1990" data-carrier="DHL Express, UPS, FedEx" data-laufzeit="3–6 working days">United States</option>
+                  <option value="CA" data-netto="2090" data-carrier="DHL Express, UPS, FedEx" data-laufzeit="4–7 working days">Canada</option>
+                  <option value="AE" data-netto="2190" data-carrier="DHL Express, FedEx" data-laufzeit="3–6 working days">United Arab Emirates</option>
+                  <option value="CN" data-netto="2290" data-carrier="DHL Express, UPS, FedEx" data-laufzeit="4–8 working days">China</option>
+                  <option value="JP" data-netto="2390" data-carrier="DHL Express, FedEx" data-laufzeit="4–7 working days">Japan</option>
+                  <option value="AU" data-netto="2590" data-carrier="DHL Express, UPS, FedEx" data-laufzeit="5–9 working days">Australia</option>
                 </select>
                 <span class="error">Please choose the destination.</span>
               </div>
               <div class="field">
-                <label for="p-gewicht">Weight</label>
+                <label for="p-gewicht">Weight class</label>
                 <select id="p-gewicht" name="gewichtsklasse">
                   <option value="2kg">up to 2 kg</option>
                 </select>
               </div>
             </div>
-            <p class="hint">More weight classes and home collection are coming — until then, parcels up to 2 kg are paid here and dropped off at a parcel shop.</p>
+            <p class="hint" data-zoll hidden>Destination outside the EU: we print the customs declaration (CN22/CN23) with the label. Import duties are paid by the recipient unless agreed otherwise.</p>
+            <p class="hint" data-kategorie-hinweis>Letters and documents up to 2 kg, parcels up to 31.5 kg — drop-off at a parcel shop or home collection. Pallets are quoted individually.</p>
+            <div class="palette-panel" data-palette hidden>
+              <p class="hint">We ship pallets worldwide on request: tell us what goes where and you get a quote within one working day.</p>
+              <div class="form-row">
+                <div class="field"><label for="pa-anzahl">Number of pallets</label><input id="pa-anzahl" name="palette_anzahl" type="number" min="1" max="99" value="1"></div>
+                <div class="field"><label for="pa-art">Pallet type</label><select id="pa-art" name="palette_art"><option value="Euro pallet 120×80 cm">Euro pallet 120×80 cm</option><option value="Industrial pallet 120×100 cm">Industrial pallet 120×100 cm</option><option value="Half pallet 80×60 cm">Half pallet 80×60 cm</option><option value="Custom size">Custom size</option></select></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label for="pa-gewicht">Total weight (kg)</label><input id="pa-gewicht" name="palette_gewicht" type="text" inputmode="decimal" placeholder="350"></div>
+                <div class="field"><label for="pa-plz">Pickup postcode / city</label><input id="pa-plz" name="palette_abholung" type="text" placeholder="68159 Mannheim"></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label for="pa-name">Name</label><input id="pa-name" name="palette_name" type="text" autocomplete="name"></div>
+                <div class="field"><label for="pa-email">Email</label><input id="pa-email" name="palette_email" type="email" autocomplete="email"></div>
+              </div>
+              <div class="field"><label for="pa-text">What are you shipping? (goods, dimensions, preferred date)</label><textarea id="pa-text" name="palette_nachricht" rows="3"></textarea></div>
+              <button class="btn btn--primary" type="button" data-palette-senden>Request a quote <span class="arrow" aria-hidden="true">→</span></button>
+              <p class="checkout-state palette-state--error" data-palette-fehler role="alert" hidden></p>
+              <p class="checkout-state palette-state--success" data-palette-ok role="status" hidden><b>Request received.</b> We will send a quote to your email address.</p>
+            </div>
           </fieldset>
 
           <fieldset class="checkout-block">
@@ -308,7 +345,7 @@
         <article class="card reveal" data-delay="2" data-for="private">
           <div class="tile tile--yellow" aria-hidden="true">€</div>
           <h3 class="h3">Cheaper than the counter</h3>
-          <p>We pool millions of shipments and pass the rates on: across Europe from €2.32 incl. VAT.</p>
+          <p>We pool millions of shipments and pass the rates on: letters from €1.01, parcels from €2.32 incl. VAT — worldwide.</p>
         </article>
         <article class="card reveal" data-delay="3">
           <div class="tile tile--magenta" aria-hidden="true">◎</div>
@@ -462,11 +499,24 @@
               <table class="table">
                 <thead><tr><th>Tracking</th><th>Destination</th><th>Carrier</th><th>Status</th><th>Cost</th></tr></thead>
                 <tbody>
-                  <tr><td class="mono">NE 8821 4470 DE</td><td>Marseille · FR</td><td>Colissimo</td><td><span class="status status--transit">In transit</span></td><td>€2.40</td></tr>
-                  <tr><td class="mono">NE 7733 1190 DE</td><td>Milan · IT</td><td>GLS</td><td><span class="status status--transit">In transit</span></td><td>€2.85</td></tr>
-                  <tr><td class="mono">NE 6610 5521 DE</td><td>The Hague · NL</td><td>PostNL</td><td><span class="status status--done">Delivered</span></td><td>€2.10</td></tr>
-                  <tr><td class="mono">NE 5402 8830 DE</td><td>Kraków · PL</td><td>InPost</td><td><span class="status status--done">Delivered</span></td><td>€1.95</td></tr>
-                  <tr><td class="mono">NE 4471 0093 DE</td><td>Vienna · AT</td><td>DPD</td><td><span class="status status--return">Return</span></td><td>€2.55</td></tr>
+                <tr><td><span class="flag">DE</span>Germany</td><td>DPD, DHL, GLS</td><td>1–2 working days</td><td class="price"><small>from</small><span data-for="business">€0.85</span><span data-for="private">€1.01</span></td><td class="price"><small>from</small><span data-for="business">€1.95</span><span data-for="private">€2.32</span></td></tr>
+                <tr><td><span class="flag">PL</span>Poland</td><td>InPost</td><td>2–3 working days</td><td class="price"><small>from</small><span data-for="business">€0.85</span><span data-for="private">€1.01</span></td><td class="price"><small>from</small><span data-for="business">€1.95</span><span data-for="private">€2.32</span></td></tr>
+                <tr><td><span class="flag">NL</span>Netherlands</td><td>PostNL</td><td>1–2 working days</td><td class="price"><small>from</small><span data-for="business">€1.00</span><span data-for="private">€1.19</span></td><td class="price"><small>from</small><span data-for="business">€2.10</span><span data-for="private">€2.50</span></td></tr>
+                <tr><td><span class="flag">BE</span>Belgium</td><td>bpost</td><td>1–2 working days</td><td class="price"><small>from</small><span data-for="business">€1.10</span><span data-for="private">€1.31</span></td><td class="price"><small>from</small><span data-for="business">€2.20</span><span data-for="private">€2.62</span></td></tr>
+                <tr><td><span class="flag">FR</span>France</td><td>Colissimo, Chronopost</td><td>2–3 working days</td><td class="price"><small>from</small><span data-for="business">€1.30</span><span data-for="private">€1.55</span></td><td class="price"><small>from</small><span data-for="business">€2.40</span><span data-for="private">€2.86</span></td></tr>
+                <tr><td><span class="flag">AT</span>Austria</td><td>DPD, Österreichische Post</td><td>1–2 working days</td><td class="price"><small>from</small><span data-for="business">€1.45</span><span data-for="private">€1.73</span></td><td class="price"><small>from</small><span data-for="business">€2.55</span><span data-for="private">€3.03</span></td></tr>
+                <tr><td><span class="flag">IT</span>Italy</td><td>GLS, Poste Italiane</td><td>2–4 working days</td><td class="price"><small>from</small><span data-for="business">€1.75</span><span data-for="private">€2.08</span></td><td class="price"><small>from</small><span data-for="business">€2.85</span><span data-for="private">€3.39</span></td></tr>
+                <tr><td><span class="flag">ES</span>Spain</td><td>Correos</td><td>2–4 working days</td><td class="price"><small>from</small><span data-for="business">€1.85</span><span data-for="private">€2.20</span></td><td class="price"><small>from</small><span data-for="business">€2.95</span><span data-for="private">€3.51</span></td></tr>
+                <tr><td><span class="flag">PT</span>Portugal</td><td>CTT</td><td>3–5 working days</td><td class="price"><small>from</small><span data-for="business">€2.00</span><span data-for="private">€2.38</span></td><td class="price"><small>from</small><span data-for="business">€3.10</span><span data-for="private">€3.69</span></td></tr>
+                <tr><td><span class="flag">CH</span>Switzerland</td><td>DHL Express, UPS</td><td>2–3 working days</td><td class="price"><small>from</small><span data-for="business">€7.80</span><span data-for="private">€9.28</span></td><td class="price"><small>from</small><span data-for="business">€8.90</span><span data-for="private">€10.59</span></td></tr>
+                <tr><td><span class="flag">GB</span>United Kingdom</td><td>DHL Express, UPS</td><td>2–4 working days</td><td class="price"><small>from</small><span data-for="business">€6.80</span><span data-for="private">€8.09</span></td><td class="price"><small>from</small><span data-for="business">€7.90</span><span data-for="private">€9.40</span></td></tr>
+                <tr><td><span class="flag">TR</span>Türkiye</td><td>DHL Express, UPS</td><td>3–5 working days</td><td class="price"><small>from</small><span data-for="business">€11.80</span><span data-for="private">€14.04</span></td><td class="price"><small>from</small><span data-for="business">€12.90</span><span data-for="private">€15.35</span></td></tr>
+                <tr><td><span class="flag">US</span>United States</td><td>DHL Express, UPS, FedEx</td><td>3–6 working days</td><td class="price"><small>from</small><span data-for="business">€18.80</span><span data-for="private">€22.37</span></td><td class="price"><small>from</small><span data-for="business">€19.90</span><span data-for="private">€23.68</span></td></tr>
+                <tr><td><span class="flag">CA</span>Canada</td><td>DHL Express, UPS, FedEx</td><td>4–7 working days</td><td class="price"><small>from</small><span data-for="business">€19.80</span><span data-for="private">€23.56</span></td><td class="price"><small>from</small><span data-for="business">€20.90</span><span data-for="private">€24.87</span></td></tr>
+                <tr><td><span class="flag">AE</span>United Arab Emirates</td><td>DHL Express, FedEx</td><td>3–6 working days</td><td class="price"><small>from</small><span data-for="business">€20.80</span><span data-for="private">€24.75</span></td><td class="price"><small>from</small><span data-for="business">€21.90</span><span data-for="private">€26.06</span></td></tr>
+                <tr><td><span class="flag">CN</span>China</td><td>DHL Express, UPS, FedEx</td><td>4–8 working days</td><td class="price"><small>from</small><span data-for="business">€21.80</span><span data-for="private">€25.94</span></td><td class="price"><small>from</small><span data-for="business">€22.90</span><span data-for="private">€27.25</span></td></tr>
+                <tr><td><span class="flag">JP</span>Japan</td><td>DHL Express, FedEx</td><td>4–7 working days</td><td class="price"><small>from</small><span data-for="business">€22.80</span><span data-for="private">€27.13</span></td><td class="price"><small>from</small><span data-for="business">€23.90</span><span data-for="private">€28.44</span></td></tr>
+                <tr><td><span class="flag">AU</span>Australia</td><td>DHL Express, UPS, FedEx</td><td>5–9 working days</td><td class="price"><small>from</small><span data-for="business">€24.80</span><span data-for="private">€29.51</span></td><td class="price"><small>from</small><span data-for="business">€25.90</span><span data-for="private">€30.82</span></td></tr>
                 </tbody>
               </table>
             </div>
@@ -494,7 +544,7 @@
           <div class="tile tile--yellow" aria-hidden="true">◉</div>
           <h3 class="h3">Drop off at a parcel shop</h3>
           <!-- PLACEHOLDER: verify the number of drop-off points before go-live. -->
-          <p>Over 40,000 parcel shops and lockers across Europe — we show you the nearest ones at checkout.</p>
+          <p>Over 40,000 parcel shops and lockers across Europe, express partners worldwide — we show you the nearest ones at checkout.</p>
         </article>
         <article class="card reveal" data-delay="3">
           <div class="tile tile--magenta" aria-hidden="true">⌂</div>
@@ -511,8 +561,8 @@
     <div class="container network">
       <div class="reveal">
         <span class="eyebrow">The network</span>
-        <h2 class="h2" id="network-title">All of Europe.<br>One interface.</h2>
-        <p class="lede" style="margin-top:1.1rem">From Lisbon to Helsinki: NEOS combines regional specialists and global carriers in one robust network — tailored to your target market.</p>
+        <h2 class="h2" id="network-title">The whole world.<br>One interface.</h2>
+        <p class="lede" style="margin-top:1.1rem">From Lisbon to Tokyo: NEOS combines regional specialists and global carriers in one robust network — tailored to your target market.</p>
         <ul class="network-points">
           <li>Automatic routing by price, speed &amp; zone</li>
           <li data-for="business">Customs &amp; returns handling included</li>
@@ -569,7 +619,7 @@
             <!-- PLACEHOLDER: example prices derived from Dashboard.pdf. Gross = net × 1.19, rounded to the cent.
                  Replace with the approved price list before go-live. -->
             <table class="table" aria-describedby="pricing-note pricing-note-private">
-              <thead><tr><th>Destination</th><th>Example carriers</th><th>Transit time</th><th><span data-for="business">Price (net)</span><span data-for="private">Price incl. VAT</span></th></tr></thead>
+              <thead><tr><th>Destination</th><th>Example carrier</th><th>Transit time</th><th>Letter / documents <span data-for="business">net</span><span data-for="private">incl. VAT</span></th><th>Parcel <span data-for="business">net</span><span data-for="private">incl. VAT</span></th></tr></thead>
               <tbody>
                 <tr><td><span class="flag">DE</span>Germany</td><td>DPD, DHL, GLS</td><td>1–2 working days</td><td class="price"><small>from</small><span data-for="business">€1.95</span><span data-for="private">€2.32</span></td></tr>
                 <tr><td><span class="flag">PL</span>Poland</td><td>InPost</td><td>2–3 working days</td><td class="price"><small>from</small><span data-for="business">€1.95</span><span data-for="private">€2.32</span></td></tr>
@@ -583,8 +633,8 @@
               </tbody>
             </table>
           </div>
-          <p class="price-note" id="pricing-note" data-for="business">Example prices, net, per parcel up to 2 kg at around 500 shipments per month. Rates for further countries, weight classes and higher volumes come with your account — return rates included.</p>
-          <p class="price-note" id="pricing-note-private" data-for="private">Final prices incl. 19% VAT per parcel up to 2 kg, paid online. Home collection and heavier parcels are shown at checkout — no hidden surcharges.</p>
+          <p class="price-note" id="pricing-note" data-for="business">Example net prices: letter/documents up to 50 g, parcel up to 2 kg, at around 500 shipments per month. More countries, weight classes, pallets and higher volumes come with the account — returns pricing included. Destinations outside the EU with customs handling.</p>
+          <p class="price-note" id="pricing-note-private" data-for="private">Final prices incl. 19% VAT: letter/documents up to 50 g, parcel up to 2 kg, paid online. More weight classes and collection are shown at checkout — no hidden surcharges. Pallets on request.</p>
         </div>
         <div class="price-aside reveal" data-delay="2">
           <div class="card card--yellow" data-for="business">
@@ -639,7 +689,7 @@
           <figcaption><span class="avatar">LK</span><div><b>Lena Kraft</b>Managing Director, Atlas Goods GmbH</div></figcaption>
         </figure>
         <figure class="card quote reveal" data-delay="2">
-          <div class="stat-value" style="color:var(--magenta)">27 countries</div>
+          <div class="stat-value" style="color:var(--magenta)">Worldwide</div>
           <blockquote>“France, Poland, Italy — three processes before, one shipment list today. Our customers get the same tracking link everywhere.”</blockquote>
           <figcaption><span class="avatar">JW</span><div><b>Jonas Weber</b>Head of Operations, Nordlicht Living</div></figcaption>
         </figure>
@@ -656,7 +706,7 @@
           <figcaption><span class="avatar">SR</span><div><b>Sabine R.</b>Freiburg, ships to France</div></figcaption>
         </figure>
         <figure class="card quote reveal" data-delay="2">
-          <div class="stat-value" style="color:var(--magenta)">27 countries</div>
+          <div class="stat-value" style="color:var(--magenta)">Worldwide</div>
           <blockquote>“My daughter studies in Lisbon. It used to be the post office, forms, queues. Now it's two minutes at the kitchen table.”</blockquote>
           <figcaption><span class="avatar">TK</span><div><b>Thomas K.</b>Hanover, ships to Portugal</div></figcaption>
         </figure>
@@ -695,7 +745,7 @@
         </details>
         <details name="faq-business">
           <summary>What about customs for destinations outside the EU?</summary>
-          <div class="faq-body">For Switzerland, the United Kingdom and Norway, NEOS generates customs documents automatically from your order data (goods description, HS code, value). You choose DDP or DAP per destination; the carrier handles clearance.</div>
+          <div class="faq-body">For every destination outside the EU — from Switzerland to the USA and Japan — NEOS generates customs documents automatically from your order data (goods description, HS code, value). You choose DDP or DAP per destination; the carrier handles clearance.</div>
         </details>
         <details name="faq-business">
           <summary>How do my customers see tracking?</summary>
@@ -826,7 +876,7 @@
     <div class="footer-grid">
       <div class="footer-brand">
         <a class="logo logo--lg" href="#top" aria-label="NEOS – back to top"><svg width="84" height="30" aria-hidden="true"><use href="#neos-logo"/></svg></a>
-        <p>Cross-border parcel shipping for shops and private customers across Europe.</p>
+        <p>Letters, parcels and pallets — worldwide for shops and private customers.</p>
       </div>
       <div class="footer-col">
         <b>Product</b>

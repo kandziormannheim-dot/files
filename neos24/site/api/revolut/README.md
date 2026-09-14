@@ -30,8 +30,8 @@ Adressen gelesen.
 |---|---|
 | `_bootstrap.php` | Konfiguration, SQLite, Herkunftsprüfung, Missbrauchsbremse, Revolut-Client, Statuspflege, Mail |
 | `preise.php` | Nur noch Saatgut: wird einmalig in die Datenbank übernommen, solange dort keine Länder stehen. Danach pflegt das Dashboard (`intern/` → Preise & Zielländer, Routingmatrix) Länder, Carrier und Preise |
-| `angebot.php` | GET · Preisliste live aus der Datenbank (je Land und Gewichtsklasse), Modus und Bereitschaft — für Preistabelle und Formular, Cache 5 Minuten |
-| `bestellung.php` | POST · Bestellung anlegen, Revolut-Order eröffnen, Token zurückgeben |
+| `angebot.php` | GET · Preisliste live aus der Datenbank (je Land und Gewichtsklasse), `kategorien`, `klassen` mit Kategorie und Maximalgewicht, je Land `eu` (Zollhinweis) und `ab` je Kategorie, Modus und Bereitschaft — für Preistabelle und Formular, Cache 5 Minuten |
+| `bestellung.php` | POST · Bestellung anlegen (`kategorie` brief oder paket; `palette` wird mit 422 abgelehnt — nur auf Anfrage), Revolut-Order eröffnen, Token zurückgeben |
 | `status.php` | GET `?id=NE-…` · Status, gleicht bei Bedarf mit Revolut ab |
 | `webhook.php` | POST · Empfänger für Revolut-Ereignisse, prüft die Signatur |
 | `webhook-einrichten.php` | CLI · registriert den Webhook und gibt das Signing Secret aus |
@@ -120,8 +120,9 @@ Bestellungen tragen seit dem Kundenportal (`konto/`) `kunde_id` (bestätigtes Pr
 E-Mail, gesetzt in `bestellung.php`), `firma_id` und `zahlungsart` (`revolut` hier, `rechnung` für
 Sendungen von Geschäftskunden mit Status `beauftragt`) sowie `rechnung_id` nach der
 Sammelrechnung. Die Bestätigungsmail verweist auf das Portal. `bestellung.php` legt Bestellungen
-über `bestellungAnlegen()` in `lib/versand.php` an — derselbe Weg wie im Portal: Gewicht in Gramm
-→ Gewichtsklasse, Carrier aus allen Angeboten der Zelle (Priorität 1, wenn keiner gewählt),
+über `bestellungAnlegen()` in `lib/versand.php` an — derselbe Weg wie im Portal: Kategorie (`brief` oder
+`paket`, Spalte `kategorie`; eine angegebene Gewichtsklasse legt die Kategorie fest), Gewicht in Gramm
+→ Gewichtsklasse der Kategorie (Volumengewicht nur bei Paketen), Carrier aus allen Angeboten der Zelle (Priorität 1, wenn keiner gewählt),
 Zusatzleistungen (`zusatz_json`, `zusatz_cent`), Abholung, Versicherung, Nachnahme. Die
 Zahlungsart `guthaben` (Prepaid, Aufladungen `NG-…` als eigene Revolut-Orders, `webhook.php`
 kennt sie) kommt dazu; `versandstatus` und `sendungsereignisse` bilden das Tracking ab.

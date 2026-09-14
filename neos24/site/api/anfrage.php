@@ -56,6 +56,8 @@ if ($email === '') {
 $firma = $art === 'business' ? saeubern($daten['firma'] ?? '', 120) : '';
 $volumen = $art === 'business' ? saeubern($daten['volumen'] ?? '', 40) : '';
 $nachricht = saeubern($daten['nachricht'] ?? '', 4000);
+// Palettenanfrage (Kategorie Palette ist nur auf Anfrage buchbar) — Eckdaten aus dem Checkout, siehe palettenanfrageAnlegen()
+$typ = ($daten['typ'] ?? '') === 'palette' ? 'palette' : '';
 
 $fehler = [];
 if (mb_strlen($name) < 2) {
@@ -73,9 +75,14 @@ if (!begrenzungPruefen('anfrage')) {
 }
 
 try {
+    if ($typ === 'palette') {
+        $id = palettenanfrageAnlegen(['art' => $art, 'name' => $name, 'firma' => $firma, 'email' => $email, 'sprache' => $sprache, 'nachricht' => $nachricht, 'volumen' => $volumen,
+            'zielland' => $daten['zielland'] ?? '', 'anzahl' => $daten['palette_anzahl'] ?? '', 'palettenart' => $daten['palette_art'] ?? '', 'gewicht' => $daten['palette_gewicht'] ?? '', 'abholung' => $daten['palette_abholung'] ?? '']);
+        $fertig(200, ['ok' => true, 'id' => $id]);
+    }
     $db = datenbank();
-    $db->prepare('INSERT INTO anfragen (art, name, firma, email, volumen, nachricht, sprache, status, erstellt, aktualisiert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-       ->execute([$art, $name, $firma, mb_strtolower($email), $volumen, $nachricht, $sprache, 'neu', jetzt(), jetzt()]);
+    $db->prepare('INSERT INTO anfragen (art, typ, name, firma, email, volumen, nachricht, sprache, status, erstellt, aktualisiert) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+       ->execute([$art, $typ, $name, $firma, mb_strtolower($email), $volumen, $nachricht, $sprache, 'neu', jetzt(), jetzt()]);
     $id = (int) $db->lastInsertId();
 } catch (Throwable $e) {
     error_log('[anfrage] Datenbank: ' . $e->getMessage());

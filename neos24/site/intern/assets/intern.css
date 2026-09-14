@@ -146,6 +146,7 @@ code { font-family: var(--font-mono); font-size: .85em; background: var(--ink-80
 .details { font-family: var(--font-mono); font-size: .74rem; max-width: 460px; overflow-wrap: anywhere; }
 
 /* Matrix ----------------------------------------------------------------- */
+.matrix .matrix-gruppe { text-align: center; border-bottom: 1px solid var(--line, #e5e7eb); background: var(--ink-50, #f6f7f9); }
 .matrix th[scope="row"] { white-space: nowrap; font-family: var(--font-text); font-size: .9rem; letter-spacing: 0; text-transform: none; color: var(--ink); }
 .matrix td.zelle { padding: 0; min-width: 200px; }
 .zelle-link { display: grid; gap: .1rem; padding: .7rem .75rem; text-decoration: none; border-radius: var(--radius-sm); transition: background var(--fast); min-height: 4.4rem; }

@@ -66,11 +66,11 @@ foreach ($zusatz as $z) { if ($z['id'] === $bearbeitenZusatz) { $zusatzForm = $z
     <div class="karte-kopf"><h2 class="h2">Gewichtsklassen</h2></div>
     <div class="scrollen">
     <table class="tabelle">
-      <thead><tr><th>Kürzel</th><th>Deutsch</th><th>Englisch</th><th class="rechts">bis g</th><th class="rechts">Routen</th><th>Aktiv</th><th></th></tr></thead>
+      <thead><tr><th>Kürzel</th><th>Kategorie</th><th>Deutsch</th><th>Englisch</th><th class="rechts">bis g</th><th class="rechts">Routen</th><th>Aktiv</th><th></th></tr></thead>
       <tbody>
       <?php foreach ($klassen as $g) { ?>
         <tr class="<?= (int) $g['aktiv'] === 1 ? '' : 'inaktiv' ?>">
-          <td class="mono"><?= e($g['code']) ?></td><td><?= e($g['name_de']) ?></td><td><?= e($g['name_en']) ?></td>
+          <td class="mono"><?= e($g['code']) ?></td><td><?= e(kategorieName((string) ($g['kategorie'] ?? 'paket'))) ?></td><td><?= e($g['name_de']) ?></td><td><?= e($g['name_en']) ?></td>
           <td class="mono rechts"><?= (int) $g['max_gramm'] ?: '—' ?></td><td class="mono rechts"><?= (int) $g['routen'] ?></td>
           <td><?= (int) $g['aktiv'] === 1 ? '<span class="ja">✓</span>' : '<span class="nein">–</span>' ?></td>
           <td class="rechts zeilen-aktionen">
@@ -86,7 +86,8 @@ foreach ($zusatz as $z) { if ($z['id'] === $bearbeitenZusatz) { $zusatzForm = $z
     <form method="post" action="<?= e(url('preise/gewichtsklasse')) ?>" class="formular formular--zeile" id="formular-gk">
       <?= csrfFeld() ?>
       <input type="hidden" name="id" value="<?= (int) ($gkForm['id'] ?? 0) ?>">
-      <div class="feld"><label for="g-code">Kürzel</label><input id="g-code" name="code" value="<?= e($gkForm['code'] ?? '') ?>" pattern="[a-z0-9]{1,12}" placeholder="5kg" required></div>
+      <div class="feld"><label for="g-code">Kürzel</label><input id="g-code" name="code" value="<?= e($gkForm['code'] ?? '') ?>" pattern="[a-z0-9-]{1,12}" placeholder="5kg" required></div>
+      <div class="feld"><label for="g-kat">Kategorie</label><select id="g-kat" name="kategorie"><?php foreach (['brief', 'paket'] as $kat) { ?><option value="<?= $kat ?>" <?= ($gkForm['kategorie'] ?? 'paket') === $kat ? 'selected' : '' ?>><?= e(kategorieName($kat)) ?></option><?php } ?></select></div>
       <div class="feld"><label for="g-de">Deutsch</label><input id="g-de" name="name_de" value="<?= e($gkForm['name_de'] ?? '') ?>" placeholder="bis 5 kg" required></div>
       <div class="feld"><label for="g-en">Englisch</label><input id="g-en" name="name_en" value="<?= e($gkForm['name_en'] ?? '') ?>" placeholder="up to 5 kg" required></div>
       <div class="feld"><label for="g-gramm">bis g</label><input id="g-gramm" name="max_gramm" type="number" value="<?= e($gkForm['max_gramm'] ?? '') ?>" min="0"></div>
