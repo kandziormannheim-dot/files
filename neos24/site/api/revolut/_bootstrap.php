@@ -800,6 +800,12 @@ function schemaAnlegen(PDO $db): void
     spaltenErgaenzen($db, 'bestellungen', ['unterkunde_id' => 'INTEGER', 'odoo_id' => 'INTEGER NOT NULL DEFAULT 0', 'odoo_nummer' => "TEXT NOT NULL DEFAULT ''"]);
     spaltenErgaenzen($db, 'rechnungen', ['unterkunde_id' => 'INTEGER', 'odoo_info' => "TEXT NOT NULL DEFAULT ''"]);
     spaltenErgaenzen($db, 'preislisten', ['unterkunde_id' => 'INTEGER']);
+    // Adressbuch je Benutzer: Firmenadressen von früher bleiben für alle sichtbar (geteilt)
+    $adressSpalten = array_column($db->query('PRAGMA table_info(adressen)')->fetchAll(), 'name');
+    if (!in_array('geteilt', $adressSpalten, true)) {
+        $db->exec("ALTER TABLE adressen ADD COLUMN geteilt INTEGER NOT NULL DEFAULT 0");
+        $db->exec('UPDATE adressen SET geteilt = 1 WHERE firma_id IS NOT NULL AND kunde_id IS NULL');
+    }
     $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS firmen_kundennummer ON firmen (kundennummer) WHERE kundennummer <> \'\'');
     $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS kunden_kundennummer ON kunden (kundennummer) WHERE kundennummer <> \'\'');
     $db->exec('CREATE INDEX IF NOT EXISTS bestellungen_unterkunde ON bestellungen (unterkunde_id)');
@@ -1384,3 +1390,7 @@ require_once __DIR__ . '/../../lib/lexware.php';
 require_once __DIR__ . '/../../lib/kundennummern.php';
 require_once __DIR__ . '/../../lib/odoo.php';
 require_once __DIR__ . '/../../lib/sync.php';
+require_once __DIR__ . '/../../lib/belege.php';
+require_once __DIR__ . '/../../lib/tabelle_lesen.php';
+require_once __DIR__ . '/../../lib/tabelle_schreiben.php';
+require_once __DIR__ . '/../../lib/import.php';

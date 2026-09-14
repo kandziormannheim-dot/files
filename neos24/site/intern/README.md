@@ -126,7 +126,7 @@ Odoo. Sendungen tragen `bestellungen.unterkunde_id`: Inhaber wählen im Portal j
 ihren Unterkunden und sehen nur dessen Sendungen und Rechnungen. Die Sammelrechnung wird je
 Empfänger erzeugt (Firma → „Abrechnen für“ bzw. Seite des Unterkunden) und enthält nur dessen
 Sendungen; Retouren und Nachberechnungen übernehmen den Unterkunden der Originalsendung.
-Guthaben und Adressbuch bleiben je Firma. Tabelle `unterkunden`, Funktionen in `lib/kunden.php`
+Guthaben und Paketvorlagen bleiben je Firma; das Adressbuch ist je Benutzer, freigegebene Adressen gelten firmenweit. Tabelle `unterkunden`, Funktionen in `lib/kunden.php`
 (`unterkundeAnlegen`, `rechnungsempfaenger`).
 
 ## Lexware Office
@@ -145,7 +145,9 @@ und -Status; fehlgeschlagene Übergaben stehen in der Warteschlange (Übersicht-
 sich nachholen. Der Zahlungsstatus kommt per Cron (`/payments`) oder Webhook
 (`api/lexware/webhook.php`, Abonnements anlegen mit `php intern/aufgaben.php lexware einrichten
 <Basis-URL>`; die Nutzlast wird nie direkt verwendet, der Beleg wird nachgeladen). Ohne Lexware
-bleibt es bei eigener Nummer `NR-…` und eigenem PDF. Belege und Mails an Kunden enthalten keine
+bleibt es bei eigener Nummer `NR-…` und eigenem PDF. Kunden sehen alle Belege — Sammelrechnungen,
+Einzelrechnungen, Gutschriften, Nachweise — im Portal unter „Rechnungen“ (`lib/belege.php`); die
+Privatkunden-Akte zeigt dieselbe Liste in der Karte „Belege“. Belege und Mails an Kunden enthalten keine
 Lieferantenangaben. Vor Go-live die Feldnamen gegen die aktuelle Lexware-Doku prüfen
 (`developers.lexware.io`); Basis-URL `lexware.basisUrl`.
 

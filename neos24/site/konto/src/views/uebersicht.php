@@ -15,6 +15,7 @@
 <div class="k-kacheln">
   <div class="card k-kachel k-kachel--gelb"><span class="k-kachel-name"><?= e(t('guthaben.stand')) ?></span><strong class="k-kachel-wert"><?= e(euro($guthaben, $sp)) ?></strong><span class="k-klein"><a href="<?= e(url('guthaben')) ?>"><?= e(t('guthaben.aufladen')) ?></a></span></div>
   <div class="card k-kachel k-kachel--cyan"><span class="k-kachel-name"><?= e(t('nav.tracking')) ?></span><span class="k-text" style="margin-top:.35rem"><a href="<?= e(url('tracking')) ?>"><?= e(t('tracking.text')) ?></a></span></div>
+  <div class="card k-kachel k-kachel--coral"><span class="k-kachel-name"><?= e(t('nav.rechnungen')) ?></span><span class="k-text" style="margin-top:.35rem"><a href="<?= e(url('rechnungen')) ?>"><?= e(t('archiv.kachel')) ?></a></span></div>
 </div>
 <?php } ?>
 <div class="k-spalten k-spalten--2-1">

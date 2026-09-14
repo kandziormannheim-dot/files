@@ -23,7 +23,7 @@ if ($ich !== null) {
             $navi['firma'] = ['firma', t('nav.firma')];
         }
     } else {
-        $navi = ['uebersicht' => ['', t('nav.uebersicht')], 'bestellungen' => ['bestellungen', t('nav.bestellungen')], 'neu' => ['sendungen/neu', t('nav.neu')], 'adressbuch' => ['adressbuch', t('nav.adressbuch')], 'guthaben' => ['guthaben', t('nav.guthaben')], 'reklamationen' => ['reklamationen', t('nav.reklamationen')]];
+        $navi = ['uebersicht' => ['', t('nav.uebersicht')], 'bestellungen' => ['bestellungen', t('nav.bestellungen')], 'neu' => ['sendungen/neu', t('nav.neu')], 'adressbuch' => ['adressbuch', t('nav.adressbuch')], 'rechnungen' => ['rechnungen', t('nav.rechnungen')], 'guthaben' => ['guthaben', t('nav.guthaben')], 'reklamationen' => ['reklamationen', t('nav.reklamationen')]];
     }
     $navi['einstellungen'] = ['einstellungen', t('nav.einstellungen')];
 }

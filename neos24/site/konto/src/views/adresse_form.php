@@ -4,7 +4,7 @@
 </header>
 <div class="k-spalten">
   <div class="card">
-    <form method="post" action="<?= e(url($a !== null ? 'adressbuch/' . $a['id'] : 'adressbuch/neu')) ?>" class="form k-form" novalidate>
+    <form method="post" action="<?= e(url($a !== null ? 'adressbuch/' . $a['id'] : 'adressbuch/neu')) ?>" class="form k-form" novalidate<?= $darf ? '' : ' inert' ?>>
       <?= csrfFeld() ?>
       <div class="form-row form-row--2">
         <div class="field"><label for="ad-art"><?= e(t('adressbuch.art')) ?></label><select id="ad-art" name="art"><option value="empfaenger" <?= $art === 'empfaenger' ? 'selected' : '' ?>><?= e(t('adressbuch.art.empfaenger')) ?></option><option value="absender" <?= $art === 'absender' ? 'selected' : '' ?>><?= e(t('adressbuch.art.absender')) ?></option></select></div>
@@ -23,8 +23,10 @@
         <div class="field"><label for="ad-email"><?= e(t('login.email')) ?></label><input id="ad-email" name="email" type="email" value="<?= e($a['email'] ?? '') ?>"></div>
         <div class="field"><label for="ad-tel"><?= e(t('neu.telefon')) ?></label><input id="ad-tel" name="telefon" type="tel" value="<?= e($a['telefon'] ?? '') ?>"></div>
       </div>
+      <?php if (!$darf) { ?><p class="k-hinweis k-hinweis--warn"><?= e(t('adressbuch.fremd')) ?></p><?php } ?>
       <label class="k-schalter"><input type="checkbox" name="standard" value="1" <?= (int) ($a['standard'] ?? 0) === 1 ? 'checked' : '' ?>> <?= e(t('adressbuch.standard')) ?></label>
-      <div class="k-form-fuss"><button class="btn btn--primary" type="submit"><?= e(t('einstellungen.speichern')) ?></button><a class="btn btn--sm k-btn-leise" href="<?= e(url('adressbuch')) ?>"><?= e(t('import.abbrechen')) ?></a></div>
+      <?php if ($business) { ?><label class="k-schalter"><input type="checkbox" name="geteilt" value="1" <?= (int) ($a['geteilt'] ?? 0) === 1 ? 'checked' : '' ?>> <?= e(t('adressbuch.geteilt')) ?></label><?php } ?>
+      <div class="k-form-fuss"><?php if ($darf) { ?><button class="btn btn--primary" type="submit"><?= e(t('einstellungen.speichern')) ?></button><?php } ?><a class="btn btn--sm k-btn-leise" href="<?= e(url('adressbuch')) ?>"><?= e(t('import.abbrechen')) ?></a></div>
     </form>
   </div>
 </div>

@@ -641,61 +641,189 @@ function adressenBereich(array $kunde): array
     return ['kunde_id = ? AND firma_id IS NULL', [(int) $kunde['id']], (int) $kunde['id'], null];
 }
 
+/**
+ * Sichtbare Adressen: jeder Benutzer hat sein eigenes Adressbuch; in Firmen
+ * kommen die für die Firma freigegebenen Adressen (geteilt = 1) dazu.
+ * Liefert [WHERE, Werte].
+ */
+function adressenSichtbar(array $kunde): array
+{
+    if (($kunde['art'] ?? '') === 'business' && (int) ($kunde['firma_id'] ?? 0) > 0) {
+        return ['a.firma_id = ? AND (a.kunde_id = ? OR a.geteilt = 1)', [(int) $kunde['firma_id'], (int) $kunde['id']]];
+    }
+
+    return ['a.kunde_id = ? AND a.firma_id IS NULL', [(int) $kunde['id']]];
+}
+
+/** Eigene Adresse, oder geteilte Firmenadresse als Inhaber (oder ohne Eigentümer aus der Zeit vor den Benutzer-Adressbüchern). */
+function adresseDarfBearbeiten(array $kunde, array $adresse): bool
+{
+    if ((int) ($adresse['kunde_id'] ?? 0) === (int) $kunde['id']) {
+        return true;
+    }
+    if (($kunde['art'] ?? '') !== 'business' || (int) ($adresse['firma_id'] ?? 0) !== (int) ($kunde['firma_id'] ?? 0)) {
+        return false;
+    }
+
+    return ($kunde['firmenrolle'] ?? '') === 'inhaber' || (int) ($adresse['kunde_id'] ?? 0) === 0;
+}
+
 function adressenAlle(array $kunde, string $art = ''): array
 {
-    [$wo, $werte] = adressenBereich($kunde);
+    [$wo, $werte] = adressenSichtbar($kunde);
     if ($art !== '') {
-        $wo .= ' AND art = ?';
+        $wo .= ' AND a.art = ?';
         $werte[] = $art;
     }
-    $st = datenbank()->prepare('SELECT * FROM adressen WHERE ' . $wo . ' ORDER BY standard DESC, name');
-    $st->execute($werte);
+    // Eigene zuerst (Standard oben), dann geteilte Firmenadressen
+    $st = datenbank()->prepare('SELECT a.*, k.name AS ersteller FROM adressen a LEFT JOIN kunden k ON k.id = a.kunde_id WHERE ' . $wo . ' ORDER BY CASE WHEN a.kunde_id = ? THEN 0 ELSE 1 END, a.standard DESC, a.name');
+    $st->execute(array_merge($werte, [(int) $kunde['id']]));
 
     return $st->fetchAll();
 }
 
 function adresseLaden(array $kunde, int $id): ?array
 {
-    [$wo, $werte] = adressenBereich($kunde);
-    $st = datenbank()->prepare('SELECT * FROM adressen WHERE id = ? AND ' . $wo);
+    [$wo, $werte] = adressenSichtbar($kunde);
+    $st = datenbank()->prepare('SELECT a.*, k.name AS ersteller FROM adressen a LEFT JOIN kunden k ON k.id = a.kunde_id WHERE a.id = ? AND ' . $wo);
     $st->execute(array_merge([$id], $werte));
     $z = $st->fetch();
 
     return is_array($z) ? $z : null;
 }
 
-/** Adresse anlegen oder (gleicher Name + Straße + PLZ) aktualisieren; liefert die ID. */
-function adresseSpeichern(array $kunde, string $art, array $a, ?int $id = null, bool $standard = false): int
+/**
+ * Adresse anlegen oder (gleicher Name + Straße + PLZ im sichtbaren Bereich)
+ * aktualisieren; liefert die ID. Bei Firmenbenutzern gehört die Adresse dem
+ * Benutzer; $geteilt gibt sie für die ganze Firma frei. Standard-Absender gilt
+ * je Benutzer.
+ */
+function adresseSpeichern(array $kunde, string $art, array $a, ?int $id = null, bool $standard = false, ?bool $geteilt = null): int
 {
-    [$wo, $werte, $kundeId, $firmaId] = adressenBereich($kunde);
+    [$wo, $werte] = adressenSichtbar($kunde);
+    $business = ($kunde['art'] ?? '') === 'business' && (int) ($kunde['firma_id'] ?? 0) > 0;
+    $kundeId = (int) $kunde['id'];
+    $firmaId = $business ? (int) $kunde['firma_id'] : null;
     $art = $art === 'absender' ? 'absender' : 'empfaenger';
     $db = datenbank();
     if ($id === null) {
-        $st = $db->prepare('SELECT id FROM adressen WHERE art = ? AND name = ? AND strasse = ? AND plz = ? AND ' . $wo);
+        $st = $db->prepare('SELECT a.id FROM adressen a WHERE a.art = ? AND a.name = ? AND a.strasse = ? AND a.plz = ? AND ' . $wo);
         $st->execute(array_merge([$art, $a['name'] ?? '', $a['strasse'] ?? '', $a['plz'] ?? ''], $werte));
         $vorhanden = $st->fetchColumn();
         $id = $vorhanden !== false ? (int) $vorhanden : null;
     }
+    if ($id !== null) {
+        $alt = adresseLaden($kunde, $id);
+        if ($alt === null || !adresseDarfBearbeiten($kunde, $alt)) {
+            throw new InvalidArgumentException('adresse');
+        }
+    }
     if ($standard) {
-        $db->prepare('UPDATE adressen SET standard = 0 WHERE art = ? AND ' . $wo)->execute(array_merge([$art], $werte));
+        $db->prepare('UPDATE adressen SET standard = 0 WHERE art = ? AND kunde_id = ?')->execute([$art, $kundeId]);
     }
     $felder = [$a['name'] ?? '', $a['firma'] ?? '', $a['strasse'] ?? '', $a['plz'] ?? '', $a['ort'] ?? '', strtoupper((string) ($a['land'] ?? 'DE')) ?: 'DE', $a['email'] ?? '', $a['telefon'] ?? '', $standard ? 1 : 0];
     if ($id !== null) {
-        $db->prepare('UPDATE adressen SET name = ?, firma = ?, strasse = ?, plz = ?, ort = ?, land = ?, email = ?, telefon = ?, standard = CASE WHEN ? = 1 THEN 1 ELSE standard END WHERE id = ? AND ' . $wo)
-           ->execute(array_merge($felder, [$id], $werte));
+        $db->prepare('UPDATE adressen SET name = ?, firma = ?, strasse = ?, plz = ?, ort = ?, land = ?, email = ?, telefon = ?, standard = CASE WHEN ? = 1 THEN 1 ELSE standard END, geteilt = CASE WHEN ? IS NULL THEN geteilt ELSE ? END WHERE id = ?')
+           ->execute(array_merge($felder, [$geteilt === null ? null : ($geteilt ? 1 : 0), $geteilt === null ? null : ($geteilt ? 1 : 0), $id]));
 
         return $id;
     }
-    $db->prepare('INSERT INTO adressen (kunde_id, firma_id, art, name, firma, strasse, plz, ort, land, email, telefon, standard, erstellt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-       ->execute(array_merge([$kundeId, $firmaId, $art], $felder, [jetzt()]));
+    $db->prepare('INSERT INTO adressen (kunde_id, firma_id, art, name, firma, strasse, plz, ort, land, email, telefon, standard, geteilt, erstellt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+       ->execute(array_merge([$kundeId, $firmaId, $art], $felder, [$business && $geteilt ? 1 : 0, jetzt()]));
 
     return (int) $db->lastInsertId();
 }
 
+/** Freigabe für die Firma setzen oder zurücknehmen (nur Eigentümer bzw. Inhaber). */
+function adresseTeilen(array $kunde, int $id, bool $geteilt): void
+{
+    $a = adresseLaden($kunde, $id);
+    if ($a === null || !adresseDarfBearbeiten($kunde, $a) || (int) ($a['firma_id'] ?? 0) === 0) {
+        throw new InvalidArgumentException('adresse');
+    }
+    datenbank()->prepare('UPDATE adressen SET geteilt = ? WHERE id = ?')->execute([$geteilt ? 1 : 0, $id]);
+}
+
 function adresseLoeschen(array $kunde, int $id): void
 {
-    [$wo, $werte] = adressenBereich($kunde);
-    datenbank()->prepare('DELETE FROM adressen WHERE id = ? AND ' . $wo)->execute(array_merge([$id], $werte));
+    $a = adresseLaden($kunde, $id);
+    if ($a === null || !adresseDarfBearbeiten($kunde, $a)) {
+        throw new InvalidArgumentException('adresse');
+    }
+    datenbank()->prepare('DELETE FROM adressen WHERE id = ?')->execute([$id]);
+}
+
+const ADRESSEN_CSV_SPALTEN = ['art', 'name', 'firma', 'strasse', 'plz', 'ort', 'land', 'email', 'telefon', 'geteilt'];
+
+/** Adressbuch als CSV (UTF-8 mit BOM, Semikolon) — eigene und geteilte Adressen. */
+function adressenCsv(array $kunde): string
+{
+    $zeilen = [implode(';', ADRESSEN_CSV_SPALTEN)];
+    foreach (adressenAlle($kunde) as $a) {
+        $zeilen[] = implode(';', array_map(static fn ($v): string => '"' . str_replace('"', '""', (string) $v) . '"', [$a['art'], $a['name'], $a['firma'], $a['strasse'], $a['plz'], $a['ort'], $a['land'], $a['email'], $a['telefon'], (int) $a['geteilt'] === 1 ? 'ja' : 'nein']));
+    }
+
+    return "ï»¿" . implode("
+", $zeilen) . "
+";
+}
+
+/**
+ * Adressen aus einer Tabelle (Kopf + Zeilen, siehe tabelleLesen()) übernehmen;
+ * tolerante Spaltennamen, Dubletten (Name + Straße + PLZ) werden übersprungen.
+ * Liefert ['angelegt' => n, 'uebersprungen' => n, 'fehler' => [Zeilennummern]].
+ */
+function adressenImportieren(array $kunde, array $kopf, array $zeilen, bool $geteilt = false): array
+{
+    $synonyme = ['art' => ['art', 'typ', 'type'], 'name' => ['name', 'empfaenger', 'empfänger', 'recipient', 'kontakt', 'contact'], 'firma' => ['firma', 'company', 'unternehmen'], 'strasse' => ['strasse', 'straße', 'street', 'adresse', 'address'],
+        'plz' => ['plz', 'zip', 'postcode', 'postleitzahl'], 'ort' => ['ort', 'stadt', 'city', 'town'], 'land' => ['land', 'country', 'zielland'], 'email' => ['email', 'e-mail', 'mail'], 'telefon' => ['telefon', 'tel', 'phone', 'telephone'], 'geteilt' => ['geteilt', 'shared', 'firma_sichtbar']];
+    $index = [];
+    foreach ($kopf as $i => $k) {
+        $n = strtolower(trim((string) $k));
+        foreach ($synonyme as $feld => $namen) {
+            if (in_array($n, $namen, true) && !isset($index[$feld])) {
+                $index[$feld] = $i;
+            }
+        }
+    }
+    $aus = ['angelegt' => 0, 'uebersprungen' => 0, 'fehler' => []];
+    if (!isset($index['name'], $index['strasse'], $index['plz'], $index['ort'])) {
+        throw new InvalidArgumentException('spalten');
+    }
+    [$wo, $werte] = adressenSichtbar($kunde);
+    $db = datenbank();
+    $laender = preisliste()['laender'];
+    foreach (array_slice($zeilen, 0, 500) as $nr => $z) {
+        $w = static fn (string $feld): string => isset($index[$feld]) ? trim((string) ($z[$index[$feld]] ?? '')) : '';
+        $a = ['name' => $w('name'), 'firma' => $w('firma'), 'strasse' => $w('strasse'), 'plz' => $w('plz'), 'ort' => $w('ort'), 'email' => $w('email'), 'telefon' => $w('telefon')];
+        $land = strtoupper($w('land')) ?: 'DE';
+        if (strlen($land) !== 2) {
+            foreach ($laender as $code => $l) {
+                if (strcasecmp((string) $l['name']['de'], $land) === 0 || strcasecmp((string) $l['name']['en'], $land) === 0) {
+                    $land = (string) $code;
+                }
+            }
+            $land = strlen($land) === 2 ? $land : 'DE';
+        }
+        $a['land'] = $land;
+        $artRoh = strtolower($w('art'));
+        $art = in_array($artRoh, ['absender', 'sender'], true) ? 'absender' : 'empfaenger';
+        if (mb_strlen($a['name']) < 2 || mb_strlen($a['strasse']) < 3 || mb_strlen($a['plz']) < 3 || mb_strlen($a['ort']) < 2 || ($a['email'] !== '' && filter_var($a['email'], FILTER_VALIDATE_EMAIL) === false)) {
+            $aus['fehler'][] = $nr + 2;
+            continue;
+        }
+        $st = $db->prepare('SELECT a.id FROM adressen a WHERE a.art = ? AND a.name = ? AND a.strasse = ? AND a.plz = ? AND ' . $wo);
+        $st->execute(array_merge([$art, $a['name'], $a['strasse'], $a['plz']], $werte));
+        if ($st->fetchColumn() !== false) {
+            $aus['uebersprungen']++;
+            continue;
+        }
+        $zeileGeteilt = $geteilt || in_array(strtolower($w('geteilt')), ['ja', 'yes', '1', 'x', 'true'], true);
+        adresseSpeichern($kunde, $art, $a, null, false, $zeileGeteilt);
+        $aus['angelegt']++;
+    }
+
+    return $aus;
 }
 
 // ------------------------------------------------------------- Paketvorlagen

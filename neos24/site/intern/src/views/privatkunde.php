@@ -28,6 +28,22 @@
       <?php } ?>
     </div>
     <div class="karte karte--tabelle">
+      <div class="karte-kopf"><h2 class="h2">Belege</h2><span class="leise">was der Kunde im Portal unter „Rechnungen“ sieht</span></div>
+      <?php $belege = belegeFuerKonto($kunde)['belege']; if ($belege === []) { ?><p class="leer">Noch keine Belege.</p><?php } else { ?>
+      <div class="scrollen"><table class="tabelle tabelle--kompakt">
+        <thead><tr><th>Datum</th><th>Beleg</th><th>Art</th><th>Bezug</th><th class="rechts">Betrag</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        <?php foreach (array_slice($belege, 0, 20) as $x) { ?>
+          <tr><td class="leise"><?= e(datumAnzeigen($x['datum'])) ?></td><td class="mono"><?= e($x['nummer'] !== '' ? $x['nummer'] : 'wird erstellt') ?></td><td><?= e(['sammelrechnung' => 'Sammelrechnung', 'rechnung' => 'Rechnung', 'nachberechnung' => 'Nachberechnung', 'gutschrift' => 'Gutschrift', 'nachweis' => 'Nachweis'][$x['art']] ?? $x['art']) ?></td>
+            <td><?php if ($x['ext_ref'] !== '' && darf('bestellungen')) { ?><a class="mono" href="<?= e(url('bestellungen/' . $x['ext_ref'])) ?>"><?= e($x['bezug']) ?></a><?php } else { ?><?= e($x['bezug']) ?><?php } ?></td>
+            <td class="mono rechts"><?= $x['betrag_cent'] === null ? '—' : ((int) $x['betrag_cent'] < 0 ? '−' : '') . e(euro(abs((int) $x['betrag_cent']))) ?></td><td><?= $x['art'] === 'nachweis' ? '' : statusPille((string) $x['status']) ?></td>
+            <td class="rechts"><?php if ($x['pdf'] !== '' && $x['ext_ref'] !== '' && darf('bestellungen')) { ?><a class="knopf knopf--leise knopf--klein" href="<?= e(url('bestellungen/' . $x['ext_ref'] . '/' . ($x['art'] === 'gutschrift' ? 'gutschrift' : ($x['art'] === 'nachweis' ? 'nachweis' : 'rechnung')) . '.pdf')) ?>" target="_blank" rel="noopener">PDF</a><?php } ?></td></tr>
+        <?php } ?>
+        </tbody>
+      </table></div>
+      <?php } ?>
+    </div>
+    <div class="karte karte--tabelle">
       <div class="karte-kopf"><h2 class="h2">Reklamationen</h2></div>
       <?php if ($reklamationen === []) { ?><p class="leer">Keine Reklamationen.</p><?php } else { ?>
       <table class="tabelle tabelle--kompakt">

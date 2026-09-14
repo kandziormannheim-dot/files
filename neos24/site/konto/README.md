@@ -14,12 +14,12 @@ gemerkt in Sitzung und Konto).
 | Neue Sendung | im Portal (oder über die Startseite): Carrier-Vergleich, Zusatzleistungen, Abholung; Zahlung per Revolut oder Guthaben | im Portal: Carrier-Vergleich, Zusatzleistungen, Abholung; auf Rechnung oder vom Guthaben |
 | Labels | NEOS-Label (PDF A6) je Sendung, Sammeldruck A4 aus der Liste | wie links |
 | Tracking | Verlauf in der Sendung; öffentlich unter `konto/tracking` (Nummer + PLZ des Empfängers) | wie links |
-| Adressbuch, Paketvorlagen | Empfänger- und Absenderadressen, Vorlagen mit Gewicht, Maßen, Zusatzleistungen | wie links, firmenweit |
-| CSV-Import | — | viele Sendungen auf einmal: Vorschau mit Preis je Zeile, dann beauftragen |
+| Adressbuch, Paketvorlagen | eigenes Adressbuch je Konto (Empfänger, Absender, Standard-Absender), CSV-Export und Import (CSV/XLSX); Vorlagen mit Gewicht, Maßen, Zusatzleistungen | eigenes Adressbuch je Benutzer plus „Firmenadressen“, die ein Benutzer für alle freigibt (ändern darf Ersteller oder Inhaber); Paketvorlagen firmenweit |
+| Sendungsimport | — | viele Sendungen auf einmal aus CSV oder Excel: tolerante Spaltennamen, Vorschau mit Preis und Fehlern je Zeile, Fehlerzeilen als CSV, Dublettenschutz über die Referenz, dann beauftragen (auf Rechnung) und Labels gesammelt drucken |
 | Guthaben | Aufladen per Revolut, Sendungen davon bezahlen, Erstattungen landen hier | wie links, firmenweit |
 | Retoure, Reklamation | Rücksendung mit einem Klick (Adressen getauscht); Reklamation mit Art, Beschreibung, Betrag | wie links |
 | Preise | Startseite (brutto) | Netto-Preisliste im Portal |
-| Rechnungen | — (Revolut-Beleg) | monatliche Sammelrechnung als PDF, Positionen im Detail |
+| Rechnungen | Belegarchiv: Rechnungen, Nachberechnungen, Gutschriften (Lexware-PDFs) und Gewichtsnachweise je Bestellung, Filter nach Jahr, Art und Nummer | Archiv wie links plus monatliche Sammelrechnungen als PDF mit Positionen im Detail |
 | Benutzer | — | Inhaber lädt Mitarbeiter ein, deaktiviert sie; Mitarbeiter sehen Sendungen und Rechnungen, nicht Benutzer und Firmendaten |
 | Einstellungen | Name, Sprache, Passwort, Absenderadresse, Konto schließen | Name, Sprache, Passwort, Konto schließen; Inhaber: Firmendaten |
 
@@ -104,17 +104,43 @@ Sendungen im Schnitt deutlich über der Angabe (≥ 300 g oder ≥ 15 %), zeigt 
 Warnhinweis und verlangt die Bestätigung „Gewicht geprüft“. Labels für Klassen über 10 kg bzw.
 20 kg tragen das Gewichtssymbol.
 
-**Rechnungen:** Mit Lexware Office vergibt Lexware die Rechnungsnummer; das Portal zeigt die
-Lexware-Nummer und liefert das Lexware-PDF (Sammelrechnungen unter „Rechnungen“, Privatkunden je
-bezahlter Bestellung „Rechnung (PDF)“ im Bestell-Detail). Bis die Übergabe erfolgt ist, steht
-„wird erstellt“.
+**Rechnungen (Belegarchiv):** „Rechnungen“ gibt es für alle Kunden (`lib/belege.php`,
+`belegeFuerKonto()`): Sammelrechnungen der Firma bzw. des Unterkunden, Einzelrechnungen und
+Nachberechnungen (Lexware-Nummer, Lexware-PDF), Gutschriften (`…/gutschrift.pdf`) und
+Gewichtsnachweise (`…/nachweis.pdf`) — je Eintrag Datum, Belegnummer, Art, Bezug (Sendung oder
+Zeitraum), Betrag, Status und PDF; Filter nach Jahr, Art und Suche (Nummer, Sendung, Referenz),
+Summenzeile. Es gibt keinen eigenen PDF-Nachbau für Einzelbelege: Mit Lexware Office vergibt Lexware
+die Rechnungsnummer und liefert das PDF; bis zur Übergabe steht „wird erstellt“. Sammelrechnungen
+ohne Lexware kommen weiter aus `lib/rechnung_pdf.php`. Das Team sieht dieselbe Liste in der
+Privatkunden-Akte (Karte „Belege“).
+
+**Adressbuch je Benutzer:** Jeder Account hat sein eigenes Adressbuch (Empfänger, Absender mit
+Standard-Absender je Benutzer). In Firmen kann ein Benutzer eine Adresse „für die Firma
+freigeben“ (`adressen.geteilt`); sie erscheint dann bei allen Firmenbenutzern unter
+„Firmenadressen“ und im Sendungsformular mit Zusatz „(Firma)“. Ändern und löschen darf der
+Ersteller oder ein Inhaber (`adresseDarfBearbeiten()`), sonst 403. Export als CSV, Import aus
+CSV/XLSX mit toleranten Spaltennamen (`Empfänger`, `Straße`, `Stadt`, `Country` …); Dubletten
+(Name + Straße + PLZ) werden übersprungen. Bestehende Firmenadressen ohne Ersteller gelten als
+freigegeben.
+
+**Sendungsimport (Firmen):** CSV oder XLSX (`lib/tabelle_lesen.php`, erstes Blatt mit Daten),
+Spaltennamen tolerant (`lib/import.php`, `IMPORT_SYNONYME`: `zielland|land|country`,
+`gewicht_kg|gewicht|weight`, `gewicht_g|gramm`, `name|empfaenger|recipient`, `strasse|straße|street`,
+`plz|zip|postcode`, `ort|stadt|city`, `referenz|ref|order`, `unterkunde|kostenstelle` …), Ländernamen
+DE/EN werden zu ISO-Codes, Gewichte als „1,2“, „1.2 kg“, „1200 g“ oder „1.200 g“. Fehlende
+Pflichtspalten werden genannt. Jede Zeile wird trocken geprüft (Gewichtsklasse, Preis, Adresse,
+E-Mail, Unterkunde); eine Referenz, zu der die Firma in den letzten 30 Tagen schon eine Sendung hat
+oder die in der Datei doppelt vorkommt, gilt als Dublette (Häkchen „trotzdem anlegen“).
+Fehlerzeilen lassen sich als CSV mit Fehlertext herunterladen, nach „beauftragen“ zeigt die
+Ergebnisliste die Sendungsnummern mit Label und Sammeldruck. Vorlagen `import/vorlage.csv` und
+`import/vorlage.xlsx` (`lib/tabelle_schreiben.php`).
 
 **Kundennummer und Unterkunden:** Jedes Konto hat eine Kundennummer (Firma `K-100001`,
 Privatkunde eigene Nummer; Übersicht, Firma, Einstellungen, Rechnungen). Hat das Team unter der
 Firma Unterkunden angelegt (weitere Unternehmen der Gruppe, Standorte — `K-100001-01`, `-02` …),
 wählt der Inhaber bei jeder Sendung „Abrechnen für“ (Hauptfirma oder Unterkunde; der Wechsel
 lädt Preisliste und Absender des Unterkunden), Listen und Rechnungen lassen sich danach filtern,
-der CSV-Import kennt die Spalte `unterkunde` (Nummer oder Name) oder eine Auswahl für alle
+der Sendungsimport kennt die Spalte `unterkunde` (Nummer oder Name) oder eine Auswahl für alle
 Zeilen. Ein Mitarbeiter, den das Team fest einem Unterkunden zugeordnet hat, bucht nur für
 diesen und sieht nur dessen Sendungen und Rechnungen. Die Seite „Firma“ listet die Unterkunden
 (nur lesend — Anlage und Pflege durch NEOS).
@@ -150,12 +176,15 @@ konto/src/bootstrap.php  Sitzung, ansicht(), fehlerSeite(), Basis-URL
 konto/src/auth.php     kundeAktuell(), kundeAnmelden(), Guards (business/privat/inhaber)
 konto/src/sendungen.php  eigeneBestellungen(), eigeneBestellung(), kundenVerlauf(), firmaKennzahlen()
 konto/src/routen_versand.php  Neue Sendung, Bezahlen (Revolut/Guthaben), Labels, Tracking, Retoure, Reklamation,
-                       Adressbuch, Paketvorlagen, CSV-Import, Guthaben
+                       Adressbuch (je Benutzer, Freigabe, CSV-Export/-Import), Paketvorlagen, Sendungsimport, Guthaben
 konto/src/texte.php    t() — alle Texte DE/EN (texte_versand.php: Versandfunktionen)
 konto/src/views/       Ansichten; assets/konto.css baut auf ../assets/neos.css auf; assets/konto.js
                        (Angebote, Summen, Zusatzleistungen, Sammeldruck, Revolut-Popup, Aufladung)
 lib/versand.php        Angebote je Zelle, Zusatzleistungen, bestellungAnlegen(), Guthaben und Aufladungen,
                        Versandstatus/Ereignisse, Tracking, Adressbuch, Vorlagen, Retouren, Reklamationen
+lib/belege.php         Belegarchiv: Sammelrechnungen, Einzelrechnungen, Gutschriften, Nachweise je Konto
+lib/import.php         Sendungsimport: Spaltensynonyme, Gewichts-/Länderparser, Trockenprüfung, Dubletten, Fehlerbericht
+lib/tabelle_lesen.php, lib/tabelle_schreiben.php  CSV/XLSX lesen und XLSX schreiben ohne Abhängigkeiten
 lib/carrier.php        Carrier-Schnittstelle (Label, Abholung, Tracking) — noch Stubs
 lib/label_pdf.php      NEOS-Label (Code 128) als PDF, A6 einzeln oder A4 vierfach
 lib/kunden.php         Konten, Firmen, Unterkunden, Rechnungsempfänger, Anmeldelinks, Einladungs-/Link-Mails

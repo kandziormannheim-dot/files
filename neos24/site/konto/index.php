@@ -308,9 +308,12 @@ if ($pfad === '/preise') {
 
 // ------------------------------------------------------------------ Rechnungen
 
+// Rechnungsarchiv für alle Kunden: Sammelrechnungen, Einzelrechnungen, Gutschriften, Nachweise (lib/belege.php)
 if ($pfad === '/rechnungen') {
-    $firma = businessErzwingen($ich);
-    ansicht('rechnungen', ['titel' => t('rechnungen.titel'), 'zeilen' => rechnungenDerFirma((int) $firma['id'], $festerUnterkunde), 'unterkunden' => $unterkunden, 'aktiv' => 'rechnungen']);
+    $jahr = (int) ($_GET['jahr'] ?? 0) > 2000 ? (int) $_GET['jahr'] : null;
+    $q = saeubern($_GET['q'] ?? '', 40);
+    $artFilter = in_array($_GET['art'] ?? '', BELEG_ARTEN, true) ? (string) $_GET['art'] : '';
+    ansicht('rechnungen', ['titel' => t('rechnungen.titel'), 'archiv' => belegeFuerKonto($ich, $jahr, $q, $artFilter), 'jahr' => $jahr, 'q' => $q, 'art' => $artFilter, 'unterkunden' => $unterkunden, 'aktiv' => 'rechnungen']);
 }
 
 if (preg_match('#^/rechnungen/([A-Za-z0-9][A-Za-z0-9_-]{1,60})(\.pdf)?$#', $pfad, $t)) {

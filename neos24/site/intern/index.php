@@ -154,10 +154,10 @@ if ($pfad === '/bestellungen') {
     ansicht('bestellungen', ['titel' => 'Bestellungen & Sendungen', 'zeilen' => $st->fetchAll(), 'gesamt' => $gesamt, 'seite' => $seite, 'status' => $status, 'versand' => $versand, 'abholung' => $abholung, 'q' => $q, 'aktiv' => 'bestellungen']);
 }
 
-if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})/(nachweis|rechnung)\.pdf$#', $pfad, $t)) {
+if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})/(nachweis|rechnung|gutschrift)\.pdf$#', $pfad, $t)) {
     rechtErzwingen('bestellungen');
     $b = bestellungLaden('ext_ref', $t[1]);
-    $datei = $b === null ? '' : ($t[2] === 'nachweis' ? nachberechnungNachweisPfad($b) : lexwarePdfPfad((string) ($b['lexware_id'] ?? '')));
+    $datei = $b === null ? '' : belegDateiFuerBestellung($b, $t[2]);
     if ($b === null || $datei === '' || !is_file($datei)) {
         fehlerSeite(404, 'Nicht gefunden', $t[2] === 'nachweis' ? 'Zu dieser Bestellung gibt es keinen Nachweis.' : 'Zu dieser Bestellung liegt noch keine Lexware-Rechnung vor.');
     }

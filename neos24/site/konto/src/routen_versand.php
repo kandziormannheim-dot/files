@@ -252,14 +252,15 @@ if ($pfad === '/sendungen/labels.pdf' || $pfad === '/bestellungen/labels.pdf') {
 
 // ------------------------------------------ Nachweis, Rechnung, Widerspruch
 
-if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/(nachweis|rechnung)\.pdf$#', $pfad, $t)) {
+if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/(nachweis|rechnung|gutschrift)\.pdf$#', $pfad, $t)) {
     $b = eigeneBestellung($ich, $t[2]);
-    $datei = $b === null ? '' : ($t[3] === 'nachweis' ? nachberechnungNachweisPfad($b) : lexwarePdfPfad((string) ($b['lexware_id'] ?? '')));
+    $datei = $b === null ? '' : belegDateiFuerBestellung($b, $t[3]);
     if ($b === null || $datei === '' || !is_file($datei)) {
-        fehlerSeite(404, t('fehler.404'), $t[3] === 'rechnung' ? t('nachberechnung.rechnung_folgt') : t('fehler.404.text'));
+        fehlerSeite(404, t('fehler.404'), $t[3] !== 'nachweis' ? t('nachberechnung.rechnung_folgt') : t('fehler.404.text'));
     }
+    $nb = json_decode((string) ($b['nachberechnung_json'] ?? '{}'), true) ?: [];
     header('Content-Type: application/pdf');
-    header('Content-Disposition: inline; filename="NEOS-' . ($t[3] === 'nachweis' ? 'Nachweis-' . $b['ext_ref'] : 'Rechnung-' . ($b['lexware_nummer'] ?: $b['ext_ref'])) . '.pdf"');
+    header('Content-Disposition: inline; filename="NEOS-' . ($t[3] === 'nachweis' ? 'Nachweis-' . $b['ext_ref'] : ($t[3] === 'gutschrift' ? 'Gutschrift-' . ($nb['lexware_gutschrift_nummer'] ?? $b['ext_ref']) : 'Rechnung-' . ($b['lexware_nummer'] ?: $b['ext_ref']))) . '.pdf"');
     header('Content-Length: ' . (string) filesize($datei));
     readfile($datei);
     exit;
@@ -331,7 +332,33 @@ if ($pfad === '/reklamationen') {
 
 // ---------------------------------------------------------------- Adressbuch
 
-if ($pfad === '/adressbuch' || $pfad === '/adressbuch/neu' || preg_match('#^/adressbuch/(\d+)(?:/(loeschen))?$#', $pfad, $t)) {
+if ($pfad === '/adressbuch/export.csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="neos-adressbuch.csv"');
+    echo adressenCsv($ich);
+    exit;
+}
+
+if ($pfad === '/adressbuch/import' && $methode === 'POST') {
+    $datei = $_FILES['datei'] ?? null;
+    if ($datei === null || ($datei['error'] ?? 1) !== UPLOAD_ERR_OK) {
+        hinweisSetzen(t('adressbuch.import.leer'), 'fehler');
+    } elseif ((int) $datei['size'] > 2 * 1024 * 1024) {
+        hinweisSetzen(t('import.zu_gross'), 'fehler');
+    } else {
+        try {
+            $tabelle = tabelleLesen((string) $datei['tmp_name'], (string) $datei['name']);
+            $blatt = $tabelle['blaetter'][0] ?? ['kopf' => [], 'zeilen' => []];
+            $z = adressenImportieren($ich, $blatt['kopf'], $blatt['zeilen'], $business && !empty($_POST['geteilt']));
+            hinweisSetzen(t('adressbuch.import.ergebnis', $z['angelegt'], $z['uebersprungen'], count($z['fehler'])) . ($z['fehler'] !== [] ? ' ' . t('adressbuch.import.fehlerzeilen', implode(', ', array_slice($z['fehler'], 0, 20))) : ''), $z['angelegt'] > 0 ? 'ok' : 'fehler');
+        } catch (InvalidArgumentException $e) {
+            hinweisSetzen($e->getMessage() === 'spalten' ? t('adressbuch.import.spalten') : t('neu.fehler'), 'fehler');
+        }
+    }
+    umleiten(url('adressbuch'));
+}
+
+if ($pfad === '/adressbuch' || $pfad === '/adressbuch/neu' || preg_match('#^/adressbuch/(\d+)(?:/(loeschen|teilen))?$#', $pfad, $t)) {
     $adresse = null;
     if (isset($t[1])) {
         $adresse = adresseLaden($ich, (int) $t[1]);
@@ -340,30 +367,45 @@ if ($pfad === '/adressbuch' || $pfad === '/adressbuch/neu' || preg_match('#^/adr
         }
     }
     if ($methode === 'POST') {
-        if (isset($t[2])) {
-            adresseLoeschen($ich, (int) $adresse['id']);
-            hinweisSetzen(t('adressbuch.geloescht'));
-            umleiten(url('adressbuch'));
-        }
-        if ($pfad !== '/adressbuch') {
-            $a = [];
-            foreach (['name', 'firma', 'strasse', 'plz', 'ort', 'land', 'email', 'telefon'] as $f) {
-                $a[$f] = feld($f, 254);
-            }
-            if (mb_strlen($a['name']) < 2 || mb_strlen($a['strasse']) < 3 || mb_strlen($a['plz']) < 3 || mb_strlen($a['ort']) < 2) {
-                hinweisSetzen(t('neu.fehler'), 'fehler');
-            } else {
-                $art = feld('art', 12) === 'absender' ? 'absender' : 'empfaenger';
-                adresseSpeichern($ich, $art, $a, $adresse !== null ? (int) $adresse['id'] : null, $art === 'absender' && !empty($_POST['standard']));
-                hinweisSetzen(t('adressbuch.gespeichert'));
+        try {
+            if (($t[2] ?? '') === 'loeschen') {
+                adresseLoeschen($ich, (int) $adresse['id']);
+                hinweisSetzen(t('adressbuch.geloescht'));
                 umleiten(url('adressbuch'));
             }
+            if (($t[2] ?? '') === 'teilen') {
+                adresseTeilen($ich, (int) $adresse['id'], !empty($_POST['geteilt']));
+                hinweisSetzen(!empty($_POST['geteilt']) ? t('adressbuch.geteilt.an') : t('adressbuch.geteilt.aus'));
+                umleiten(url('adressbuch'));
+            }
+            if ($pfad !== '/adressbuch') {
+                if ($adresse !== null && !adresseDarfBearbeiten($ich, $adresse)) {
+                    fehlerSeite(403, t('fehler.403'), t('adressbuch.fremd'));
+                }
+                $a = [];
+                foreach (['name', 'firma', 'strasse', 'plz', 'ort', 'land', 'email', 'telefon'] as $f) {
+                    $a[$f] = feld($f, 254);
+                }
+                if (mb_strlen($a['name']) < 2 || mb_strlen($a['strasse']) < 3 || mb_strlen($a['plz']) < 3 || mb_strlen($a['ort']) < 2) {
+                    hinweisSetzen(t('neu.fehler'), 'fehler');
+                } else {
+                    $art = feld('art', 12) === 'absender' ? 'absender' : 'empfaenger';
+                    adresseSpeichern($ich, $art, $a, $adresse !== null ? (int) $adresse['id'] : null, $art === 'absender' && !empty($_POST['standard']), $business ? !empty($_POST['geteilt']) : null);
+                    hinweisSetzen(t('adressbuch.gespeichert'));
+                    umleiten(url('adressbuch'));
+                }
+            }
+        } catch (InvalidArgumentException $e) {
+            fehlerSeite(403, t('fehler.403'), t('adressbuch.fremd'));
         }
     }
     if ($pfad === '/adressbuch') {
-        ansicht('adressbuch', ['titel' => t('adressbuch.titel'), 'zeilen' => adressenAlle($ich), 'vorlagen' => vorlagenAlle($ich), 'aktiv' => 'adressbuch']);
+        $alle = adressenAlle($ich);
+        $eigene = array_values(array_filter($alle, static fn (array $a): bool => (int) $a['kunde_id'] === (int) $ich['id']));
+        $geteilte = array_values(array_filter($alle, static fn (array $a): bool => (int) $a['kunde_id'] !== (int) $ich['id']));
+        ansicht('adressbuch', ['titel' => t('adressbuch.titel'), 'zeilen' => $eigene, 'geteilte' => $geteilte, 'vorlagen' => vorlagenAlle($ich), 'business' => $business, 'aktiv' => 'adressbuch']);
     }
-    ansicht('adresse_form', ['titel' => $adresse !== null ? t('adressbuch.bearbeiten') : t('adressbuch.neu'), 'a' => $adresse, 'laender' => preisliste()['laender'], 'aktiv' => 'adressbuch']);
+    ansicht('adresse_form', ['titel' => $adresse !== null ? t('adressbuch.bearbeiten') : t('adressbuch.neu'), 'a' => $adresse, 'laender' => preisliste()['laender'], 'business' => $business, 'darf' => $adresse === null || adresseDarfBearbeiten($ich, $adresse), 'aktiv' => 'adressbuch']);
 }
 
 if ($pfad === '/vorlagen/neu' || preg_match('#^/vorlagen/(\d+)(?:/(loeschen))?$#', $pfad, $t)) {
@@ -394,24 +436,43 @@ if ($pfad === '/vorlagen/neu' || preg_match('#^/vorlagen/(\d+)(?:/(loeschen))?$#
 
 // ---------------------------------------------------------------- CSV-Import
 
-if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import/beauftragen' || $pfad === '/import/verwerfen') {
+if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import/vorlage.xlsx' || $pfad === '/import/fehler.csv' || $pfad === '/import/beauftragen' || $pfad === '/import/verwerfen') {
     $firma = businessErzwingen($ich);
+    $vorlage = importVorlage((string) ($unterkunden[0]['nummer'] ?? ''));
     if ($pfad === '/import/vorlage.csv') {
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="neos-import-vorlage.csv"');
-        echo "zielland;gewicht_kg;name;firma;strasse;plz;ort;email;telefon;referenz;carrier;zusatz;unterkunde\n";
-        echo "FR;1,2;Marie Curie;;Rue de Rivoli 2;75001;Paris;marie@example.com;;AUF-1001;;versicherung;\n";
-        echo "DE;4,5;Hans Meier;Meier GmbH;Hauptstr. 3;10115;Berlin;;;AUF-1002;DPD;;" . ($unterkunden[0]['nummer'] ?? '') . "\n";
+        echo "\xEF\xBB\xBF" . implode(';', $vorlage['kopf']) . "\n";
+        foreach ($vorlage['zeilen'] as $z) {
+            echo implode(';', $z) . "\n";
+        }
+        exit;
+    }
+    if ($pfad === '/import/vorlage.xlsx') {
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="neos-import-vorlage.xlsx"');
+        echo xlsxSchreiben($vorlage['kopf'], $vorlage['zeilen'], 'Sendungen');
+        exit;
+    }
+    if ($pfad === '/import/fehler.csv') {
+        $vorschau = $_SESSION['import'] ?? [];
+        $kopf = $_SESSION['import_kopf'] ?? [];
+        if ($vorschau === []) {
+            fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
+        }
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="neos-import-fehler.csv"');
+        echo importFehlerCsv($kopf, $vorschau, static fn (string $code): string => t('import.fehler.' . $code));
         exit;
     }
     if ($pfad === '/import/verwerfen' && $methode === 'POST') {
-        unset($_SESSION['import']);
+        unset($_SESSION['import'], $_SESSION['import_kopf'], $_SESSION['import_ergebnis']);
         umleiten(url('import'));
     }
     if ($pfad === '/import/beauftragen' && $methode === 'POST') {
         $zeilen = $_SESSION['import'] ?? [];
-        unset($_SESSION['import']);
-        $anzahl = 0;
+        unset($_SESSION['import'], $_SESSION['import_kopf']);
+        $refs = [];
         $standardUnterkunde = $festerUnterkunde > 0 ? $festerUnterkunde : (int) feld('unterkunde_id', 10);
         $unterkundenNachId = array_column($unterkunden, null, 'id');
         foreach ($zeilen as $z) {
@@ -421,15 +482,19 @@ if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import
             $uId = (int) ($z['unterkunde_id'] ?? 0) > 0 ? (int) $z['unterkunde_id'] : $standardUnterkunde;
             $u = $unterkundenNachId[$uId] ?? null;
             $e = bestellungAnlegen($z['p'] + ['email' => $ich['email'], 'absender' => standardAbsender($ich, $firma, $u), 'kunde_id' => $ich['id'], 'firma_id' => $firma['id'], 'unterkunde_id' => $u !== null ? (int) $u['id'] : null,
-                'preisliste_id' => preislisteFuerKonto(['unterkunde_id' => $u !== null ? (int) $u['id'] : 0] + $ich), 'zahlungsart' => 'rechnung', 'angelegt_von' => $ich['name'] . ' (CSV)', 'sprache' => sprache()]);
+                'preisliste_id' => preislisteFuerKonto(['unterkunde_id' => $u !== null ? (int) $u['id'] : 0] + $ich), 'zahlungsart' => 'rechnung', 'angelegt_von' => $ich['name'] . ' (Import)', 'sprache' => sprache()]);
             if (isset($e['bestellung'])) {
-                $anzahl++;
+                $refs[] = ['ext_ref' => $e['bestellung']['ext_ref'], 'referenz' => $z['p']['referenz'], 'name' => $z['p']['empfaenger']['name'], 'zielland' => $z['p']['zielland'], 'betrag_cent' => (int) ($e['bestellung']['betrag_cent'] ?? 0)];
             }
         }
-        hinweisSetzen(t('import.beauftragt', $anzahl));
-        umleiten(url('sendungen'));
+        $_SESSION['import_ergebnis'] = $refs;
+        hinweisSetzen(t('import.beauftragt', count($refs)));
+        umleiten(url('import'));
     }
     $vorschau = $_SESSION['import'] ?? null;
+    $kopf = $_SESSION['import_kopf'] ?? [];
+    $ergebnis = $_SESSION['import_ergebnis'] ?? null;
+    unset($_SESSION['import_ergebnis']);
     $meldung = null;
     if ($methode === 'POST' && $pfad === '/import') {
         $datei = $_FILES['datei'] ?? null;
@@ -438,72 +503,36 @@ if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import
         } elseif ((int) $datei['size'] > 2 * 1024 * 1024) {
             $meldung = t('import.zu_gross');
         } else {
-            $inhalt = (string) file_get_contents((string) $datei['tmp_name']);
-            $inhalt = preg_replace('/^\xEF\xBB\xBF/', '', $inhalt) ?? $inhalt;
-            $linien = preg_split('/\r\n|\r|\n/', trim($inhalt)) ?: [];
-            $trenner = substr_count($linien[0] ?? '', ';') >= substr_count($linien[0] ?? '', ',') ? ';' : ',';
-            $kopf = array_map(static fn (string $s): string => strtolower(trim($s)), str_getcsv((string) array_shift($linien), $trenner, '"', '\\'));
-            $vorschau = [];
-            foreach (array_slice($linien, 0, 500) as $nr => $linie) {
-                if (trim($linie) === '') {
-                    continue;
-                }
-                $felder = str_getcsv($linie, $trenner, '"', '\\');
-                $z = [];
-                foreach ($kopf as $i => $name) {
-                    $z[$name] = trim((string) ($felder[$i] ?? ''));
-                }
-                $gramm = (int) round((float) str_replace(',', '.', $z['gewicht_kg'] ?? '') * 1000);
-                $p = [
-                    'zielland' => strtoupper($z['zielland'] ?? ''), 'gewicht_gramm' => $gramm, 'carrier' => $z['carrier'] ?? '',
-                    'zusatz' => array_filter(array_map('trim', explode(',', (string) ($z['zusatz'] ?? '')))),
-                    'empfaenger' => ['name' => $z['name'] ?? '', 'firma' => $z['firma'] ?? '', 'strasse' => $z['strasse'] ?? '', 'plz' => $z['plz'] ?? '', 'ort' => $z['ort'] ?? '', 'email' => $z['email'] ?? '', 'telefon' => $z['telefon'] ?? ''],
-                    'referenz' => $z['referenz'] ?? '',
-                ];
-                // Prüfen ohne Anlegen: dieselbe Validierung wie bestellungAnlegen(), aber trocken.
-                $fehler = [];
-                $gk = $gramm > 0 ? gewichtsklasseFuerGewicht($gramm) : null;
-                if ($gk === null) {
-                    $fehler[] = 'gewicht';
-                }
-                $preis = $gk !== null ? preisFuer($p['zielland'], $gk, $p['carrier'], preislisteFuerKonto($ich)) : null;
-                if ($preis === null) {
-                    $fehler[] = $p['carrier'] !== '' ? 'carrier' : 'zielland';
-                }
-                foreach (['name' => 2, 'strasse' => 3, 'plz' => 3, 'ort' => 2] as $f => $min) {
-                    if (mb_strlen($p['empfaenger'][$f]) < $min) {
-                        $fehler[] = $f;
+            try {
+                $tabelle = tabelleLesen((string) $datei['tmp_name'], (string) $datei['name']);
+                $blatt = $tabelle['blaetter'][0] ?? ['kopf' => [], 'zeilen' => []];
+                foreach ($tabelle['blaetter'] as $b) { // erstes Blatt mit Daten
+                    if ($b['zeilen'] !== []) {
+                        $blatt = $b;
+                        break;
                     }
                 }
-                if (in_array('abholung', $p['zusatz'], true)) {
-                    $fehler[] = 'abholung'; // Abholtermin gibt es im Import nicht — einzeln anlegen
-                }
-                // Spalte „unterkunde“: Nummer (K-100001-02) oder Name eines aktiven Unterkunden; Mitarbeiter mit fester Zuordnung: immer der eigene
-                $unterkundeId = 0;
-                $uWunsch = trim((string) ($z['unterkunde'] ?? ''));
-                if ($festerUnterkunde > 0) {
-                    $unterkundeId = $festerUnterkunde;
-                } elseif ($uWunsch !== '') {
-                    foreach ($unterkunden as $u) {
-                        if (strcasecmp($u['nummer'], $uWunsch) === 0 || strcasecmp($u['name'], $uWunsch) === 0) {
-                            $unterkundeId = (int) $u['id'];
-                        }
-                    }
-                    if ($unterkundeId === 0) {
-                        $fehler[] = 'unterkunde';
+                $fehlt = importFehlendeSpalten(importKopfZuordnen($blatt['kopf']));
+                if ($fehlt !== []) {
+                    $meldung = t('import.spalten_fehlen', implode(', ', $fehlt));
+                } elseif (count($blatt['zeilen']) > 500) {
+                    $meldung = t('import.zu_gross');
+                } else {
+                    $vorschau = importZeilenPruefen($ich, $blatt['kopf'], $blatt['zeilen'], $unterkunden, $festerUnterkunde, !empty($_POST['dubletten_ok']));
+                    if ($vorschau === []) {
+                        $meldung = t('import.keine');
+                        $vorschau = null;
+                    } else {
+                        $_SESSION['import'] = $vorschau;
+                        $_SESSION['import_kopf'] = $kopf = $blatt['kopf'];
                     }
                 }
-                $vorschau[] = ['nr' => $nr + 2, 'p' => $p, 'gk' => $gk, 'preis' => $preis, 'fehler' => $fehler, 'unterkunde_id' => $unterkundeId];
-            }
-            if ($vorschau === []) {
-                $meldung = t('import.keine');
-                $vorschau = null;
-            } else {
-                $_SESSION['import'] = $vorschau;
+            } catch (InvalidArgumentException|RuntimeException $e) {
+                $meldung = t('import.unlesbar') . ' ' . $e->getMessage();
             }
         }
     }
-    ansicht('import', ['titel' => t('import.titel'), 'vorschau' => $vorschau, 'meldung' => $meldung, 'unterkunden' => $festerUnterkunde > 0 ? [] : $unterkunden, 'aktiv' => 'import']);
+    ansicht('import', ['titel' => t('import.titel'), 'vorschau' => $vorschau, 'kopf' => $kopf, 'ergebnis' => $ergebnis, 'meldung' => $meldung, 'unterkunden' => $festerUnterkunde > 0 ? [] : $unterkunden, 'aktiv' => 'import']);
 }
 
 // ------------------------------------------------------------------ Guthaben

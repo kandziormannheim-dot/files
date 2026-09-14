@@ -108,8 +108,12 @@ $laufzeit = $landInfo['klassen'][$b['gewichtsklasse']]['laufzeit'][$sp] ?? '—'
           <dt><?= e(t('detail.zahlung')) ?></dt><dd><?= e($b['zahlungsart'] === 'guthaben' ? t('nav.guthaben') : t('detail.zahlung.revolut')) ?></dd>
         <?php } ?>
       </dl>
-      <?php if (!$business && lexwarePdfPfad((string) ($b['lexware_id'] ?? '')) !== '' && is_file(lexwarePdfPfad((string) $b['lexware_id']))) { ?>
-        <p style="margin-top:.75rem"><a class="btn btn--sm btn--ink" href="<?= e(url($pfad . '/' . $b['ext_ref'] . '/rechnung.pdf')) ?>" target="_blank" rel="noopener"><?= e(t('detail.rechnung.pdf')) ?><?= $b['lexware_nummer'] ? ' ' . e($b['lexware_nummer']) : '' ?> ↓</a></p>
+      <?php $gs = json_decode((string) ($b['nachberechnung_json'] ?? '{}'), true) ?: []; $gsDa = !empty($gs['lexware_gutschrift_id']) && is_file(lexwarePdfPfad((string) $gs['lexware_gutschrift_id'])); ?>
+      <?php if ((!$business && lexwarePdfPfad((string) ($b['lexware_id'] ?? '')) !== '' && is_file(lexwarePdfPfad((string) $b['lexware_id']))) || $gsDa) { ?>
+        <p style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap">
+          <?php if (!$business && lexwarePdfPfad((string) ($b['lexware_id'] ?? '')) !== '' && is_file(lexwarePdfPfad((string) $b['lexware_id']))) { ?><a class="btn btn--sm btn--ink" href="<?= e(url($pfad . '/' . $b['ext_ref'] . '/rechnung.pdf')) ?>" target="_blank" rel="noopener"><?= e(t('detail.rechnung.pdf')) ?><?= $b['lexware_nummer'] ? ' ' . e($b['lexware_nummer']) : '' ?> ↓</a><?php } ?>
+          <?php if ($gsDa) { ?><a class="btn btn--sm k-btn-leise" href="<?= e(url($pfad . '/' . $b['ext_ref'] . '/gutschrift.pdf')) ?>" target="_blank" rel="noopener"><?= e(t('archiv.art.gutschrift')) ?> <?= e($gs['lexware_gutschrift_nummer'] ?? '') ?> ↓</a><?php } ?>
+        </p>
       <?php } ?>
     </div>
     <div class="card">

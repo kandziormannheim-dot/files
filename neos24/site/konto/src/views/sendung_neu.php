@@ -105,7 +105,7 @@ $zusatzAlle = $daten['zusatz'];
 
       <div class="card">
         <div class="k-karte-kopf"><h2 class="h3"><?= e(t('neu.empfaenger')) ?></h2>
-          <?php if ($empfaengerBuch !== []) { ?><select class="k-adresswahl" data-adresswahl="empfaenger" aria-label="<?= e(t('neu.adresse.aus_buch')) ?>"><option value=""><?= e(t('neu.adresse.aus_buch')) ?></option><?php foreach ($empfaengerBuch as $a) { ?><option value="<?= (int) $a['id'] ?>"><?= e($a['name']) ?>, <?= e($a['ort']) ?></option><?php } ?></select><?php } ?>
+          <?php if ($empfaengerBuch !== []) { ?><select class="k-adresswahl" data-adresswahl="empfaenger" aria-label="<?= e(t('neu.adresse.aus_buch')) ?>"><option value=""><?= e(t('neu.adresse.aus_buch')) ?></option><?php foreach ($empfaengerBuch as $a) { ?><option value="<?= (int) $a['id'] ?>"><?= e($a['name']) ?>, <?= e($a['ort']) ?><?= (int) $a['kunde_id'] !== (int) kundeAktuell()['id'] ? ' (' . e(t('adressbuch.firma')) . ')' : '' ?></option><?php } ?></select><?php } ?>
         </div>
         <div class="form-row form-row--2">
           <div class="field <?= $f('empfaenger.name') ?>"><label for="e-name"><?= e(t('neu.name')) ?></label><input id="e-name" name="empfaenger[name]" type="text" value="<?= e($werte['empfaenger']['name']) ?>" required></div>
@@ -125,7 +125,7 @@ $zusatzAlle = $daten['zusatz'];
 
       <div class="card">
         <div class="k-karte-kopf"><h2 class="h3"><?= e(t('neu.absender')) ?></h2>
-          <?php if ($absenderBuch !== []) { ?><select class="k-adresswahl" data-adresswahl="absender" aria-label="<?= e(t('neu.adresse.aus_buch')) ?>"><option value=""><?= e(t('neu.adresse.aus_buch')) ?></option><?php foreach ($absenderBuch as $a) { ?><option value="<?= (int) $a['id'] ?>"><?= e($a['name']) ?>, <?= e($a['ort']) ?></option><?php } ?></select><?php } ?>
+          <?php if ($absenderBuch !== []) { ?><select class="k-adresswahl" data-adresswahl="absender" aria-label="<?= e(t('neu.adresse.aus_buch')) ?>"><option value=""><?= e(t('neu.adresse.aus_buch')) ?></option><?php foreach ($absenderBuch as $a) { ?><option value="<?= (int) $a['id'] ?>"><?= e($a['name']) ?>, <?= e($a['ort']) ?><?= (int) $a['kunde_id'] !== (int) kundeAktuell()['id'] ? ' (' . e(t('adressbuch.firma')) . ')' : '' ?></option><?php } ?></select><?php } ?>
         </div>
         <div class="form-row form-row--2">
           <div class="field <?= $f('absender.name') ?>"><label for="a-name"><?= e(t('neu.name')) ?></label><input id="a-name" name="absender[name]" type="text" value="<?= e($werte['absender']['name']) ?>" required></div>

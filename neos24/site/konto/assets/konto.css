@@ -74,6 +74,7 @@
 .k-form { gap: 1rem; }
 .k-form .field .k-klein { margin-top: .1rem; }
 .k-form-fuss { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.k-form-fuss > .btn { max-width: 100%; white-space: normal; text-align: center; }
 .form-row--2 { grid-template-columns: 1fr; }
 .k-summe { position: sticky; top: 5.25rem; display: grid; gap: .75rem; }
 .k-summe-wert { font-family: var(--font-display); font-size: 2.2rem; font-weight: 800; color: var(--yellow); }
@@ -162,6 +163,9 @@
   .k-kopfzeile { flex-direction: column; align-items: flex-start; }
   .k-liste { grid-template-columns: 1fr; gap: .1rem .5rem; }
   .k-liste dt { margin-top: .4rem; }
+  .k-adresswahl { max-width: 52vw; overflow: hidden; text-overflow: ellipsis; }
 }
 @media (min-width: 640px) { .form-row--2 { grid-template-columns: 1fr 1fr; } }
 .k-werkzeuge select { flex: 0 1 auto; max-width: 100%; min-width: 0; }
+.k-feld-knopf { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; padding-top: 1.6rem; }
+.k-import-form .k-schalter { margin-right: 0; }
