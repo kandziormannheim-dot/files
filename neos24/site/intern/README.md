@@ -48,12 +48,82 @@ je Zeile:
 
 Eine gebuchte Nachberechnung ist eine eigene Bestellung (`art = nachberechnung`, verweist auf
 das Original) ohne Label: bei Firmen `zahlungsart rechnung`, Status `beauftragt` → sie erscheint
-als Position „Nachber. NE-…“ auf der nächsten Sammelrechnung; bei Privatkunden vom Guthaben,
-wenn es reicht, sonst als offene Revolut-Zahlung mit Link im Portal. Der Kunde bekommt eine
-Mail mit gebuchter und gewogener Klasse. Die Originalbestellung speichert das Carrier-Gewicht,
-den tatsächlichen Einkauf und die Carrier-Sendungsnummer (Marge). „Beanstandung CSV“ exportiert
-alle beanstandeten Zeilen für den Lieferanten. Dateien liegen im Datenverzeichnis unter
+als Position „Gewichtsnachberechnung zu NE-…“ auf der nächsten Sammelrechnung; bei Privatkunden
+vom Guthaben, wenn es reicht (Rechnung sofort über Lexware), sonst als offene Revolut-Zahlung
+mit Link im Portal (Rechnung nach der Zahlung). Die Differenz wird **mit der Preisliste des
+Kunden** gerechnet (Liste der Bestellung, sonst aktuelle Liste des Kontos, sonst Routingmatrix);
+hat der Carrier für die Abweichung einen Zuschlag berechnet, kommt die in „Preise & Zielländer“
+je Carrier hinterlegte **Gewichtsgebühr** dazu (höchstens der berechnete Zuschlag). Der Kunde
+bekommt eine Mail mit dem **Nachweis Gewichtsabweichung** (PDF, `lib/nachberechnung_pdf.php`,
+abgelegt unter `daten/nachberechnungen/`): Sendung, gebuchte und gewogene Klasse, Preise laut
+seiner Liste, Differenz, Widerspruchshinweis. **Kundendokumente und Mails nennen weder den
+Lieferanten noch dessen Rechnungsnummer** — nur den Carrier, weil er gewogen hat; die
+Lieferantenrechnung steht ausschließlich im internen Bestell-Detail. Die Originalbestellung
+speichert das Carrier-Gewicht, den tatsächlichen Einkauf und die Carrier-Sendungsnummer (Marge).
+Zu jeder Sendung gibt es höchstens eine aktive Nachberechnung (Sicherheitsnetz gegen doppelte
+Buchung, auch über gelöschte Rechnungen hinweg). „Beanstandung CSV“ exportiert alle
+beanstandeten Zeilen für den Lieferanten; eine erhaltene **Gutschrift des Lieferanten** wird an
+der Rechnung vermerkt (Betrag, Nummer, Datum). Dateien liegen im Datenverzeichnis unter
 `lieferantenrechnungen/`.
+
+### Automatische Nachberechnung
+
+Nach jeder Prüfung (Upload, „Neu prüfen“, Postfach) bucht `rpAutomatischBuchen()` Positionen mit
+Befund „Gewicht höher“ ohne Freigabe, wenn alle Regeln aus `rechnungspruefung.auto` erfüllt sind:
+Differenz mindestens `mindestGramm` **und** `mindestProzent` des gebuchten Gewichts, Betrag über
+`bagatelleCent` und höchstens `maxPositionCent`, Summe je Kunde auf der Rechnung höchstens
+`maxKundeCent`, kein Carrier-Wechsel, keine Handzuordnung. Alles andere bleibt „offen“ mit dem
+Grund im Hinweis („Freigabe nötig: …“) und wird wie bisher einzeln oder mit „Alle offenen
+Nachberechnungen buchen“ freigegeben. `aktiv => false` schaltet die Automatik ab.
+
+### Widerspruch, Storno, Erinnerung
+
+Der Kunde kann im Portal innerhalb von `rechnungspruefung.widerspruchTage` widersprechen; das
+erzeugt eine Reklamation der Art „Widerspruch Nachberechnung“. Im Reklamations-Detail nimmt
+„Nachberechnung zurücknehmen“ die Nachberechnung zurück: Status `storniert`, bezahlte Beträge
+zurück aufs Guthaben, Gutschrift an Lexware, Position wieder „verzichtet“, Antwort per Mail.
+`php intern/aufgaben.php erinnern` (Cron) erinnert Privatkunden an offene Revolut-Nachberechnungen
+nach `erinnerungTage` — genau einmal (`bestellungen.erinnert`).
+
+### Carrier-Rechnungen aus dem Postfach
+
+`php intern/aufgaben.php postfach` holt ungelesene Mails per IMAP (TLS, LOGIN; eigener Client in
+`lib/postfach.php`, PHP braucht keine imap-Erweiterung), ordnet den Absender über
+`postfach.absender` (Adresse oder Domain → Carrier-Name) zu, legt aus PDF + CSV/XLSX die
+Lieferantenrechnung an, prüft sie mit dem gespeicherten Spaltenprofil des Carriers und lässt die
+Automatik laufen. Doppelte Rechnungsnummern werden übersprungen, Mails ohne Tabelle oder von
+unbekannten Absendern bleiben (ungelesen) liegen; ohne Profil wartet die Rechnung unter „Spalten
+zuordnen“. Verarbeitete Mails werden als gelesen markiert und nach `erledigtOrdner` kopiert; eine
+Zusammenfassung geht an `kopie`.
+
+### Kundenpreislisten
+
+Jede Firma und jeder Privatkunde kann eine eigene Verkaufsmatrix haben (Kunden & Anfragen → Firma
+bzw. Privatkunde → „Preisliste anlegen“): sie startet als Kopie der Routingmatrix mit
+Auf-/Abschlag in Prozent, danach lassen sich einzelne Zellen (Land × Klasse × Carrier, netto)
+und Zusatzleistungspreise ändern oder aus XLSX/CSV importieren (gleiche Form wie die
+Einkaufspreisliste; Preis gilt für Priorität 1 der Zelle oder alle Carrier). Zellen ohne eigenen
+Preis zeigen je Liste den Standardpreis oder werden nicht angeboten. Das Portal rechnet mit der
+Liste (Angebote, Preise-Seite, CSV-Import), jede Bestellung merkt sich `preisliste_id`, und die
+Rechnungsprüfung rechnet Nachberechnungen mit denselben Konditionen. Tabellen `preislisten`,
+`preislisten_preise`, `preislisten_zusatz`; `lib/preislisten.php`.
+
+## Lexware Office
+
+Ist `lexware.aktiv` mit API-Key gesetzt, vergibt Lexware Office die Rechnungsnummern und erzeugt
+die PDFs (`lib/lexware.php`): Sammelrechnungen der Firmen (Kontakt in Lexware, netto, Zahlungsziel
+der Firma, je Sendung eine Zeile), bezahlte Privatkunden-Bestellungen (Adresse ohne Kontakt,
+brutto, Vermerk „bezahlt per Revolut/Guthaben“) und Nachberechnungen als Rechnung, Stornos als
+Gutschrift. Jeder Vorgang landet in der Warteschlange `lexware_auftraege` und wird sofort (best
+effort) sowie per Cron `php intern/aufgaben.php lexware` abgearbeitet — ein Ausfall der API
+blockiert nichts, nichts wird doppelt angelegt. Rechnungen zeigen unter „Rechnungen“ Lexware-Nummer
+und -Status; fehlgeschlagene Übergaben stehen in der Warteschlange (Übersicht-Kachel) und lassen
+sich nachholen. Der Zahlungsstatus kommt per Cron (`/payments`) oder Webhook
+(`api/lexware/webhook.php`, Abonnements anlegen mit `php intern/aufgaben.php lexware einrichten
+<Basis-URL>`; die Nutzlast wird nie direkt verwendet, der Beleg wird nachgeladen). Ohne Lexware
+bleibt es bei eigener Nummer `NR-…` und eigenem PDF. Belege und Mails an Kunden enthalten keine
+Lieferantenangaben. Vor Go-live die Feldnamen gegen die aktuelle Lexware-Doku prüfen
+(`developers.lexware.io`); Basis-URL `lexware.basisUrl`.
 
 ### Einkaufspreise importieren
 

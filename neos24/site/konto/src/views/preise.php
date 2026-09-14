@@ -1,6 +1,6 @@
 <?php $sp = sprache(); ?>
 <header class="k-kopfzeile">
-  <div><span class="eyebrow eyebrow--magenta"><?= e(t('portal')) ?></span><h1 class="h2"><?= e(t('preise.titel')) ?></h1><p class="k-text"><?= e(t('preise.text')) ?></p></div>
+  <div><span class="eyebrow eyebrow--magenta"><?= e(t('portal')) ?></span><h1 class="h2"><?= e(t('preise.titel')) ?></h1><p class="k-text"><?= e(!empty($eigene) ? t('preise.eigene') : t('preise.text')) ?></p></div>
 </header>
 <div class="card k-karte-tabelle">
   <div class="k-scroll"><table class="table k-tabelle">
@@ -17,3 +17,13 @@
     </tbody>
   </table></div>
 </div>
+<?php if (!empty($zusatz)) { ?>
+<div class="card k-karte-tabelle" style="margin-top:1rem">
+  <h2 class="h3"><?= e(t('preise.zusatz')) ?></h2>
+  <table class="table k-tabelle">
+    <tbody>
+    <?php foreach ($zusatz as $z) { ?><tr><td><strong><?= e($z['name'][$sp]) ?></strong><br><span class="k-klein"><?= e($z['beschreibung'][$sp]) ?></span></td><td class="k-mono"><?= e(euro((int) $z['preis'], $sp)) ?></td></tr><?php } ?>
+    </tbody>
+  </table>
+</div>
+<?php } ?>

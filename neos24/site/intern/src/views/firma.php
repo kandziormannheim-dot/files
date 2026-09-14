@@ -77,6 +77,19 @@
       </table>
       <?php } ?>
     </div>
+    <div class="karte">
+      <div class="karte-kopf"><h2 class="h2">Preisliste</h2><?php if ($firma['preisliste_id']) { ?><a class="knopf knopf--leise knopf--klein" href="<?= e(url('kunden/preisliste/' . $firma['preisliste_id'])) ?>">Bearbeiten</a><?php } ?></div>
+      <?php if ($firma['preisliste_id']) { $pl = preislisteLaden((int) $firma['preisliste_id']); ?>
+        <p><strong><?= e($pl['name'] ?? '') ?></strong><?= $pl !== null && (int) $pl['aktiv'] !== 1 ? ' <span class="pille pille--warn">inaktiv</span>' : '' ?><br><span class="leise">eigene Konditionen · zuletzt <?= e(zeitAnzeigen($pl['aktualisiert'] ?? null)) ?></span></p>
+      <?php } elseif ($darfB) { ?>
+        <p class="leise">Standardpreise der Routingmatrix. Eigene Liste anlegen — sie startet als Kopie der Routingmatrix mit Auf-/Abschlag:</p>
+        <form method="post" action="<?= e(url('kunden/preisliste/anlegen')) ?>" class="formular" style="margin-top:.6rem">
+          <?= csrfFeld() ?><input type="hidden" name="firma_id" value="<?= (int) $firma['id'] ?>">
+          <div class="spalten spalten--2"><div class="feld"><label for="pl-name">Bezeichnung</label><input id="pl-name" name="name" value="<?= e($firma['name']) ?>" maxlength="80"></div><div class="feld"><label for="pl-prozent">Auf-/Abschlag %</label><input id="pl-prozent" name="prozent" inputmode="decimal" value="-10"></div></div>
+          <button class="knopf knopf--leise" type="submit">Preisliste anlegen</button>
+        </form>
+      <?php } else { ?><p class="leise">Standardpreise der Routingmatrix.</p><?php } ?>
+    </div>
     <div class="karte karte--tabelle">
       <div class="karte-kopf"><h2 class="h2">Benutzer</h2></div>
       <?php foreach ($benutzer as $b) { ?>

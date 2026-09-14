@@ -10,15 +10,41 @@ $laufzeit = $landInfo['klassen'][$b['gewichtsklasse']]['laufzeit'][$sp] ?? '—'
   <div><a class="k-zurueck" href="<?= e(url($pfad)) ?>"><?= e(t('detail.zurueck')) ?></a><h1 class="h2 k-mono"><?= e($b['ext_ref']) ?></h1></div>
   <div><?= statusPille((string) $b['status'], statusName((string) $b['status'], $sp)) ?></div>
 </header>
-<?php if ($b['art'] === 'nachberechnung') { $nb = json_decode((string) $b['nachberechnung_json'], true) ?: []; $orig = $b['nachberechnung_zu'] ? datenbank()->query('SELECT ext_ref FROM bestellungen WHERE id = ' . (int) $b['nachberechnung_zu'])->fetchColumn() : ''; ?>
+<?php if ($b['art'] === 'nachberechnung') { $nb = json_decode((string) $b['nachberechnung_json'], true) ?: []; $orig = $b['nachberechnung_zu'] ? datenbank()->query('SELECT ext_ref FROM bestellungen WHERE id = ' . (int) $b['nachberechnung_zu'])->fetchColumn() : '';
+  $frist = (int) (konfig()['rechnungspruefung']['widerspruchTage'] ?? 14); $fristOffen = strtotime((string) $b['erstellt']) >= time() - $frist * 86400; $storniert = $b['status'] === 'storniert';
+  $nachweisDa = nachberechnungNachweisPfad($b) !== '' && is_file(nachberechnungNachweisPfad($b)); $rechnungDa = lexwarePdfPfad((string) ($b['lexware_id'] ?? '')) !== '' && is_file(lexwarePdfPfad((string) $b['lexware_id'])); ?>
 <div class="k-spalten k-spalten--2-1">
-  <div class="card">
-    <span class="eyebrow eyebrow--magenta"><?= e(t('nachberechnung')) ?></span>
-    <h2 class="h3" style="margin-top:.4rem"><?= e(t('nachberechnung.titel')) ?></h2>
-    <p class="k-text" style="margin:.75rem 0"><?= e(t('nachberechnung.text', $orig ?: ($nb['original'] ?? ''), number_format((int) ($nb['gewicht_gramm'] ?? 0) / 1000, 2, $sp === 'en' ? '.' : ',', ''), $nb['gk_bestellt'] ?? '', $nb['gk_ist'] ?? '')) ?></p>
-    <p class="k-text"><?= e($b['status'] === 'offen' || $b['status'] === 'angelegt' || $b['status'] === 'fehlgeschlagen' ? t('nachberechnung.offen') : ($b['zahlungsart'] === 'rechnung' ? t('nachberechnung.rechnung') : ($b['zahlungsart'] === 'guthaben' ? t('nachberechnung.guthaben') : t('nachberechnung.bezahlt')))) ?></p>
-    <p class="k-klein" style="margin-top:.75rem"><?= e(t('nachberechnung.tipp')) ?></p>
-    <?php if ($orig) { ?><p style="margin-top:1rem"><a class="btn btn--sm k-btn-leise" href="<?= e(url($pfad . '/' . $orig)) ?>"><?= e(t('nachberechnung.zu')) ?> <?= e($orig) ?> →</a></p><?php } ?>
+  <div>
+    <div class="card">
+      <span class="eyebrow eyebrow--magenta"><?= e(t('nachberechnung')) ?></span>
+      <h2 class="h3" style="margin-top:.4rem"><?= e(t('nachberechnung.titel')) ?></h2>
+      <p class="k-text" style="margin:.75rem 0"><?= e(t('nachberechnung.text', $orig ?: ($nb['original'] ?? ''), number_format((int) ($nb['gewicht_gramm'] ?? 0) / 1000, 2, $sp === 'en' ? '.' : ',', ''), $nb['gk_bestellt'] ?? '', $nb['gk_ist'] ?? '')) ?></p>
+      <?php if ((int) ($nb['gebuehr'] ?? 0) > 0) { ?><p class="k-klein"><?= e(t('nachberechnung.gebuehr', euro((int) $nb['gebuehr'], $sp))) ?></p><?php } ?>
+      <p class="k-text"><?= e($storniert ? t('nachberechnung.storniert') : ($b['status'] === 'offen' || $b['status'] === 'angelegt' || $b['status'] === 'fehlgeschlagen' ? t('nachberechnung.offen') : ($b['zahlungsart'] === 'rechnung' ? t('nachberechnung.rechnung') : ($b['zahlungsart'] === 'guthaben' ? t('nachberechnung.guthaben') : t('nachberechnung.bezahlt'))))) ?></p>
+      <p class="k-klein" style="margin-top:.75rem"><?= e(t('nachberechnung.tipp')) ?></p>
+      <p style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
+        <?php if ($nachweisDa) { ?><a class="btn btn--sm btn--ink" href="<?= e(url($pfad . '/' . $b['ext_ref'] . '/nachweis.pdf')) ?>" target="_blank" rel="noopener"><?= e(t('nachberechnung.nachweis')) ?> ↓</a><?php } ?>
+        <?php if ($rechnungDa) { ?><a class="btn btn--sm btn--ink" href="<?= e(url($pfad . '/' . $b['ext_ref'] . '/rechnung.pdf')) ?>" target="_blank" rel="noopener"><?= e(t('nachberechnung.rechnung_pdf')) ?><?= $b['lexware_nummer'] ? ' ' . e($b['lexware_nummer']) : '' ?> ↓</a><?php } ?>
+        <?php if ($orig) { ?><a class="btn btn--sm k-btn-leise" href="<?= e(url($pfad . '/' . $orig)) ?>"><?= e(t('nachberechnung.zu')) ?> <?= e($orig) ?> →</a><?php } ?>
+      </p>
+    </div>
+    <?php if (!$storniert) { ?>
+    <div class="card">
+      <h2 class="h3"><?= e(t('nachberechnung.widerspruch')) ?></h2>
+      <?php if ($reklamation !== null) { ?>
+        <p class="k-text"><a href="<?= e(url('reklamationen')) ?>"><?= e(t('nachberechnung.widerspruch.offen')) ?> · <?= e(REKLAMATION_STATUS[$reklamation['status']][$sp] ?? $reklamation['status']) ?></a></p>
+      <?php } elseif (!$fristOffen) { ?>
+        <p class="k-text"><?= e(t('nachberechnung.widerspruch.frist')) ?></p>
+      <?php } else { ?>
+        <p class="k-text" style="margin-bottom:.75rem"><?= e(t('nachberechnung.widerspruch.text', $frist)) ?></p>
+        <form method="post" action="<?= e(url($pfad . '/' . $b['ext_ref'] . '/widerspruch')) ?>" class="form k-form">
+          <?= csrfFeld() ?>
+          <div class="field"><label for="w-text"><?= e(t('reklamationen.beschreibung')) ?></label><textarea id="w-text" name="beschreibung" rows="4" required minlength="10"></textarea></div>
+          <button class="btn btn--sm k-btn-leise" type="submit"><?= e(t('nachberechnung.widerspruch.knopf')) ?></button>
+        </form>
+      <?php } ?>
+    </div>
+    <?php } ?>
   </div>
   <div>
     <div class="card card--ink">
@@ -27,9 +53,10 @@ $laufzeit = $landInfo['klassen'][$b['gewichtsklasse']]['laufzeit'][$sp] ?? '—'
         <dt><?= e(t('detail.netto')) ?></dt><dd class="k-mono"><?= e(euro((int) $b['netto_cent'], $sp)) ?></dd>
         <?php if (!$business) { ?><dt><?= e(t('detail.mwst')) ?></dt><dd class="k-mono"><?= e(euro((int) $b['mwst_cent'], $sp)) ?></dd><dt><?= e(t('detail.brutto')) ?></dt><dd class="k-mono"><strong><?= e(euro((int) $b['betrag_cent'], $sp)) ?></strong></dd><?php } ?>
         <dt><?= e(t('detail.zahlung')) ?></dt><dd><?= e($b['zahlungsart'] === 'rechnung' ? t('detail.zahlung.rechnung') : ($b['zahlungsart'] === 'guthaben' ? t('nav.guthaben') : t('detail.zahlung.revolut'))) ?></dd>
+        <?php if ($business && $b['rechnung_nummer']) { ?><dt><?= e(t('detail.rechnung')) ?></dt><dd><a href="<?= e(url('rechnungen/' . $b['rechnung_nummer'])) ?>"><?= e($b['rechnung_nummer']) ?></a></dd><?php } ?>
       </dl>
     </div>
-    <?php if ($b['zahlungsart'] === 'revolut' && in_array($b['status'], ['offen', 'angelegt', 'fehlgeschlagen'], true)) { ?>
+    <?php if (!$storniert && $b['zahlungsart'] === 'revolut' && in_array($b['status'], ['offen', 'angelegt', 'fehlgeschlagen'], true)) { ?>
     <div class="card"><a class="btn btn--primary k-btn-breit" href="<?= e(url('bestellungen/' . $b['ext_ref'] . '/bezahlen')) ?>"><?= e(t('bezahlen.knopf')) ?> →</a></div>
     <?php } ?>
   </div>
@@ -78,9 +105,12 @@ $laufzeit = $landInfo['klassen'][$b['gewichtsklasse']]['laufzeit'][$sp] ?? '—'
           <dt><?= e(t('detail.netto')) ?></dt><dd class="k-mono"><?= e(euro((int) $b['netto_cent'], $sp)) ?></dd>
           <dt><?= e(t('detail.mwst')) ?></dt><dd class="k-mono"><?= e(euro((int) $b['mwst_cent'], $sp)) ?></dd>
           <dt><?= e(t('detail.brutto')) ?></dt><dd class="k-mono"><strong><?= e(euro((int) $b['betrag_cent'], $sp)) ?></strong></dd>
-          <dt><?= e(t('detail.zahlung')) ?></dt><dd><?= e(t('detail.zahlung.revolut')) ?></dd>
+          <dt><?= e(t('detail.zahlung')) ?></dt><dd><?= e($b['zahlungsart'] === 'guthaben' ? t('nav.guthaben') : t('detail.zahlung.revolut')) ?></dd>
         <?php } ?>
       </dl>
+      <?php if (!$business && lexwarePdfPfad((string) ($b['lexware_id'] ?? '')) !== '' && is_file(lexwarePdfPfad((string) $b['lexware_id']))) { ?>
+        <p style="margin-top:.75rem"><a class="btn btn--sm btn--ink" href="<?= e(url($pfad . '/' . $b['ext_ref'] . '/rechnung.pdf')) ?>" target="_blank" rel="noopener"><?= e(t('detail.rechnung.pdf')) ?><?= $b['lexware_nummer'] ? ' ' . e($b['lexware_nummer']) : '' ?> ↓</a></p>
+      <?php } ?>
     </div>
     <div class="card">
       <h2 class="h3"><?= e(t('detail.label')) ?></h2>

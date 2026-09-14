@@ -19,8 +19,8 @@ $befundKlasse = ['ok' => 'ok', 'gewicht_hoeher' => 'warn', 'gewicht_niedriger' =
 <div class="kpi-raster">
   <div class="kpi kpi--cyan"><span class="kpi-name">Positionen</span><strong class="kpi-wert"><?= $z['positionen'] ?></strong><span class="kpi-zusatz"><?= (int) ($z['befunde']['ok']['n'] ?? 0) ?> in Ordnung · <?= $z['positionen'] - (int) ($z['befunde']['ok']['n'] ?? 0) ?> auffällig</span></div>
   <div class="kpi kpi--gelb"><span class="kpi-name">Summe netto</span><strong class="kpi-wert"><?= e(euro($z['summe'])) ?></strong><span class="kpi-zusatz"><?= $pdfSumme > 0 ? ($summeOk ? 'stimmt mit dem PDF überein' : 'laut PDF ' . e(euro($pdfSumme)) . ' — Abweichung ' . e(euro($pdfSumme - $z['summe']))) : 'keine Summe aus dem PDF' ?></span></div>
-  <div class="kpi kpi--coral"><span class="kpi-name">Beanstandung Lieferant</span><strong class="kpi-wert"><?= e(euro($z['beanstandung'])) ?></strong><span class="kpi-zusatz"><?= $z['beanstandungen'] ?> Positionen (zu viel berechnet, doppelt, storniert, nicht zuzuordnen)</span></div>
-  <div class="kpi kpi--magenta"><span class="kpi-name">Nachberechnung Kunden</span><strong class="kpi-wert"><?= e(euro($z['nachberechnung_offen'])) ?></strong><span class="kpi-zusatz">offen netto · <?= e(euro($z['nachberechnung_gebucht'])) ?> schon gebucht</span></div>
+  <div class="kpi kpi--coral"><span class="kpi-name">Beanstandung Lieferant</span><strong class="kpi-wert"><?= e(euro($z['beanstandung'])) ?></strong><span class="kpi-zusatz"><?= $z['beanstandungen'] ?> Positionen (zu viel berechnet, doppelt, storniert, nicht zuzuordnen)<?= (int) $r['gutschrift_cent'] > 0 ? ' · Gutschrift ' . e(euro((int) $r['gutschrift_cent'])) . ' erhalten' : '' ?></span></div>
+  <div class="kpi kpi--magenta"><span class="kpi-name">Nachberechnung Kunden</span><strong class="kpi-wert"><?= e(euro($z['nachberechnung_offen'])) ?></strong><span class="kpi-zusatz">wartet auf Freigabe · <?= e(euro($z['nachberechnung_gebucht'])) ?> gebucht<?= !empty(konfig()['rechnungspruefung']['auto']['aktiv']) ? ' (Automatik aktiv)' : '' ?></span></div>
 </div>
 
 <div class="spalten spalten--2-1">
@@ -105,10 +105,22 @@ $befundKlasse = ['ok' => 'ok', 'gewicht_hoeher' => 'warn', 'gewicht_niedriger' =
     <div class="karte">
       <h2 class="h2">Aktionen</h2>
       <form method="post" action="<?= e(url('rechnungspruefung/' . $r['id'] . '/alle-buchen')) ?>" class="aktion" data-bestaetigen="Alle offenen Nachberechnungen (<?= e(euro($z['nachberechnung_offen'])) ?> netto) buchen und die Kunden per Mail informieren?"><?= csrfFeld() ?><button class="knopf knopf--primaer knopf--breit" type="submit" <?= $z['nachberechnung_offen'] > 0 ? '' : 'disabled' ?>>Alle offenen Nachberechnungen buchen</button><span class="leise">Firmen: Position auf der nächsten Sammelrechnung · Privatkunden: vom Guthaben, sonst offene Zahlung</span></form>
-      <form method="post" action="<?= e(url('rechnungspruefung/' . $r['id'] . '/pruefen')) ?>" class="aktion"><?= csrfFeld() ?><button class="knopf knopf--leise knopf--breit" type="submit">Neu prüfen</button><span class="leise">nach Änderungen an Routingmatrix oder Zuordnung</span></form>
+      <form method="post" action="<?= e(url('rechnungspruefung/' . $r['id'] . '/pruefen')) ?>" class="aktion"><?= csrfFeld() ?><input type="hidden" name="automatik" value="1"><button class="knopf knopf--leise knopf--breit" type="submit">Neu prüfen</button><span class="leise">nach Änderungen an Routingmatrix, Preislisten oder Zuordnung — bucht danach automatisch, was die Regeln erlauben</span></form>
       <form method="post" action="<?= e(url('rechnungspruefung/' . $r['id'] . '/status')) ?>" class="aktion formular"><?= csrfFeld() ?>
         <div class="feld"><label for="lr-status">Status setzen</label><select id="lr-status" name="status"><?php foreach (RP_STATUS as $code => $n) { if ($code === 'zuordnung') { continue; } ?><option value="<?= e($code) ?>" <?= $r['status'] === $code ? 'selected' : '' ?>><?= e($n) ?></option><?php } ?></select></div>
         <button class="knopf knopf--leise knopf--breit" type="submit">Status speichern</button>
+      </form>
+    </div>
+    <div class="karte">
+      <h2 class="h2">Gutschrift des Lieferanten</h2>
+      <form method="post" action="<?= e(url('rechnungspruefung/' . $r['id'] . '/gutschrift')) ?>" class="formular"><?= csrfFeld() ?>
+        <div class="spalten spalten--2">
+          <div class="feld"><label for="gs-betrag">Betrag netto €</label><input id="gs-betrag" name="gutschrift" inputmode="decimal" value="<?= (int) $r['gutschrift_cent'] > 0 ? e(number_format((int) $r['gutschrift_cent'] / 100, 2, ',', '')) : '' ?>"></div>
+          <div class="feld"><label for="gs-datum">Datum</label><input id="gs-datum" name="gutschrift_datum" type="date" value="<?= e($r['gutschrift_datum']) ?>"></div>
+        </div>
+        <div class="feld"><label for="gs-nummer">Gutschrift-Nr.</label><input id="gs-nummer" name="gutschrift_nummer" value="<?= e($r['gutschrift_nummer']) ?>" maxlength="40"></div>
+        <button class="knopf knopf--leise" type="submit">Vermerken</button>
+        <span class="leise">nach Beanstandung erhaltene Gutschrift — nur intern</span>
       </form>
     </div>
     <div class="karte">

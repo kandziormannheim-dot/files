@@ -23,6 +23,20 @@
     <?php } ?>
   </div>
   <div>
+    <?php if ($darfB && $b !== null && ($b['art'] ?? '') === 'nachberechnung') { $nbGrund = json_decode((string) $b['nachberechnung_json'], true) ?: []; ?>
+    <div class="karte karte--gelb">
+      <h2 class="h2">Widerspruch zur Nachberechnung</h2>
+      <p class="leise">Gewogen <?= e(number_format((int) ($nbGrund['gewicht_gramm'] ?? 0) / 1000, 2, ',', '')) ?> kg · gebucht <?= e($nbGrund['gk_bestellt'] ?? '') ?> → <?= e($nbGrund['gk_ist'] ?? '') ?> · <?= e(euro((int) $b['netto_cent'])) ?> netto · Status <?= e(statusName((string) $b['status'])) ?><?= !empty($nbGrund['lieferantenrechnung']) ? ' · Lieferantenrechnung ' . e($nbGrund['lieferantenrechnung']) : '' ?></p>
+      <?php if ($b['status'] === 'storniert') { ?><p style="margin-top:.5rem"><strong>Nachberechnung zurückgenommen.</strong></p><?php } else { ?>
+      <form method="post" action="<?= e(url('reklamationen/' . $r['id'] . '/storno')) ?>" class="formular" style="margin-top:.75rem" data-bestaetigen="Nachberechnung <?= e($b['ext_ref']) ?> zurücknehmen? Bezahlte Beträge werden als Guthaben erstattet<?= lexwareAktiv() ? ', eine Gutschrift geht an Lexware' : '' ?>.">
+        <?= csrfFeld() ?>
+        <div class="feld"><label for="st-grund">Grund (erscheint in der Antwort an den Kunden)</label><input id="st-grund" name="grund" maxlength="500" placeholder="z. B. Wiegeprotokoll des Kunden bestätigt 1,8 kg"></div>
+        <label class="schalter"><input type="checkbox" name="mail" value="1" checked> Antwort per E-Mail schicken</label>
+        <button class="knopf knopf--gefahr knopf--breit" type="submit">Nachberechnung zurücknehmen</button>
+      </form>
+      <?php } ?>
+    </div>
+    <?php } ?>
     <?php if ($darfB) { ?>
     <div class="karte">
       <h2 class="h2">Bearbeiten</h2>

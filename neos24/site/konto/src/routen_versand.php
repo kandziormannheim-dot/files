@@ -14,31 +14,56 @@ require_once dirname(__DIR__, 2) . '/lib/label_pdf.php';
 $business = $ich['art'] === 'business';
 $listenPfad = $business ? 'sendungen' : 'bestellungen';
 
-/** Angebote aller Zellen für das Formular (JSON): laender[code].klassen[gk] = [angebote]. */
-function angeboteFuerFormular(string $sprache): array
+/** Angebote aller Zellen für das Formular (JSON): laender[code].klassen[gk] = [angebote] — mit Kundenpreisliste deren Preise. */
+function angeboteFuerFormular(string $sprache, ?int $preislisteId = null): array
 {
     $p = preisliste();
-    $aus = ['gewichtsklassen' => [], 'laender' => [], 'zusatz' => [], 'mwst' => (int) $p['mwstSatz']];
+    $aus = ['gewichtsklassen' => [], 'laender' => [], 'zusatz' => [], 'mwst' => (int) $p['mwstSatz'], 'preisliste' => $preislisteId !== null];
     foreach ($p['gewichtsklassen'] as $code => $gk) {
         $aus['gewichtsklassen'][$code] = ['name' => $gk[$sprache], 'max_gramm' => (int) $gk['max_gramm']];
     }
     foreach ($p['laender'] as $code => $land) {
         $klassen = [];
         foreach ($p['gewichtsklassen'] as $gkCode => $_) {
-            $angebote = angeboteFuer((string) $code, (string) $gkCode);
+            $angebote = angeboteFuer((string) $code, (string) $gkCode, $preislisteId);
             if ($angebote !== []) {
-                $klassen[$gkCode] = array_map(static fn (array $a): array => ['carrier' => $a['carrier'], 'netto' => $a['netto'], 'brutto' => $a['brutto'], 'laufzeit' => $a['laufzeit'][$sprache], 'empfohlen' => $a['empfohlen']], $angebote);
+                $klassen[$gkCode] = array_map(static fn (array $a): array => ['carrier' => $a['carrier'], 'netto' => $a['netto'], 'brutto' => $a['brutto'], 'laufzeit' => $a['laufzeit'][$sprache], 'empfohlen' => $a['empfohlen'], 'volumenfaktor' => $a['volumenfaktor']], $angebote);
             }
         }
         if ($klassen !== []) {
             $aus['laender'][$code] = ['name' => $land['name'][$sprache], 'klassen' => $klassen];
         }
     }
-    foreach (zusatzleistungen() as $code => $z) {
+    foreach (zusatzleistungen(true, $preislisteId) as $code => $z) {
         $aus['zusatz'][$code] = ['name' => $z['name'][$sprache], 'beschreibung' => $z['beschreibung'][$sprache], 'preis' => $z['preis']];
     }
 
     return $aus;
+}
+
+/**
+ * Mittlere Abweichung Carrier-Gewicht minus eingegebenes Gewicht der letzten
+ * Sendungen (Gramm, Prozent, Anzahl) — Grundlage für den Warnhinweis im Formular.
+ */
+function abweichungsquote(array $kunde, int $anzahl = 20): array
+{
+    [$wo, $werte] = bereich($kunde);
+    $st = datenbank()->prepare('SELECT b.gewicht_gramm, b.gewicht_carrier_gramm FROM bestellungen b WHERE ' . $wo . " AND b.gewicht_carrier_gramm > 0 AND b.gewicht_gramm > 0 AND b.art = 'sendung' ORDER BY b.id DESC LIMIT " . $anzahl);
+    $st->execute($werte);
+    $zeilen = $st->fetchAll();
+    if ($zeilen === []) {
+        return ['gramm' => 0, 'prozent' => 0, 'anzahl' => 0, 'warnen' => false];
+    }
+    $summeDiff = 0;
+    $summeGewicht = 0;
+    foreach ($zeilen as $z) {
+        $summeDiff += (int) $z['gewicht_carrier_gramm'] - (int) $z['gewicht_gramm'];
+        $summeGewicht += (int) $z['gewicht_gramm'];
+    }
+    $gramm = (int) round($summeDiff / count($zeilen));
+    $prozent = $summeGewicht > 0 ? (int) round($summeDiff / $summeGewicht * 100) : 0;
+
+    return ['gramm' => $gramm, 'prozent' => $prozent, 'anzahl' => count($zeilen), 'warnen' => count($zeilen) >= 2 && ($gramm >= 300 || $prozent >= 15)];
 }
 
 /** Standard-Absender: Adressbuch-Standard, sonst Firma bzw. gespeicherte Absenderadresse. */
@@ -61,7 +86,9 @@ function standardAbsender(array $kunde, ?array $firma): array
 
 if ($pfad === '/sendungen/neu') {
     $fehler = [];
-    $werte = ['zielland' => '', 'gewicht_kg' => '', 'laenge' => '', 'breite' => '', 'hoehe' => '', 'carrier' => '', 'referenz' => '', 'zusatz' => [], 'abholung_datum' => '', 'abholung_fenster' => '9-13', 'versicherung_wert' => '', 'nachnahme' => '', 'zahlungsart' => $business ? 'rechnung' : 'revolut', 'adresse_speichern' => false,
+    $preislisteId = preislisteFuerKonto($ich);
+    $abweichung = abweichungsquote($ich);
+    $werte = ['zielland' => '', 'gewicht_kg' => '', 'laenge' => '', 'breite' => '', 'hoehe' => '', 'carrier' => '', 'referenz' => '', 'zusatz' => [], 'abholung_datum' => '', 'abholung_fenster' => '9-13', 'versicherung_wert' => '', 'nachnahme' => '', 'zahlungsart' => $business ? 'rechnung' : 'revolut', 'adresse_speichern' => false, 'gewicht_geprueft' => false,
         'absender' => standardAbsender($ich, $firma), 'empfaenger' => ['name' => '', 'firma' => '', 'strasse' => '', 'plz' => '', 'ort' => '', 'email' => '', 'telefon' => '']];
     if ($methode === 'POST') {
         foreach (['zielland', 'gewicht_kg', 'laenge', 'breite', 'hoehe', 'carrier', 'referenz', 'abholung_datum', 'abholung_fenster', 'versicherung_wert', 'nachnahme', 'zahlungsart'] as $k) {
@@ -69,6 +96,7 @@ if ($pfad === '/sendungen/neu') {
         }
         $werte['zusatz'] = is_array($_POST['zusatz'] ?? null) ? array_map('strval', $_POST['zusatz']) : [];
         $werte['adresse_speichern'] = !empty($_POST['adresse_speichern']);
+        $werte['gewicht_geprueft'] = !empty($_POST['gewicht_geprueft']);
         foreach (['absender', 'empfaenger'] as $rolle) {
             $roh = is_array($_POST[$rolle] ?? null) ? $_POST[$rolle] : [];
             foreach (['name', 'firma', 'strasse', 'plz', 'ort', 'email', 'telefon', 'land'] as $f) {
@@ -77,13 +105,13 @@ if ($pfad === '/sendungen/neu') {
         }
         $zahlungsart = $business ? (in_array($werte['zahlungsart'], ['rechnung', 'guthaben'], true) ? $werte['zahlungsart'] : 'rechnung') : (in_array($werte['zahlungsart'], ['revolut', 'guthaben'], true) ? $werte['zahlungsart'] : 'revolut');
         $gramm = (int) round((float) str_replace(',', '.', $werte['gewicht_kg']) * 1000);
-        $ergebnis = bestellungAnlegen([
+        $ergebnis = $abweichung['warnen'] && !$werte['gewicht_geprueft'] ? ['fehler' => ['gewicht_bestaetigt']] : bestellungAnlegen([
             'sprache' => sprache(), 'zielland' => $werte['zielland'], 'gewicht_gramm' => $gramm, 'carrier' => $werte['carrier'],
             'zusatz' => $werte['zusatz'], 'masse' => ['l' => (int) $werte['laenge'], 'b' => (int) $werte['breite'], 'h' => (int) $werte['hoehe']],
             'abholung' => ['datum' => $werte['abholung_datum'], 'fenster' => $werte['abholung_fenster']],
             'versicherung_wert_cent' => centAusEingabe($werte['versicherung_wert']) ?? 0, 'nachnahme_cent' => centAusEingabe($werte['nachnahme']) ?? 0,
             'email' => $ich['email'], 'absender' => $werte['absender'], 'empfaenger' => $werte['empfaenger'], 'referenz' => $werte['referenz'],
-            'kunde_id' => $ich['id'], 'firma_id' => $firma['id'] ?? null, 'zahlungsart' => $zahlungsart, 'angelegt_von' => $ich['name'],
+            'kunde_id' => $ich['id'], 'firma_id' => $firma['id'] ?? null, 'preisliste_id' => $preislisteId, 'zahlungsart' => $zahlungsart, 'angelegt_von' => $ich['name'],
             'adresse_speichern' => $werte['adresse_speichern'],
         ]);
         if (isset($ergebnis['bestellung'])) {
@@ -100,14 +128,14 @@ if ($pfad === '/sendungen/neu') {
         }
     }
     $meldung = null;
-    foreach (['carrier' => 'neu.fehler.carrier', 'gewicht' => 'neu.fehler.gewicht', 'abholung' => 'neu.fehler.abholung', 'nachnahme' => 'neu.fehler.nachnahme', 'guthaben' => 'neu.fehler.guthaben', 'zielland' => 'neu.carrier.leer'] as $f => $key) {
+    foreach (['carrier' => 'neu.fehler.carrier', 'gewicht' => 'neu.fehler.gewicht', 'gewicht_bestaetigt' => 'neu.fehler.gewicht_bestaetigt', 'abholung' => 'neu.fehler.abholung', 'nachnahme' => 'neu.fehler.nachnahme', 'guthaben' => 'neu.fehler.guthaben', 'zielland' => 'neu.carrier.leer'] as $f => $key) {
         if (in_array($f, $fehler, true)) {
             $meldung = t($key);
             break;
         }
     }
-    ansicht('sendung_neu', ['titel' => t('neu.titel'), 'werte' => $werte, 'fehler' => $fehler, 'meldung' => $meldung ?? ($fehler !== [] ? t('neu.fehler') : null), 'angebote' => angeboteFuerFormular(sprache()),
-        'adressen' => adressenAlle($ich), 'vorlagen' => vorlagenAlle($ich), 'guthaben' => guthabenStand($ich), 'zahlungBereit' => zahlungBereit(), 'business' => $business, 'aktiv' => 'neu']);
+    ansicht('sendung_neu', ['titel' => t('neu.titel'), 'werte' => $werte, 'fehler' => $fehler, 'meldung' => $meldung ?? ($fehler !== [] ? t('neu.fehler') : null), 'angebote' => angeboteFuerFormular(sprache(), $preislisteId),
+        'adressen' => adressenAlle($ich), 'vorlagen' => vorlagenAlle($ich), 'guthaben' => guthabenStand($ich), 'zahlungBereit' => zahlungBereit(), 'business' => $business, 'abweichung' => $abweichung, 'preisliste' => $preislisteId !== null, 'aktiv' => 'neu']);
 }
 
 // ------------------------------------------------------------------ Bezahlen
@@ -154,10 +182,14 @@ if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/(bezahlen|tok
     }
     if ($t[3] === 'guthaben' && $methode === 'POST') {
         if (in_array($b['status'], ['offen', 'angelegt', 'fehlgeschlagen'], true) && guthabenStand($ich) >= (int) $b['betrag_cent']) {
-            guthabenBuchen($ich, 'verbrauch', -(int) $b['betrag_cent'], 'Sendung ' . $b['ext_ref'], (int) $b['id']);
+            guthabenBuchen($ich, 'verbrauch', -(int) $b['betrag_cent'], ($b['art'] === 'nachberechnung' ? 'Nachberechnung ' : 'Sendung ') . $b['ext_ref'], (int) $b['id']);
             $db->prepare("UPDATE bestellungen SET zahlungsart = 'guthaben' WHERE id = ?")->execute([$b['id']]);
             $b = bestellungFortschreiben(bestellungLaden('ext_ref', $b['ext_ref']), 'beauftragt', 'guthaben.belastet', ['betrag' => (int) $b['betrag_cent']]);
             nachBeauftragung($b);
+            if (!$b['firma_id']) {
+                lexwareAuftragAnlegen('rechnung', 'bestellungen', (int) $b['id']);
+                lexwareAuftraegeAbarbeiten(3);
+            }
             hinweisSetzen(t('neu.angelegt', $b['ext_ref']));
         } else {
             hinweisSetzen(t('neu.fehler.guthaben'), 'fehler');
@@ -203,6 +235,40 @@ if ($pfad === '/sendungen/labels.pdf' || $pfad === '/bestellungen/labels.pdf') {
     header('Content-Disposition: inline; filename="NEOS-Labels.pdf"');
     echo labelPdf($liste, 'a4');
     exit;
+}
+
+// ------------------------------------------ Nachweis, Rechnung, Widerspruch
+
+if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/(nachweis|rechnung)\.pdf$#', $pfad, $t)) {
+    $b = eigeneBestellung($ich, $t[2]);
+    $datei = $b === null ? '' : ($t[3] === 'nachweis' ? nachberechnungNachweisPfad($b) : lexwarePdfPfad((string) ($b['lexware_id'] ?? '')));
+    if ($b === null || $datei === '' || !is_file($datei)) {
+        fehlerSeite(404, t('fehler.404'), $t[3] === 'rechnung' ? t('nachberechnung.rechnung_folgt') : t('fehler.404.text'));
+    }
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="NEOS-' . ($t[3] === 'nachweis' ? 'Nachweis-' . $b['ext_ref'] : 'Rechnung-' . ($b['lexware_nummer'] ?: $b['ext_ref'])) . '.pdf"');
+    header('Content-Length: ' . (string) filesize($datei));
+    readfile($datei);
+    exit;
+}
+
+if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/widerspruch$#', $pfad, $t) && $methode === 'POST') {
+    $b = eigeneBestellung($ich, $t[2]);
+    if ($b === null || $b['art'] !== 'nachberechnung' || $b['status'] === 'storniert') {
+        fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
+    }
+    $frist = (int) (konfig()['rechnungspruefung']['widerspruchTage'] ?? 14);
+    if (strtotime((string) $b['erstellt']) < time() - $frist * 86400) {
+        hinweisSetzen(t('nachberechnung.widerspruch.frist'), 'fehler');
+        umleiten(url($t[1] . '/' . $b['ext_ref']));
+    }
+    try {
+        reklamationAnlegen($ich, $b, 'nachberechnung', feld('beschreibung', 4000), (int) $b['betrag_cent']);
+        hinweisSetzen(t('nachberechnung.widerspruch.eingereicht'));
+    } catch (InvalidArgumentException) {
+        hinweisSetzen(t('reklamationen.fehler'), 'fehler');
+    }
+    umleiten(url($t[1] . '/' . $b['ext_ref']));
 }
 
 // ------------------------------------------------------- Retoure, Reklamation
@@ -337,7 +403,7 @@ if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import
             if ($z['fehler'] !== []) {
                 continue;
             }
-            $e = bestellungAnlegen($z['p'] + ['email' => $ich['email'], 'absender' => standardAbsender($ich, $firma), 'kunde_id' => $ich['id'], 'firma_id' => $firma['id'], 'zahlungsart' => 'rechnung', 'angelegt_von' => $ich['name'] . ' (CSV)', 'sprache' => sprache()]);
+            $e = bestellungAnlegen($z['p'] + ['email' => $ich['email'], 'absender' => standardAbsender($ich, $firma), 'kunde_id' => $ich['id'], 'firma_id' => $firma['id'], 'preisliste_id' => preislisteFuerKonto($ich), 'zahlungsart' => 'rechnung', 'angelegt_von' => $ich['name'] . ' (CSV)', 'sprache' => sprache()]);
             if (isset($e['bestellung'])) {
                 $anzahl++;
             }
@@ -382,7 +448,7 @@ if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import
                 if ($gk === null) {
                     $fehler[] = 'gewicht';
                 }
-                $preis = $gk !== null ? preisFuer($p['zielland'], $gk, $p['carrier']) : null;
+                $preis = $gk !== null ? preisFuer($p['zielland'], $gk, $p['carrier'], preislisteFuerKonto($ich)) : null;
                 if ($preis === null) {
                     $fehler[] = $p['carrier'] !== '' ? 'carrier' : 'zielland';
                 }

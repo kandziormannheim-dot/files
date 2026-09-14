@@ -71,6 +71,7 @@ function kennzahlen(): array
     $guthabenGesamt = (int) $db->query('SELECT COALESCE(SUM(betrag_cent),0) FROM guthaben_buchungen')->fetchColumn();
     $lieferantenOffen = (int) $db->query("SELECT COUNT(*) FROM lieferantenrechnungen WHERE status IN ('zuordnung','geprueft')")->fetchColumn();
     $nachberechnungOffen = (int) $db->query("SELECT COALESCE(SUM(nachberechnung_cent),0) FROM lieferantenpositionen WHERE nachberechnung_status = 'offen'")->fetchColumn();
+    $lexware = lexwareAuftraegeOffen();
 
     return [
         'heute' => $zaehle($heute),
@@ -95,5 +96,7 @@ function kennzahlen(): array
         'guthabenGesamt' => $guthabenGesamt,
         'lieferantenOffen' => $lieferantenOffen,
         'nachberechnungOffen' => $nachberechnungOffen,
+        'lexwareFehler' => $lexware['fehler'],
+        'lexwareOffen' => $lexware['offen'],
     ];
 }

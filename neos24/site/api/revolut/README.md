@@ -95,7 +95,16 @@ Zeitstempel älter als 5 Minuten → 401, unbekanntes Zielland → 422, fremde H
   NEOS-Label mit Strichcode (`lib/label_pdf.php`), Abholungen werden nur als Ereignis vermerkt,
   Tracking-Stufen pflegt das Team im Dashboard.
 - Mehrere Pakete je Bestellung.
-- Rechnung als PDF (die Bestätigungsmail nennt Betrag und MwSt., ist aber keine Rechnung).
+- Rechnung als PDF ohne Lexware: mit `lexware.aktiv` bekommt jede bezahlte Privatkunden-Bestellung
+  eine Rechnung aus Lexware Office (Warteschlange `lexware_auftraege`, `lib/lexware.php`), die an
+  die Bestätigungsmail gehängt wird und im Portal abrufbar ist; ohne Lexware nennt die
+  Bestätigungsmail nur Betrag und MwSt.
+
+## Mails mit Anhang
+
+`mailSenden($an, $betreff, $koerper, $anhaenge)` verschickt Anhänge (`[['name', 'datei'|'inhalt',
+'typ']]`) als `multipart/mixed` über SMTP und `mail()`; der Transport `datei` legt sie neben der
+Textdatei ab. Genutzt für Rechnungs-PDFs aus Lexware und den Nachweis zu Gewichtsnachberechnungen.
 
 ## Kundenportal
 

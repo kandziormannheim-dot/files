@@ -24,8 +24,12 @@
         <dt>Brutto</dt><dd class="mono"><strong><?= e(euro((int) $r['brutto_cent'])) ?></strong></dd>
         <dt>Fällig</dt><dd><?= e(datumAnzeigen($r['faellig'] . 'T00:00:00Z')) ?></dd>
         <dt>Erstellt</dt><dd><?= e(zeitAnzeigen($r['erstellt'])) ?> von <?= e($r['erstellt_von']) ?></dd>
+        <?php if (lexwareAktiv()) { ?><dt>Lexware</dt><dd><?= $r['lexware_id'] !== '' ? e($r['lexware_nummer'] ?: 'übergeben') . ($r['lexware_status'] !== '' ? ' <span class="leise">' . e($r['lexware_status']) . '</span>' : '') : '<span class="leise">noch nicht übergeben</span>' ?></dd><?php } ?>
       </dl>
     </div>
+    <?php if (lexwareAktiv() && $r['lexware_id'] === '' && darf('rechnungen', 'bearbeiten')) { ?>
+    <div class="karte karte--gelb"><form method="post" action="<?= e(url('rechnungen/' . $r['id'] . '/lexware')) ?>" class="aktion"><?= csrfFeld() ?><button class="knopf knopf--primaer knopf--breit" type="submit">An Lexware übergeben</button><span class="leise">vergibt die Rechnungsnummer, holt das PDF und schickt die Rechnungsmail</span></form></div>
+    <?php } ?>
     <?php if (darf('rechnungen', 'bearbeiten')) { ?>
     <div class="karte">
       <h2 class="h2">Status</h2>

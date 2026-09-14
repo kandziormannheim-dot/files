@@ -590,16 +590,38 @@ function rpKlassenRang(string $code): int
     return $i === false ? -1 : (int) $i;
 }
 
-/** Angebot eines bestimmten Carriers für eine Zelle (Einkauf/Verkauf), sonst null. */
-function rpAngebot(string $land, string $gk, string $carrier): ?array
+/** Angebot eines bestimmten Carriers für eine Zelle (Einkauf/Verkauf) — mit Kundenpreisliste deren Verkaufspreis; sonst null. */
+function rpAngebot(string $land, string $gk, string $carrier, ?int $preislisteId = null): ?array
 {
-    foreach (angeboteFuer($land, $gk) as $a) {
+    foreach (angeboteFuer($land, $gk, $preislisteId) as $a) {
         if (strcasecmp($a['carrier'], $carrier) === 0) {
             return $a;
         }
     }
+    if ($preislisteId !== null) {
+        // Liste bietet die Zelle nicht an („fehlend = nicht“) — dann zählt trotzdem der Standard
+        foreach (angeboteFuer($land, $gk) as $a) {
+            if (strcasecmp($a['carrier'], $carrier) === 0) {
+                return $a;
+            }
+        }
+    }
 
     return null;
+}
+
+/** Gewichtsdifferenz-Gebühr des Carriers (Cent) aus der Carrier-Tabelle. */
+function rpCarrierGebuehr(string $carrier): int
+{
+    static $cache = [];
+    $k = mb_strtolower($carrier);
+    if (!isset($cache[$k])) {
+        $st = datenbank()->prepare('SELECT gewichtsgebuehr_cent FROM carrier WHERE lower(name) = ?');
+        $st->execute([$k]);
+        $cache[$k] = max(0, (int) $st->fetchColumn());
+    }
+
+    return $cache[$k];
 }
 
 /** Alle Positionen einer Rechnung zuordnen und bewerten. Gebuchte Nachberechnungen bleiben unberührt. */
@@ -640,8 +662,8 @@ function rpRechnungPruefen(int $rechnungId): array
             $b = $st->fetch() ?: null;
         }
         $e = rpPositionBewerten($p, $b, (string) $rechnung['carrier'], $gesehen);
-        $db->prepare('UPDATE lieferantenpositionen SET bestellung_id = ?, gk_bestellt = ?, gk_ist = ?, einkauf_soll_cent = ?, differenz_cent = ?, verkauf_bestellt_cent = ?, verkauf_ist_cent = ?, nachberechnung_cent = ?, nachberechnung_status = ?, befund = ?, hinweis = ? WHERE id = ?')
-           ->execute([$b['id'] ?? null, $e['gk_bestellt'], $e['gk_ist'], $e['einkauf_soll'], $e['differenz'], $e['verkauf_bestellt'], $e['verkauf_ist'], $e['nachberechnung'], $e['nachberechnung_status'], $e['befund'], $e['hinweis'], $p['id']]);
+        $db->prepare('UPDATE lieferantenpositionen SET bestellung_id = ?, gk_bestellt = ?, gk_ist = ?, einkauf_soll_cent = ?, differenz_cent = ?, verkauf_bestellt_cent = ?, verkauf_ist_cent = ?, nachberechnung_cent = ?, nachberechnung_status = ?, befund = ?, hinweis = ?, gebuehr_cent = ? WHERE id = ?')
+           ->execute([$b['id'] ?? null, $e['gk_bestellt'], $e['gk_ist'], $e['einkauf_soll'], $e['differenz'], $e['verkauf_bestellt'], $e['verkauf_ist'], $e['nachberechnung'], $e['nachberechnung_status'], $e['befund'], $e['hinweis'], $e['gebuehr'], $p['id']]);
         if ($b !== null) {
             $gesehen[(int) $b['id']] = true;
         }
@@ -655,7 +677,7 @@ function rpRechnungPruefen(int $rechnungId): array
 function rpPositionBewerten(array $p, ?array $b, string $carrier, array $gesehen): array
 {
     $tol = rpToleranzCent();
-    $e = ['gk_bestellt' => '', 'gk_ist' => '', 'einkauf_soll' => 0, 'differenz' => 0, 'verkauf_bestellt' => 0, 'verkauf_ist' => 0, 'nachberechnung' => 0, 'nachberechnung_status' => 'keine', 'befund' => 'nicht_zugeordnet', 'hinweis' => ''];
+    $e = ['gk_bestellt' => '', 'gk_ist' => '', 'einkauf_soll' => 0, 'differenz' => 0, 'verkauf_bestellt' => 0, 'verkauf_ist' => 0, 'nachberechnung' => 0, 'nachberechnung_status' => 'keine', 'befund' => 'nicht_zugeordnet', 'hinweis' => '', 'gebuehr' => 0];
     $betrag = (int) $p['betrag_cent'];
     if ($b === null) {
         $e['hinweis'] = $p['referenz'] !== '' ? 'Referenz ' . $p['referenz'] . ($p['sendungsnummer'] !== '' ? ' / Carrier-Nr. ' . $p['sendungsnummer'] : '') . ' passt zu keiner Bestellung.' : ($p['sendungsnummer'] !== '' ? 'Carrier-Nr. ' . $p['sendungsnummer'] . ' ist keiner Bestellung zugeordnet.' : 'Keine Sendungsnummer in der Zeile.');
@@ -666,6 +688,8 @@ function rpPositionBewerten(array $p, ?array $b, string $carrier, array $gesehen
     $e['verkauf_bestellt'] = (int) $b['netto_cent'] - (int) $b['zusatz_cent'];
     $e['einkauf_soll'] = (int) $b['einkauf_cent'];
     $land = (string) $b['zielland'];
+    // Verkaufspreise mit den Konditionen des Kunden (Preisliste der Bestellung, sonst aktuelle Liste, sonst Standard)
+    $preislisteId = preislisteFuerBestellung($b);
     if (isset($gesehen[(int) $b['id']])) {
         $e['befund'] = 'doppelt';
         $e['differenz'] = $betrag;
@@ -677,6 +701,17 @@ function rpPositionBewerten(array $p, ?array $b, string $carrier, array $gesehen
         $e['befund'] = 'storniert';
         $e['differenz'] = $betrag;
         $e['hinweis'] = 'Bestellstatus: ' . statusName((string) $b['status']) . '.';
+
+        return $e;
+    }
+    // Sicherheitsnetz: zu dieser Sendung gibt es schon eine Nachberechnung (andere Rechnung, gelöschte Rechnung) → nie doppelt nachberechnen
+    $st = datenbank()->prepare("SELECT ext_ref FROM bestellungen WHERE nachberechnung_zu = ? AND art = 'nachberechnung' AND status <> 'storniert' AND (? = 0 OR id <> ?) LIMIT 1");
+    $st->execute([$b['id'], (int) ($p['nachberechnung_bestellung_id'] ?? 0), (int) ($p['nachberechnung_bestellung_id'] ?? 0)]);
+    $vorhanden = $st->fetchColumn();
+    if ($vorhanden !== false) {
+        $e['befund'] = 'doppelt';
+        $e['differenz'] = $betrag;
+        $e['hinweis'] = 'Zu dieser Sendung wurde schon nachberechnet (' . $vorhanden . ').';
 
         return $e;
     }
@@ -697,20 +732,26 @@ function rpPositionBewerten(array $p, ?array $b, string $carrier, array $gesehen
     $e['gk_ist'] = $gkIst;
     $rangIst = rpKlassenRang($gkIst);
     $rangSoll = rpKlassenRang($e['gk_bestellt']);
-    $angebotIst = rpAngebot($land, $gkIst, $carrier !== '' ? $carrier : (string) $b['carrier']) ?? rpAngebot($land, $gkIst, (string) $b['carrier']);
-    $angebotSoll = rpAngebot($land, $e['gk_bestellt'], $carrier !== '' ? $carrier : (string) $b['carrier']) ?? rpAngebot($land, $e['gk_bestellt'], (string) $b['carrier']);
+    $carrierName = $carrier !== '' ? $carrier : (string) $b['carrier'];
+    $angebotIst = rpAngebot($land, $gkIst, $carrierName, $preislisteId) ?? rpAngebot($land, $gkIst, (string) $b['carrier'], $preislisteId);
+    $angebotSoll = rpAngebot($land, $e['gk_bestellt'], $carrierName, $preislisteId) ?? rpAngebot($land, $e['gk_bestellt'], (string) $b['carrier'], $preislisteId);
     if ($rangIst > $rangSoll) {
         $e['befund'] = 'gewicht_hoeher';
         $einkaufIst = $angebotIst['einkauf'] ?? null;
         $e['verkauf_ist'] = (int) ($angebotIst['netto'] ?? 0);
         $e['differenz'] = $einkaufIst !== null ? $betrag - (int) $einkaufIst : 0;
+        // Gebühr des Carriers für die Abweichung nur weitergeben, wenn er sie tatsächlich berechnet hat (Zuschlag in der Zeile)
+        $e['gebuehr'] = (int) $p['zuschlag_cent'] > 0 ? min((int) $p['zuschlag_cent'], rpCarrierGebuehr($carrierName)) : 0;
         if ($e['verkauf_ist'] > 0) {
-            $e['nachberechnung'] = max(0, $e['verkauf_ist'] - $e['verkauf_bestellt']);
+            $e['nachberechnung'] = max(0, $e['verkauf_ist'] - $e['verkauf_bestellt']) + ($e['verkauf_ist'] > $e['verkauf_bestellt'] ? $e['gebuehr'] : 0);
             $e['nachberechnung_status'] = $e['nachberechnung'] > 0 ? 'offen' : 'keine';
         } else {
             $hinweise[] = 'Für ' . $gkIst . ' gibt es keinen Verkaufspreis in der Routingmatrix — Nachberechnung bitte manuell.';
         }
-        $hinweise[] = 'Gebucht ' . $e['gk_bestellt'] . ' (' . number_format((int) $b['gewicht_gramm'] / 1000, 2, ',', '') . ' kg), gewogen ' . number_format($gramm / 1000, 2, ',', '') . ' kg → ' . $gkIst . '.';
+        $hinweise[] = 'Gebucht ' . $e['gk_bestellt'] . ' (' . number_format((int) $b['gewicht_gramm'] / 1000, 2, ',', '') . ' kg), gewogen ' . number_format($gramm / 1000, 2, ',', '') . ' kg → ' . $gkIst . ($preislisteId !== null ? ' (Kundenpreisliste)' : '') . '.';
+        if ($e['gebuehr'] > 0) {
+            $hinweise[] = 'Carrier-Gebühr für die Abweichung ' . euro($e['gebuehr']) . ' wird weitergegeben.';
+        }
         if ($einkaufIst !== null && abs($e['differenz']) > $tol) {
             $hinweise[] = 'Lieferant berechnet ' . euro($betrag) . ' statt ' . euro((int) $einkaufIst) . ' laut Routingmatrix.';
         }
@@ -731,11 +772,77 @@ function rpPositionBewerten(array $p, ?array $b, string $carrier, array $gesehen
         }
     }
     if ((int) $p['zuschlag_cent'] > 0) {
-        $hinweise[] = 'Zuschläge ' . euro((int) $p['zuschlag_cent']) . ' zusätzlich berechnet.';
+        $zusatzCodes = array_column(json_decode((string) ($b['zusatz_json'] ?? '[]'), true) ?: [], 'code');
+        $hinweise[] = 'Zuschläge ' . euro((int) $p['zuschlag_cent']) . ' zusätzlich berechnet' . (in_array('sperrgut', $zusatzCodes, true) ? ' (Sperrgut war gebucht — erwartet)' : '') . '.';
     }
     $e['hinweis'] = implode(' ', $hinweise);
 
     return $e;
+}
+
+/**
+ * Nachberechnungen ohne Freigabe buchen, wenn alle Regeln der Konfiguration
+ * (rechnungspruefung.auto) erfüllt sind. Alles andere bleibt „offen“ für das
+ * Team; der Grund steht im Hinweis. Liefert ['gebucht', 'netto', 'uebersprungen'].
+ */
+function rpAutomatischBuchen(int $rechnungId, string $von = 'auto'): array
+{
+    $regeln = (array) (konfig()['rechnungspruefung']['auto'] ?? []);
+    $aus = ['gebucht' => 0, 'netto' => 0, 'uebersprungen' => 0];
+    if (empty($regeln['aktiv'])) {
+        return $aus;
+    }
+    $rechnung = rpRechnungLaden($rechnungId);
+    if ($rechnung === null) {
+        return $aus;
+    }
+    $db = datenbank();
+    $jeKunde = [];
+    foreach (rpPositionen($rechnungId) as $p) {
+        if ($p['nachberechnung_status'] !== 'offen' || (int) $p['nachberechnung_cent'] <= 0 || $p['befund'] !== 'gewicht_hoeher' || (int) ($p['manuell'] ?? 0) === 1) {
+            continue;
+        }
+        $b = bestellungLaden('id', (string) $p['bestellung_id']);
+        if ($b === null) {
+            continue;
+        }
+        $grund = '';
+        $diff = (int) $p['gewicht_gramm'] - (int) $b['gewicht_gramm'];
+        $prozent = (int) $b['gewicht_gramm'] > 0 ? $diff / (int) $b['gewicht_gramm'] * 100 : 100;
+        $schluessel = $b['firma_id'] ? 'f' . $b['firma_id'] : ('k' . ($b['kunde_id'] ?: $b['email']));
+        $jeKunde[$schluessel] = ($jeKunde[$schluessel] ?? 0) + (int) $p['nachberechnung_cent'];
+        if ((int) $b['gewicht_gramm'] <= 0) {
+            $grund = 'kein Gewicht an der Bestellung';
+        } elseif ($diff < (int) ($regeln['mindestGramm'] ?? 500) || $prozent < (float) ($regeln['mindestProzent'] ?? 10)) {
+            $grund = 'Differenz unter ' . (int) ($regeln['mindestGramm'] ?? 500) . ' g bzw. ' . (int) ($regeln['mindestProzent'] ?? 10) . ' %';
+        } elseif ((int) $p['nachberechnung_cent'] <= (int) ($regeln['bagatelleCent'] ?? 100)) {
+            $grund = 'Bagatelle';
+        } elseif ((int) $p['nachberechnung_cent'] > (int) ($regeln['maxPositionCent'] ?? 5000)) {
+            $grund = 'über ' . euro((int) ($regeln['maxPositionCent'] ?? 5000)) . ' je Position';
+        } elseif ($jeKunde[$schluessel] > (int) ($regeln['maxKundeCent'] ?? 20000)) {
+            $grund = 'über ' . euro((int) ($regeln['maxKundeCent'] ?? 20000)) . ' je Kunde auf dieser Rechnung';
+        } elseif (str_contains((string) $p['hinweis'], 'abgerechnet von')) {
+            $grund = 'Carrier weicht von der Bestellung ab';
+        }
+        if ($grund !== '') {
+            $aus['uebersprungen']++;
+            if (!str_contains((string) $p['hinweis'], 'Freigabe nötig')) {
+                $db->prepare('UPDATE lieferantenpositionen SET hinweis = ? WHERE id = ?')->execute([trim($p['hinweis'] . ' Freigabe nötig: ' . $grund . '.'), $p['id']]);
+            }
+            continue;
+        }
+        try {
+            $p['rechnung_nummer'] = $rechnung['nummer'];
+            rpNachberechnungBuchen($p, $von);
+            $aus['gebucht']++;
+            $aus['netto'] += (int) $p['nachberechnung_cent'];
+        } catch (Throwable $e) {
+            error_log('[rechnungspruefung] Automatik Position ' . $p['id'] . ': ' . $e->getMessage());
+            $aus['uebersprungen']++;
+        }
+    }
+
+    return $aus;
 }
 
 function rpZusammenfassung(int $rechnungId): array
@@ -797,21 +904,26 @@ function rpNachberechnungBuchen(array $p, string $von, ?int $betragCent = null):
         $status = 'offen';
     }
     $extRef = 'NE-' . gmdate('Y') . '-' . strtoupper(bin2hex(random_bytes(4)));
-    $grund = ['original' => $b['ext_ref'], 'gewicht_gramm' => (int) $p['gewicht_gramm'], 'gk_bestellt' => $p['gk_bestellt'], 'gk_ist' => $p['gk_ist'], 'lieferantenrechnung' => $p['rechnung_nummer'] ?? '', 'position' => (int) $p['id']];
+    $gebuehr = $betragCent === null ? (int) ($p['gebuehr_cent'] ?? 0) : 0;
+    // „lieferantenrechnung“ und „position“ sind interne Bezüge — sie erscheinen in keinem Kundendokument.
+    $grund = ['original' => $b['ext_ref'], 'gewicht_gramm' => (int) $p['gewicht_gramm'], 'gk_bestellt' => $p['gk_bestellt'], 'gk_ist' => $p['gk_ist'],
+        'verkauf_bestellt' => (int) $p['verkauf_bestellt_cent'], 'verkauf_ist' => (int) $p['verkauf_ist_cent'], 'gebuehr' => $gebuehr,
+        'preisliste_id' => preislisteFuerBestellung($b), 'carrier' => (string) $b['carrier'],
+        'lieferantenrechnung' => $p['rechnung_nummer'] ?? '', 'position' => (int) $p['id']];
     $ereignis = ['zeit' => jetzt(), 'ereignis' => 'nachberechnung', 'status' => $status, 'von' => $von, 'grund' => $grund];
     $db->prepare(<<<'SQL'
         INSERT INTO bestellungen
             (ext_ref, status, netto_cent, mwst_cent, betrag_cent, waehrung, zielland, gewichtsklasse, carrier, einkauf_cent,
              email, sprache, absender_json, empfaenger_json, ereignisse_json, erstellt, aktualisiert,
-             kunde_id, firma_id, zahlungsart, referenz, art, gewicht_gramm, versandstatus, nachberechnung_zu, nachberechnung_json)
+             kunde_id, firma_id, zahlungsart, referenz, art, gewicht_gramm, versandstatus, nachberechnung_zu, nachberechnung_json, preisliste_id)
         VALUES (:ref, :status, :netto, :mwst, :brutto, 'EUR', :land, :gk, :carrier, 0, :email, :sprache, :abs, :emp, :ev, :t, :t,
-             :kunde, :firma, :zahlungsart, :referenz, 'nachberechnung', :gewicht, 'zugestellt', :zu, :grund)
+             :kunde, :firma, :zahlungsart, :referenz, 'nachberechnung', :gewicht, 'zugestellt', :zu, :grund, :liste)
     SQL)->execute([
         ':ref' => $extRef, ':status' => $status, ':netto' => $netto, ':mwst' => $brutto - $netto, ':brutto' => $brutto,
         ':land' => $b['zielland'], ':gk' => $p['gk_ist'] ?: $b['gewichtsklasse'], ':carrier' => $b['carrier'], ':email' => $b['email'], ':sprache' => $b['sprache'],
         ':abs' => $b['absender_json'], ':emp' => $b['empfaenger_json'], ':ev' => json_encode([$ereignis], JSON_UNESCAPED_UNICODE), ':t' => jetzt(),
         ':kunde' => $b['kunde_id'], ':firma' => $b['firma_id'], ':zahlungsart' => $zahlungsart, ':referenz' => 'Nachberechnung ' . $b['ext_ref'],
-        ':gewicht' => (int) $p['gewicht_gramm'], ':zu' => $b['id'], ':grund' => json_encode($grund, JSON_UNESCAPED_UNICODE),
+        ':gewicht' => (int) $p['gewicht_gramm'], ':zu' => $b['id'], ':grund' => json_encode($grund, JSON_UNESCAPED_UNICODE), ':liste' => $grund['preisliste_id'],
     ]);
     $neu = bestellungLaden('ext_ref', $extRef);
     if ($zahlungsart === 'guthaben') {
@@ -823,6 +935,18 @@ function rpNachberechnungBuchen(array $p, string $von, ?int $betragCent = null):
     $db->prepare('UPDATE bestellungen SET gewicht_carrier_gramm = ?, einkauf_ist_cent = ?, carrier_sendungsnummer = CASE WHEN carrier_sendungsnummer = ? THEN ? ELSE carrier_sendungsnummer END, ereignisse_json = ?, aktualisiert = ? WHERE id = ?')
        ->execute([(int) $p['gewicht_gramm'], (int) $p['betrag_cent'] + (int) $p['zuschlag_cent'], '', (string) $p['sendungsnummer'], json_encode($ereignisse, JSON_UNESCAPED_UNICODE), jetzt(), $b['id']]);
     $db->prepare("UPDATE lieferantenpositionen SET nachberechnung_cent = ?, nachberechnung_status = 'gebucht', nachberechnung_bestellung_id = ? WHERE id = ?")->execute([$netto, $neu['id'], $p['id']]);
+    // Nachweis (PDF) für den Kunden — ohne Lieferantenangaben
+    try {
+        nachberechnungNachweisErzeugen($neu, bestellungLaden('id', (string) $b['id']) ?? $b);
+    } catch (Throwable $e) {
+        error_log('[rechnungspruefung] Nachweis: ' . $e->getMessage());
+    }
+    // Vom Guthaben bezahlt → Rechnung sofort über Lexware; Revolut → nach Zahlung; Firma → Sammelrechnung
+    if ($zahlungsart === 'guthaben') {
+        lexwareAuftragAnlegen('rechnung', 'bestellungen', (int) $neu['id']);
+        lexwareAuftraegeAbarbeiten(3);
+    }
+    $neu = bestellungLaden('ext_ref', $extRef) ?? $neu;
     try {
         rpNachberechnungMail($neu, $b, $grund);
     } catch (Throwable $e) {
@@ -836,6 +960,88 @@ function rpNachberechnungBuchen(array $p, string $von, ?int $betragCent = null):
 function rpNachberechnungVerzichten(array $p): void
 {
     datenbank()->prepare("UPDATE lieferantenpositionen SET nachberechnung_status = 'verzichtet' WHERE id = ? AND nachberechnung_status <> 'gebucht'")->execute([$p['id']]);
+}
+
+/**
+ * Nachberechnung zurücknehmen (Widerspruch anerkannt): Status storniert,
+ * bezahlte Beträge als Guthaben zurück, Lexware-Gutschrift zur Rechnung,
+ * Position wieder „verzichtet“. Idempotent.
+ */
+function rpNachberechnungStornieren(array $nb, string $von, string $grund = ''): void
+{
+    if (($nb['art'] ?? '') !== 'nachberechnung' || $nb['status'] === 'storniert') {
+        return;
+    }
+    $db = datenbank();
+    $kunde = ['id' => (int) ($nb['kunde_id'] ?? 0), 'art' => $nb['firma_id'] ? 'business' : 'privat', 'firma_id' => $nb['firma_id']];
+    $bezahlt = in_array($nb['status'], ['bezahlt', 'beauftragt'], true);
+    if ($bezahlt && $nb['zahlungsart'] === 'guthaben') {
+        guthabenBuchen($kunde, 'erstattung', (int) $nb['betrag_cent'], 'Nachberechnung ' . $nb['ext_ref'] . ' zurückgenommen', (int) $nb['id']);
+    } elseif ($bezahlt && $nb['zahlungsart'] === 'revolut') {
+        guthabenBuchen($kunde, 'erstattung', (int) $nb['betrag_cent'], 'Nachberechnung ' . $nb['ext_ref'] . ' zurückgenommen (Erstattung als Guthaben)', (int) $nb['id']);
+    } elseif ($bezahlt && $nb['zahlungsart'] === 'rechnung' && $nb['rechnung_id']) {
+        guthabenBuchen($kunde, 'erstattung', (int) $nb['netto_cent'], 'Nachberechnung ' . $nb['ext_ref'] . ' zurückgenommen (bereits abgerechnet)', (int) $nb['id']);
+    }
+    if ((string) ($nb['lexware_id'] ?? '') !== '' || ($nb['rechnung_id'] && $nb['zahlungsart'] === 'rechnung')) {
+        lexwareAuftragAnlegen('gutschrift', 'bestellungen', (int) $nb['id'], ['grund' => $grund]);
+    }
+    bestellungFortschreiben($nb, 'storniert', 'nachberechnung.storniert', ['von' => $von, 'grund' => $grund]);
+    $db->prepare("UPDATE lieferantenpositionen SET nachberechnung_status = 'verzichtet' WHERE nachberechnung_bestellung_id = ?")->execute([$nb['id']]);
+    if ($nb['nachberechnung_zu']) {
+        $orig = bestellungLaden('id', (string) $nb['nachberechnung_zu']);
+        if ($orig !== null) {
+            $ereignisse = json_decode((string) $orig['ereignisse_json'], true) ?: [];
+            $ereignisse[] = ['zeit' => jetzt(), 'ereignis' => 'nachberechnung.storniert', 'status' => $orig['status'], 'von' => $von, 'nachberechnung' => $nb['ext_ref']];
+            $db->prepare('UPDATE bestellungen SET ereignisse_json = ?, aktualisiert = ? WHERE id = ?')->execute([json_encode($ereignisse, JSON_UNESCAPED_UNICODE), jetzt(), $orig['id']]);
+        }
+    }
+    lexwareAuftraegeAbarbeiten(3);
+}
+
+/** Erinnerung an offene Nachberechnungen (Revolut) nach erinnerungTage; liefert die Zahl der Mails. */
+function rpErinnerungenSenden(): int
+{
+    $tage = (int) (konfig()['rechnungspruefung']['erinnerungTage'] ?? 14);
+    if ($tage <= 0) {
+        return 0;
+    }
+    $db = datenbank();
+    $st = $db->prepare("SELECT * FROM bestellungen WHERE art = 'nachberechnung' AND zahlungsart = 'revolut' AND status IN ('offen','angelegt','fehlgeschlagen') AND erinnert IS NULL AND erstellt < ? ORDER BY id");
+    $st->execute([gmdate('Y-m-d\TH:i:s\Z', time() - $tage * 86400)]);
+    $n = 0;
+    foreach ($st->fetchAll() as $nb) {
+        $orig = $nb['nachberechnung_zu'] ? bestellungLaden('id', (string) $nb['nachberechnung_zu']) : null;
+        try {
+            rpErinnerungMail($nb, $orig);
+            $db->prepare('UPDATE bestellungen SET erinnert = ?, aktualisiert = ? WHERE id = ?')->execute([jetzt(), jetzt(), $nb['id']]);
+            $ereignisse = json_decode((string) $nb['ereignisse_json'], true) ?: [];
+            $ereignisse[] = ['zeit' => jetzt(), 'ereignis' => 'nachberechnung.erinnert', 'status' => $nb['status']];
+            $db->prepare('UPDATE bestellungen SET ereignisse_json = ? WHERE id = ?')->execute([json_encode($ereignisse, JSON_UNESCAPED_UNICODE), $nb['id']]);
+            $n++;
+        } catch (Throwable $e) {
+            error_log('[rechnungspruefung] Erinnerung ' . $nb['ext_ref'] . ': ' . $e->getMessage());
+        }
+    }
+
+    return $n;
+}
+
+function rpErinnerungMail(array $nb, ?array $original): void
+{
+    $sprache = $nb['sprache'] === 'en' ? 'en' : 'de';
+    $basis = rtrim((string) konfig()['basisUrl'], '/');
+    $abs = json_decode((string) $nb['absender_json'], true) ?: [];
+    $orig = (string) ($original['ext_ref'] ?? '');
+    $link = $basis . '/konto/bestellungen/' . $nb['ext_ref'] . '/bezahlen' . ($sprache === 'en' ? '?sprache=en' : '');
+    $anhaenge = nachberechnungNachweisPfad($nb) !== '' ? [['name' => 'NEOS-Nachweis-' . $nb['ext_ref'] . '.pdf', 'datei' => nachberechnungNachweisPfad($nb)]] : [];
+    if ($sprache === 'en') {
+        $betreff = 'Reminder: weight adjustment for NEOS shipment ' . $orig . ' is still open';
+        $text = "Hello " . ($abs['name'] ?? '') . ",\n\nthe weight adjustment for shipment " . $orig . ' (' . betragFormat((int) $nb['betrag_cent'], 'en') . ") is still open.\n\nPlease settle it in the portal: " . $link . "\n\nThe record explaining the adjustment is attached. If you disagree, you can object in the portal.\n\nNEOS Logistics UG · info@neos24.com";
+    } else {
+        $betreff = 'Erinnerung: Gewichtsnachberechnung zu NEOS-Sendung ' . $orig . ' ist noch offen';
+        $text = "Hallo " . ($abs['name'] ?? '') . ",\n\ndie Gewichtsnachberechnung zur Sendung " . $orig . ' (' . betragFormat((int) $nb['betrag_cent'], 'de') . ") ist noch offen.\n\nBitte begleiche sie im Portal: " . $link . "\n\nDer Nachweis zur Nachberechnung hängt an. Wenn du anderer Meinung bist, kannst du im Portal widersprechen.\n\nNEOS Logistics UG · info@neos24.com";
+    }
+    mailSenden((string) $nb['email'], $betreff, $text, $anhaenge);
 }
 
 /** Gutschrift bei niedrigerem Gewicht: Differenz brutto als Guthaben. */
@@ -858,6 +1064,11 @@ function rpGutschriftBuchen(array $p, string $von): int
     return $brutto;
 }
 
+/**
+ * Mail zur Nachberechnung — nennt weder Lieferant noch Lieferantenrechnung,
+ * nur den Carrier als denjenigen, der gewogen hat. Anhang: Nachweis (PDF) und,
+ * sobald vorhanden, die Rechnung aus Lexware.
+ */
 function rpNachberechnungMail(array $neu, array $original, array $grund): void
 {
     $sprache = $neu['sprache'] === 'en' ? 'en' : 'de';
@@ -865,30 +1076,40 @@ function rpNachberechnungMail(array $neu, array $original, array $grund): void
     $abs = json_decode((string) $original['absender_json'], true) ?: [];
     $pfad = $neu['firma_id'] ? 'sendungen' : 'bestellungen';
     $kg = number_format((int) $grund['gewicht_gramm'] / 1000, 2, $sprache === 'en' ? '.' : ',', '');
+    $frist = (int) (konfig()['rechnungspruefung']['widerspruchTage'] ?? 14);
+    $gebuehr = (int) ($grund['gebuehr'] ?? 0);
+    $anhaenge = [];
+    if (nachberechnungNachweisPfad($neu) !== '') {
+        $anhaenge[] = ['name' => 'NEOS-Nachweis-' . $neu['ext_ref'] . '.pdf', 'datei' => nachberechnungNachweisPfad($neu)];
+    }
+    $rechnungPdf = lexwarePdfPfad((string) ($neu['lexware_id'] ?? ''));
+    if ($rechnungPdf !== '' && is_file($rechnungPdf)) {
+        $anhaenge[] = ['name' => 'NEOS-Rechnung-' . ($neu['lexware_nummer'] ?: $neu['ext_ref']) . '.pdf', 'datei' => $rechnungPdf];
+    }
     if ($sprache === 'en') {
         $betreff = 'Weight adjustment for NEOS shipment ' . $original['ext_ref'];
         $zeilen = ['Hello ' . ($abs['name'] ?? '') . ',', '',
-            'the carrier weighed shipment ' . $original['ext_ref'] . ' at ' . $kg . ' kg. It was booked in weight class ' . $grund['gk_bestellt'] . ', the measured weight falls into class ' . $grund['gk_ist'] . '.',
-            '', 'Difference net: ' . betragFormat((int) $neu['netto_cent'], 'en'), 'Difference incl. VAT: ' . betragFormat((int) $neu['betrag_cent'], 'en'), ''];
+            'the carrier weighed shipment ' . $original['ext_ref'] . ' at ' . $kg . ' kg. It was booked in weight class ' . $grund['gk_bestellt'] . ', the measured weight falls into class ' . $grund['gk_ist'] . '. We charge the difference between the shipping prices of both classes according to your price terms.',
+            '', 'Difference net: ' . betragFormat((int) $neu['netto_cent'], 'en') . ($gebuehr > 0 ? ' (incl. carrier fee for the deviation ' . betragFormat($gebuehr, 'en') . ')' : ''), 'Difference incl. VAT: ' . betragFormat((int) $neu['betrag_cent'], 'en'), ''];
         $zeilen[] = match ($neu['zahlungsart']) {
             'rechnung' => 'The amount appears as a separate line on your next collective invoice.',
-            'guthaben' => 'The amount has been debited from your NEOS credit.',
-            default => 'Please settle the amount in the portal: ' . $basis . '/konto/' . $pfad . '/' . $neu['ext_ref'] . '/bezahlen?sprache=en',
+            'guthaben' => 'The amount has been debited from your NEOS credit.' . ($rechnungPdf !== '' ? ' The invoice is attached.' : ' The invoice follows separately.'),
+            default => 'Please settle the amount in the portal: ' . $basis . '/konto/' . $pfad . '/' . $neu['ext_ref'] . '/bezahlen?sprache=en — the invoice follows after payment.',
         };
-        array_push($zeilen, '', 'Tip: weigh parcels before booking — the class is chosen from the weight you enter.', '', 'NEOS Logistics UG · info@neos24.com');
+        array_push($zeilen, '', 'The attached record explains the calculation. If you disagree, you can object in the portal within ' . $frist . ' days: ' . $basis . '/konto/' . $pfad . '/' . $neu['ext_ref'] . '?sprache=en', '', 'Tip: weigh parcels before booking — the class is chosen from the weight you enter.', '', 'NEOS Logistics UG · info@neos24.com');
     } else {
         $betreff = 'Gewichtsnachberechnung zu NEOS-Sendung ' . $original['ext_ref'];
         $zeilen = ['Hallo ' . ($abs['name'] ?? '') . ',', '',
-            'der Carrier hat die Sendung ' . $original['ext_ref'] . ' mit ' . $kg . ' kg gewogen. Gebucht war die Gewichtsklasse ' . $grund['gk_bestellt'] . ', das gemessene Gewicht fällt in die Klasse ' . $grund['gk_ist'] . '.',
-            '', 'Differenz netto: ' . betragFormat((int) $neu['netto_cent'], 'de'), 'Differenz inkl. MwSt.: ' . betragFormat((int) $neu['betrag_cent'], 'de'), ''];
+            'der Carrier hat die Sendung ' . $original['ext_ref'] . ' mit ' . $kg . ' kg gewogen. Gebucht war die Gewichtsklasse ' . $grund['gk_bestellt'] . ', das gemessene Gewicht fällt in die Klasse ' . $grund['gk_ist'] . '. Wir berechnen die Differenz der Versandpreise beider Klassen nach deinen Preiskonditionen.',
+            '', 'Differenz netto: ' . betragFormat((int) $neu['netto_cent'], 'de') . ($gebuehr > 0 ? ' (inkl. Carrier-Gebühr für die Abweichung ' . betragFormat($gebuehr, 'de') . ')' : ''), 'Differenz inkl. MwSt.: ' . betragFormat((int) $neu['betrag_cent'], 'de'), ''];
         $zeilen[] = match ($neu['zahlungsart']) {
             'rechnung' => 'Der Betrag erscheint als eigene Position auf deiner nächsten Sammelrechnung.',
-            'guthaben' => 'Der Betrag wurde von deinem NEOS-Guthaben abgebucht.',
-            default => 'Bitte begleiche den Betrag im Portal: ' . $basis . '/konto/' . $pfad . '/' . $neu['ext_ref'] . '/bezahlen',
+            'guthaben' => 'Der Betrag wurde von deinem NEOS-Guthaben abgebucht.' . ($rechnungPdf !== '' ? ' Die Rechnung hängt an.' : ' Die Rechnung folgt separat.'),
+            default => 'Bitte begleiche den Betrag im Portal: ' . $basis . '/konto/' . $pfad . '/' . $neu['ext_ref'] . '/bezahlen — die Rechnung folgt nach der Zahlung.',
         };
-        array_push($zeilen, '', 'Tipp: Pakete vor der Buchung wiegen — die Klasse ergibt sich aus dem eingegebenen Gewicht.', '', 'NEOS Logistics UG · info@neos24.com');
+        array_push($zeilen, '', 'Der angehängte Nachweis erklärt die Berechnung. Wenn du anderer Meinung bist, kannst du innerhalb von ' . $frist . ' Tagen im Portal widersprechen: ' . $basis . '/konto/' . $pfad . '/' . $neu['ext_ref'], '', 'Tipp: Pakete vor der Buchung wiegen — die Klasse ergibt sich aus dem eingegebenen Gewicht.', '', 'NEOS Logistics UG · info@neos24.com');
     }
-    mailSenden((string) $neu['email'], $betreff, implode("\n", $zeilen));
+    mailSenden((string) $neu['email'], $betreff, implode("\n", $zeilen), $anhaenge);
 }
 
 // -------------------------------------------------------------- Beanstandung
@@ -910,4 +1131,138 @@ function rpBeanstandungCsv(array $rechnung): string
     }
 
     return implode("\r\n", $zeilen) . "\r\n";
+}
+
+// ------------------------------------------------------------------ Postfach
+
+/** Carrier-ID zu einer Absenderadresse laut konfig()['postfach']['absender'] (Adresse oder Domain). */
+function rpCarrierFuerAbsender(string $email): ?int
+{
+    $karte = (array) (konfig()['postfach']['absender'] ?? []);
+    $domain = substr(strrchr($email, '@') ?: '', 1);
+    $name = null;
+    foreach ($karte as $schluessel => $carrier) {
+        $s = mb_strtolower(trim((string) $schluessel));
+        if ($s === $email || ($s !== '' && ($s === $domain || $s === '@' . $domain || str_ends_with($email, $s)))) {
+            $name = (string) $carrier;
+            break;
+        }
+    }
+    if ($name === null) {
+        return null;
+    }
+    $st = datenbank()->prepare('SELECT id FROM carrier WHERE lower(name) = ?');
+    $st->execute([mb_strtolower($name)]);
+    $id = $st->fetchColumn();
+
+    return $id !== false ? (int) $id : null;
+}
+
+/**
+ * Ungelesene Mails aus dem Postfach holen, Carrier-Rechnungen (PDF + CSV/XLSX)
+ * anlegen, mit gespeichertem Profil prüfen und die Automatik laufen lassen.
+ * Liefert Zähler und ein Protokoll; eine Zusammenfassung geht an konfig()['kopie'].
+ */
+function rpPostfachVerarbeiten(): array
+{
+    require_once __DIR__ . '/postfach.php';
+    $p = (array) (konfig()['postfach'] ?? []);
+    $aus = ['mails' => 0, 'rechnungen' => 0, 'geprueft' => 0, 'uebersprungen' => 0, 'protokoll' => []];
+    if ((string) ($p['host'] ?? '') === '') {
+        return $aus;
+    }
+    $imap = new ImapVerbindung((string) $p['host'], (int) ($p['port'] ?? 993), 30, (bool) ($p['tls'] ?? ((int) ($p['port'] ?? 993) !== 143)));
+    try {
+        $imap->login((string) $p['benutzer'], (string) $p['passwort']);
+        $imap->select((string) ($p['ordner'] ?: 'INBOX'));
+        foreach ($imap->ungelesen() as $uid) {
+            $aus['mails']++;
+            $roh = $imap->holen($uid);
+            $mail = mimeZerlegen($roh);
+            $von = mimeAbsender((string) ($mail['kopf']['from'] ?? ''));
+            $betreff = mimeWortDekodieren((string) ($mail['kopf']['subject'] ?? ''));
+            $carrierId = rpCarrierFuerAbsender($von);
+            if ($carrierId === null) {
+                $aus['uebersprungen']++;
+                $aus['protokoll'][] = 'übersprungen (Absender ' . $von . ' keinem Carrier zugeordnet): ' . $betreff;
+                continue; // bleibt ungelesen, damit das Team sie sieht
+            }
+            $pdf = null;
+            $tabelle = null;
+            foreach ($mail['anhaenge'] as $a) {
+                $endung = strtolower(pathinfo($a['name'], PATHINFO_EXTENSION));
+                if ($pdf === null && ($endung === 'pdf' || str_starts_with($a['inhalt'], '%PDF'))) {
+                    $pdf = $a;
+                } elseif ($tabelle === null && in_array($endung, ['csv', 'xlsx', 'xlsm', 'txt'], true)) {
+                    $tabelle = $a;
+                }
+            }
+            if ($tabelle === null) {
+                $aus['uebersprungen']++;
+                $aus['protokoll'][] = 'übersprungen (keine CSV/XLSX im Anhang): ' . $betreff;
+                $imap->gelesen($uid);
+                continue;
+            }
+            $tmpTab = tempnam(sys_get_temp_dir(), 'neos-tab');
+            file_put_contents($tmpTab, $tabelle['inhalt']);
+            $tmpPdf = null;
+            $nummer = '';
+            if ($pdf !== null) {
+                $tmpPdf = tempnam(sys_get_temp_dir(), 'neos-pdf');
+                file_put_contents($tmpPdf, $pdf['inhalt']);
+                $nummer = (string) rpPdfKopfdaten(rpPdfText($tmpPdf))['nummer'];
+            }
+            try {
+                if ($nummer !== '') {
+                    $st = datenbank()->prepare('SELECT id FROM lieferantenrechnungen WHERE carrier_id = ? AND nummer = ?');
+                    $st->execute([$carrierId, $nummer]);
+                    if ($st->fetchColumn() !== false) {
+                        $aus['uebersprungen']++;
+                        $aus['protokoll'][] = 'übersprungen (Rechnung ' . $nummer . ' schon vorhanden): ' . $betreff;
+                        $imap->gelesen($uid);
+                        continue;
+                    }
+                }
+                $id = rpRechnungAnlegen($carrierId, ['tabelle' => $tmpTab, 'tabelle_name' => $tabelle['name'], 'pdf' => $tmpPdf], ['nummer' => '', 'datum' => '', 'netto_cent' => 0], 'postfach');
+                $aus['rechnungen']++;
+                $r = rpRechnungLaden($id);
+                $tab = rpRechnungTabelle($r);
+                $spalten = rpProfilAnwenden(rpProfilFuerCarrier($carrierId), $tab['blatt']['kopf']);
+                $zeile = 'Rechnung #' . $id . ' (' . ($r['nummer'] ?: 'ohne Nummer') . ', ' . euro((int) $r['betrag_netto_cent']) . ') aus „' . $betreff . '“';
+                if ($spalten !== null && ($spalten['gewicht'] ?? -1) >= 0 && ($spalten['betrag'] ?? -1) >= 0) {
+                    $profil = rpProfilFuerCarrier($carrierId);
+                    $n = rpPositionenImportieren($r, $spalten, (string) ($profil['gewicht_einheit'] ?? 'kg'), $tab['blatt']['name'], (string) ($r['zuschlag_blatt'] ?? ''));
+                    $z = rpZusammenfassung($id);
+                    $auto = rpAutomatischBuchen($id, 'auto (Postfach)');
+                    $aus['geprueft']++;
+                    $zeile .= ': ' . $n . ' Positionen geprüft, ' . ($z['positionen'] - (int) ($z['befunde']['ok']['n'] ?? 0)) . ' auffällig, Nachberechnung offen ' . euro($z['nachberechnung_offen']) . ', automatisch gebucht ' . $auto['gebucht'] . ' (' . euro($auto['netto']) . '), Beanstandung ' . euro($z['beanstandung']);
+                } else {
+                    $zeile .= ': Spalten im Dashboard zuordnen (kein Profil für diesen Carrier)';
+                }
+                $aus['protokoll'][] = $zeile;
+                $imap->gelesen($uid);
+                if ((string) ($p['erledigtOrdner'] ?? '') !== '') {
+                    try {
+                        $imap->kopieren($uid, (string) $p['erledigtOrdner']);
+                    } catch (Throwable $e) {
+                        $aus['protokoll'][] = 'Kopie in ' . $p['erledigtOrdner'] . ' fehlgeschlagen: ' . $e->getMessage();
+                    }
+                }
+            } finally {
+                @unlink($tmpTab);
+                if ($tmpPdf !== null) {
+                    @unlink($tmpPdf);
+                }
+            }
+        }
+    } finally {
+        $imap->logout();
+    }
+    $kopie = (string) (konfig()['kopie'] ?? '');
+    if ($kopie !== '' && $aus['rechnungen'] > 0) {
+        $basis = rtrim((string) konfig()['basisUrl'], '/');
+        mailSenden($kopie, 'Rechnungsprüfung: ' . $aus['rechnungen'] . ' Carrier-Rechnung(en) aus dem Postfach', "Aus dem Postfach eingelesen:\n\n" . implode("\n", $aus['protokoll']) . "\n\nDashboard: " . $basis . "/intern/rechnungspruefung\n");
+    }
+
+    return $aus;
 }

@@ -294,7 +294,8 @@ require __DIR__ . '/src/routen_versand.php';
 
 if ($pfad === '/preise') {
     businessErzwingen($ich);
-    ansicht('preise', ['titel' => t('preise.titel'), 'preise' => preisliste(), 'aktiv' => 'preise']);
+    $preislisteId = preislisteFuerKonto($ich);
+    ansicht('preise', ['titel' => t('preise.titel'), 'preise' => preislisteFuerAnzeige($preislisteId), 'zusatz' => zusatzleistungen(true, $preislisteId), 'eigene' => $preislisteId !== null, 'aktiv' => 'preise']);
 }
 
 // ------------------------------------------------------------------ Rechnungen
@@ -304,7 +305,7 @@ if ($pfad === '/rechnungen') {
     ansicht('rechnungen', ['titel' => t('rechnungen.titel'), 'zeilen' => rechnungenDerFirma((int) $firma['id']), 'aktiv' => 'rechnungen']);
 }
 
-if (preg_match('#^/rechnungen/([A-Z]{1,5}-\d{4}-\d{4,6})(\.pdf)?$#', $pfad, $t)) {
+if (preg_match('#^/rechnungen/([A-Za-z0-9][A-Za-z0-9_-]{1,60})(\.pdf)?$#', $pfad, $t)) {
     $firma = businessErzwingen($ich);
     $r = rechnungNachNummer($t[1]);
     if ($r === null || (int) $r['firma_id'] !== (int) $firma['id']) {
@@ -313,7 +314,7 @@ if (preg_match('#^/rechnungen/([A-Z]{1,5}-\d{4}-\d{4,6})(\.pdf)?$#', $pfad, $t))
     if (isset($t[2])) {
         $datei = rechnungPfad($r);
         if (!is_file($datei)) {
-            fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
+            fehlerSeite(404, t('fehler.404'), t('rechnungen.entwurf'));
         }
         header('Content-Type: application/pdf');
         header('Content-Disposition: inline; filename="' . $r['nummer'] . '.pdf"');

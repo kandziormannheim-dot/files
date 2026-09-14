@@ -11,7 +11,13 @@ $zusatzAlle = $daten['zusatz'];
   <div><a class="k-zurueck" href="<?= e(url($business ? 'sendungen' : 'bestellungen')) ?>"><?= e(t('detail.zurueck')) ?></a><h1 class="h2"><?= e(t('neu.titel')) ?></h1><p class="k-text"><?= e(t($business ? 'neu.text.business' : 'neu.text.privat')) ?></p></div>
 </header>
 <?php if ($meldung !== null) { ?><p class="k-hinweis k-hinweis--fehler" role="alert"><?= e($meldung) ?></p><?php } ?>
-<form method="post" action="<?= e(url('sendungen/neu')) ?>" class="form k-form k-sendung" novalidate data-mwst="<?= (int) $daten['mwst'] ?>" data-sprache="<?= e($sp) ?>" data-guthaben="<?= (int) $guthaben ?>">
+<?php if (!empty($abweichung['warnen'])) { ?>
+<div class="k-hinweis k-hinweis--warn <?= $f('gewicht_bestaetigt') ?>" role="alert">
+  <p><?= e(t('neu.abweichung.warnung', (int) $abweichung['anzahl'], number_format((int) $abweichung['gramm'] / 1000, 2, $sp === 'en' ? '.' : ',', ''), (int) $abweichung['prozent'])) ?></p>
+  <label class="k-schalter" style="margin-top:.5rem"><input type="checkbox" name="gewicht_geprueft" value="1" form="formular-sendung" <?= !empty($werte['gewicht_geprueft']) ? 'checked' : '' ?>> <?= e(t('neu.abweichung.bestaetigen')) ?></label>
+</div>
+<?php } ?>
+<form method="post" action="<?= e(url('sendungen/neu')) ?>" id="formular-sendung" class="form k-form k-sendung" novalidate data-mwst="<?= (int) $daten['mwst'] ?>" data-sprache="<?= e($sp) ?>" data-guthaben="<?= (int) $guthaben ?>" data-volumen-text="<?= e(t('neu.volumen', '%s')) ?>">
   <?= csrfFeld() ?>
   <script type="application/json" id="angebote-daten"><?= json_encode($daten, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
   <script type="application/json" id="adressen-daten"><?= json_encode(['absender' => $absenderBuch, 'empfaenger' => $empfaengerBuch, 'vorlagen' => array_map(static fn (array $v): array => $v + ['zusatz' => json_decode((string) $v['zusatz_json'], true) ?: []], $vorlagen)], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
@@ -37,6 +43,7 @@ $zusatzAlle = $daten['zusatz'];
           <div class="field">
             <label for="s-laenge"><?= e(t('neu.masse')) ?></label>
             <div class="k-masse"><input id="s-laenge" name="laenge" type="number" min="0" max="200" value="<?= e($werte['laenge']) ?>" placeholder="L" aria-label="L"><span>×</span><input name="breite" type="number" min="0" max="200" value="<?= e($werte['breite']) ?>" placeholder="B" aria-label="B"><span>×</span><input name="hoehe" type="number" min="0" max="200" value="<?= e($werte['hoehe']) ?>" placeholder="H" aria-label="H"></div>
+            <span class="k-klein" data-volumen><?= e(t('neu.volumen.hinweis')) ?></span>
           </div>
           <div class="field">
             <label for="s-vorlage"><?= e(t('neu.vorlage')) ?></label>
@@ -50,7 +57,7 @@ $zusatzAlle = $daten['zusatz'];
       </div>
 
       <div class="card <?= $f('carrier') ?>">
-        <div class="k-karte-kopf"><h2 class="h3"><?= e(t('neu.carrier')) ?></h2><span class="k-klein"><?= e(t('neu.carrier.hinweis')) ?></span></div>
+        <div class="k-karte-kopf"><h2 class="h3"><?= e(t('neu.carrier')) ?></h2><span class="k-klein"><?= e(!empty($preisliste) ? t('neu.preisliste.hinweis') : t('neu.carrier.hinweis')) ?></span></div>
         <div class="k-angebote" data-angebote data-gewaehlt="<?= e($werte['carrier']) ?>" data-leer="<?= e(t('neu.carrier.leer')) ?>" data-empfohlen="<?= e(t('neu.carrier.empfohlen')) ?>" data-netto="<?= e(t('neu.summe.netto')) ?>" data-brutto="<?= e(t('neu.summe.brutto')) ?>">
           <p class="k-leer"><?= e(t('neu.carrier.leer')) ?></p>
         </div>

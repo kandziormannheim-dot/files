@@ -17,27 +17,43 @@ require_once __DIR__ . '/carrier.php';
 /**
  * Alle nutzbaren Carrier einer Zelle (Land × Gewichtsklasse) in
  * Prioritätsreihenfolge, je mit Netto, Brutto, Laufzeit und Einkauf.
+ * Mit $preislisteId gelten die Preise der Kundenpreisliste (lib/preislisten.php);
+ * Zellen ohne Listenpreis fallen je Liste auf den Standard zurück oder entfallen.
  */
-function angeboteFuer(string $land, string $gewichtsklasse): array
+function angeboteFuer(string $land, string $gewichtsklasse, ?int $preislisteId = null, bool $cacheLeeren = false): array
 {
     static $cache = [];
-    $schluessel = $land . '|' . $gewichtsklasse;
+    if ($cacheLeeren) {
+        $cache = [];
+
+        return [];
+    }
+    $schluessel = $land . '|' . $gewichtsklasse . '|' . (int) $preislisteId;
     if (isset($cache[$schluessel])) {
         return $cache[$schluessel];
     }
+    $liste = $preislisteId !== null ? preislisteLaden($preislisteId) : null;
     $st = datenbank()->prepare(<<<'SQL'
-        SELECT c.id AS carrier_id, c.name AS carrier, r.prioritaet, r.laufzeit_de, r.laufzeit_en, r.verkauf_cent, r.einkauf_cent
+        SELECT c.id AS carrier_id, c.name AS carrier, c.volumenfaktor, r.prioritaet, r.laufzeit_de, r.laufzeit_en, r.verkauf_cent, r.einkauf_cent,
+               p.netto_cent AS listen_cent
         FROM routing r
         JOIN laender l ON l.code = r.land_code
         JOIN gewichtsklassen g ON g.id = r.gewichtsklasse_id
         JOIN carrier c ON c.id = r.carrier_id
+        LEFT JOIN preislisten_preise p ON p.preisliste_id = ? AND p.land_code = r.land_code AND p.gewichtsklasse_id = r.gewichtsklasse_id AND p.carrier_id = r.carrier_id
         WHERE r.land_code = ? AND g.code = ? AND r.aktiv = 1 AND l.aktiv = 1 AND g.aktiv = 1 AND c.aktiv = 1
         ORDER BY r.prioritaet
     SQL);
-    $st->execute([$land, $gewichtsklasse]);
+    $st->execute([$liste !== null ? (int) $liste['id'] : 0, $land, $gewichtsklasse]);
     $angebote = [];
     foreach ($st as $z) {
-        $netto = (int) $z['verkauf_cent'];
+        if ($z['listen_cent'] !== null) {
+            $netto = (int) $z['listen_cent'];
+        } elseif ($liste !== null && $liste['fehlend'] === 'nicht') {
+            continue;
+        } else {
+            $netto = (int) $z['verkauf_cent'];
+        }
         $brutto = bruttoCent($netto);
         $angebote[] = [
             'carrier' => (string) $z['carrier'],
@@ -47,12 +63,28 @@ function angeboteFuer(string $land, string $gewichtsklasse): array
             'mwst' => $brutto - $netto,
             'brutto' => $brutto,
             'einkauf' => (int) $z['einkauf_cent'],
+            'standard' => (int) $z['verkauf_cent'],
+            'listenpreis' => $z['listen_cent'] !== null,
+            'volumenfaktor' => max(0, (int) ($z['volumenfaktor'] ?? 5000)),
             'laufzeit' => ['de' => (string) $z['laufzeit_de'], 'en' => (string) $z['laufzeit_en']],
             'empfohlen' => $angebote === [],
         ];
     }
 
     return $cache[$schluessel] = $angebote;
+}
+
+/** Volumengewicht in Gramm aus Maßen in cm (L·B·H / Faktor kg); 0 ohne Maße. */
+function volumengewichtGramm(array $masse, int $faktor): int
+{
+    $l = (int) ($masse['l'] ?? 0);
+    $b = (int) ($masse['b'] ?? 0);
+    $h = (int) ($masse['h'] ?? 0);
+    if ($l <= 0 || $b <= 0 || $h <= 0 || $faktor <= 0) {
+        return 0;
+    }
+
+    return (int) round($l * $b * $h / $faktor * 1000);
 }
 
 /** Gewichtsklasse zu einem Gewicht in Gramm: die kleinste, die noch passt. */
@@ -69,10 +101,11 @@ function gewichtsklasseFuerGewicht(int $gramm): ?string
 
 // ---------------------------------------------------------- Zusatzleistungen
 
-/** Aktive Zusatzleistungen: code, name{de,en}, beschreibung{de,en}, preis (netto Cent). */
-function zusatzleistungen(bool $nurAktive = true): array
+/** Aktive Zusatzleistungen: code, name{de,en}, beschreibung{de,en}, preis (netto Cent) — mit Kundenpreisliste deren Preise. */
+function zusatzleistungen(bool $nurAktive = true, ?int $preislisteId = null): array
 {
     $sql = 'SELECT * FROM zusatzleistungen' . ($nurAktive ? ' WHERE aktiv = 1' : '') . ' ORDER BY sortierung, id';
+    $eigene = $preislisteId !== null ? preislisteZusatz($preislisteId) : [];
     $liste = [];
     foreach (datenbank()->query($sql) as $z) {
         $liste[(string) $z['code']] = [
@@ -80,7 +113,9 @@ function zusatzleistungen(bool $nurAktive = true): array
             'code' => (string) $z['code'],
             'name' => ['de' => (string) $z['name_de'], 'en' => (string) $z['name_en']],
             'beschreibung' => ['de' => (string) $z['beschreibung_de'], 'en' => (string) $z['beschreibung_en']],
-            'preis' => (int) $z['preis_cent'],
+            'preis' => $eigene[(string) $z['code']] ?? (int) $z['preis_cent'],
+            'standard' => (int) $z['preis_cent'],
+            'listenpreis' => isset($eigene[(string) $z['code']]),
             'aktiv' => (int) $z['aktiv'] === 1,
             'sortierung' => (int) $z['sortierung'],
         ];
@@ -90,9 +125,9 @@ function zusatzleistungen(bool $nurAktive = true): array
 }
 
 /** Gültige Codes herausfiltern und Summe netto bilden. */
-function zusatzBerechnen(array $codes): array
+function zusatzBerechnen(array $codes, ?int $preislisteId = null): array
 {
-    $alle = zusatzleistungen();
+    $alle = zusatzleistungen(true, $preislisteId);
     $gewaehlt = [];
     $summe = 0;
     foreach (array_unique(array_map('strval', $codes)) as $code) {
@@ -308,14 +343,27 @@ function bestellungAnlegen(array $p): array
     $sprache = ($p['sprache'] ?? 'de') === 'en' ? 'en' : 'de';
     $zielland = strtoupper(saeubern($p['zielland'] ?? '', 2));
     $gewicht = max(0, (int) ($p['gewicht_gramm'] ?? 0));
+    $masse = ['l' => (int) (($p['masse'] ?? [])['l'] ?? 0), 'b' => (int) (($p['masse'] ?? [])['b'] ?? 0), 'h' => (int) (($p['masse'] ?? [])['h'] ?? 0)];
+    $carrier = saeubern($p['carrier'] ?? '', 60);
+    $preislisteId = isset($p['preisliste_id']) && (int) $p['preisliste_id'] > 0 ? (int) $p['preisliste_id'] : null;
     $gk = saeubern($p['gewichtsklasse'] ?? '', 12);
+    // Volumengewicht (L·B·H / Faktor des Carriers) hebt die Klasse an, wenn es das reale Gewicht übersteigt.
+    $volumen = 0;
     if ($gk === '' && $gewicht > 0) {
-        $gk = (string) gewichtsklasseFuerGewicht($gewicht);
+        $vorlaeufig = (string) gewichtsklasseFuerGewicht($gewicht);
+        $faktor = 5000;
+        foreach ($vorlaeufig !== '' ? angeboteFuer($zielland, $vorlaeufig, $preislisteId) : [] as $a) {
+            if ($carrier === '' || $a['carrier'] === $carrier) {
+                $faktor = (int) $a['volumenfaktor'];
+                break;
+            }
+        }
+        $volumen = volumengewichtGramm($masse, $faktor);
+        $gk = (string) gewichtsklasseFuerGewicht(max($gewicht, $volumen));
     }
     if ($gk === '') {
         $gk = (string) array_key_first(preisliste()['gewichtsklassen']);
     }
-    $carrier = saeubern($p['carrier'] ?? '', 60);
     $zahlungsart = in_array($p['zahlungsart'] ?? '', ['revolut', 'rechnung', 'guthaben'], true) ? $p['zahlungsart'] : 'revolut';
     $art = ($p['art'] ?? 'sendung') === 'retoure' ? 'retoure' : 'sendung';
     $email = saeubern($p['email'] ?? '', 254);
@@ -332,13 +380,12 @@ function bestellungAnlegen(array $p): array
     $absender = $adresse($p['absender'] ?? null);
     $empfaenger = $adresse($p['empfaenger'] ?? null);
     $empfaenger['land'] = $zielland;
-    $masse = ['l' => (int) (($p['masse'] ?? [])['l'] ?? 0), 'b' => (int) (($p['masse'] ?? [])['b'] ?? 0), 'h' => (int) (($p['masse'] ?? [])['h'] ?? 0)];
-    $zusatz = zusatzBerechnen(is_array($p['zusatz'] ?? null) ? $p['zusatz'] : []);
+    $zusatz = zusatzBerechnen(is_array($p['zusatz'] ?? null) ? $p['zusatz'] : [], $preislisteId);
     $abholung = null;
     $codes = array_column($zusatz['liste'], 'code');
 
     $fehler = [];
-    $angebote = angeboteFuer($zielland, $gk);
+    $angebote = angeboteFuer($zielland, $gk, $preislisteId);
     $angebot = null;
     foreach ($angebote as $a) {
         if ($carrier === '' || $a['carrier'] === $carrier) {
@@ -351,7 +398,7 @@ function bestellungAnlegen(array $p): array
     }
     if ($gewicht > 0) {
         $max = (int) (preisliste()['gewichtsklassen'][$gk]['max_gramm'] ?? 0);
-        if ($max > 0 && $gewicht > $max) {
+        if ($max > 0 && max($gewicht, $volumen) > $max) {
             $fehler[] = 'gewicht';
         }
     }
@@ -410,15 +457,18 @@ function bestellungAnlegen(array $p): array
         $extRef = 'NE-' . gmdate('Y') . '-' . strtoupper(bin2hex(random_bytes(4))); // gleiche Nummernform, Kennzeichnung über art
     }
     $ereignis = ['zeit' => jetzt(), 'ereignis' => 'angelegt', 'status' => $status, 'von' => (string) ($p['angelegt_von'] ?? '')];
+    if ($volumen > $gewicht) {
+        $ereignis['volumengewicht_gramm'] = $volumen;
+    }
     $db->prepare(<<<'SQL'
         INSERT INTO bestellungen
             (ext_ref, status, netto_cent, mwst_cent, betrag_cent, waehrung, zielland, gewichtsklasse, carrier, einkauf_cent,
              email, sprache, absender_json, empfaenger_json, ereignisse_json, erstellt, aktualisiert,
              kunde_id, firma_id, zahlungsart, referenz, art, retoure_zu, gewicht_gramm, masse_json, zusatz_json, zusatz_cent,
-             versandstatus, abholung_json, versicherung_cent, nachnahme_cent)
+             versandstatus, abholung_json, versicherung_cent, nachnahme_cent, preisliste_id, volumen_gramm)
         VALUES
             (:ref, :status, :netto, :mwst, :brutto, 'EUR', :land, :gk, :carrier, :einkauf, :email, :sprache, :abs, :emp, :ev, :t, :t,
-             :kunde, :firma, :zahlungsart, :referenz, :art, :retoure_zu, :gewicht, :masse, :zusatz, :zusatz_cent, 'angelegt', :abholung, :vers, :nn)
+             :kunde, :firma, :zahlungsart, :referenz, :art, :retoure_zu, :gewicht, :masse, :zusatz, :zusatz_cent, 'angelegt', :abholung, :vers, :nn, :liste, :volumen)
     SQL)->execute([
         ':ref' => $extRef, ':status' => $status, ':netto' => $netto, ':mwst' => $brutto - $netto, ':brutto' => $brutto,
         ':land' => $zielland, ':gk' => $gk, ':carrier' => $angebot['carrier'], ':einkauf' => $angebot['einkauf'],
@@ -429,6 +479,7 @@ function bestellungAnlegen(array $p): array
         ':art' => $art, ':retoure_zu' => isset($p['retoure_zu']) ? (int) $p['retoure_zu'] : null,
         ':gewicht' => $gewicht, ':masse' => json_encode($masse), ':zusatz' => json_encode($zusatz['liste'], JSON_UNESCAPED_UNICODE), ':zusatz_cent' => $zusatz['netto'],
         ':abholung' => json_encode($abholung ?? new stdClass()), ':vers' => $versicherungWert, ':nn' => $nachnahme,
+        ':liste' => $preislisteId, ':volumen' => $volumen,
     ]);
     $bestellung = bestellungLaden('ext_ref', $extRef);
     sendungsereignis((int) $bestellung['id'], 'angelegt', '', 'system', (string) ($p['angelegt_von'] ?? ''));
@@ -436,6 +487,11 @@ function bestellungAnlegen(array $p): array
     if ($zahlungsart === 'guthaben') {
         guthabenBuchen($kontoFuerGuthaben, 'verbrauch', -$brutto, ($art === 'retoure' ? 'Retoure ' : 'Sendung ') . $extRef, (int) $bestellung['id']);
         $bestellung = bestellungFortschreiben($bestellung, 'beauftragt', 'guthaben.belastet', ['betrag' => $brutto]);
+        if ($firmaId === null) {
+            // Privatkunde vom Guthaben: Rechnung über Lexware (Firmen: Sammelrechnung)
+            lexwareAuftragAnlegen('rechnung', 'bestellungen', (int) $bestellung['id']);
+            lexwareAuftraegeAbarbeiten(3);
+        }
     }
     if ($zahlungsart !== 'revolut') {
         nachBeauftragung($bestellung);
@@ -523,7 +579,7 @@ function beauftragungSenden(array $bestellung): void
         }
         array_push($zeilen, '', 'Label (PDF) und Verlauf im Portal: ' . $basis . '/konto/' . $pfad . '/' . $bestellung['ext_ref'], 'Sendungsverfolgung: ' . $tracking, '', 'NEOS Logistics UG · info@neos24.com');
     }
-    mailSenden((string) $bestellung['email'], $betreff, implode("\n", $zeilen));
+    mailSenden((string) $bestellung['email'], $betreff, implode("\n", $zeilen), rechnungAnhangFuerBestellung($bestellung));
     $kopie = (string) (konfig()['kopie'] ?? '');
     if ($kopie !== '') {
         mailSenden($kopie, '[Kopie] ' . $betreff, implode("\n", $zeilen));
@@ -697,6 +753,7 @@ function retoureAnlegen(array $kunde, array $original, string $zahlungsart, stri
         'referenz' => 'Retoure ' . $original['ext_ref'],
         'kunde_id' => $kunde['id'],
         'firma_id' => $kunde['firma_id'] ?? null,
+        'preisliste_id' => preislisteFuerKonto($kunde),
         'zahlungsart' => $zahlungsart,
         'art' => 'retoure',
         'retoure_zu' => (int) $original['id'],
@@ -711,6 +768,7 @@ const REKLAMATION_ARTEN = [
     'verlust' => ['de' => 'Verlust', 'en' => 'Loss'],
     'verspaetung' => ['de' => 'Verspätung', 'en' => 'Delay'],
     'falschzustellung' => ['de' => 'Falschzustellung', 'en' => 'Misdelivery'],
+    'nachberechnung' => ['de' => 'Widerspruch Nachberechnung', 'en' => 'Objection to weight adjustment'],
     'sonstiges' => ['de' => 'Sonstiges', 'en' => 'Other'],
 ];
 const REKLAMATION_STATUS = [

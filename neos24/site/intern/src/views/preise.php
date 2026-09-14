@@ -100,11 +100,11 @@ foreach ($zusatz as $z) { if ($z['id'] === $bearbeitenZusatz) { $zusatzForm = $z
     <div class="karte-kopf"><h2 class="h2">Carrier</h2></div>
     <div class="scrollen">
     <table class="tabelle">
-      <thead><tr><th>Name</th><th class="rechts">Routen</th><th>Aktiv</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th class="rechts">Routen</th><th class="rechts">Volumenfaktor</th><th class="rechts">Gewichtsgebühr</th><th>Aktiv</th><th></th></tr></thead>
       <tbody>
       <?php foreach ($carrier as $c) { ?>
         <tr class="<?= (int) $c['aktiv'] === 1 ? '' : 'inaktiv' ?>">
-          <td><?= e($c['name']) ?></td><td class="mono rechts"><?= (int) $c['routen'] ?></td>
+          <td><?= e($c['name']) ?></td><td class="mono rechts"><?= (int) $c['routen'] ?></td><td class="mono rechts"><?= (int) ($c['volumenfaktor'] ?? 5000) ?></td><td class="mono rechts"><?= (int) ($c['gewichtsgebuehr_cent'] ?? 0) > 0 ? e(euro((int) $c['gewichtsgebuehr_cent'])) : '—' ?></td>
           <td><?= (int) $c['aktiv'] === 1 ? '<span class="ja">✓</span>' : '<span class="nein">–</span>' ?></td>
           <td class="rechts zeilen-aktionen">
             <?php if ($darfB) { ?><a class="knopf knopf--leise knopf--klein" href="<?= e(url('preise', ['bearbeiten' => 'carrier:' . $c['id']])) ?>#formular-carrier">Bearbeiten</a><?php } ?>
@@ -120,10 +120,12 @@ foreach ($zusatz as $z) { if ($z['id'] === $bearbeitenZusatz) { $zusatzForm = $z
       <?= csrfFeld() ?>
       <input type="hidden" name="id" value="<?= (int) ($carrierForm['id'] ?? 0) ?>">
       <div class="feld feld--wachsen"><label for="c-name">Carrier</label><input id="c-name" name="name" value="<?= e($carrierForm['name'] ?? '') ?>" placeholder="z. B. Hermes" required></div>
+      <div class="feld"><label for="c-volumen">Volumenfaktor</label><input id="c-volumen" name="volumenfaktor" type="number" min="0" max="20000" value="<?= (int) ($carrierForm['volumenfaktor'] ?? 5000) ?>" style="width:6.5rem"></div>
+      <div class="feld"><label for="c-gebuehr">Gewichtsgebühr €</label><input id="c-gebuehr" name="gewichtsgebuehr" inputmode="decimal" value="<?= (int) ($carrierForm['gewichtsgebuehr_cent'] ?? 0) > 0 ? e(number_format((int) $carrierForm['gewichtsgebuehr_cent'] / 100, 2, ',', '')) : '' ?>" placeholder="2,20" style="width:6rem"></div>
       <label class="schalter"><input type="checkbox" name="aktiv" <?= ($carrierForm === null || (int) $carrierForm['aktiv'] === 1) ? 'checked' : '' ?>> Aktiv</label>
       <button class="knopf knopf--primaer" type="submit"><?= $carrierForm !== null ? 'Speichern' : 'Anlegen' ?></button>
     </form>
-    <p class="leise" style="margin-top:.75rem">Ein deaktivierter Carrier fällt in der Routingmatrix aus; die nächste Priorität rückt nach.</p>
+    <p class="leise" style="margin-top:.75rem">Ein deaktivierter Carrier fällt in der Routingmatrix aus; die nächste Priorität rückt nach. Volumenfaktor: L × B × H (cm) ÷ Faktor = Volumengewicht in kg (DHL 5000); 0 = kein Volumengewicht. Gewichtsgebühr: Zuschlag des Carriers je Paket mit Gewichtsabweichung — wird bei Nachberechnungen an den Kunden weitergegeben, wenn der Carrier ihn berechnet hat.</p>
     <?php } ?>
   </div>
 </div>

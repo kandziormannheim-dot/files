@@ -13,9 +13,9 @@ declare(strict_types=1);
 define('NEOS_HTML', true);
 
 require dirname(__DIR__, 2) . '/api/revolut/_bootstrap.php';
-require dirname(__DIR__, 2) . '/lib/helfer.php';
-require dirname(__DIR__, 2) . '/lib/kunden.php';
-require dirname(__DIR__, 2) . '/lib/rechnungen.php';
+require_once dirname(__DIR__, 2) . '/lib/helfer.php';
+require_once dirname(__DIR__, 2) . '/lib/kunden.php';
+require_once dirname(__DIR__, 2) . '/lib/rechnungen.php';
 require __DIR__ . '/texte.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/sendungen.php';

@@ -81,9 +81,32 @@ Dashboard; das öffentliche Tracking zeigt denselben Verlauf.
 eine Erstattung wird dem Guthaben gutgeschrieben und der Kunde per Mail informiert.
 **Nachberechnungen** aus der Rechnungsprüfung des Dashboards (Carrier hat schwerer gewogen als
 gebucht) erscheinen als eigene Position „Nachberechnung“ mit Erklärung (gewogenes Gewicht,
-gebuchte und tatsächliche Klasse); Firmen sehen sie auf der nächsten Sammelrechnung,
-Privatkunden zahlen sie vom Guthaben oder per Revolut. **Retouren** sind eigene Bestellungen (`art = retoure`, `retoure_zu`) mit getauschten
-Adressen zum Preis der Routingmatrix.
+gebuchte und tatsächliche Klasse), dem **Nachweis Gewichtsabweichung** als PDF
+(`…/nachweis.pdf`) und der Rechnung aus Lexware (`…/rechnung.pdf`, sobald vorhanden). Die
+Differenz folgt der Preisliste des Kunden. Innerhalb der Widerspruchsfrist
+(`rechnungspruefung.widerspruchTage`) kann der Kunde direkt am Beleg **widersprechen**
+(Reklamation „Widerspruch Nachberechnung“); nimmt das Team die Nachberechnung zurück, zeigt das
+Portal das an und bezahlte Beträge kommen als Guthaben zurück. Firmen sehen Nachberechnungen auf
+der nächsten Sammelrechnung, Privatkunden zahlen sie vom Guthaben oder per Revolut (Erinnerung
+nach `erinnerungTage`). **Retouren** sind eigene Bestellungen (`art = retoure`, `retoure_zu`)
+mit getauschten Adressen zum Preis der Routingmatrix.
+
+**Kundenpreislisten:** hat das Team für die Firma oder den Privatkunden eine eigene Preisliste
+angelegt, zeigen Formular, „Preise“ und CSV-Import diese Konditionen (Zusatzleistungen
+eingeschlossen); die Bestellung merkt sich die Liste.
+
+**Vorbeugung gegen Gewichtsnachberechnungen:** Aus den Maßen rechnet das Formular das
+**Volumengewicht** (L × B × H ÷ Faktor des Carriers, Standard 5000) und hebt die Gewichtsklasse
+an, wenn es das reale Gewicht übersteigt — live in `konto.js` und verbindlich in
+`bestellungAnlegen()` (`volumen_gramm`). Lag das vom Carrier gemessene Gewicht bei den letzten
+Sendungen im Schnitt deutlich über der Angabe (≥ 300 g oder ≥ 15 %), zeigt das Formular einen
+Warnhinweis und verlangt die Bestätigung „Gewicht geprüft“. Labels für Klassen über 10 kg bzw.
+20 kg tragen das Gewichtssymbol.
+
+**Rechnungen:** Mit Lexware Office vergibt Lexware die Rechnungsnummer; das Portal zeigt die
+Lexware-Nummer und liefert das Lexware-PDF (Sammelrechnungen unter „Rechnungen“, Privatkunden je
+bezahlter Bestellung „Rechnung (PDF)“ im Bestell-Detail). Bis die Übergabe erfolgt ist, steht
+„wird erstellt“.
 
 ## Geschäftskunden: Ablauf
 
@@ -94,9 +117,11 @@ Adressen zum Preis der Routingmatrix.
 4. Sendungen werden im Portal beauftragt: Status `beauftragt`, `zahlungsart rechnung`,
    Nettopreis, Carrier und Einkaufspreis aus der Routingmatrix zum Zeitpunkt der Buchung.
 5. Zum Monatsende erzeugt das Team je Firma die Sammelrechnung (Dashboard → Firma → „Rechnung
-   erzeugen“): Nummer `NR-<Jahr>-<lfd. Nummer>`, Sendungen bekommen `rechnung_id`, PDF nach
-   `daten/rechnungen/`, Mail an die Rechnungs-E-Mail. Status bezahlt / storniert im Dashboard
-   (Stornieren gibt die Sendungen wieder zur Abrechnung frei).
+   erzeugen“): mit Lexware Office vergibt Lexware Nummer und PDF (Kontakt der Firma, netto,
+   Zahlungsziel), sonst Nummer `NR-<Jahr>-<lfd. Nummer>` und PDF nach `daten/rechnungen/`;
+   Sendungen bekommen `rechnung_id`, Mail mit PDF (und Nachweisen zu Nachberechnungen) an die
+   Rechnungs-E-Mail. Status bezahlt kommt aus Lexware (Cron/Webhook) oder wird im Dashboard
+   gesetzt; Stornieren gibt die Sendungen wieder zur Abrechnung frei.
 
 Absender, Bankverbindung und Pflichtangaben der Rechnung stehen in der Konfiguration unter
 `firma`; `rechnung.zahlungszielTage` und das Zahlungsziel je Firma bestimmen die Fälligkeit.
@@ -118,8 +143,11 @@ lib/versand.php        Angebote je Zelle, Zusatzleistungen, bestellungAnlegen(),
 lib/carrier.php        Carrier-Schnittstelle (Label, Abholung, Tracking) — noch Stubs
 lib/label_pdf.php      NEOS-Label (Code 128) als PDF, A6 einzeln oder A4 vierfach
 lib/kunden.php         Konten, Firmen, Anmeldelinks, Einladungs-/Link-Mails
-lib/rechnungen.php     Sammelrechnung erzeugen, Nummernkreis, Status
-lib/rechnung_pdf.php   PDF mit FPDF (lib/pdf/, vendored)
+lib/rechnungen.php     Sammelrechnung erzeugen, Nummernkreis, Status (mit Lexware: Übergabe statt eigener Nummer)
+lib/rechnung_pdf.php   PDF mit FPDF (lib/pdf/, vendored) — Rückfallebene ohne Lexware
+lib/preislisten.php    Kundenpreislisten (je Konto eine Matrix), Anzeige- und Angebotsfunktionen
+lib/nachberechnung_pdf.php  Nachweis Gewichtsabweichung (PDF) zur Nachberechnung
+lib/lexware.php        Lexware Office: Kontakte, Rechnungen, Gutschriften, PDFs, Zahlungsstatus, Warteschlange
 ```
 
 ## Lokal ausprobieren

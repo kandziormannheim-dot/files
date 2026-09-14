@@ -94,8 +94,13 @@ function rechnungNummerNeu(PDO $db, int $jahr): string
     return sprintf('%s-%d-%04d', $praefix, $jahr, $lfd);
 }
 
+/** Pfad des Rechnungs-PDFs: aus Lexware (daten/lexware/) oder eigenes (daten/rechnungen/). */
 function rechnungPfad(array $rechnung): string
 {
+    if ((string) ($rechnung['lexware_id'] ?? '') !== '') {
+        return lexwarePdfPfad((string) $rechnung['lexware_id']);
+    }
+
     return rtrim((string) konfig()['daten'], '/') . '/rechnungen/' . basename((string) $rechnung['pdf_datei']);
 }
 
@@ -122,13 +127,15 @@ function rechnungErzeugen(int $firmaId, string $von, string $bis, string $erstel
     $faellig = gmdate('Y-m-d', time() + (int) $firma['zahlungsziel_tage'] * 86400);
 
     $db = datenbank();
+    $lexware = lexwareAktiv();
     $db->beginTransaction();
     try {
-        $nummer = rechnungNummerNeu($db, (int) gmdate('Y'));
+        // Mit Lexware vergibt Lexware die Nummer; bis dahin ein Platzhalter, den das Portal als „wird erstellt“ zeigt.
+        $nummer = $lexware ? 'ENTWURF-' . gmdate('YmdHis') . '-' . bin2hex(random_bytes(2)) : rechnungNummerNeu($db, (int) gmdate('Y'));
         $db->prepare(<<<'SQL'
             INSERT INTO rechnungen (nummer, firma_id, zeitraum_von, zeitraum_bis, netto_cent, mwst_cent, brutto_cent, status, faellig, pdf_datei, erstellt, erstellt_von)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'offen', ?, ?, ?, ?)
-        SQL)->execute([$nummer, $firmaId, $von, $bis, $netto, $mwst, $netto + $mwst, $faellig, $nummer . '.pdf', jetzt(), $erstelltVon]);
+        SQL)->execute([$nummer, $firmaId, $von, $bis, $netto, $mwst, $netto + $mwst, $faellig, $lexware ? '' : $nummer . '.pdf', jetzt(), $erstelltVon]);
         $id = (int) $db->lastInsertId();
         $st = $db->prepare('UPDATE bestellungen SET rechnung_id = ?, aktualisiert = ? WHERE id = ? AND rechnung_id IS NULL');
         foreach ($positionen as $p) {
@@ -140,6 +147,13 @@ function rechnungErzeugen(int $firmaId, string $von, string $bis, string $erstel
         throw $e;
     }
     $rechnung = rechnungLaden($id);
+    if ($lexware) {
+        // Nummer, PDF und Mail kommen mit der Übergabe an Lexware (sofort, sonst per aufgaben.php lexware)
+        lexwareAuftragAnlegen('rechnung', 'rechnungen', $id);
+        lexwareAuftraegeAbarbeiten(3);
+
+        return rechnungLaden($id) ?? $rechnung;
+    }
     rechnungPdfErzeugen($rechnung, $firma, $positionen);
     try {
         rechnungMailSenden($rechnung, $firma);
@@ -176,10 +190,18 @@ function rechnungMailSenden(array $rechnung, array $firma): void
     }
     $basis = rtrim((string) konfig()['basisUrl'], '/');
     $betreff = 'NEOS Rechnung ' . $rechnung['nummer'];
+    $pdf = rechnungPfad($rechnung);
+    $anhaenge = is_file($pdf) ? [['name' => 'NEOS-Rechnung-' . $rechnung['nummer'] . '.pdf', 'datei' => $pdf]] : [];
+    // Nachweise zu Nachberechnungen auf dieser Rechnung als weitere Anlagen
+    foreach (rechnungPositionen((int) $rechnung['id']) as $p) {
+        if (($p['art'] ?? '') === 'nachberechnung' && nachberechnungNachweisPfad($p) !== '' && is_file(nachberechnungNachweisPfad($p))) {
+            $anhaenge[] = ['name' => 'NEOS-Nachweis-' . $p['ext_ref'] . '.pdf', 'datei' => nachberechnungNachweisPfad($p)];
+        }
+    }
     $koerper = implode("\n", [
         'Guten Tag,',
         '',
-        'für ' . $firma['name'] . ' liegt eine neue Rechnung vor.',
+        'für ' . $firma['name'] . ' liegt eine neue Rechnung vor' . ($anhaenge !== [] ? ' (PDF im Anhang)' : '') . '.',
         '',
         'Rechnung:     ' . $rechnung['nummer'],
         'Zeitraum:     ' . datumAnzeigen($rechnung['zeitraum_von']) . ' – ' . datumAnzeigen(gmdate('Y-m-d\TH:i:s\Z', strtotime((string) $rechnung['zeitraum_bis']) - 1)),
@@ -192,5 +214,5 @@ function rechnungMailSenden(array $rechnung, array $firma): void
         '',
         'NEOS Logistics UG · info@neos24.com',
     ]);
-    mailSenden($an, $betreff, $koerper);
+    mailSenden($an, $betreff, $koerper, $anhaenge);
 }

@@ -154,6 +154,19 @@ if ($pfad === '/bestellungen') {
     ansicht('bestellungen', ['titel' => 'Bestellungen & Sendungen', 'zeilen' => $st->fetchAll(), 'gesamt' => $gesamt, 'seite' => $seite, 'status' => $status, 'versand' => $versand, 'abholung' => $abholung, 'q' => $q, 'aktiv' => 'bestellungen']);
 }
 
+if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})/(nachweis|rechnung)\.pdf$#', $pfad, $t)) {
+    rechtErzwingen('bestellungen');
+    $b = bestellungLaden('ext_ref', $t[1]);
+    $datei = $b === null ? '' : ($t[2] === 'nachweis' ? nachberechnungNachweisPfad($b) : lexwarePdfPfad((string) ($b['lexware_id'] ?? '')));
+    if ($b === null || $datei === '' || !is_file($datei)) {
+        fehlerSeite(404, 'Nicht gefunden', $t[2] === 'nachweis' ? 'Zu dieser Bestellung gibt es keinen Nachweis.' : 'Zu dieser Bestellung liegt noch keine Lexware-Rechnung vor.');
+    }
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="NEOS-' . ucfirst($t[2]) . '-' . $b['ext_ref'] . '.pdf"');
+    readfile($datei);
+    exit;
+}
+
 if (preg_match('#^/bestellungen/(NE-\d{4}-[0-9A-F]{8})/label\.pdf$#', $pfad, $t)) {
     rechtErzwingen('bestellungen');
     $b = bestellungLaden('ext_ref', $t[1]);
@@ -381,6 +394,8 @@ if (preg_match('#^/preise/(land|gewichtsklasse|carrier)(/loeschen)?$#', $pfad, $
                 if (mb_strlen($name) < 2) {
                     throw new InvalidArgumentException('Bitte einen Carrier-Namen angeben.');
                 }
+                $volumenfaktor = max(0, min(20000, (int) feld('volumenfaktor', 6)));
+                $gebuehr = centAusEingabe(feld('gewichtsgebuehr', 10)) ?? 0;
                 $st = $db->prepare('SELECT id FROM carrier WHERE name = ?');
                 $st->execute([$name]);
                 $vorhanden = $st->fetchColumn();
@@ -388,15 +403,16 @@ if (preg_match('#^/preise/(land|gewichtsklasse|carrier)(/loeschen)?$#', $pfad, $
                     if ($vorhanden !== false && (int) $vorhanden !== $id) {
                         throw new InvalidArgumentException('Diesen Carrier gibt es schon.');
                     }
-                    $db->prepare('UPDATE carrier SET name = ?, aktiv = ? WHERE id = ?')->execute([$name, $aktiv, $id]);
-                    protokollieren('carrier.geaendert', 'carrier', $id, ['name' => $name, 'aktiv' => $aktiv]);
+                    $db->prepare('UPDATE carrier SET name = ?, aktiv = ?, volumenfaktor = ?, gewichtsgebuehr_cent = ? WHERE id = ?')->execute([$name, $aktiv, $volumenfaktor, $gebuehr, $id]);
+                    protokollieren('carrier.geaendert', 'carrier', $id, ['name' => $name, 'aktiv' => $aktiv, 'volumenfaktor' => $volumenfaktor, 'gebuehr' => $gebuehr]);
                 } else {
                     if ($vorhanden !== false) {
                         throw new InvalidArgumentException('Diesen Carrier gibt es schon.');
                     }
-                    $db->prepare('INSERT INTO carrier (name, aktiv) VALUES (?, ?)')->execute([$name, $aktiv]);
+                    $db->prepare('INSERT INTO carrier (name, aktiv, volumenfaktor, gewichtsgebuehr_cent) VALUES (?, ?, ?, ?)')->execute([$name, $aktiv, $volumenfaktor, $gebuehr]);
                     protokollieren('carrier.angelegt', 'carrier', (int) $db->lastInsertId(), ['name' => $name]);
                 }
+                preislistenCacheLeeren();
                 hinweisSetzen('Carrier „' . $name . '“ gespeichert.');
             }
         }
@@ -714,6 +730,95 @@ if (preg_match('#^/kunden/privat/(\d+)$#', $pfad, $t)) {
     ansicht('privatkunde', ['titel' => $kunde['name'], 'kunde' => $kunde, 'bestellungen' => $st->fetchAll(), 'guthaben' => guthabenStand($kunde), 'buchungen' => guthabenBuchungen($kunde, 20), 'reklamationen' => $rk->fetchAll(), 'aktiv' => 'kunden']);
 }
 
+// Kundenpreislisten: je Firma oder Privatkunde eine eigene Matrix
+if ($pfad === '/kunden/preisliste/anlegen' && $methode === 'POST') {
+    rechtErzwingen('kunden', 'bearbeiten');
+    $firmaId = (int) feld('firma_id', 10) ?: null;
+    $kundeId = (int) feld('kunde_id', 10) ?: null;
+    try {
+        $id = preislisteAnlegen($firmaId ? null : $kundeId, $firmaId, feld('name', 80), (float) str_replace(',', '.', feld('prozent', 8)), $ich['name'], feld('fehlend', 10));
+        protokollieren('preisliste.angelegt', 'preisliste', $id, ['firma_id' => $firmaId, 'kunde_id' => $kundeId, 'prozent' => feld('prozent', 8)]);
+        hinweisSetzen('Preisliste angelegt — alle Zellen aus der Routingmatrix übernommen. Jetzt einzelne Preise anpassen oder eine Datei importieren.');
+        umleiten(url('kunden/preisliste/' . $id));
+    } catch (InvalidArgumentException $e) {
+        hinweisSetzen($e->getMessage(), 'fehler');
+        umleiten(url($firmaId ? 'kunden/firmen/' . $firmaId : 'kunden/privat/' . $kundeId));
+    }
+}
+
+if (preg_match('#^/kunden/preisliste/(\d+)(?:/(zellen|zusatz|einstellungen|import|loeschen))?$#', $pfad, $t)) {
+    rechtErzwingen('kunden');
+    $liste = preislisteLaden((int) $t[1]);
+    if ($liste === null) {
+        fehlerSeite(404, 'Nicht gefunden', 'Diese Preisliste gibt es nicht.');
+    }
+    $zurueck = $liste['firma_id'] ? url('kunden/firmen/' . $liste['firma_id']) : url('kunden/privat/' . $liste['kunde_id']);
+    $aktion = $t[2] ?? '';
+    if ($aktion !== '' && $methode === 'POST') {
+        rechtErzwingen('kunden', $aktion === 'loeschen' ? 'loeschen' : 'bearbeiten');
+        try {
+            if ($aktion === 'zellen') {
+                $zellen = [];
+                foreach (is_array($_POST['zelle'] ?? null) ? $_POST['zelle'] : [] as $land => $klassen) {
+                    foreach (is_array($klassen) ? $klassen : [] as $gkId => $carrierListe) {
+                        foreach (is_array($carrierListe) ? $carrierListe : [] as $carrierId => $wert) {
+                            $wert = trim((string) $wert);
+                            $zellen[] = ['land' => (string) $land, 'gk_id' => (int) $gkId, 'carrier_id' => (int) $carrierId, 'cent' => $wert === '' ? null : (centAusEingabe($wert) ?? null)];
+                        }
+                    }
+                }
+                $z = preislistePreiseSetzen((int) $liste['id'], $zellen, $ich['name']);
+                protokollieren('preisliste.zellen', 'preisliste', (int) $liste['id'], $z);
+                hinweisSetzen('Preise gespeichert: ' . $z['gesetzt'] . ' Zellen mit eigenem Preis' . ($z['geloescht'] > 0 ? ', ' . $z['geloescht'] . ' auf Standard zurückgesetzt' : '') . '.');
+            } elseif ($aktion === 'zusatz') {
+                $preise = [];
+                foreach (is_array($_POST['zusatz'] ?? null) ? $_POST['zusatz'] : [] as $code => $wert) {
+                    $wert = trim((string) $wert);
+                    $preise[(string) $code] = $wert === '' ? null : (centAusEingabe($wert) ?? null);
+                }
+                preislisteZusatzSetzen((int) $liste['id'], $preise, $ich['name']);
+                hinweisSetzen('Zusatzleistungspreise gespeichert.');
+            } elseif ($aktion === 'einstellungen') {
+                preislisteEinstellungen((int) $liste['id'], feld('name', 80), feld('fehlend', 10), feld('notiz', 1000), !empty($_POST['aktiv']), $ich['name']);
+                hinweisSetzen('Einstellungen gespeichert.');
+            } elseif ($aktion === 'import') {
+                $datei = $_FILES['datei'] ?? null;
+                if ($datei === null || ($datei['error'] ?? 1) !== UPLOAD_ERR_OK || (int) $datei['size'] > 5 * 1024 * 1024) {
+                    throw new InvalidArgumentException('Bitte eine Preisliste (XLSX oder CSV, bis 5 MB) hochladen.');
+                }
+                $tabelle = tabelleLesen((string) $datei['tmp_name'], (string) $datei['name']);
+                $matrix = null;
+                $fehlerText = '';
+                foreach ($tabelle['blaetter'] as $blatt) {
+                    try {
+                        $matrix = einkaufMatrixLesen($blatt);
+                        break;
+                    } catch (InvalidArgumentException $e) {
+                        $fehlerText = $e->getMessage();
+                    }
+                }
+                if ($matrix === null) {
+                    throw new InvalidArgumentException($fehlerText !== '' ? $fehlerText : 'Keine Preismatrix gefunden.');
+                }
+                $z = preislisteImportieren((int) $liste['id'], $matrix, $ich['name'], !empty($_POST['alle_carrier']));
+                protokollieren('preisliste.import', 'preisliste', (int) $liste['id'], $z + ['datei' => $datei['name']]);
+                hinweisSetzen($z['gesetzt'] . ' Zellen aus „' . $datei['name'] . '“ übernommen' . ($z['ohne_klasse'] > 0 ? ', ' . $z['ohne_klasse'] . ' Gewichtsgrenzen ohne passende Klasse übersprungen' : '') . ($z['ohne_route'] > 0 ? ', ' . $z['ohne_route'] . ' Zellen ohne Routing übersprungen' : '') . ($matrix['unbekannt'] !== [] ? '; nicht erkannt: ' . implode(', ', array_slice($matrix['unbekannt'], 0, 8)) : '') . '.');
+            } elseif ($aktion === 'loeschen') {
+                preislisteLoeschen((int) $liste['id']);
+                protokollieren('preisliste.geloescht', 'preisliste', (int) $liste['id']);
+                hinweisSetzen('Preisliste gelöscht — das Konto rechnet wieder mit der Routingmatrix.');
+                umleiten($zurueck);
+            }
+        } catch (InvalidArgumentException $e) {
+            hinweisSetzen($e->getMessage(), 'fehler');
+        }
+        umleiten(url('kunden/preisliste/' . $liste['id']));
+    }
+    ansicht('preisliste', ['titel' => 'Preisliste ' . $liste['name'], 'liste' => preislisteLaden((int) $liste['id']), 'zurueck' => $zurueck, 'matrix' => preislisteMatrix((int) $liste['id']),
+        'laender' => array_values(array_filter(laenderAlle(), static fn (array $l): bool => (int) $l['aktiv'] === 1)), 'klassen' => array_values(array_filter(gewichtsklassenAlle(), static fn (array $g): bool => (int) $g['aktiv'] === 1)),
+        'zusatz' => zusatzleistungen(true, (int) $liste['id']), 'mwst' => (int) konfig()['mwstSatz'], 'aktiv' => 'kunden']);
+}
+
 if (preg_match('#^/kunden/anfragen/(\d+)(?:/(status|notiz|loeschen))?$#', $pfad, $t)) {
     rechtErzwingen('kunden');
     $st = $db->prepare('SELECT a.*, b.name AS bearbeiter FROM anfragen a LEFT JOIN benutzer b ON b.id = a.bearbeiter_id WHERE a.id = ?');
@@ -749,22 +854,45 @@ if (preg_match('#^/kunden/anfragen/(\d+)(?:/(status|notiz|loeschen))?$#', $pfad,
 
 // ------------------------------------------------------------------ Rechnungen
 
-if ($pfad === '/rechnungen') {
+if ($pfad === '/rechnungen' || $pfad === '/rechnungen/lexware') {
     rechtErzwingen('rechnungen');
+    if ($pfad === '/rechnungen/lexware' && $methode === 'POST') {
+        rechtErzwingen('rechnungen', 'bearbeiten');
+        $was = feld('was', 12);
+        if ($was === 'abgleich') {
+            $n = lexwareStatusAbgleichen();
+            hinweisSetzen('Zahlungsstatus mit Lexware abgeglichen — ' . $n . ' Rechnung(en) geändert.');
+        } else {
+            $db->exec("UPDATE lexware_auftraege SET status = 'offen', versuche = 0 WHERE status = 'fehler'");
+            $z = lexwareAuftraegeAbarbeiten(50);
+            hinweisSetzen('Lexware-Warteschlange abgearbeitet: ' . $z['erledigt'] . ' erledigt, ' . $z['fehler'] . ' Fehler.');
+        }
+        umleiten(url('rechnungen'));
+    }
     $status = saeubern($_GET['status'] ?? '', 20);
-    ansicht('rechnungen', ['titel' => 'Rechnungen', 'zeilen' => rechnungenAlle($status), 'status' => $status, 'firmen' => firmenAlle(), 'aktiv' => 'rechnungen']);
+    ansicht('rechnungen', ['titel' => 'Rechnungen', 'zeilen' => rechnungenAlle($status), 'status' => $status, 'firmen' => firmenAlle(), 'lexware' => lexwareAktiv(),
+        'auftraege' => $db->query("SELECT * FROM lexware_auftraege WHERE status <> 'erledigt' ORDER BY id DESC LIMIT 50")->fetchAll(), 'aktiv' => 'rechnungen']);
 }
 
-if (preg_match('#^/rechnungen/(\d+)(\.pdf)?(?:/(status))?$#', $pfad, $t)) {
+if (preg_match('#^/rechnungen/(\d+)(\.pdf)?(?:/(status|lexware))?$#', $pfad, $t)) {
     rechtErzwingen('rechnungen');
     $r = rechnungLaden((int) $t[1]);
     if ($r === null) {
         fehlerSeite(404, 'Nicht gefunden', 'Diese Rechnung gibt es nicht.');
     }
+    if (($t[3] ?? '') === 'lexware' && $methode === 'POST') {
+        rechtErzwingen('rechnungen', 'bearbeiten');
+        $db->prepare("UPDATE lexware_auftraege SET status = 'offen', versuche = 0 WHERE bezug_tabelle = 'rechnungen' AND bezug_id = ? AND status <> 'erledigt'")->execute([$r['id']]);
+        lexwareAuftragAnlegen('rechnung', 'rechnungen', (int) $r['id']);
+        $z = lexwareAuftraegeAbarbeiten(5);
+        $r = rechnungLaden((int) $r['id']) ?? $r;
+        hinweisSetzen($r['lexware_id'] !== '' ? 'Rechnung an Lexware übergeben: ' . $r['lexware_nummer'] . '.' : 'Übergabe fehlgeschlagen — Fehler siehe Warteschlange unter Rechnungen.');
+        umleiten(url('rechnungen/' . $r['id']));
+    }
     if (($t[2] ?? '') === '.pdf') {
         $datei = rechnungPfad($r);
         if (!is_file($datei)) {
-            fehlerSeite(404, 'Nicht gefunden', 'Die PDF-Datei fehlt im Datenverzeichnis.');
+            fehlerSeite(404, 'Nicht gefunden', lexwareAktiv() && $r['lexware_id'] === '' ? 'Die Rechnung ist noch nicht an Lexware übergeben — PDF folgt.' : 'Die PDF-Datei fehlt im Datenverzeichnis.');
         }
         header('Content-Type: application/pdf');
         header('Content-Disposition: inline; filename="' . $r['nummer'] . '.pdf"');
@@ -805,11 +933,28 @@ if ($pfad === '/reklamationen') {
     ansicht('reklamationen', ['titel' => 'Reklamationen', 'zeilen' => $st->fetchAll(), 'status' => $status, 'aktiv' => 'reklamationen']);
 }
 
-if (preg_match('#^/reklamationen/(\d+)(?:/(status))?$#', $pfad, $t)) {
+if (preg_match('#^/reklamationen/(\d+)(?:/(status|storno))?$#', $pfad, $t)) {
     rechtErzwingen('reklamationen');
     $r = reklamationLaden((int) $t[1]);
     if ($r === null) {
         fehlerSeite(404, 'Nicht gefunden', 'Diese Reklamation gibt es nicht.');
+    }
+    if (($t[2] ?? '') === 'storno' && $methode === 'POST') {
+        rechtErzwingen('reklamationen', 'bearbeiten');
+        $nb = bestellungLaden('id', (string) $r['bestellung_id']);
+        if ($nb === null || $nb['art'] !== 'nachberechnung') {
+            hinweisSetzen('Diese Reklamation gehört zu keiner Nachberechnung.', 'fehler');
+        } else {
+            $grund = feld('grund', 500);
+            rpNachberechnungStornieren($nb, $ich['name'], $grund);
+            reklamationFortschreiben($r, 'anerkannt', $r['antwort'] !== '' ? $r['antwort'] : 'Wir haben die Nachberechnung geprüft und zurückgenommen.' . ($grund !== '' ? ' ' . $grund : ''), 0, $ich['name']);
+            protokollieren('nachberechnung.storniert', 'bestellung', $nb['ext_ref'], ['reklamation' => (int) $r['id'], 'grund' => $grund]);
+            if (!empty($_POST['mail'])) {
+                reklamationAntwortSenden(reklamationLaden((int) $r['id']) ?? $r);
+            }
+            hinweisSetzen('Nachberechnung ' . $nb['ext_ref'] . ' zurückgenommen' . (in_array($nb['status'], ['bezahlt', 'beauftragt'], true) ? ' — bezahlter Betrag als Guthaben erstattet' . (lexwareAktiv() ? ', Gutschrift an Lexware übergeben' : '') : '') . '.');
+        }
+        umleiten(url('reklamationen/' . $r['id']));
     }
     if (($t[2] ?? '') === 'status' && $methode === 'POST') {
         rechtErzwingen('reklamationen', 'bearbeiten');
@@ -866,7 +1011,7 @@ if ($pfad === '/rechnungspruefung') {
     ansicht('rechnungspruefung', ['titel' => 'Rechnungsprüfung', 'zeilen' => rpRechnungenAlle($status), 'status' => $status, 'carrier' => carrierAlle(), 'aktiv' => 'rechnungspruefung']);
 }
 
-if (preg_match('#^/rechnungspruefung/(\d+)(?:/(zuordnung|pruefen|status|notiz|kopf|beanstandung\.csv|rechnung\.pdf|loeschen|alle-buchen))?$#', $pfad, $t)) {
+if (preg_match('#^/rechnungspruefung/(\d+)(?:/(zuordnung|pruefen|status|notiz|kopf|beanstandung\.csv|rechnung\.pdf|loeschen|alle-buchen|gutschrift))?$#', $pfad, $t)) {
     rechtErzwingen('rechnungspruefung');
     $r = rpRechnungLaden((int) $t[1]);
     if ($r === null) {
@@ -905,8 +1050,9 @@ if (preg_match('#^/rechnungspruefung/(\d+)(?:/(zuordnung|pruefen|status|notiz|ko
                 if (!empty($_POST['profil'])) {
                     rpProfilSpeichern((int) $r['carrier_id'], $spalten, $einheit, $csv['kopf']);
                 }
-                protokollieren('lieferantenrechnung.geprueft', 'lieferantenrechnung', (int) $r['id'], ['positionen' => $n]);
-                hinweisSetzen($n . ' Positionen eingelesen und geprüft.');
+                $auto = rpAutomatischBuchen((int) $r['id'], 'auto (' . $ich['name'] . ')');
+                protokollieren('lieferantenrechnung.geprueft', 'lieferantenrechnung', (int) $r['id'], ['positionen' => $n, 'automatik' => $auto]);
+                hinweisSetzen($n . ' Positionen eingelesen und geprüft.' . ($auto['gebucht'] > 0 ? ' Automatisch nachberechnet: ' . $auto['gebucht'] . ' (' . euro($auto['netto']) . ' netto).' : '') . ($auto['uebersprungen'] > 0 ? ' ' . $auto['uebersprungen'] . ' warten auf Freigabe.' : ''));
                 umleiten(url('rechnungspruefung/' . $r['id']));
             } catch (InvalidArgumentException $e) {
                 hinweisSetzen($e->getMessage(), 'fehler');
@@ -939,7 +1085,13 @@ if (preg_match('#^/rechnungspruefung/(\d+)(?:/(zuordnung|pruefen|status|notiz|ko
         try {
             if ($aktion === 'pruefen') {
                 rpRechnungPruefen((int) $r['id']);
-                hinweisSetzen('Alle Positionen neu geprüft.');
+                $auto = !empty($_POST['automatik']) ? rpAutomatischBuchen((int) $r['id'], 'auto (' . $ich['name'] . ')') : ['gebucht' => 0, 'netto' => 0, 'uebersprungen' => 0];
+                hinweisSetzen('Alle Positionen neu geprüft.' . ($auto['gebucht'] > 0 ? ' Automatisch nachberechnet: ' . $auto['gebucht'] . ' (' . euro($auto['netto']) . ' netto).' : ''));
+            } elseif ($aktion === 'gutschrift') {
+                $db->prepare('UPDATE lieferantenrechnungen SET gutschrift_cent = ?, gutschrift_nummer = ?, gutschrift_datum = ?, aktualisiert = ? WHERE id = ?')
+                   ->execute([centAusEingabe(feld('gutschrift', 14)) ?? 0, feld('gutschrift_nummer', 40), rpDatumNormalisieren(feld('gutschrift_datum', 12)), jetzt(), $r['id']]);
+                protokollieren('lieferantenrechnung.gutschrift', 'lieferantenrechnung', (int) $r['id'], ['betrag' => centAusEingabe(feld('gutschrift', 14)) ?? 0]);
+                hinweisSetzen('Gutschrift des Lieferanten vermerkt.');
             } elseif ($aktion === 'status') {
                 $neu = feld('status', 20);
                 if (!isset(RP_STATUS[$neu]) || $neu === 'zuordnung') {

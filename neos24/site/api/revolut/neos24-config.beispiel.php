@@ -66,7 +66,40 @@ return [
         'email' => 'info@neos24.com', 'web' => 'neos24.com',
     ],
     'rechnung' => ['praefix' => 'NR', 'zahlungszielTage' => 14], // Nummer NR-<Jahr>-0001, Fälligkeit
-    'rechnungspruefung' => ['toleranzCent' => 2],          // Lieferantenrechnung: erlaubte Abweichung vom Einkaufspreis je Position
+    'rechnungspruefung' => [
+        'toleranzCent' => 2,                               // Lieferantenrechnung: erlaubte Abweichung vom Einkaufspreis je Position
+        'auto' => [                                        // Nachberechnung ohne Freigabe, wenn alle Regeln erfüllt sind
+            'aktiv' => true,
+            'mindestGramm' => 500, 'mindestProzent' => 10, // Gewichtsdifferenz mindestens 500 g UND 10 % des gebuchten Gewichts
+            'bagatelleCent' => 100,                        // darunter wird nichts nachberechnet
+            'maxPositionCent' => 5000, 'maxKundeCent' => 20000, // darüber wartet die Position auf Freigabe im Dashboard
+        ],
+        'erinnerungTage' => 14,                            // Erinnerung an offene Nachberechnungen (Revolut) — php intern/aufgaben.php erinnern
+        'widerspruchTage' => 14,                           // Widerspruchsfrist im Kundenportal
+    ],
+
+    // Lexware Office (Cloud). API-Key unter Lexware Office → Einstellungen → Erweiterungen → Public API.
+    // Ist 'aktiv' gesetzt, vergibt Lexware die Rechnungsnummern und erzeugt die PDFs; die Plattform übergibt
+    // Sammelrechnungen, Privatkunden-Bestellungen und Nachberechnungen als Rechnung, Stornos als Gutschrift.
+    'lexware' => [
+        'aktiv' => false,
+        'apiKey' => '',
+        'basisUrl' => 'https://api.lexware.io/v1',
+        'zahlungsziel' => 14,                              // Tage, wenn die Firma kein eigenes Zahlungsziel hat
+        'privatkunden' => true,                            // bezahlte Privatkunden-Bestellungen je Bestellung als Rechnung übergeben
+        'einleitung' => 'Vielen Dank für Ihren Auftrag. Wir berechnen Ihnen folgende Leistungen:',
+        'schlusstext' => 'Fragen zur Rechnung beantworten wir unter info@neos24.com.',
+        'webhookGeheimnis' => '',                          // Ausgabe von: php intern/aufgaben.php lexware einrichten
+        'zeitlimit' => 20,
+    ],
+
+    // IMAP-Postfach, aus dem Carrier-Rechnungen (PDF + CSV/XLSX) automatisch eingelesen werden:
+    // php intern/aufgaben.php postfach (Cron, z. B. stündlich). Absender → Carrier-Name wie in Preise & Zielländer.
+    'postfach' => [
+        'host' => '', 'port' => 993, 'benutzer' => '', 'passwort' => '',
+        'ordner' => 'INBOX', 'erledigtOrdner' => 'Verarbeitet',
+        'absender' => ['rechnung@example-carrier.de' => 'DHL'],
+    ],
 
     // Öffentliche Adresse der Seite ohne Schrägstrich am Ende; wird für die
     // Rücksprung-URL nach 3-D-Secure gebraucht.

@@ -8,7 +8,7 @@
     <form method="post" action="<?= e(url($pfad . '/' . $b['ext_ref'] . '/reklamation')) ?>" class="form k-form" novalidate>
       <?= csrfFeld() ?>
       <div class="form-row form-row--2">
-        <div class="field"><label for="rk-art"><?= e(t('reklamationen.art')) ?></label><select id="rk-art" name="art" required><option value=""><?= e(t('neu.bitte_waehlen')) ?></option><?php foreach (REKLAMATION_ARTEN as $code => $n) { ?><option value="<?= e($code) ?>" <?= $werte['art'] === $code ? 'selected' : '' ?>><?= e($n[$sp]) ?></option><?php } ?></select></div>
+        <div class="field"><label for="rk-art"><?= e(t('reklamationen.art')) ?></label><select id="rk-art" name="art" required><option value=""><?= e(t('neu.bitte_waehlen')) ?></option><?php foreach (REKLAMATION_ARTEN as $code => $n) { if ($code === 'nachberechnung' && $b['art'] !== 'nachberechnung') { continue; } ?><option value="<?= e($code) ?>" <?= $werte['art'] === $code ? 'selected' : '' ?>><?= e($n[$sp]) ?></option><?php } ?></select></div>
         <div class="field"><label for="rk-betrag"><?= e(t('reklamationen.betrag')) ?></label><input id="rk-betrag" name="betrag" type="text" inputmode="decimal" value="<?= e($werte['betrag']) ?>"></div>
       </div>
       <div class="field"><label for="rk-text"><?= e(t('reklamationen.beschreibung')) ?></label><textarea id="rk-text" name="beschreibung" rows="6" minlength="10" required><?= e($werte['beschreibung']) ?></textarea></div>

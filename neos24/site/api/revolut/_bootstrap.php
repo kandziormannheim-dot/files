@@ -79,7 +79,24 @@ function konfig(): array
             'iban' => '', 'bic' => '', 'bank' => '', 'email' => 'info@neos24.com', 'web' => 'neos24.com',
         ],
         'rechnung' => ['praefix' => 'NR', 'zahlungszielTage' => 14],
-        'rechnungspruefung' => ['toleranzCent' => 2],   // Abweichung Einkaufspreis, die noch als „in Ordnung“ gilt
+        'rechnungspruefung' => [
+            'toleranzCent' => 2,            // Abweichung Einkaufspreis, die noch als „in Ordnung“ gilt
+            'auto' => [                     // Nachberechnung ohne Freigabe, wenn alle Regeln erfüllt sind
+                'aktiv' => true, 'mindestGramm' => 500, 'mindestProzent' => 10,
+                'bagatelleCent' => 100, 'maxPositionCent' => 5000, 'maxKundeCent' => 20000,
+            ],
+            'erinnerungTage' => 14,         // Erinnerung an offene Nachberechnungen (Revolut) nach n Tagen
+            'widerspruchTage' => 14,        // Frist für den Widerspruch im Portal
+        ],
+        'lexware' => [                      // Lexware Office (Cloud): Rechnungen, Gutschriften, Kontakte
+            'aktiv' => false, 'apiKey' => '', 'basisUrl' => 'https://api.lexware.io/v1',
+            'zahlungsziel' => 14, 'privatkunden' => true, 'einleitung' => '', 'schlusstext' => '',
+            'webhookGeheimnis' => '', 'zeitlimit' => 20,
+        ],
+        'postfach' => [                     // IMAP-Postfach für Carrier-Rechnungen (aufgaben.php postfach)
+            'host' => '', 'port' => 993, 'benutzer' => '', 'passwort' => '', 'ordner' => 'INBOX',
+            'erledigtOrdner' => '', 'absender' => [],   // 'rechnung@carrier.de' => 'DHL'
+        ],
         'basisUrl' => '',
         'absender' => '',
         'absenderName' => 'NEOS',
@@ -664,7 +681,73 @@ function schemaAnlegen(PDO $db): void
         }
     }
 
+    // Kundenpreislisten (je Kunde/Firma eine Matrix), Lexware-Warteschlange, Nachweise, Automatik, Carrier-Felder
+    $db->exec(<<<'SQL'
+        CREATE TABLE IF NOT EXISTS preislisten (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            name             TEXT NOT NULL DEFAULT '',
+            kunde_id         INTEGER,
+            firma_id         INTEGER,
+            fehlend          TEXT NOT NULL DEFAULT 'standard',
+            aktiv            INTEGER NOT NULL DEFAULT 1,
+            notiz            TEXT NOT NULL DEFAULT '',
+            erstellt         TEXT NOT NULL,
+            aktualisiert     TEXT NOT NULL,
+            aktualisiert_von TEXT NOT NULL DEFAULT ''
+        );
+        CREATE TABLE IF NOT EXISTS preislisten_preise (
+            preisliste_id     INTEGER NOT NULL REFERENCES preislisten(id) ON DELETE CASCADE,
+            land_code         TEXT NOT NULL,
+            gewichtsklasse_id INTEGER NOT NULL,
+            carrier_id        INTEGER NOT NULL,
+            netto_cent        INTEGER NOT NULL DEFAULT 0,
+            UNIQUE (preisliste_id, land_code, gewichtsklasse_id, carrier_id)
+        );
+        CREATE TABLE IF NOT EXISTS preislisten_zusatz (
+            preisliste_id INTEGER NOT NULL REFERENCES preislisten(id) ON DELETE CASCADE,
+            code          TEXT NOT NULL,
+            preis_cent    INTEGER NOT NULL DEFAULT 0,
+            UNIQUE (preisliste_id, code)
+        );
+        CREATE TABLE IF NOT EXISTS lexware_auftraege (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            art           TEXT NOT NULL,
+            bezug_tabelle TEXT NOT NULL,
+            bezug_id      INTEGER NOT NULL,
+            status        TEXT NOT NULL DEFAULT 'offen',
+            versuche      INTEGER NOT NULL DEFAULT 0,
+            fehler_text   TEXT NOT NULL DEFAULT '',
+            daten_json    TEXT NOT NULL DEFAULT '{}',
+            erstellt      TEXT NOT NULL,
+            erledigt      TEXT
+        );
+        CREATE INDEX IF NOT EXISTS lexware_auftraege_status ON lexware_auftraege (status, erstellt);
+    SQL);
+    spaltenErgaenzen($db, 'firmen', ['preisliste_id' => 'INTEGER', 'lexware_kontakt_id' => "TEXT NOT NULL DEFAULT ''"]);
+    spaltenErgaenzen($db, 'kunden', ['preisliste_id' => 'INTEGER', 'lexware_kontakt_id' => "TEXT NOT NULL DEFAULT ''"]);
+    spaltenErgaenzen($db, 'bestellungen', ['preisliste_id' => 'INTEGER', 'volumen_gramm' => 'INTEGER NOT NULL DEFAULT 0', 'beleg_datei' => "TEXT NOT NULL DEFAULT ''",
+        'lexware_id' => "TEXT NOT NULL DEFAULT ''", 'lexware_nummer' => "TEXT NOT NULL DEFAULT ''", 'lexware_status' => "TEXT NOT NULL DEFAULT ''", 'erinnert' => 'TEXT']);
+    spaltenErgaenzen($db, 'rechnungen', ['lexware_id' => "TEXT NOT NULL DEFAULT ''", 'lexware_nummer' => "TEXT NOT NULL DEFAULT ''", 'lexware_status' => "TEXT NOT NULL DEFAULT ''", 'lexware_pdf' => "TEXT NOT NULL DEFAULT ''"]);
+    spaltenErgaenzen($db, 'carrier', ['gewichtsgebuehr_cent' => 'INTEGER NOT NULL DEFAULT 0', 'volumenfaktor' => 'INTEGER NOT NULL DEFAULT 5000']);
+    spaltenErgaenzen($db, 'lieferantenpositionen', ['gebuehr_cent' => 'INTEGER NOT NULL DEFAULT 0']);
+    spaltenErgaenzen($db, 'lieferantenrechnungen', ['gutschrift_cent' => 'INTEGER NOT NULL DEFAULT 0', 'gutschrift_nummer' => "TEXT NOT NULL DEFAULT ''", 'gutschrift_datum' => "TEXT NOT NULL DEFAULT ''"]);
+    if ((int) $db->query("SELECT COUNT(*) FROM zusatzleistungen WHERE code = 'sperrgut'")->fetchColumn() === 0) {
+        $db->prepare('INSERT INTO zusatzleistungen (code, name_de, name_en, beschreibung_de, beschreibung_en, preis_cent, aktiv, sortierung) VALUES (?, ?, ?, ?, ?, ?, 1, ?)')
+           ->execute(['sperrgut', 'Sperrgut', 'Bulky goods', 'Über 120 cm lang oder nicht quaderförmig — der Carrier berechnet einen Zuschlag', 'Longer than 120 cm or not box-shaped — the carrier charges a surcharge', 2000, 50]);
+    }
+
     preiseSaeen($db);
+}
+
+/** Spalten nachträglich ergänzen (CREATE TABLE IF NOT EXISTS greift bei bestehenden Tabellen nicht). */
+function spaltenErgaenzen(PDO $db, string $tabelle, array $spalten): void
+{
+    $vorhanden = array_column($db->query("PRAGMA table_info($tabelle)")->fetchAll(), 'name');
+    foreach ($spalten as $spalte => $typ) {
+        if (!in_array($spalte, $vorhanden, true)) {
+            $db->exec("ALTER TABLE $tabelle ADD COLUMN $spalte $typ");
+        }
+    }
 }
 
 /**
@@ -849,13 +932,13 @@ function bruttoCent(int $nettoCent): int
  * Preis für Zielland und Gewichtsklasse — Priorität 1 oder, wenn angegeben,
  * ein bestimmter Carrier aus den Angeboten der Zelle. null, wenn nicht angeboten.
  */
-function preisFuer(string $land, string $gewichtsklasse, string $carrier = ''): ?array
+function preisFuer(string $land, string $gewichtsklasse, string $carrier = '', ?int $preislisteId = null): ?array
 {
     $p = preisliste();
     if (!isset($p['gewichtsklassen'][$gewichtsklasse])) {
         return null;
     }
-    foreach (angeboteFuer($land, $gewichtsklasse) as $a) {
+    foreach (angeboteFuer($land, $gewichtsklasse, $preislisteId) as $a) {
         if ($carrier === '' || $a['carrier'] === $carrier) {
             return ['netto' => $a['netto'], 'mwst' => $a['mwst'], 'brutto' => $a['brutto'], 'waehrung' => (string) $p['waehrung'], 'carrier' => $a['carrier'], 'einkauf' => $a['einkauf'], 'laufzeit' => $a['laufzeit']];
         }
@@ -939,6 +1022,16 @@ function checkoutModus(): string
  */
 function nachBezahlung(array $bestellung): void
 {
+    // Privatkunden: je bezahlter Bestellung eine Rechnung über Lexware (Firmen: Sammelrechnung)
+    if (!$bestellung['firma_id']) {
+        try {
+            lexwareAuftragAnlegen('rechnung', 'bestellungen', (int) $bestellung['id']);
+            lexwareAuftraegeAbarbeiten(3);
+            $bestellung = bestellungLaden('id', (string) $bestellung['id']) ?? $bestellung;
+        } catch (Throwable $e) {
+            error_log('[lexware] Übergabe ' . $bestellung['ext_ref'] . ': ' . $e->getMessage());
+        }
+    }
     if (($bestellung['art'] ?? 'sendung') === 'nachberechnung') {
         try {
             nachberechnungBezahltSenden($bestellung);
@@ -961,6 +1054,14 @@ function nachBezahlung(array $bestellung): void
     }
 }
 
+/** Rechnungs-PDF (Lexware) einer Bestellung als Mail-Anhang, falls vorhanden. */
+function rechnungAnhangFuerBestellung(array $bestellung): array
+{
+    $pfad = lexwarePdfPfad((string) ($bestellung['lexware_id'] ?? ''));
+
+    return $pfad !== '' && is_file($pfad) ? [['name' => 'NEOS-Rechnung-' . ($bestellung['lexware_nummer'] ?: $bestellung['ext_ref']) . '.pdf', 'datei' => $pfad]] : [];
+}
+
 function labelBeauftragen(array $bestellung): void
 {
     $carrierLabel = carrierLabelAnfordern($bestellung);
@@ -977,10 +1078,12 @@ function nachberechnungBezahltSenden(array $bestellung): void
     $sprache = $bestellung['sprache'] === 'en' ? 'en' : 'de';
     $grund = json_decode((string) ($bestellung['nachberechnung_json'] ?? '{}'), true) ?: [];
     $original = (string) ($grund['original'] ?? '');
+    $anhaenge = rechnungAnhangFuerBestellung($bestellung);
+    $rechnungText = $anhaenge !== [] ? ($sprache === 'en' ? ' The invoice is attached.' : ' Die Rechnung hängt an.') : ($sprache === 'en' ? ' The invoice follows in the portal.' : ' Die Rechnung folgt im Portal.');
     if ($sprache === 'en') {
-        mailSenden((string) $bestellung['email'], 'Weight adjustment ' . $bestellung['ext_ref'] . ' paid', "Hello,\n\nthank you — the weight adjustment for shipment " . $original . ' (' . betragFormat((int) $bestellung['betrag_cent'], 'en') . ") has been paid.\n\nNEOS Logistics UG · info@neos24.com");
+        mailSenden((string) $bestellung['email'], 'Weight adjustment ' . $bestellung['ext_ref'] . ' paid', "Hello,\n\nthank you — the weight adjustment for shipment " . $original . ' (' . betragFormat((int) $bestellung['betrag_cent'], 'en') . ") has been paid." . $rechnungText . "\n\nNEOS Logistics UG · info@neos24.com", $anhaenge);
     } else {
-        mailSenden((string) $bestellung['email'], 'Nachberechnung ' . $bestellung['ext_ref'] . ' bezahlt', "Hallo,\n\ndanke — die Gewichtsnachberechnung zur Sendung " . $original . ' (' . betragFormat((int) $bestellung['betrag_cent'], 'de') . ") ist bezahlt.\n\nNEOS Logistics UG · info@neos24.com");
+        mailSenden((string) $bestellung['email'], 'Nachberechnung ' . $bestellung['ext_ref'] . ' bezahlt', "Hallo,\n\ndanke — die Gewichtsnachberechnung zur Sendung " . $original . ' (' . betragFormat((int) $bestellung['betrag_cent'], 'de') . ") ist bezahlt." . $rechnungText . "\n\nNEOS Logistics UG · info@neos24.com", $anhaenge);
     }
 }
 
@@ -1039,7 +1142,7 @@ function bestaetigungSenden(array $bestellung): void
         ]);
     }
 
-    mailSenden((string) $bestellung['email'], $betreff, $koerper);
+    mailSenden((string) $bestellung['email'], $betreff, $koerper, rechnungAnhangFuerBestellung($bestellung));
     if ((string) $konfig['kopie'] !== '') {
         mailSenden((string) $konfig['kopie'], '[Kopie] ' . $betreff, $koerper);
     }
@@ -1052,22 +1155,41 @@ function kopfKodieren(string $wert): string
     return preg_match('/^[\x20-\x7E]*$/', $wert) === 1 ? $wert : '=?UTF-8?B?' . base64_encode($wert) . '?=';
 }
 
-function mailSenden(string $an, string $betreff, string $koerper): void
+/**
+ * Mail verschicken. $anhaenge: [['name' => 'Datei.pdf', 'inhalt' => Bytes, 'typ' => 'application/pdf']]
+ * oder [['name' => …, 'datei' => Pfad]]; Anhänge werden als multipart/mixed verschickt,
+ * beim Transport „datei“ neben der Textdatei abgelegt.
+ */
+function mailSenden(string $an, string $betreff, string $koerper, array $anhaenge = []): void
 {
     $konfig = konfig();
     $transport = (string) $konfig['transport'];
+    $anhaenge = array_values(array_filter(array_map(static function (array $a): ?array {
+        $inhalt = $a['inhalt'] ?? (isset($a['datei']) && is_file((string) $a['datei']) ? (string) file_get_contents((string) $a['datei']) : null);
+        if ($inhalt === null || $inhalt === '') {
+            return null;
+        }
+        $name = preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) ($a['name'] ?? basename((string) ($a['datei'] ?? 'anhang')))) ?: 'anhang';
+
+        return ['name' => $name, 'inhalt' => $inhalt, 'typ' => (string) ($a['typ'] ?? (str_ends_with(strtolower($name), '.pdf') ? 'application/pdf' : 'application/octet-stream'))];
+    }, $anhaenge)));
     if ($transport === 'datei') {
-        // Lokale Entwicklung: jede Mail als Textdatei ins Datenverzeichnis.
+        // Lokale Entwicklung: jede Mail als Textdatei ins Datenverzeichnis, Anhänge daneben.
         $verzeichnis = rtrim((string) $konfig['daten'], '/') . '/mails';
         if (!is_dir($verzeichnis)) {
             @mkdir($verzeichnis, 0770, true);
         }
-        @file_put_contents($verzeichnis . '/' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(3)) . '.txt', "An: $an\nBetreff: $betreff\n\n$koerper\n");
+        $basis = $verzeichnis . '/' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(3));
+        $liste = $anhaenge !== [] ? "\nAnhaenge: " . implode(', ', array_column($anhaenge, 'name')) : '';
+        @file_put_contents($basis . '.txt', "An: $an\nBetreff: $betreff$liste\n\n$koerper\n");
+        foreach ($anhaenge as $a) {
+            @file_put_contents($basis . '-' . $a['name'], $a['inhalt']);
+        }
 
         return;
     }
     if ($transport === '' || (string) $konfig['absender'] === '') {
-        error_log('[revolut] Mail (kein Transport) an ' . $an . ': ' . $betreff);
+        error_log('[revolut] Mail (kein Transport) an ' . $an . ': ' . $betreff . ($anhaenge !== [] ? ' [' . implode(', ', array_column($anhaenge, 'name')) . ']' : ''));
 
         return;
     }
@@ -1079,15 +1201,27 @@ function mailSenden(string $an, string $betreff, string $koerper): void
         'Date: ' . gmdate('D, d M Y H:i:s') . ' +0000',
         'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . $domaene . '>',
         'MIME-Version: 1.0',
-        'Content-Type: text/plain; charset=UTF-8',
-        'Content-Transfer-Encoding: base64',
         'Auto-Submitted: auto-generated',
     ];
-    $rohmail = implode(ZEILE, $kopf) . ZEILE . ZEILE . chunk_split(base64_encode($koerper), 76, ZEILE);
+    if ($anhaenge === []) {
+        $kopf[] = 'Content-Type: text/plain; charset=UTF-8';
+        $kopf[] = 'Content-Transfer-Encoding: base64';
+        $rumpf = chunk_split(base64_encode($koerper), 76, ZEILE);
+    } else {
+        $grenze = '=_NEOS_' . bin2hex(random_bytes(12));
+        $kopf[] = 'Content-Type: multipart/mixed; boundary="' . $grenze . '"';
+        $teile = ['--' . $grenze, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', chunk_split(base64_encode($koerper), 76, ZEILE)];
+        foreach ($anhaenge as $a) {
+            array_push($teile, '--' . $grenze, 'Content-Type: ' . $a['typ'] . '; name="' . $a['name'] . '"', 'Content-Transfer-Encoding: base64', 'Content-Disposition: attachment; filename="' . $a['name'] . '"', '', chunk_split(base64_encode($a['inhalt']), 76, ZEILE));
+        }
+        $teile[] = '--' . $grenze . '--';
+        $rumpf = implode(ZEILE, $teile);
+    }
+    $rohmail = implode(ZEILE, $kopf) . ZEILE . ZEILE . $rumpf;
 
     if ($transport === 'mail') {
         $rest = array_filter($kopf, static fn (string $z): bool => !str_starts_with($z, 'Subject: ') && !str_starts_with($z, 'To: '));
-        if (!mail($an, kopfKodieren($betreff), chunk_split(base64_encode($koerper), 76, ZEILE), implode(ZEILE, $rest))) {
+        if (!mail($an, kopfKodieren($betreff), $rumpf, implode(ZEILE, $rest))) {
             throw new RuntimeException('mail() lehnte die Nachricht ab');
         }
 
@@ -1162,6 +1296,12 @@ function perSmtpSenden(array $konfig, string $von, string $an, string $rohmail):
     }
 }
 
+require_once __DIR__ . '/../../lib/helfer.php';
+require_once __DIR__ . '/../../lib/kunden.php';
+require_once __DIR__ . '/../../lib/rechnungen.php';
 require_once __DIR__ . '/../../lib/versand.php';
+require_once __DIR__ . '/../../lib/preislisten.php';
 require_once __DIR__ . '/../../lib/rechnungspruefung.php';
 require_once __DIR__ . '/../../lib/einkauf_import.php';
+require_once __DIR__ . '/../../lib/nachberechnung_pdf.php';
+require_once __DIR__ . '/../../lib/lexware.php';

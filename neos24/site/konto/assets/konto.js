@@ -93,9 +93,29 @@
       }
       return null;
     };
+    var volumenText = sendung.querySelector('[data-volumen]');
+    var volumenVorlage = sendung.getAttribute('data-volumen-text') || '%s';
+    var volumenHinweis = volumenText ? volumenText.textContent : '';
+    /* Volumengewicht: L·B·H (cm) / Faktor des Carriers (kg) — hebt die Klasse an, wenn es das reale Gewicht übersteigt */
+    var volumenGramm = function (faktor) {
+      var l = parseInt(sendung.querySelector('[name="laenge"]').value, 10) || 0;
+      var b = parseInt(sendung.querySelector('[name="breite"]').value, 10) || 0;
+      var h = parseInt(sendung.querySelector('[name="hoehe"]').value, 10) || 0;
+      if (l <= 0 || b <= 0 || h <= 0 || !(faktor > 0)) return 0;
+      return Math.round(l * b * h / faktor * 1000);
+    };
     var aktuelleKlasse = function () {
       var gramm = Math.round(parseFloat(String(gewicht.value).replace(',', '.')) * 1000);
-      return gramm > 0 ? klasseFuer(gramm) : null;
+      if (!(gramm > 0)) { if (volumenText) volumenText.textContent = volumenHinweis; return null; }
+      var gk = klasseFuer(gramm);
+      var l = daten.laender[land.value];
+      var liste = gk && l && l.klassen[gk] ? l.klassen[gk] : [];
+      var gewaehltCarrier = angebote.querySelector('input[name="carrier"]:checked');
+      var faktor = 5000;
+      liste.forEach(function (a, i) { if ((gewaehltCarrier && a.carrier === gewaehltCarrier.value) || (!gewaehltCarrier && i === 0)) faktor = a.volumenfaktor || 5000; });
+      var volumen = volumenGramm(faktor);
+      if (volumenText) volumenText.textContent = volumen > gramm ? volumenVorlage.replace('%s', (volumen / 1000).toFixed(1).replace('.', lang === 'de' ? ',' : '.')) : volumenHinweis;
+      return klasseFuer(Math.max(gramm, volumen));
     };
     var aktuelleAngebote = function () {
       var gk = aktuelleKlasse();
@@ -172,6 +192,7 @@
 
     land.addEventListener('change', angeboteZeichnen);
     gewicht.addEventListener('input', angeboteZeichnen);
+    ['laenge', 'breite', 'hoehe'].forEach(function (n) { var el = sendung.querySelector('[name="' + n + '"]'); if (el) el.addEventListener('input', angeboteZeichnen); });
     angebote.addEventListener('change', summen);
     zusatzBoxen.forEach(function (cb) { cb.addEventListener('change', summen); });
 

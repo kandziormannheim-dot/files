@@ -126,6 +126,17 @@ function labelZeichnen(FPDF $pdf, array $b, float $x0, float $y0): void
         $pdf->SetX($x0 + 5);
         $pdf->Cell($breite - 10, 4.5, pdfText($zeile), 0, 1);
     }
+    // Gewichtssymbol ab 10 kg bzw. 20 kg (Carrier verlangen die Kennzeichnung schwerer Pakete)
+    $maxGramm = (int) (preisliste()['gewichtsklassen'][$b['gewichtsklasse']]['max_gramm'] ?? 0);
+    $schwer = max($maxGramm, (int) $b['gewicht_gramm']);
+    if ($schwer > 10000) {
+        $pdf->SetFillColor(0, 0, 0);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('Helvetica', 'B', 11);
+        $pdf->SetXY($x0 + $breite - 33, $y0 + 78);
+        $pdf->Cell(28, 9, pdfText($schwer > 20000 ? '> 20 kg' : '> 10 kg'), 0, 0, 'C', true);
+        $pdf->SetTextColor(0, 0, 0);
+    }
 
     // Strichcode
     code128Zeichnen($pdf, (string) $b['ext_ref'], $x0 + 10, $y0 + 108, 22, $breite - 20);

@@ -53,6 +53,18 @@
         <?php if ($abs !== []) { ?><dt>Absender</dt><dd><?= e($abs['name'] ?? '') ?><br><?= e($abs['strasse'] ?? '') ?><br><?= e(trim(($abs['plz'] ?? '') . ' ' . ($abs['ort'] ?? ''))) ?></dd><?php } ?>
       </dl>
     </div>
+    <div class="karte">
+      <div class="karte-kopf"><h2 class="h2">Preisliste</h2><?php if ($kunde['preisliste_id']) { ?><a class="knopf knopf--leise knopf--klein" href="<?= e(url('kunden/preisliste/' . $kunde['preisliste_id'])) ?>">Bearbeiten</a><?php } ?></div>
+      <?php if ($kunde['preisliste_id']) { $pl = preislisteLaden((int) $kunde['preisliste_id']); ?>
+        <p><strong><?= e($pl['name'] ?? '') ?></strong><?= $pl !== null && (int) $pl['aktiv'] !== 1 ? ' <span class="pille pille--warn">inaktiv</span>' : '' ?><br><span class="leise">eigene Konditionen</span></p>
+      <?php } elseif (darf('kunden', 'bearbeiten')) { ?>
+        <form method="post" action="<?= e(url('kunden/preisliste/anlegen')) ?>" class="formular">
+          <?= csrfFeld() ?><input type="hidden" name="kunde_id" value="<?= (int) $kunde['id'] ?>">
+          <div class="spalten spalten--2"><div class="feld"><label for="pl-name">Bezeichnung</label><input id="pl-name" name="name" value="<?= e($kunde['name']) ?>" maxlength="80"></div><div class="feld"><label for="pl-prozent">Auf-/Abschlag %</label><input id="pl-prozent" name="prozent" inputmode="decimal" value="-5"></div></div>
+          <button class="knopf knopf--leise" type="submit">Eigene Preisliste anlegen</button>
+        </form>
+      <?php } else { ?><p class="leise">Standardpreise.</p><?php } ?>
+    </div>
     <div class="karte karte--gelb">
       <div class="karte-kopf"><h2 class="h2">Guthaben</h2><strong class="mono"><?= e(euro($guthaben)) ?></strong></div>
       <?php if ($buchungen === []) { ?><p class="leise">Keine Buchungen.</p><?php } else { ?>

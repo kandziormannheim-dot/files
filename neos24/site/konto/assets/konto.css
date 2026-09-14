@@ -34,6 +34,8 @@
 .k-hinweis { padding: .75rem 1rem; border-radius: var(--radius-sm, 10px); background: var(--cyan-50); border: 1px solid #b7ecf8; margin-bottom: 1rem; font-size: var(--text-sm); }
 .k-hinweis--ok { background: #E3F6EC; border-color: #bfe8d3; }
 .k-hinweis--fehler { background: var(--coral-50); border-color: #ffc9b5; }
+.k-hinweis--warn { background: #fff8d6; border-color: #f2df6b; }
+.k-hinweis--warn.is-invalid { border-color: #ff5a2c; }
 .konto .card { margin-bottom: 1.25rem; transform: none !important; box-shadow: none !important; }
 .k-karte-tabelle { padding: 1rem 1.25rem; }
 .k-karte-kopf { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: .5rem; }
