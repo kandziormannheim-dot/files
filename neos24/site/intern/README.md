@@ -16,6 +16,7 @@ gepflegt wird.
 | **Kunden & Anfragen** | Anfragen des Kontaktformulars (Status, Notiz, Bearbeiter, „Firmenkonto anlegen“), Firmen (Daten, Benutzer einladen/deaktivieren, Sendungen, Rechnungen, Sammelrechnung erzeugen, Guthaben mit Buchungen) und registrierte Privatkunden (Detail mit Bestellungen, Guthaben, Reklamationen) |
 | **Rechnungen** | Alle Sammelrechnungen mit Status offen / bezahlt / storniert, PDF, Positionen; Stornieren gibt die Sendungen wieder zur Abrechnung frei |
 | **Reklamationen** | Reklamationen aus dem Kundenportal: Status neu / in Prüfung / anerkannt / erstattet / abgelehnt, Antwort an den Kunden (optional per Mail), Erstattung — wird bei „Erstattet“ einmalig als Guthaben gebucht |
+| **Statistiken & Berichte** | Kennzahlen mit Vorperiodenvergleich (Sendungen, Umsatz, Einkauf, Marge, Ø Netto, Zustellquote, Laufzeit, Nachberechnungen, Reklamationen, aktive Kunden, offene Posten), Berichte Zeitverlauf, Carrier, Zielländer, Kunden, Finanzen, Reklamationen, Guthaben mit Diagrammen (Inline-SVG, ohne Abhängigkeiten) und Tabellen, freier **Pivot-Bericht** (Zeilen × Spalten × Kennzahl, Top N, Diagrammart) mit gespeicherten Berichten, Filter Zeitraum/Kunde/Unterkunde/Carrier/Land/Zahlungsart, Export CSV/XLSX — siehe unten |
 | **Rechnungsprüfung** | Lieferantenrechnungen der Carrier (PDF + CSV) hochladen, CSV-Spalten zuordnen (Vorschlag, Profil je Carrier), jede Position der eigenen Bestellung zuordnen und prüfen: gewogenes Gewicht gegen gebuchte Gewichtsklasse, Einkaufspreis gegen Routingmatrix, doppelt, storniert, nicht zuzuordnen. Nachberechnung an den Kunden (Firma: nächste Sammelrechnung; Privatkunde: Guthaben, sonst offene Revolut-Zahlung), Gutschrift bei niedrigerem Gewicht, Beanstandung an den Lieferanten als CSV — siehe unten |
 | **Benutzer & Rollen** | Benutzer anlegen (Startpasswort wird einmal angezeigt), Rolle und Aktiv-Status ändern, Passwort zurücksetzen, löschen; Rollen mit Rechtematrix; Änderungsprotokoll |
 
@@ -134,6 +135,41 @@ Retouren, Buchhaltung, Verwaltung — sehen/bearbeiten; Tabelle `benutzergruppen
 `kunden.gruppe_id`, Vorlagen je Firma). Benutzer ohne Gruppe und Inhaber haben alle Rechte. Die
 Firmenseite zeigt die Gruppen mit Rechten (Karte „Benutzergruppen“, nur lesend) und je Benutzer
 eine Gruppen-Pille plus Auswahl (`was=gruppe`); die Einladung kann eine Gruppe vorgeben.
+
+## Statistiken und Berichte
+
+Modul „Statistiken & Berichte“ (`/statistik`, eigenes Recht `statistik`; Berichte speichern und
+löschen braucht „bearbeiten“). Kern in `lib/statistik.php`, Diagramme in `intern/src/diagramme.php`
+(Balken, Linien, Ringe, Ranglisten als Inline-SVG mit Werten als Tooltip), Routen in
+`intern/src/routen_statistik.php`.
+
+- **Datenbasis:** bezahlte und beauftragte Bestellungen nach Bestelldatum. Sendungen = Sendungen und
+  Retouren; Nachberechnungen zählen zum Umsatz, nicht zu den Sendungen. Umsatz = netto, Einkauf =
+  Ist-Einkauf aus der Rechnungsprüfung (sonst Routingmatrix), Marge = Umsatz − Einkauf. Zustellquote
+  bezogen auf abgeschlossene Sendungen (zugestellt, Problem, Rücksendung), Laufzeit von der Übergabe
+  (bzw. Label) bis zur Zustellung aus den Sendungsereignissen, Reklamationen nach Eingangsdatum.
+- **Filter** gelten für alle Berichte: Zeitraum (30/90 Tage, Monat, Vormonat, Quartal, Jahr,
+  12 Monate, von–bis), Kunde, Unterkunde, Carrier, Zielland, Zahlungsart, Auftragsart, „Vorperiode
+  vergleichen“ (gleich langer Zeitraum davor, Veränderung in Prozent je Kennzahl, grün/rot je nach
+  Richtung). Die Auflösung der Zeitreihe folgt dem Zeitraum (Tag, Woche, Monat) und ist im Bericht
+  „Zeitverlauf“ wählbar.
+- **Berichte:** Übersicht (Kennzahlen, Zeitverlauf, Carrier, Länder, Top-Kunden, Zahlungsarten,
+  Versandstatus), Zeitverlauf (Sendungen, Umsatz, Einkauf, Marge, Zustellquote, Laufzeit, Retouren,
+  Nachberechnungen, Reklamationen je Periode), Carrier und Zielländer (Rangliste, Marge, Laufzeit,
+  Vergleichstabelle), Kunden (Top 25, Geschäfts-/Privatkunden, Preislisten, Unterkunden), Finanzen
+  (Umsatz/Einkauf/Marge, Zahlungs- und Auftragsarten, Sammelrechnungen je Monat, offene Posten je
+  Kunde mit Überfälligkeit), Reklamationen (Art, Status, Quote je Carrier, Bearbeitungsdauer,
+  Verlauf), Guthaben (Bestand, Aufladungen je Monat, Buchungen nach Art).
+- **Pivot-Bericht:** Zeilen-Dimension × optionale Spalten-Dimension × Kennzahl — Dimensionen Monat,
+  Kalenderwoche, Tag, Wochentag, Carrier, Zielland, Kunde, Unterkunde, Kundenart, Zahlungsart,
+  Gewichtsklasse, Auftragsart, Status, Versandstatus, Preisliste; Kennzahlen Sendungen, Umsatz netto
+  und brutto, Einkauf, Marge, Marge %, Ø Netto, Ø Gewicht, Retouren, Nachberechnungen (Anzahl und €),
+  Storniert, Zustellquote, Ø Laufzeit, Reklamationen, Reklamationsquote; Top N mit Sammelzeile
+  „Übrige“, Diagramm als Balken, Linie, Rangliste oder Ring, Heatmap in der Tabelle. Berichte lassen
+  sich mit Filter und Konfiguration speichern (Tabelle `berichte`), laden (eigene Parameter in der
+  URL überschreiben die gespeicherten) und aktualisieren.
+- **Export:** jede Tabelle als CSV (Semikolon, UTF-8 mit BOM) oder Excel (`lib/tabelle_schreiben.php`),
+  Beträge in Euro, Prozent und Tage als Zahlen.
 
 ## Lexware Office
 

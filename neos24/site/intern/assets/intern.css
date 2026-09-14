@@ -269,3 +269,41 @@ code { font-family: var(--font-mono); font-size: .85em; background: var(--ink-80
 .firma-benutzer .zeilen-aktionen { white-space: normal; display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; justify-content: flex-end; }
 .firma-benutzer .zeilen-aktionen select { font-size: .85rem; max-width: 220px; }
 .karte--ink .scrollen .tabelle th { letter-spacing: .04em; font-size: .7rem; }
+
+/* Statistiken & Berichte */
+.reiter--statistik { flex-wrap: wrap; }
+.reiter--statistik a { padding: .45rem .8rem; border-radius: var(--radius-sm) var(--radius-sm) 0 0; text-decoration: none; color: var(--ink-500); font-weight: 600; font-size: .9rem; }
+.reiter--statistik a.aktiv { color: var(--ink); background: var(--white); border: 1px solid var(--line); border-bottom-color: var(--white); margin-bottom: -1px; }
+.statistik-filter { align-items: center; }
+.statistik-filter select { flex: 0 1 auto; max-width: 220px; }
+.statistik-filter input[type="date"] { width: auto; }
+.statistik-zeitraum { flex-basis: 100%; }
+.kpi-delta { font-family: var(--font-mono); font-size: .72rem; font-weight: 600; padding: .05rem .4rem; border-radius: 999px; background: var(--ink-100, #eef0f3); }
+.kpi-delta--gut { background: var(--green-50); color: #157a52; }
+.kpi-delta--schlecht { background: var(--coral-50); color: #b63a12; }
+.kpi-delta--neutral { color: var(--ink-500); }
+.diagramm { width: 100%; height: auto; display: block; }
+.diagramm--quer { max-height: 420px; }
+.d-raster { stroke: var(--line); stroke-width: 1; }
+.d-achse { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-500); }
+.d-name { font-family: var(--font-body, inherit); font-size: 12px; fill: var(--ink); }
+.d-wert { font-family: var(--font-mono); font-size: 11px; fill: var(--ink-500); }
+.d-mitte { font-family: var(--font-mono); font-size: 16px; font-weight: 700; fill: var(--ink); }
+.d-legende { display: flex; flex-wrap: wrap; gap: .4rem 1rem; margin-top: .5rem; font-size: .8rem; color: var(--ink-500); }
+.d-legende i, .d-ring-legende i { display: inline-block; width: .7rem; height: .7rem; border-radius: 3px; margin-right: .35rem; vertical-align: middle; }
+.d-ring { display: grid; grid-template-columns: 180px 1fr; gap: 1rem; align-items: center; }
+.d-ring svg { width: 180px; height: 180px; }
+.d-ring-legende { list-style: none; margin: 0; padding: 0; font-size: .82rem; display: grid; gap: .3rem; }
+.d-ring-legende .mono { color: var(--ink-500); }
+.karte--ink .d-legende, .karte--ink .d-achse { color: var(--ink-200); fill: var(--ink-200); }
+.tabelle--zahlen td, .tabelle--zahlen th { white-space: nowrap; }
+.pivot thead th { position: sticky; top: 0; background: var(--white); }
+.pivot td.warn, .tabelle td.warn { color: #b63a12; }
+.export-zeile { margin: .75rem 0 0; display: flex; gap: .4rem; }
+.formular--inline { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.formular--inline input { flex: 1 1 160px; }
+.berichte-liste li { display: flex; align-items: center; gap: .5rem; }
+.berichte-liste a.aktiv { font-weight: 700; }
+.berichte-liste form { display: inline; margin-left: auto; }
+.sparkline { width: 120px; height: 32px; }
+@media (max-width: 720px) { .d-ring { grid-template-columns: 1fr; justify-items: center; } .statistik-filter select { max-width: 100%; } }

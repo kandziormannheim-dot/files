@@ -767,6 +767,14 @@ function schemaAnlegen(PDO $db): void
             aktualisiert         TEXT NOT NULL,
             UNIQUE (firma_id, laufnummer)
         );
+        CREATE TABLE IF NOT EXISTS berichte (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            name          TEXT NOT NULL,
+            konfig_json   TEXT NOT NULL DEFAULT '{}',
+            erstellt_von  TEXT NOT NULL DEFAULT '',
+            erstellt      TEXT NOT NULL,
+            aktualisiert  TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS benutzergruppen (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             firma_id      INTEGER NOT NULL REFERENCES firmen(id),
@@ -1407,3 +1415,4 @@ require_once __DIR__ . '/../../lib/belege.php';
 require_once __DIR__ . '/../../lib/tabelle_lesen.php';
 require_once __DIR__ . '/../../lib/tabelle_schreiben.php';
 require_once __DIR__ . '/../../lib/import.php';
+require_once __DIR__ . '/../../lib/statistik.php';

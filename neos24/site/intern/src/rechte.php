@@ -18,6 +18,7 @@ const MODULE = [
     'rechnungen' => 'Rechnungen',
     'reklamationen' => 'Reklamationen',
     'rechnungspruefung' => 'Rechnungsprüfung',
+    'statistik' => 'Statistiken & Berichte',
     'sync' => 'Synchronisation',
     'benutzer' => 'Benutzer & Rollen',
 ];

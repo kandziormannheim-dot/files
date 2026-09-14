@@ -1164,6 +1164,10 @@ if ($pfad === '/sync' || preg_match('#^/sync/(auftrag|konflikt|alle|abholen|nach
     ansicht('sync', ['titel' => 'Synchronisation', 'status' => syncStatus(), 'auftraege' => $auftraege, 'erledigt' => $erledigt, 'konflikte' => $konflikte, 'stand' => $stand, 'aktiv' => 'sync']);
 }
 
+// ---------------------------------------------------- Statistiken & Berichte
+
+require __DIR__ . '/src/routen_statistik.php';
+
 // ------------------------------------------------------------ Rechnungsprüfung
 
 if ($pfad === '/rechnungspruefung') {

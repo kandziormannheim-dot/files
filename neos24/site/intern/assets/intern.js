@@ -51,3 +51,11 @@
     });
   });
 })();
+
+/* Statistik: Von/Bis nur bei „Von – bis“ zeigen */
+(function () {
+  document.querySelectorAll('.statistik-filter [data-zeitraum]').forEach(function (sel) {
+    var frei = sel.closest('form').querySelector('.statistik-frei');
+    sel.addEventListener('change', function () { if (frei) frei.hidden = sel.value !== 'frei'; });
+  });
+})();
