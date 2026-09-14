@@ -20,7 +20,7 @@ gemerkt in Sitzung und Konto).
 | Retoure, Reklamation | Rücksendung mit einem Klick (Adressen getauscht); Reklamation mit Art, Beschreibung, Betrag | wie links |
 | Preise | Startseite (brutto) | Netto-Preisliste im Portal |
 | Rechnungen | Belegarchiv: Rechnungen, Nachberechnungen, Gutschriften (Lexware-PDFs) und Gewichtsnachweise je Bestellung, Filter nach Jahr, Art und Nummer | Archiv wie links plus monatliche Sammelrechnungen als PDF mit Positionen im Detail |
-| Benutzer | — | Inhaber lädt Mitarbeiter ein, deaktiviert sie; Mitarbeiter sehen Sendungen und Rechnungen, nicht Benutzer und Firmendaten |
+| Benutzer, Benutzergruppen | — | Inhaber (oder Benutzer mit Bereich „Verwaltung“) lädt Mitarbeiter als Subaccounts ein, ordnet ihnen eine Benutzergruppe und einen Unterkunden zu, deaktiviert sie, ernennt weitere Inhaber; Gruppen mit Rechten je Bereich (Versand, Lager, Retouren, Buchhaltung, Verwaltung: sehen / bearbeiten), Vorlagen je Firma — siehe „Benutzergruppen und Rechte“ |
 | Einstellungen | Name, Sprache, Passwort, Absenderadresse, Konto schließen | Name, Sprache, Passwort, Konto schließen; Inhaber: Firmendaten |
 
 ## Anmeldung
@@ -145,6 +145,32 @@ Zeilen. Ein Mitarbeiter, den das Team fest einem Unterkunden zugeordnet hat, buc
 diesen und sieht nur dessen Sendungen und Rechnungen. Die Seite „Firma“ listet die Unterkunden
 (nur lesend — Anlage und Pflege durch NEOS).
 
+## Benutzergruppen und Rechte
+
+Firmenbenutzer sind Subaccounts der Firma. **Neue Benutzer haben alle Rechte**, bis ihnen der
+Inhaber eine Benutzergruppe zuordnet (`kunden.gruppe_id`, Tabelle `benutzergruppen`, Funktionen in
+`lib/kunden.php`: `gruppenDerFirma`, `gruppeSpeichern`, `gruppeLoeschen`, `kundenRechteVon`). Eine
+Gruppe legt je Bereich fest: kein Zugriff, sehen oder bearbeiten (bearbeiten schließt sehen ein).
+Jede Firma bekommt beim ersten Aufruf die Vorlagen Lager, Versand, Retouren, Buchhaltung und
+Alle Rechte, die der Inhaber ändern, löschen oder um eigene Gruppen ergänzen kann.
+
+| Bereich | sehen | bearbeiten |
+|---|---|---|
+| Versand | Sendungen, Preise, Adressbuch und Vorlagen lesen | Neue Sendung, Bezahlen, Sendungsimport, Adressbuch und Vorlagen pflegen |
+| Lager | Sendungen mit Sendungsverlauf | Labels drucken (einzeln und Sammeldruck) |
+| Retouren | Reklamationen | Retoure, Reklamation, Widerspruch anlegen |
+| Buchhaltung | Belegarchiv, Sammelrechnungen, Guthaben, Preise | Guthaben aufladen |
+| Verwaltung | Benutzer, Gruppen, Firmendaten lesen | Benutzer einladen und deaktivieren, Gruppen und Unterkunden zuordnen, Gruppen und Firmendaten ändern |
+
+Inhaber (`firmenrolle = inhaber`) haben immer alle Rechte, unabhängig von einer Gruppe; nur ein
+Inhaber kann weitere Inhaber ernennen oder die Rolle entziehen (`/benutzer/{id}/rolle`), der letzte
+aktive Inhaber bleibt geschützt. Wer den Bereich „Verwaltung“ bearbeiten darf, hat damit den
+Vollzugriff, kann aber Inhaber nicht deaktivieren oder umgruppieren und sich selbst die Verwaltung
+nicht entziehen. Das Menü zeigt nur freigegebene Bereiche (`konto/src/views/layout.php`), Routen
+prüfen mit `kundenRechtErzwingen()` bzw. `verwaltungErzwingen()` (`konto/src/rechte_kunde.php`,
+`konto/src/auth.php`), fehlende Rechte enden als 403 mit Bereich und Stufe. Das NEOS-Team sieht
+Gruppen und Zuordnung an der Firma im Dashboard und kann die Gruppe je Benutzer setzen.
+
 ## Geschäftskunden: Ablauf
 
 1. Anfrage über das Kontaktformular landet im Dashboard (Kunden & Anfragen).
@@ -173,7 +199,8 @@ Absender, Bankverbindung und Pflichtangaben der Rechnung stehen in der Konfigura
 ```
 konto/index.php        Front-Controller, alle Routen
 konto/src/bootstrap.php  Sitzung, ansicht(), fehlerSeite(), Basis-URL
-konto/src/auth.php     kundeAktuell(), kundeAnmelden(), Guards (business/privat/inhaber)
+konto/src/auth.php     kundeAktuell(), kundeAnmelden(), Guards (business/privat/inhaber/verwaltung)
+konto/src/rechte_kunde.php  Rechte je Bereich aus der Benutzergruppe: darfKunde(), kundenRechtErzwingen()
 konto/src/sendungen.php  eigeneBestellungen(), eigeneBestellung(), kundenVerlauf(), firmaKennzahlen()
 konto/src/routen_versand.php  Neue Sendung, Bezahlen (Revolut/Guthaben), Labels, Tracking, Retoure, Reklamation,
                        Adressbuch (je Benutzer, Freigabe, CSV-Export/-Import), Paketvorlagen, Sendungsimport, Guthaben
@@ -187,7 +214,7 @@ lib/import.php         Sendungsimport: Spaltensynonyme, Gewichts-/Länderparser,
 lib/tabelle_lesen.php, lib/tabelle_schreiben.php  CSV/XLSX lesen und XLSX schreiben ohne Abhängigkeiten
 lib/carrier.php        Carrier-Schnittstelle (Label, Abholung, Tracking) — noch Stubs
 lib/label_pdf.php      NEOS-Label (Code 128) als PDF, A6 einzeln oder A4 vierfach
-lib/kunden.php         Konten, Firmen, Unterkunden, Rechnungsempfänger, Anmeldelinks, Einladungs-/Link-Mails
+lib/kunden.php         Konten, Firmen, Unterkunden, Benutzergruppen und Rechte, Rechnungsempfänger, Anmeldelinks, Einladungs-/Link-Mails
 lib/kundennummern.php  Kundennummern (Zähler, Unterkunden-Nummern, Migration)
 lib/sync.php, lib/odoo.php  Synchronisation der Stammdaten mit Lexware Office und Odoo (Warteschlange, Rückrichtung, Konflikte)
 lib/rechnungen.php     Sammelrechnung erzeugen, Nummernkreis, Status (mit Lexware: Übergabe statt eigener Nummer)

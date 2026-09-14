@@ -18,6 +18,7 @@ require_once dirname(__DIR__, 2) . '/lib/kunden.php';
 require_once dirname(__DIR__, 2) . '/lib/rechnungen.php';
 require __DIR__ . '/texte.php';
 require __DIR__ . '/auth.php';
+require __DIR__ . '/rechte_kunde.php';
 require __DIR__ . '/sendungen.php';
 
 if (PHP_SAPI !== 'cli') {

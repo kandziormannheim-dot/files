@@ -134,11 +134,23 @@ function privatErzwingen(array $kunde): void
     }
 }
 
+/** Nur echte Inhaber (Inhaber ernennen oder absetzen). */
 function inhaberErzwingen(array $kunde): array
 {
     $firma = businessErzwingen($kunde);
     if ($kunde['firmenrolle'] !== 'inhaber') {
         fehlerSeite(403, t('fehler.403'), t('fehler.403.text'));
+    }
+
+    return $firma;
+}
+
+/** Inhaber oder Benutzergruppe mit Bereich „Verwaltung“ (Benutzer, Gruppen, Firmendaten). */
+function verwaltungErzwingen(array $kunde, string $stufe = 'sehen'): array
+{
+    $firma = businessErzwingen($kunde);
+    if ($kunde['firmenrolle'] !== 'inhaber') {
+        kundenRechtErzwingen('verwaltung', $stufe);
     }
 
     return $firma;

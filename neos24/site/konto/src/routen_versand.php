@@ -88,6 +88,9 @@ function standardAbsender(array $kunde, ?array $firma, ?array $unterkunde = null
 // ---------------------------------------------------------------- Neue Sendung
 
 if ($pfad === '/sendungen/neu') {
+    if ($business) {
+        kundenRechtErzwingen('versand', 'bearbeiten');
+    }
     $fehler = [];
     // Unterkunde (Rechnungsempfänger): fest zugeordnet, aus ?unterkunde= (Wechsel lädt die Preise neu) oder aus dem Formular
     $unterkundeId = $festerUnterkunde > 0 ? $festerUnterkunde : (int) ($_POST['unterkunde_id'] ?? $_GET['unterkunde'] ?? ($ich['unterkunde_id'] ?? 0));
@@ -154,6 +157,9 @@ if ($pfad === '/sendungen/neu') {
 // ------------------------------------------------------------------ Bezahlen
 
 if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/(bezahlen|token|status|guthaben)$#', $pfad, $t)) {
+    if ($business) {
+        kundenRechtErzwingen('versand', 'bearbeiten');
+    }
     $b = eigeneBestellung($ich, $t[2]);
     if ($b === null) {
         fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
@@ -220,6 +226,9 @@ if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/(bezahlen|tok
 // ---------------------------------------------------------------- Labels
 
 if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/label\.pdf$#', $pfad, $t)) {
+    if ($business) {
+        kundenRechtEinesErzwingen([['lager', 'bearbeiten'], ['versand', 'bearbeiten']]);
+    }
     $b = eigeneBestellung($ich, $t[2]);
     if ($b === null || !in_array($b['status'], ['bezahlt', 'beauftragt'], true) || $b['art'] === 'nachberechnung') {
         fehlerSeite(404, t('fehler.404'), t('label.noch_nicht'));
@@ -231,6 +240,9 @@ if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/label\.pdf$#'
 }
 
 if ($pfad === '/sendungen/labels.pdf' || $pfad === '/bestellungen/labels.pdf') {
+    if ($business) {
+        kundenRechtEinesErzwingen([['lager', 'bearbeiten'], ['versand', 'bearbeiten']]);
+    }
     $refs = array_filter(array_map('trim', explode(',', (string) ($_GET['refs'] ?? ''))));
     $liste = [];
     foreach (array_slice($refs, 0, 40) as $ref) {
@@ -253,6 +265,9 @@ if ($pfad === '/sendungen/labels.pdf' || $pfad === '/bestellungen/labels.pdf') {
 // ------------------------------------------ Nachweis, Rechnung, Widerspruch
 
 if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/(nachweis|rechnung|gutschrift)\.pdf$#', $pfad, $t)) {
+    if ($business) {
+        kundenRechtErzwingen('buchhaltung');
+    }
     $b = eigeneBestellung($ich, $t[2]);
     $datei = $b === null ? '' : belegDateiFuerBestellung($b, $t[3]);
     if ($b === null || $datei === '' || !is_file($datei)) {
@@ -267,6 +282,9 @@ if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/(nachweis|rec
 }
 
 if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/widerspruch$#', $pfad, $t) && $methode === 'POST') {
+    if ($business) {
+        kundenRechtErzwingen('retouren', 'bearbeiten');
+    }
     $b = eigeneBestellung($ich, $t[2]);
     if ($b === null || $b['art'] !== 'nachberechnung' || $b['status'] === 'storniert') {
         fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
@@ -288,6 +306,9 @@ if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/widerspruch$#
 // ------------------------------------------------------- Retoure, Reklamation
 
 if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/retoure$#', $pfad, $t) && $methode === 'POST') {
+    if ($business) {
+        kundenRechtErzwingen('retouren', 'bearbeiten');
+    }
     $b = eigeneBestellung($ich, $t[2]);
     if ($b === null || !in_array($b['status'], ['bezahlt', 'beauftragt'], true) || $b['art'] !== 'sendung') {
         fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
@@ -307,6 +328,9 @@ if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/retoure$#', $
 }
 
 if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/reklamation$#', $pfad, $t)) {
+    if ($business) {
+        kundenRechtErzwingen('retouren', $methode === 'POST' ? 'bearbeiten' : 'sehen');
+    }
     $b = eigeneBestellung($ich, $t[2]);
     if ($b === null) {
         fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
@@ -327,10 +351,20 @@ if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})/reklamation$#
 }
 
 if ($pfad === '/reklamationen') {
+    if ($business) {
+        kundenRechtErzwingen('retouren');
+    }
     ansicht('reklamationen', ['titel' => t('reklamationen.titel'), 'zeilen' => reklamationenDesKunden($ich), 'pfad' => $listenPfad, 'aktiv' => 'reklamationen']);
 }
 
 // ---------------------------------------------------------------- Adressbuch
+
+if ($business && str_starts_with($pfad, '/adressbuch')) {
+    kundenRechtErzwingen('versand', $methode === 'POST' ? 'bearbeiten' : 'sehen');
+}
+if ($business && str_starts_with($pfad, '/vorlagen')) {
+    kundenRechtErzwingen('versand', $methode === 'POST' ? 'bearbeiten' : 'sehen');
+}
 
 if ($pfad === '/adressbuch/export.csv') {
     header('Content-Type: text/csv; charset=utf-8');
@@ -405,7 +439,7 @@ if ($pfad === '/adressbuch' || $pfad === '/adressbuch/neu' || preg_match('#^/adr
         $geteilte = array_values(array_filter($alle, static fn (array $a): bool => (int) $a['kunde_id'] !== (int) $ich['id']));
         ansicht('adressbuch', ['titel' => t('adressbuch.titel'), 'zeilen' => $eigene, 'geteilte' => $geteilte, 'vorlagen' => vorlagenAlle($ich), 'business' => $business, 'aktiv' => 'adressbuch']);
     }
-    ansicht('adresse_form', ['titel' => $adresse !== null ? t('adressbuch.bearbeiten') : t('adressbuch.neu'), 'a' => $adresse, 'laender' => preisliste()['laender'], 'business' => $business, 'darf' => $adresse === null || adresseDarfBearbeiten($ich, $adresse), 'aktiv' => 'adressbuch']);
+    ansicht('adresse_form', ['titel' => $adresse !== null ? t('adressbuch.bearbeiten') : t('adressbuch.neu'), 'a' => $adresse, 'laender' => preisliste()['laender'], 'business' => $business, 'darf' => ($adresse === null || adresseDarfBearbeiten($ich, $adresse)) && (!$business || darfKunde('versand', 'bearbeiten')), 'aktiv' => 'adressbuch']);
 }
 
 if ($pfad === '/vorlagen/neu' || preg_match('#^/vorlagen/(\d+)(?:/(loeschen))?$#', $pfad, $t)) {
@@ -438,6 +472,7 @@ if ($pfad === '/vorlagen/neu' || preg_match('#^/vorlagen/(\d+)(?:/(loeschen))?$#
 
 if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import/vorlage.xlsx' || $pfad === '/import/fehler.csv' || $pfad === '/import/beauftragen' || $pfad === '/import/verwerfen') {
     $firma = businessErzwingen($ich);
+    kundenRechtErzwingen('versand', 'bearbeiten');
     $vorlage = importVorlage((string) ($unterkunden[0]['nummer'] ?? ''));
     if ($pfad === '/import/vorlage.csv') {
         header('Content-Type: text/csv; charset=utf-8');
@@ -538,6 +573,9 @@ if ($pfad === '/import' || $pfad === '/import/vorlage.csv' || $pfad === '/import
 // ------------------------------------------------------------------ Guthaben
 
 if ($pfad === '/guthaben' || $pfad === '/guthaben/aufladen' || $pfad === '/guthaben/status') {
+    if ($business) {
+        kundenRechtErzwingen('buchhaltung', $pfad === '/guthaben' ? 'sehen' : 'bearbeiten');
+    }
     if ($pfad === '/guthaben/status') {
         header('Content-Type: application/json; charset=utf-8');
         $a = aufladungLaden('ext_ref', saeubern($_GET['ref'] ?? '', 20));

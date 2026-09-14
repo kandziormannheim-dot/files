@@ -2,14 +2,18 @@
 <header class="k-kopfzeile">
   <div><span class="eyebrow eyebrow--magenta"><?= e(t('nav.uebersicht')) ?></span><h1 class="h2"><?= e(t('willkommen', explode(' ', $ich['name'])[0] ?: $ich['name'])) ?></h1>
   <p class="k-text"><?= e($business ? t('uebersicht.business.text', $firma['name']) : t('uebersicht.privat.text', $ich['email'])) ?></p></div>
-  <a class="btn btn--primary" href="<?= e(url('sendungen/neu')) ?>"><?= e(t('nav.neu')) ?> →</a>
+  <?php if (!$business || darfKunde('versand', 'bearbeiten')) { ?><a class="btn btn--primary" href="<?= e(url('sendungen/neu')) ?>"><?= e(t('nav.neu')) ?> →</a><?php } ?>
 </header>
-<?php if ($business) { ?>
+<?php if ($business) { $buchhaltung = darfKunde('buchhaltung'); ?>
 <div class="k-kacheln">
   <div class="card k-kachel k-kachel--cyan"><span class="k-kachel-name"><?= e(t('uebersicht.monat')) ?></span><strong class="k-kachel-wert"><?= (int) $k['monat'] ?></strong></div>
+  <?php if ($buchhaltung) { ?>
   <div class="card k-kachel k-kachel--gelb"><span class="k-kachel-name"><?= e(t('uebersicht.kosten')) ?></span><strong class="k-kachel-wert"><?= e(euro($k['netto'], $sp)) ?></strong></div>
   <div class="card k-kachel k-kachel--coral"><span class="k-kachel-name"><?= e(t('uebersicht.offen')) ?></span><strong class="k-kachel-wert"><?= (int) $k['offen'] ?></strong><span class="k-klein"><?= e(euro($k['offen_brutto'], $sp)) ?> · <a href="<?= e(url('rechnungen')) ?>"><?= e(t('nav.rechnungen')) ?></a></span></div>
-  <div class="card k-kachel"><span class="k-kachel-name"><?= e(t('guthaben.stand')) ?></span><strong class="k-kachel-wert"><?= e(euro($guthaben, $sp)) ?></strong><span class="k-klein"><a href="<?= e(url('guthaben')) ?>"><?= e(t('guthaben.aufladen')) ?></a></span></div>
+  <div class="card k-kachel"><span class="k-kachel-name"><?= e(t('guthaben.stand')) ?></span><strong class="k-kachel-wert"><?= e(euro($guthaben, $sp)) ?></strong><span class="k-klein"><?php if (darfKunde('buchhaltung', 'bearbeiten')) { ?><a href="<?= e(url('guthaben')) ?>"><?= e(t('guthaben.aufladen')) ?></a><?php } ?></span></div>
+  <?php } else { ?>
+  <div class="card k-kachel k-kachel--gelb"><span class="k-kachel-name"><?= e(t('benutzer.gruppe')) ?></span><span class="k-text" style="margin-top:.35rem"><?= e(t('uebersicht.rechte', implode(', ', array_map(static fn (string $b): string => t('gruppen.bereich.' . $b), array_keys(array_filter(kundenRechte())))))) ?></span></div>
+  <?php } ?>
 </div>
 <?php } else { ?>
 <div class="k-kacheln">

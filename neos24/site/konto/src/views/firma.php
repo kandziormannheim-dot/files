@@ -4,7 +4,8 @@
 <div class="k-spalten k-spalten--2-1">
   <div class="card">
     <?php if ($fehler !== null) { ?><p class="k-hinweis k-hinweis--fehler" role="alert"><?= e($fehler) ?></p><?php } ?>
-    <form method="post" action="<?= e(url('firma')) ?>" class="form k-form" novalidate>
+    <?php $ichF = kundeAktuell(); $darfF = ($ichF['firmenrolle'] ?? '') === 'inhaber' || darfKunde('verwaltung', 'bearbeiten'); ?>
+    <form method="post" action="<?= e(url('firma')) ?>" class="form k-form" novalidate<?= $darfF ? '' : ' inert' ?>>
       <?= csrfFeld() ?>
       <div class="field"><label for="f-name"><?= e(t('firma.name')) ?></label><input id="f-name" name="name" type="text" value="<?= e($firma['name']) ?>" required></div>
       <div class="field"><label for="f-strasse"><?= e(t('firma.strasse')) ?></label><input id="f-strasse" name="strasse" type="text" value="<?= e($firma['strasse']) ?>" required></div>
@@ -17,7 +18,7 @@
         <div class="field"><label for="f-ust"><?= e(t('firma.ust')) ?></label><input id="f-ust" name="ust_id" type="text" value="<?= e($firma['ust_id']) ?>"></div>
       </div>
       <div class="field"><label for="f-rechnung"><?= e(t('firma.rechnungs_email')) ?></label><input id="f-rechnung" name="rechnungs_email" type="email" value="<?= e($firma['rechnungs_email']) ?>"></div>
-      <button class="btn btn--primary" type="submit"><?= e(t('firma.speichern')) ?></button>
+      <?php if ($darfF) { ?><button class="btn btn--primary" type="submit"><?= e(t('firma.speichern')) ?></button><?php } ?>
     </form>
   </div>
   <div class="card card--ink">

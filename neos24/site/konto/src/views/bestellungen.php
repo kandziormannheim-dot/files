@@ -1,7 +1,7 @@
 <?php $ich = kundeAktuell(); $sp = sprache(); $business = $ich['art'] === 'business'; ?>
 <header class="k-kopfzeile">
   <div><span class="eyebrow eyebrow--magenta"><?= e(t('portal')) ?></span><h1 class="h2"><?= e($titel) ?></h1></div>
-  <a class="btn btn--primary" href="<?= e(url('sendungen/neu')) ?>"><?= e(t('nav.neu')) ?> →</a>
+  <?php if (!$business || darfKunde('versand', 'bearbeiten')) { ?><a class="btn btn--primary" href="<?= e(url('sendungen/neu')) ?>"><?= e(t('nav.neu')) ?> →</a><?php } ?>
 </header>
 <form class="k-werkzeuge" method="get" action="<?= e(url($pfad)) ?>">
   <input type="search" name="q" value="<?= e($q) ?>" placeholder="<?= e(t('liste.suche')) ?>" aria-label="<?= e(t('liste.suche')) ?>">
@@ -37,7 +37,7 @@
     <?php } ?>
     </tbody>
   </table></div>
-  <div class="k-form-fuss" style="margin-top:1rem"><button type="button" class="btn btn--sm btn--ink" data-labels-drucken disabled><?= e(t('label.sammeldruck')) ?></button></div>
+  <?php if (!$business || darfKunde('lager', 'bearbeiten') || darfKunde('versand', 'bearbeiten')) { ?><div class="k-form-fuss" style="margin-top:1rem"><button type="button" class="btn btn--sm btn--ink" data-labels-drucken disabled><?= e(t('label.sammeldruck')) ?></button></div><?php } ?>
   <?= blaettern($seite, $gesamt, 50, $pfad, ['q' => $q, 'status' => $status, 'unterkunde' => $unterkundeFilter !== null ? (string) $unterkundeFilter : ''], $sp) ?>
   <?php } ?>
 </div>

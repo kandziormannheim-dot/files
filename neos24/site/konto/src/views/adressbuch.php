@@ -1,5 +1,5 @@
-<?php $sp = sprache(); $ich = kundeAktuell(); $business = $business ?? false;
-$zeile = static function (array $a, bool $fremdBlock) use ($ich, $business): void { $darf = adresseDarfBearbeiten($ich, $a); ?>
+<?php $sp = sprache(); $ich = kundeAktuell(); $business = $business ?? false; $schreiben = !$business || darfKunde('versand', 'bearbeiten');
+$zeile = static function (array $a, bool $fremdBlock) use ($ich, $business, $schreiben): void { $darf = $schreiben && adresseDarfBearbeiten($ich, $a); ?>
       <tr>
         <td><?= e(t('adressbuch.art.' . $a['art'])) ?><?= (int) $a['standard'] === 1 && !$fremdBlock ? ' <span class="status status--bezahlt">' . e(t('adressbuch.standard.pille')) . '</span>' : '' ?><?= $business && (int) $a['geteilt'] === 1 && !$fremdBlock ? ' <span class="status status--offen">' . e(t('adressbuch.geteilt.pille')) . '</span>' : '' ?></td>
         <td><?php if ($darf) { ?><a href="<?= e(url('adressbuch/' . $a['id'])) ?>"><?= e($a['name']) ?></a><?php } else { ?><?= e($a['name']) ?><?php } ?><?= $a['firma'] !== '' ? '<br><span class="k-klein">' . e($a['firma']) . '</span>' : '' ?></td>
@@ -16,7 +16,7 @@ $zeile = static function (array $a, bool $fremdBlock) use ($ich, $business): voi
 <?php }; ?>
 <header class="k-kopfzeile">
   <div><span class="eyebrow eyebrow--magenta"><?= e(t('portal')) ?></span><h1 class="h2"><?= e(t('adressbuch.titel')) ?></h1><p class="k-text"><?= e($business ? t('adressbuch.text.business') : t('adressbuch.text')) ?></p></div>
-  <div class="k-form-fuss"><a class="btn btn--sm k-btn-leise" href="<?= e(url('adressbuch/export.csv')) ?>"><?= e(t('adressbuch.export')) ?> ↓</a><a class="btn btn--sm k-btn-leise" href="<?= e(url('vorlagen/neu')) ?>"><?= e(t('vorlagen.neu')) ?></a><a class="btn btn--primary" href="<?= e(url('adressbuch/neu')) ?>"><?= e(t('adressbuch.neu')) ?></a></div>
+  <div class="k-form-fuss"><a class="btn btn--sm k-btn-leise" href="<?= e(url('adressbuch/export.csv')) ?>"><?= e(t('adressbuch.export')) ?> ↓</a><?php if ($schreiben) { ?><a class="btn btn--sm k-btn-leise" href="<?= e(url('vorlagen/neu')) ?>"><?= e(t('vorlagen.neu')) ?></a><a class="btn btn--primary" href="<?= e(url('adressbuch/neu')) ?>"><?= e(t('adressbuch.neu')) ?></a><?php } ?></div>
 </header>
 <div class="card k-karte-tabelle">
   <?php if ($business) { ?><div class="k-karte-kopf"><h2 class="h3"><?= e(t('adressbuch.meine')) ?></h2></div><?php } ?>
@@ -42,6 +42,7 @@ $zeile = static function (array $a, bool $fremdBlock) use ($ich, $business): voi
   <?php } ?>
 </div>
 <?php } ?>
+<?php if ($schreiben) { ?>
 <div class="card">
   <div class="k-karte-kopf"><h2 class="h3"><?= e(t('adressbuch.import')) ?></h2></div>
   <p class="k-klein"><?= e(t('adressbuch.import.text')) ?></p>
@@ -53,6 +54,7 @@ $zeile = static function (array $a, bool $fremdBlock) use ($ich, $business): voi
     </div>
   </form>
 </div>
+<?php } ?>
 <div class="card k-karte-tabelle">
   <div class="k-karte-kopf"><h2 class="h3"><?= e(t('vorlagen.titel')) ?></h2><span class="k-klein"><?= e(t('vorlagen.text')) ?></span></div>
   <?php if ($vorlagen === []) { ?><p class="k-leer"><?= e(t('vorlagen.leer')) ?></p><?php } else { ?>
@@ -65,7 +67,7 @@ $zeile = static function (array $a, bool $fremdBlock) use ($ich, $business): voi
         <td class="k-mono"><?= e(number_format((int) $v['gewicht_gramm'] / 1000, 2, $sp === 'en' ? '.' : ',', '')) ?> kg</td>
         <td class="k-mono"><?= (int) $v['laenge_cm'] > 0 ? e($v['laenge_cm'] . ' × ' . $v['breite_cm'] . ' × ' . $v['hoehe_cm'] . ' cm') : '—' ?></td>
         <td><?= e($z !== [] ? implode(', ', $z) : '—') ?></td>
-        <td class="k-aktionen"><form method="post" action="<?= e(url('vorlagen/' . $v['id'] . '/loeschen')) ?>" data-bestaetigen="<?= e(t('adressbuch.loeschen.bestaetigen')) ?>"><?= csrfFeld() ?><button class="btn btn--sm k-btn-gefahr" type="submit"><?= e(t('adressbuch.loeschen')) ?></button></form></td>
+        <td class="k-aktionen"><?php if ($schreiben) { ?><form method="post" action="<?= e(url('vorlagen/' . $v['id'] . '/loeschen')) ?>" data-bestaetigen="<?= e(t('adressbuch.loeschen.bestaetigen')) ?>"><?= csrfFeld() ?><button class="btn btn--sm k-btn-gefahr" type="submit"><?= e(t('adressbuch.loeschen')) ?></button></form><?php } ?></td>
       </tr>
     <?php } ?>
     </tbody>

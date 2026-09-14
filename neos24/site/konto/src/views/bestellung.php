@@ -118,7 +118,9 @@ $laufzeit = $landInfo['klassen'][$b['gewichtsklasse']]['laufzeit'][$sp] ?? '—'
     </div>
     <div class="card">
       <h2 class="h3"><?= e(t('detail.label')) ?></h2>
-      <?php if (in_array($b['status'], ['bezahlt', 'beauftragt'], true)) { ?>
+      <?php if ($business && !darfKunde('lager', 'bearbeiten') && !darfKunde('versand', 'bearbeiten')) { ?>
+        <p class="k-text"><?= e(t('gruppen.kein_recht', t('gruppen.bereich.lager'), t('gruppen.stufe.bearbeiten'))) ?></p>
+      <?php } elseif (in_array($b['status'], ['bezahlt', 'beauftragt'], true)) { ?>
         <p class="k-text" style="margin-bottom:1rem"><?= e(t('label.hinweis')) ?></p>
         <a class="btn btn--primary k-btn-breit" href="<?= e(url($pfad . '/' . $b['ext_ref'] . '/label.pdf')) ?>" target="_blank" rel="noopener"><?= e(t('label.knopf')) ?> ↓</a>
       <?php } elseif ($b['zahlungsart'] === 'revolut' && in_array($b['status'], ['offen', 'angelegt', 'fehlgeschlagen'], true)) { ?>
@@ -128,20 +130,22 @@ $laufzeit = $landInfo['klassen'][$b['gewichtsklasse']]['laufzeit'][$sp] ?? '—'
         <p class="k-text"><?= e(t('label.noch_nicht')) ?></p>
       <?php } ?>
     </div>
-    <?php if (in_array($b['status'], ['bezahlt', 'beauftragt'], true) && $b['art'] !== 'retoure') { ?>
+    <?php if (in_array($b['status'], ['bezahlt', 'beauftragt'], true) && $b['art'] !== 'retoure' && (!$business || darfKunde('retouren', 'bearbeiten'))) { ?>
     <div class="card">
       <h2 class="h3"><?= e(t('detail.retoure')) ?></h2>
       <p class="k-text" style="margin-bottom:1rem"><?= e(t('detail.retoure.text')) ?></p>
       <form method="post" action="<?= e(url($pfad . '/' . $b['ext_ref'] . '/retoure')) ?>" data-bestaetigen="<?= e(t('detail.retoure.knopf')) ?>?"><?= csrfFeld() ?><button class="btn btn--sm btn--ink" type="submit"><?= e(t('detail.retoure.knopf')) ?></button></form>
     </div>
     <?php } ?>
+    <?php if (!$business || darfKunde('retouren')) { ?>
     <div class="card">
       <h2 class="h3"><?= e(t('nav.reklamationen')) ?></h2>
       <?php if ($reklamation !== null) { ?>
         <p class="k-text"><a href="<?= e(url('reklamationen')) ?>"><?= e(t('detail.reklamation.vorhanden')) ?> · <?= e(REKLAMATION_STATUS[$reklamation['status']][$sp] ?? $reklamation['status']) ?></a></p>
       <?php } else { ?>
-        <a class="btn btn--sm k-btn-leise" href="<?= e(url($pfad . '/' . $b['ext_ref'] . '/reklamation')) ?>"><?= e(t('detail.reklamation.knopf')) ?></a>
+        <?php if (!$business || darfKunde('retouren', 'bearbeiten')) { ?><a class="btn btn--sm k-btn-leise" href="<?= e(url($pfad . '/' . $b['ext_ref'] . '/reklamation')) ?>"><?= e(t('detail.reklamation.knopf')) ?></a><?php } ?>
       <?php } ?>
     </div>
+    <?php } ?>
   </div>
 </div>

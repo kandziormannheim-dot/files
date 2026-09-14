@@ -17,8 +17,29 @@ $wechsel = $aktuellePfad . '?' . http_build_query(array_merge(array_diff_key($_G
 $navi = [];
 if ($ich !== null) {
     if ($ich['art'] === 'business') {
-        $navi = ['uebersicht' => ['', t('nav.uebersicht')], 'sendungen' => ['sendungen', t('nav.sendungen')], 'neu' => ['sendungen/neu', t('nav.neu')], 'import' => ['import', t('nav.import')], 'adressbuch' => ['adressbuch', t('nav.adressbuch')], 'preise' => ['preise', t('nav.preise')], 'rechnungen' => ['rechnungen', t('nav.rechnungen')], 'guthaben' => ['guthaben', t('nav.guthaben')], 'reklamationen' => ['reklamationen', t('nav.reklamationen')]];
-        if ($ich['firmenrolle'] === 'inhaber') {
+        // Menü nach Rechten der Benutzergruppe (konto/src/rechte_kunde.php); Inhaber und Benutzer ohne Gruppe sehen alles
+        $navi = ['uebersicht' => ['', t('nav.uebersicht')]];
+        if (sendungenSehenErlaubt()) {
+            $navi['sendungen'] = ['sendungen', t('nav.sendungen')];
+        }
+        if (darfKunde('versand', 'bearbeiten')) {
+            $navi['neu'] = ['sendungen/neu', t('nav.neu')];
+            $navi['import'] = ['import', t('nav.import')];
+        }
+        if (darfKunde('versand')) {
+            $navi['adressbuch'] = ['adressbuch', t('nav.adressbuch')];
+        }
+        if (darfKunde('versand') || darfKunde('buchhaltung')) {
+            $navi['preise'] = ['preise', t('nav.preise')];
+        }
+        if (darfKunde('buchhaltung')) {
+            $navi['rechnungen'] = ['rechnungen', t('nav.rechnungen')];
+            $navi['guthaben'] = ['guthaben', t('nav.guthaben')];
+        }
+        if (darfKunde('retouren')) {
+            $navi['reklamationen'] = ['reklamationen', t('nav.reklamationen')];
+        }
+        if ($ich['firmenrolle'] === 'inhaber' || darfKunde('verwaltung')) {
             $navi['benutzer'] = ['benutzer', t('nav.benutzer')];
             $navi['firma'] = ['firma', t('nav.firma')];
         }
@@ -73,7 +94,7 @@ if ($ich !== null) {
 </header>
 <main class="container k-inhalt">
 <?php if ($ich !== null) { ?>
-  <p class="k-ich"><?= e($ich['name']) ?><?= $ich['art'] === 'business' ? ' · ' . e($ich['firma'] ?? '') . ' (' . e(t('benutzer.rolle.' . ($ich['firmenrolle'] ?: 'mitarbeiter'))) . ')' : '' ?></p>
+  <p class="k-ich"><?= e($ich['name']) ?><?= $ich['art'] === 'business' ? ' · ' . e($ich['firma'] ?? '') . ' (' . e(t('benutzer.rolle.' . ($ich['firmenrolle'] ?: 'mitarbeiter'))) . (($ich['firmenrolle'] ?? '') !== 'inhaber' && (int) ($ich['gruppe_id'] ?? 0) > 0 ? ' · ' . e((string) (gruppeLaden((int) $ich['firma_id'], (int) $ich['gruppe_id'])['name'] ?? '')) : '') . ')' : '' ?></p>
 <?php } ?>
 <?php if ($hinweis !== null) { ?>
   <p class="k-hinweis k-hinweis--<?= e($hinweis['art']) ?>" role="status"><?= e($hinweis['text']) ?></p>

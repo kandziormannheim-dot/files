@@ -129,6 +129,12 @@ Sendungen; Retouren und Nachberechnungen übernehmen den Unterkunden der Origina
 Guthaben und Paketvorlagen bleiben je Firma; das Adressbuch ist je Benutzer, freigegebene Adressen gelten firmenweit. Tabelle `unterkunden`, Funktionen in `lib/kunden.php`
 (`unterkundeAnlegen`, `rechnungsempfaenger`).
 
+**Benutzergruppen:** Firmen legen im Portal Gruppen mit Rechten je Bereich an (Versand, Lager,
+Retouren, Buchhaltung, Verwaltung — sehen/bearbeiten; Tabelle `benutzergruppen`, Spalte
+`kunden.gruppe_id`, Vorlagen je Firma). Benutzer ohne Gruppe und Inhaber haben alle Rechte. Die
+Firmenseite zeigt die Gruppen mit Rechten (Karte „Benutzergruppen“, nur lesend) und je Benutzer
+eine Gruppen-Pille plus Auswahl (`was=gruppe`); die Einladung kann eine Gruppe vorgeben.
+
 ## Lexware Office
 
 Ist `lexware.aktiv` mit API-Key gesetzt, vergibt Lexware Office die Rechnungsnummern und erzeugt

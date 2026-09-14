@@ -43,14 +43,15 @@ function kundeAnlegen(array $daten): int
     $db = datenbank();
     $art = ($daten['art'] ?? 'privat') === 'business' ? 'business' : 'privat';
     $db->prepare(<<<'SQL'
-        INSERT INTO kunden (art, email, name, firma_id, unterkunde_id, firmenrolle, passwort_hash, email_bestaetigt, aktiv, sprache, kundennummer, erstellt, aktualisiert)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
+        INSERT INTO kunden (art, email, name, firma_id, unterkunde_id, gruppe_id, firmenrolle, passwort_hash, email_bestaetigt, aktiv, sprache, kundennummer, erstellt, aktualisiert)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
     SQL)->execute([
         $art,
         $email,
         trim((string) ($daten['name'] ?? '')),
         isset($daten['firma_id']) ? (int) $daten['firma_id'] : null,
         isset($daten['unterkunde_id']) && (int) $daten['unterkunde_id'] > 0 ? (int) $daten['unterkunde_id'] : null,
+        isset($daten['gruppe_id']) && (int) $daten['gruppe_id'] > 0 ? (int) $daten['gruppe_id'] : null,
         (string) ($daten['firmenrolle'] ?? ''),
         isset($daten['passwort']) && $daten['passwort'] !== '' ? password_hash((string) $daten['passwort'], PASSWORD_DEFAULT) : null,
         (int) ($daten['email_bestaetigt'] ?? 0),
@@ -68,7 +69,7 @@ function kundeAnlegen(array $daten): int
 /** Einzelne Felder eines Kontos setzen (nur bekannte Spalten). */
 function kundeAktualisieren(int $id, array $felder): void
 {
-    $erlaubt = ['name', 'passwort_hash', 'email_bestaetigt', 'aktiv', 'sprache', 'absender_json', 'fehlversuche', 'gesperrt_bis', 'letzte_anmeldung', 'firmenrolle', 'unterkunde_id'];
+    $erlaubt = ['name', 'passwort_hash', 'email_bestaetigt', 'aktiv', 'sprache', 'absender_json', 'fehlversuche', 'gesperrt_bis', 'letzte_anmeldung', 'firmenrolle', 'unterkunde_id', 'gruppe_id'];
     $setzen = [];
     $werte = [];
     foreach ($felder as $spalte => $wert) {
@@ -148,7 +149,7 @@ function firmenAlle(): array
 
 function firmenBenutzer(int $firmaId): array
 {
-    $st = datenbank()->prepare("SELECT * FROM kunden WHERE firma_id = ? ORDER BY CASE firmenrolle WHEN 'inhaber' THEN 0 ELSE 1 END, aktiv DESC, name");
+    $st = datenbank()->prepare("SELECT k.*, g.name AS gruppe_name FROM kunden k LEFT JOIN benutzergruppen g ON g.id = k.gruppe_id WHERE k.firma_id = ? ORDER BY CASE k.firmenrolle WHEN 'inhaber' THEN 0 ELSE 1 END, k.aktiv DESC, k.name");
     $st->execute([$firmaId]);
 
     return $st->fetchAll();
@@ -339,8 +340,11 @@ function rechnungsempfaenger(array $bezug): array
  * den Inhaber): Konto anlegen oder vorhandenes Konto derselben Firma erneut
  * einladen, Einladungslink per Mail. Liefert die Kunden-ID.
  */
-function firmenBenutzerEinladen(array $firma, string $email, string $name, string $rolle, string $sprache = 'de'): int
+function firmenBenutzerEinladen(array $firma, string $email, string $name, string $rolle, string $sprache = 'de', ?int $gruppeId = null): int
 {
+    if ($gruppeId !== null && gruppeLaden((int) $firma['id'], $gruppeId) === null) {
+        $gruppeId = null; // fremde oder gelöschte Gruppe → alle Rechte
+    }
     $email = mb_strtolower(trim($email));
     if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
         throw new InvalidArgumentException($sprache === 'en' ? 'Please enter a valid email address.' : 'Bitte eine gültige E-Mail-Adresse angeben.');
@@ -351,15 +355,172 @@ function firmenBenutzerEinladen(array $firma, string $email, string $name, strin
     }
     $rolle = $rolle === 'inhaber' ? 'inhaber' : 'mitarbeiter';
     if ($vorhanden === null) {
-        $kundeId = kundeAnlegen(['email' => $email, 'name' => $name, 'art' => 'business', 'firma_id' => (int) $firma['id'], 'firmenrolle' => $rolle, 'sprache' => $sprache, 'email_bestaetigt' => 0]);
+        $kundeId = kundeAnlegen(['email' => $email, 'name' => $name, 'art' => 'business', 'firma_id' => (int) $firma['id'], 'firmenrolle' => $rolle, 'gruppe_id' => $gruppeId, 'sprache' => $sprache, 'email_bestaetigt' => 0]);
     } else {
         $kundeId = (int) $vorhanden['id'];
-        kundeAktualisieren($kundeId, ['aktiv' => 1, 'firmenrolle' => $rolle]);
+        kundeAktualisieren($kundeId, ['aktiv' => 1, 'firmenrolle' => $rolle] + ($gruppeId !== null ? ['gruppe_id' => $gruppeId] : []));
     }
     $token = anmeldelinkErzeugen($kundeId, 'einladung', (int) konfig()['konto']['einladungGueltigkeit']);
     kontoMailSenden(kundeLaden($kundeId) ?? ['email' => $email, 'name' => $name, 'sprache' => $sprache], 'einladung', anmeldelinkUrl($token, $sprache), ['firma' => $firma['name']]);
 
     return $kundeId;
+}
+
+// ------------------------------------------------------------ Benutzergruppen
+
+/**
+ * Rechte je Bereich für Firmenbenutzer. Inhaber und Benutzer ohne Gruppe
+ * haben alle Rechte; eine Gruppe schränkt je Bereich auf sehen, bearbeiten
+ * oder nichts ein. Bearbeiten schließt Sehen ein.
+ */
+const KUNDEN_BEREICHE = ['versand', 'lager', 'retouren', 'buchhaltung', 'verwaltung'];
+const KUNDEN_STUFEN = ['sehen', 'bearbeiten'];
+
+/** Vorlagen, die jede Firma beim ersten Aufruf bekommt (Schlüssel = vorlage, Name über t('gruppen.vorlage.*')). */
+const GRUPPEN_VORLAGEN = [
+    'lager' => ['lager' => 'bearbeiten', 'versand' => 'sehen'],
+    'versand' => ['versand' => 'bearbeiten', 'lager' => 'bearbeiten', 'retouren' => 'sehen'],
+    'retouren' => ['retouren' => 'bearbeiten', 'versand' => 'sehen', 'lager' => 'sehen'],
+    'buchhaltung' => ['buchhaltung' => 'bearbeiten', 'versand' => 'sehen', 'retouren' => 'sehen'],
+    'alle' => ['versand' => 'bearbeiten', 'lager' => 'bearbeiten', 'retouren' => 'bearbeiten', 'buchhaltung' => 'bearbeiten', 'verwaltung' => 'bearbeiten'],
+];
+
+const GRUPPEN_VORLAGEN_NAMEN = [
+    'de' => ['lager' => 'Lager', 'versand' => 'Versand', 'retouren' => 'Retouren', 'buchhaltung' => 'Buchhaltung', 'alle' => 'Alle Rechte'],
+    'en' => ['lager' => 'Warehouse', 'versand' => 'Shipping', 'retouren' => 'Returns', 'buchhaltung' => 'Accounting', 'alle' => 'All rights'],
+];
+
+/** Rechte-Array normalisieren: nur bekannte Bereiche und Stufen, fehlende Bereiche = ''. */
+function gruppenRechteNormalisieren(array $eingabe): array
+{
+    $aus = [];
+    foreach (KUNDEN_BEREICHE as $bereich) {
+        $stufe = (string) ($eingabe[$bereich] ?? '');
+        $aus[$bereich] = in_array($stufe, KUNDEN_STUFEN, true) ? $stufe : '';
+    }
+
+    return $aus;
+}
+
+/** Alle Rechte (Inhaber, Benutzer ohne Gruppe, Privatkunden). */
+function kundenRechteAlle(): array
+{
+    return array_fill_keys(KUNDEN_BEREICHE, 'bearbeiten');
+}
+
+/** Rechte eines Kontos: Inhaber und Benutzer ohne (gültige) Gruppe → alles; sonst aus der Gruppe. */
+function kundenRechteVon(array $kunde): array
+{
+    if (($kunde['art'] ?? '') !== 'business' || ($kunde['firmenrolle'] ?? '') === 'inhaber' || (int) ($kunde['gruppe_id'] ?? 0) <= 0) {
+        return kundenRechteAlle();
+    }
+    $gruppe = gruppeLaden((int) ($kunde['firma_id'] ?? 0), (int) $kunde['gruppe_id']);
+
+    return $gruppe === null ? kundenRechteAlle() : $gruppe['rechte'];
+}
+
+/** Hat das Recht die Stufe (bearbeiten schließt sehen ein)? */
+function rechtDeckt(string $vorhanden, string $stufe): bool
+{
+    return $vorhanden === 'bearbeiten' || ($stufe === 'sehen' && $vorhanden === 'sehen');
+}
+
+function gruppeAusZeile(array $z): array
+{
+    $z['rechte'] = gruppenRechteNormalisieren(json_decode((string) ($z['rechte_json'] ?? '{}'), true) ?: []);
+
+    return $z;
+}
+
+function gruppeLaden(int $firmaId, int $id): ?array
+{
+    $st = datenbank()->prepare('SELECT * FROM benutzergruppen WHERE id = ? AND firma_id = ?');
+    $st->execute([$id, $firmaId]);
+    $z = $st->fetch();
+
+    return is_array($z) ? gruppeAusZeile($z) : null;
+}
+
+/** Gruppen der Firma mit Benutzeranzahl, Vorlagen werden bei Bedarf angelegt. */
+function gruppenDerFirma(int $firmaId, string $sprache = 'de'): array
+{
+    gruppenVorlagenSicherstellen($firmaId, $sprache);
+    $st = datenbank()->prepare('SELECT g.*, (SELECT COUNT(*) FROM kunden k WHERE k.gruppe_id = g.id AND k.aktiv = 1) AS benutzer FROM benutzergruppen g WHERE g.firma_id = ? ORDER BY g.name');
+    $st->execute([$firmaId]);
+
+    return array_map('gruppeAusZeile', $st->fetchAll());
+}
+
+/** Vorlagen (Lager, Versand, Retouren, Buchhaltung, Alle Rechte) einmalig je Firma anlegen. */
+function gruppenVorlagenSicherstellen(int $firmaId, string $sprache = 'de'): void
+{
+    $db = datenbank();
+    $st = $db->prepare('SELECT COUNT(*) FROM benutzergruppen WHERE firma_id = ?');
+    $st->execute([$firmaId]);
+    if ((int) $st->fetchColumn() > 0) {
+        return;
+    }
+    $namen = GRUPPEN_VORLAGEN_NAMEN[$sprache === 'en' ? 'en' : 'de'];
+    foreach (GRUPPEN_VORLAGEN as $vorlage => $rechte) {
+        $db->prepare('INSERT INTO benutzergruppen (firma_id, name, beschreibung, rechte_json, vorlage, erstellt, aktualisiert) VALUES (?, ?, ?, ?, ?, ?, ?)')
+           ->execute([$firmaId, $namen[$vorlage], '', json_encode(gruppenRechteNormalisieren($rechte)), $vorlage, jetzt(), jetzt()]);
+    }
+}
+
+/**
+ * Gruppe anlegen oder ändern; $daten: name, beschreibung, rechte (bereich => stufe).
+ * Wirft InvalidArgumentException('name' | 'doppelt').
+ */
+function gruppeSpeichern(int $firmaId, array $daten, ?int $id = null): int
+{
+    $name = trim((string) ($daten['name'] ?? ''));
+    if (mb_strlen($name) < 2 || mb_strlen($name) > 60) {
+        throw new InvalidArgumentException('name');
+    }
+    $db = datenbank();
+    $st = $db->prepare('SELECT id FROM benutzergruppen WHERE firma_id = ? AND name = ? COLLATE NOCASE AND id <> ?');
+    $st->execute([$firmaId, $name, $id ?? 0]);
+    if ($st->fetchColumn() !== false) {
+        throw new InvalidArgumentException('doppelt');
+    }
+    $rechte = json_encode(gruppenRechteNormalisieren((array) ($daten['rechte'] ?? [])));
+    $beschreibung = mb_substr(trim((string) ($daten['beschreibung'] ?? '')), 0, 300);
+    if ($id !== null) {
+        if (gruppeLaden($firmaId, $id) === null) {
+            throw new InvalidArgumentException('gruppe');
+        }
+        $db->prepare('UPDATE benutzergruppen SET name = ?, beschreibung = ?, rechte_json = ?, aktualisiert = ? WHERE id = ? AND firma_id = ?')
+           ->execute([$name, $beschreibung, $rechte, jetzt(), $id, $firmaId]);
+
+        return $id;
+    }
+    $db->prepare('INSERT INTO benutzergruppen (firma_id, name, beschreibung, rechte_json, vorlage, erstellt, aktualisiert) VALUES (?, ?, ?, ?, ?, ?, ?)')
+       ->execute([$firmaId, $name, $beschreibung, $rechte, '', jetzt(), jetzt()]);
+
+    return (int) $db->lastInsertId();
+}
+
+/** Gruppe löschen — zugeordnete Benutzer haben danach wieder alle Rechte. Liefert die Zahl der betroffenen Benutzer. */
+function gruppeLoeschen(int $firmaId, int $id): int
+{
+    if (gruppeLaden($firmaId, $id) === null) {
+        throw new InvalidArgumentException('gruppe');
+    }
+    $db = datenbank();
+    $st = $db->prepare('UPDATE kunden SET gruppe_id = NULL WHERE gruppe_id = ? AND firma_id = ?');
+    $st->execute([$id, $firmaId]);
+    $db->prepare('DELETE FROM benutzergruppen WHERE id = ? AND firma_id = ?')->execute([$id, $firmaId]);
+
+    return $st->rowCount();
+}
+
+/** Aktive Inhaber der Firma zählen (Schutz: der letzte bleibt). */
+function inhaberAnzahl(int $firmaId): int
+{
+    $st = datenbank()->prepare("SELECT COUNT(*) FROM kunden WHERE firma_id = ? AND firmenrolle = 'inhaber' AND aktiv = 1");
+    $st->execute([$firmaId]);
+
+    return (int) $st->fetchColumn();
 }
 
 // ---------------------------------------------------------------- Anmeldelinks

@@ -131,9 +131,10 @@
       <div class="karte-kopf"><h2 class="h2">Benutzer</h2></div>
       <?php $uNummern = array_column($unterkunden, 'nummer', 'id'); foreach ($benutzer as $b) { ?>
         <div class="firma-benutzer <?= (int) $b['aktiv'] === 1 ? '' : 'inaktiv' ?>">
-          <div><strong><?= e($b['name']) ?></strong> <span class="pille"><?= $b['firmenrolle'] === 'inhaber' ? 'Inhaber' : 'Mitarbeiter' ?></span><?= (int) ($b['unterkunde_id'] ?? 0) > 0 ? ' <span class="pille mono">' . e($uNummern[(int) $b['unterkunde_id']] ?? '') . '</span>' : '' ?><br><span class="leise"><?= e($b['email']) ?> · <?= (int) $b['email_bestaetigt'] === 1 ? 'aktiviert' : 'Einladung offen' ?><?= (int) $b['aktiv'] === 1 ? '' : ' · inaktiv' ?><?= $b['letzte_anmeldung'] ? ' · zuletzt ' . e(zeitAnzeigen($b['letzte_anmeldung'])) : '' ?></span></div>
+          <div><strong><?= e($b['name']) ?></strong> <span class="pille"><?= $b['firmenrolle'] === 'inhaber' ? 'Inhaber' : 'Mitarbeiter' ?></span><?= $b['firmenrolle'] !== 'inhaber' ? ' <span class="pille pille--cyan">' . e($b['gruppe_name'] ?? '' ?: 'alle Rechte') . '</span>' : '' ?><?= (int) ($b['unterkunde_id'] ?? 0) > 0 ? ' <span class="pille mono">' . e($uNummern[(int) $b['unterkunde_id']] ?? '') . '</span>' : '' ?><br><span class="leise"><?= e($b['email']) ?> · <?= (int) $b['email_bestaetigt'] === 1 ? 'aktiviert' : 'Einladung offen' ?><?= (int) $b['aktiv'] === 1 ? '' : ' · inaktiv' ?><?= $b['letzte_anmeldung'] ? ' · zuletzt ' . e(zeitAnzeigen($b['letzte_anmeldung'])) : '' ?></span></div>
           <?php if ($darfB) { ?>
           <div class="zeilen-aktionen">
+            <?php if ($b['firmenrolle'] !== 'inhaber') { ?><form method="post" action="<?= e(url('kunden/firmen/' . $firma['id'] . '/benutzer')) ?>" class="formular--zeile"><?= csrfFeld() ?><input type="hidden" name="kunde_id" value="<?= (int) $b['id'] ?>"><input type="hidden" name="was" value="gruppe"><select name="gruppe_id" aria-label="Benutzergruppe" onchange="this.form.requestSubmit()"><option value="0">Alle Rechte</option><?php foreach ($gruppen as $g) { ?><option value="<?= (int) $g['id'] ?>" <?= (int) ($b['gruppe_id'] ?? 0) === (int) $g['id'] ? 'selected' : '' ?>><?= e($g['name']) ?></option><?php } ?></select></form><?php } ?>
             <?php if ($unterkunden !== []) { ?><form method="post" action="<?= e(url('kunden/firmen/' . $firma['id'] . '/benutzer')) ?>" class="formular--zeile"><?= csrfFeld() ?><input type="hidden" name="kunde_id" value="<?= (int) $b['id'] ?>"><input type="hidden" name="was" value="unterkunde"><select name="unterkunde_id" aria-label="Unterkunde" onchange="this.form.requestSubmit()"><option value="0">Hauptfirma</option><?php foreach ($unterkunden as $u) { ?><option value="<?= (int) $u['id'] ?>" <?= (int) ($b['unterkunde_id'] ?? 0) === (int) $u['id'] ? 'selected' : '' ?>><?= e($u['nummer']) ?> <?= e($u['name']) ?></option><?php } ?></select></form><?php } ?>
             <?php if ((int) $b['email_bestaetigt'] !== 1) { ?><form method="post" action="<?= e(url('kunden/firmen/' . $firma['id'] . '/benutzer')) ?>"><?= csrfFeld() ?><input type="hidden" name="kunde_id" value="<?= (int) $b['id'] ?>"><input type="hidden" name="was" value="einladen"><button class="knopf knopf--leise knopf--klein" type="submit">Erneut einladen</button></form><?php } ?>
             <form method="post" action="<?= e(url('kunden/firmen/' . $firma['id'] . '/benutzer')) ?>"><?= csrfFeld() ?><input type="hidden" name="kunde_id" value="<?= (int) $b['id'] ?>"><input type="hidden" name="was" value="<?= (int) $b['aktiv'] === 1 ? 'deaktivieren' : 'aktivieren' ?>"><button class="knopf knopf--leise knopf--klein" type="submit"><?= (int) $b['aktiv'] === 1 ? 'Deaktivieren' : 'Aktivieren' ?></button></form>
@@ -148,11 +149,23 @@
         <div class="feld"><input name="email" type="email" placeholder="E-Mail" aria-label="E-Mail" required></div>
         <div class="spalten spalten--2">
           <div class="feld"><select name="rolle" aria-label="Rolle"><option value="mitarbeiter">Mitarbeiter</option><option value="inhaber">Inhaber</option></select></div>
+          <div class="feld"><select name="gruppe_id" aria-label="Benutzergruppe"><option value="0">Alle Rechte (keine Gruppe)</option><?php foreach ($gruppen as $g) { ?><option value="<?= (int) $g['id'] ?>"><?= e($g['name']) ?></option><?php } ?></select></div>
           <div class="feld"><select name="sprache" aria-label="Sprache"><option value="de">Deutsch</option><option value="en">English</option></select></div>
         </div>
         <button class="knopf knopf--leise" type="submit">Einladen</button>
       </form>
       <?php } ?>
+    </div>
+    <div class="karte karte--tabelle">
+      <div class="karte-kopf"><h2 class="h2">Benutzergruppen</h2><span class="leise">verwaltet der Inhaber im Portal · ohne Gruppe: alle Rechte</span></div>
+      <div class="scrollen"><table class="tabelle tabelle--kompakt">
+        <thead><tr><th>Gruppe</th><?php foreach (KUNDEN_BEREICHE as $bereich) { ?><th><?= e(ucfirst($bereich)) ?></th><?php } ?><th class="rechts">Benutzer</th></tr></thead>
+        <tbody>
+        <?php foreach ($gruppen as $g) { ?>
+          <tr><td><strong><?= e($g['name']) ?></strong><?= $g['beschreibung'] !== '' ? '<br><span class="leise">' . e($g['beschreibung']) . '</span>' : '' ?></td><?php foreach (KUNDEN_BEREICHE as $bereich) { $st = $g['rechte'][$bereich]; ?><td><?= $st === '' ? '<span class="leise">—</span>' : '<span class="pille' . ($st === 'bearbeiten' ? '' : ' pille--warn') . '">' . e($st) . '</span>' ?></td><?php } ?><td class="mono rechts"><?= (int) $g['benutzer'] ?></td></tr>
+        <?php } ?>
+        </tbody>
+      </table></div>
     </div>
   </div>
 </div>

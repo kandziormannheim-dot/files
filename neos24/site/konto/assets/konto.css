@@ -169,3 +169,5 @@
 .k-werkzeuge select { flex: 0 1 auto; max-width: 100%; min-width: 0; }
 .k-feld-knopf { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; padding-top: 1.6rem; }
 .k-import-form .k-schalter { margin-right: 0; }
+.k-matrix td, .k-matrix th { vertical-align: middle; }
+.k-matrix td .k-schalter input { width: 1.05rem; height: 1.05rem; }

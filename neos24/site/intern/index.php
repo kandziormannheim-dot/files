@@ -710,7 +710,8 @@ if (preg_match('#^/kunden/firmen/(\d+)(?:/(daten|einladen|benutzer|rechnung|akti
                 protokollieren('firma.' . ($neu ? 'aktiviert' : 'deaktiviert'), 'firma', (int) $firma['id']);
                 hinweisSetzen($neu ? 'Firma aktiviert.' : 'Firma deaktiviert — Benutzer können sich nicht mehr anmelden.');
             } elseif ($aktion === 'einladen') {
-                $id = firmenBenutzerEinladen($firma, feld('email', 254), feld('name', 100), feld('rolle', 12) === 'inhaber' ? 'inhaber' : 'mitarbeiter', feld('sprache', 2) === 'en' ? 'en' : 'de');
+                $gruppeId = (int) feld('gruppe_id', 10);
+                $id = firmenBenutzerEinladen($firma, feld('email', 254), feld('name', 100), feld('rolle', 12) === 'inhaber' ? 'inhaber' : 'mitarbeiter', feld('sprache', 2) === 'en' ? 'en' : 'de', $gruppeId > 0 ? $gruppeId : null);
                 protokollieren('firma.benutzer_eingeladen', 'kunde', $id, ['firma' => $firma['name']]);
                 hinweisSetzen('Einladung verschickt.');
             } elseif ($aktion === 'benutzer') {
@@ -722,6 +723,14 @@ if (preg_match('#^/kunden/firmen/(\d+)(?:/(daten|einladen|benutzer|rechnung|akti
                 if ($was === 'einladen') {
                     firmenBenutzerEinladen($firma, (string) $kunde['email'], (string) $kunde['name'], (string) $kunde['firmenrolle'], (string) $kunde['sprache']);
                     hinweisSetzen('Einladung erneut verschickt.');
+                } elseif ($was === 'gruppe') {
+                    $gId = (int) feld('gruppe_id', 10);
+                    $g = $gId > 0 ? gruppeLaden((int) $firma['id'], $gId) : null;
+                    if ($gId > 0 && $g === null) {
+                        throw new InvalidArgumentException('Gruppe gehört nicht zu dieser Firma.');
+                    }
+                    kundeAktualisieren((int) $kunde['id'], ['gruppe_id' => $gId > 0 ? $gId : null]);
+                    hinweisSetzen($g !== null ? $kunde['name'] . ' ist jetzt in der Gruppe „' . $g['name'] . '“.' : $kunde['name'] . ' hat wieder alle Rechte (keine Gruppe).');
                 } elseif ($was === 'unterkunde') {
                     $uId = (int) feld('unterkunde_id', 10);
                     $u = $uId > 0 ? unterkundeLaden($uId) : null;
@@ -749,7 +758,7 @@ if (preg_match('#^/kunden/firmen/(\d+)(?:/(daten|einladen|benutzer|rechnung|akti
     }
     $guthabenKonto = ['id' => 0, 'art' => 'business', 'firma_id' => (int) $firma['id']];
     ansicht('firma', ['titel' => $firma['name'], 'firma' => $firma, 'benutzer' => firmenBenutzer((int) $firma['id']), 'sendungen' => $st->fetchAll(), 'rechnungen' => rechnungenDerFirma((int) $firma['id']), 'monate' => $monate,
-        'unterkunden' => unterkundenDerFirma((int) $firma['id']), 'sync' => syncKarte('firmen', $firma),
+        'unterkunden' => unterkundenDerFirma((int) $firma['id']), 'gruppen' => gruppenDerFirma((int) $firma['id']), 'sync' => syncKarte('firmen', $firma),
         'guthaben' => guthabenStand($guthabenKonto), 'buchungen' => guthabenBuchungen($guthabenKonto, 10), 'aktiv' => 'kunden']);
 }
 

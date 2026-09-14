@@ -767,6 +767,18 @@ function schemaAnlegen(PDO $db): void
             aktualisiert         TEXT NOT NULL,
             UNIQUE (firma_id, laufnummer)
         );
+        CREATE TABLE IF NOT EXISTS benutzergruppen (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            firma_id      INTEGER NOT NULL REFERENCES firmen(id),
+            name          TEXT NOT NULL,
+            beschreibung  TEXT NOT NULL DEFAULT '',
+            rechte_json   TEXT NOT NULL DEFAULT '{}',
+            vorlage       TEXT NOT NULL DEFAULT '',
+            erstellt      TEXT NOT NULL,
+            aktualisiert  TEXT NOT NULL,
+            UNIQUE (firma_id, name)
+        );
+        CREATE INDEX IF NOT EXISTS benutzergruppen_firma ON benutzergruppen (firma_id);
         CREATE TABLE IF NOT EXISTS sync_auftraege (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             system        TEXT NOT NULL,
@@ -797,6 +809,7 @@ function schemaAnlegen(PDO $db): void
     $syncSpalten = ['lexware_kundennummer' => "TEXT NOT NULL DEFAULT ''", 'odoo_id' => 'INTEGER NOT NULL DEFAULT 0', 'synchronisiert' => 'TEXT', 'sync_json' => "TEXT NOT NULL DEFAULT '{}'"];
     spaltenErgaenzen($db, 'firmen', ['kundennummer' => "TEXT NOT NULL DEFAULT ''"] + $syncSpalten);
     spaltenErgaenzen($db, 'kunden', ['kundennummer' => "TEXT NOT NULL DEFAULT ''", 'unterkunde_id' => 'INTEGER'] + $syncSpalten);
+    spaltenErgaenzen($db, 'kunden', ['gruppe_id' => 'INTEGER']); // Benutzergruppe mit Rechten je Bereich (NULL = alle Rechte)
     spaltenErgaenzen($db, 'bestellungen', ['unterkunde_id' => 'INTEGER', 'odoo_id' => 'INTEGER NOT NULL DEFAULT 0', 'odoo_nummer' => "TEXT NOT NULL DEFAULT ''"]);
     spaltenErgaenzen($db, 'rechnungen', ['unterkunde_id' => 'INTEGER', 'odoo_info' => "TEXT NOT NULL DEFAULT ''"]);
     spaltenErgaenzen($db, 'preislisten', ['unterkunde_id' => 'INTEGER']);

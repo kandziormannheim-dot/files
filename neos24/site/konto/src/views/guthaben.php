@@ -19,6 +19,9 @@
       <?php } ?>
     </div>
   </div>
+  <?php if (kundeAktuell()['art'] === 'business' && !darfKunde('buchhaltung', 'bearbeiten')) { ?>
+  <div class="card card--ink"><h2 class="h3"><?= e(t('guthaben.aufladen')) ?></h2><p class="k-text"><?= e(t('gruppen.kein_recht', t('gruppen.bereich.buchhaltung'), t('gruppen.stufe.bearbeiten'))) ?></p></div>
+  <?php } else { ?>
   <div class="card card--ink k-aufladen" data-aufladen data-url="<?= e(url('guthaben/aufladen')) ?>" data-status-url="<?= e(url('guthaben/status')) ?>" data-csrf="<?= e(csrfWert()) ?>" data-modus="<?= e($modus) ?>" data-email="<?= e(kundeAktuell()['email']) ?>" data-name="<?= e(kundeAktuell()['name']) ?>" data-rueck="<?= e($rueck) ?>"
        data-msg-warten="<?= e(t('bezahlen.warten')) ?>" data-msg-erfolg="<?= e(t('guthaben.aufgeladen')) ?>" data-msg-abbruch="<?= e(t('bezahlen.abbruch')) ?>" data-msg-fehler="<?= e(t('bezahlen.fehler')) ?>" data-msg-unavailable="<?= e(t('bezahlen.unavailable')) ?>" data-msg-betrag="<?= e(t('guthaben.min')) ?>">
     <h2 class="h3"><?= e(t('guthaben.aufladen')) ?></h2>
@@ -31,4 +34,5 @@
     <p class="k-hinweis k-hinweis--ok" data-ok hidden></p>
     <?php if ($zahlungBereit) { ?><button class="btn btn--primary k-btn-breit" type="button" data-aufladen-knopf><?= e(t('guthaben.aufladen.knopf')) ?></button><?php } else { ?><p class="k-hinweis k-hinweis--fehler"><?= e(t('bezahlen.unavailable')) ?></p><?php } ?>
   </div>
+  <?php } ?>
 </div>
