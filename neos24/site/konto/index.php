@@ -1,0 +1,507 @@
+<?php
+
+/**
+ * Kundenportal neos24.com — Einstiegspunkt und Wegweiser.
+ *
+ * Alle Anfragen unter /konto/ laufen durch diese Datei (.htaccess). Jede
+ * Datenabfrage läuft über src/sendungen.php und filtert auf das angemeldete
+ * Konto bzw. dessen Firma — fremde Datensätze enden als 404.
+ */
+
+declare(strict_types=1);
+
+require __DIR__ . '/src/bootstrap.php';
+
+$methode = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$pfad = isset($_GET['pfad'])
+    ? (string) $_GET['pfad']
+    : rawurldecode((string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH));
+$basis = kontoBasis();
+if ($basis !== '' && str_starts_with($pfad, $basis)) {
+    $pfad = substr($pfad, strlen($basis));
+}
+$pfad = '/' . trim(preg_replace('#/+#', '/', $pfad) ?? '', '/');
+if ($pfad === '/index.php') {
+    $pfad = '/';
+}
+
+if ($pfad === '/status') {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['ok' => true, 'dienst' => 'konto', 'konfiguriert' => is_file(getenv('NEOS_KONFIG') ?: NEOS_KONFIG_PFAD)]);
+    exit;
+}
+
+try {
+    $db = datenbank();
+} catch (Throwable $e) {
+    error_log('[konto] Datenbank: ' . $e->getMessage());
+    http_response_code(503);
+    exit('Service temporarily unavailable.');
+}
+sitzungStarten();
+sprache();
+anmeldelinksAufraeumen();
+
+if ($methode === 'POST' && !herkunftErlaubt((string) ($_SERVER['HTTP_ORIGIN'] ?? ''), konfig()['erlaubteHerkunft'])) {
+    fehlerSeite(403, t('fehler.403'), t('fehler.403.text'));
+}
+
+$linkMinuten = (int) round((int) konfig()['konto']['linkGueltigkeit'] / 60);
+
+// -------------------------------------------------------------- Checkout-Hilfe
+
+/** Angemeldeter Privatkunde für die Vorbelegung des Checkouts (JSON, nur lesend). */
+if ($pfad === '/ich') {
+    header('Content-Type: application/json; charset=utf-8');
+    $k = kundeAktuell();
+    if ($k === null || $k['art'] !== 'privat') {
+        echo json_encode(['angemeldet' => false]);
+        exit;
+    }
+    $absender = json_decode((string) $k['absender_json'], true) ?: [];
+    echo json_encode(['angemeldet' => true, 'name' => $k['name'], 'email' => $k['email'], 'absender' => $absender], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ---------------------------------------------------- Sendungsverfolgung (öffentlich)
+
+if ($pfad === '/tracking') {
+    $nr = strtoupper(saeubern($_GET['nr'] ?? '', 20));
+    $plz = saeubern($_GET['plz'] ?? '', 12);
+    $ergebnis = null;
+    $gesucht = $nr !== '' && $plz !== '';
+    if ($gesucht && begrenzungPruefen('tracking', 60)) {
+        $ergebnis = trackingOeffentlich($nr, $plz);
+    }
+    ansicht('tracking', ['titel' => t('tracking.titel'), 'nr' => $nr, 'plz' => $plz, 'ergebnis' => $ergebnis, 'gesucht' => $gesucht, 'aktiv' => 'tracking']);
+}
+
+// ------------------------------------------------------------------ Anmeldung
+
+$weiter = (string) ($_GET['weiter'] ?? $_POST['weiter'] ?? '');
+if ($weiter === '' || $weiter[0] !== '/' || str_starts_with($weiter, '//')) {
+    $weiter = '/';
+}
+
+if ($pfad === '/login') {
+    if (kundeAktuell() !== null) {
+        umleiten(url());
+    }
+    $fehler = null;
+    if ($methode === 'POST') {
+        csrfPruefen();
+        $email = feld('email', 254);
+        $k = kundeNachEmail($email);
+        if ($k !== null && $k['passwort_hash'] === null && (int) $k['aktiv'] === 1 && (int) $k['email_bestaetigt'] === 1) {
+            $fehler = t('login.kein_passwort');
+        } elseif (kundeAnmelden($email, (string) ($_POST['passwort'] ?? ''))) {
+            umleiten(url(ltrim($weiter, '/')));
+        } else {
+            $fehler = t('login.fehler');
+        }
+    }
+    ansicht('login', ['titel' => t('login.titel'), 'fehler' => $fehler, 'weiter' => $weiter, 'email' => feld('email', 254), 'aktiv' => '']);
+}
+
+if ($pfad === '/link-senden' && $methode === 'POST') {
+    csrfPruefen();
+    $email = mb_strtolower(feld('email', 254));
+    if (filter_var($email, FILTER_VALIDATE_EMAIL) !== false && begrenzungPruefen('anmeldelink', 5)) {
+        $k = kundeNachEmail($email);
+        if ($k !== null && (int) $k['aktiv'] === 1) {
+            $zweck = (int) $k['email_bestaetigt'] === 1 ? 'anmelden' : ($k['art'] === 'business' ? 'einladung' : 'registrieren');
+            $gueltig = (int) konfig()['konto'][$zweck === 'einladung' ? 'einladungGueltigkeit' : 'linkGueltigkeit'];
+            $token = anmeldelinkErzeugen((int) $k['id'], $zweck, $gueltig);
+            try {
+                kontoMailSenden($k, $zweck, anmeldelinkUrl($token, sprache()), ['firma' => $k['firma'] ?? '']);
+            } catch (Throwable $e) {
+                error_log('[konto] Anmeldelink-Mail: ' . $e->getMessage());
+            }
+        }
+    }
+    ansicht('link_gesendet', ['titel' => t('link.titel'), 'email' => $email, 'minuten' => $linkMinuten, 'aktiv' => '']);
+}
+
+if ($pfad === '/registrieren') {
+    if (kundeAktuell() !== null) {
+        umleiten(url());
+    }
+    $fehler = null;
+    $werte = ['name' => '', 'email' => ''];
+    if ($methode === 'POST') {
+        csrfPruefen();
+        $werte = ['name' => feld('name', 100), 'email' => mb_strtolower(feld('email', 254))];
+        if (feld('webseite', 100) !== '') {
+            ansicht('link_gesendet', ['titel' => t('link.titel'), 'email' => $werte['email'], 'minuten' => $linkMinuten, 'aktiv' => '']);
+        }
+        if (mb_strlen($werte['name']) < 2 || filter_var($werte['email'], FILTER_VALIDATE_EMAIL) === false) {
+            $fehler = t('neu.fehler');
+        } elseif (!begrenzungPruefen('anmeldelink', 5)) {
+            $fehler = t('login.fehler');
+        } else {
+            $k = kundeNachEmail($werte['email']);
+            if ($k === null) {
+                $id = kundeAnlegen(['email' => $werte['email'], 'name' => $werte['name'], 'art' => 'privat', 'sprache' => sprache(), 'email_bestaetigt' => 0]);
+                $k = kundeLaden($id);
+                $zweck = 'registrieren';
+            } else {
+                // Vorhandenes Konto: nichts verraten, Anmeldelink statt Registrierung.
+                $zweck = (int) $k['email_bestaetigt'] === 1 ? 'anmelden' : ($k['art'] === 'business' ? 'einladung' : 'registrieren');
+            }
+            if ((int) $k['aktiv'] === 1) {
+                $gueltig = (int) konfig()['konto'][$zweck === 'einladung' ? 'einladungGueltigkeit' : 'linkGueltigkeit'];
+                $token = anmeldelinkErzeugen((int) $k['id'], $zweck, $gueltig);
+                try {
+                    kontoMailSenden($k, $zweck, anmeldelinkUrl($token, sprache()), ['firma' => $k['firma'] ?? '']);
+                } catch (Throwable $e) {
+                    error_log('[konto] Registrierungs-Mail: ' . $e->getMessage());
+                }
+            }
+            ansicht('link_gesendet', ['titel' => t('link.titel'), 'email' => $werte['email'], 'minuten' => $linkMinuten, 'aktiv' => '']);
+        }
+    }
+    ansicht('registrieren', ['titel' => t('registrieren.titel'), 'fehler' => $fehler, 'werte' => $werte, 'aktiv' => '']);
+}
+
+if ($pfad === '/passwort-vergessen') {
+    $fehler = null;
+    if ($methode === 'POST') {
+        csrfPruefen();
+        $email = mb_strtolower(feld('email', 254));
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) !== false && begrenzungPruefen('anmeldelink', 5)) {
+            $k = kundeNachEmail($email);
+            if ($k !== null && (int) $k['aktiv'] === 1 && (int) $k['email_bestaetigt'] === 1) {
+                $token = anmeldelinkErzeugen((int) $k['id'], 'passwort', (int) konfig()['konto']['linkGueltigkeit']);
+                try {
+                    kontoMailSenden($k, 'passwort', anmeldelinkUrl($token, sprache()));
+                } catch (Throwable $e) {
+                    error_log('[konto] Passwort-Mail: ' . $e->getMessage());
+                }
+            }
+        }
+        ansicht('link_gesendet', ['titel' => t('link.titel'), 'email' => $email, 'minuten' => $linkMinuten, 'aktiv' => '']);
+    }
+    ansicht('passwort_vergessen', ['titel' => t('vergessen.titel'), 'fehler' => $fehler, 'aktiv' => '']);
+}
+
+if ($pfad === '/link') {
+    $ergebnis = anmeldelinkEinloesen((string) ($_GET['t'] ?? ''));
+    if ($ergebnis === null) {
+        ansicht('login', ['titel' => t('login.titel'), 'fehler' => t('login.abgelaufen'), 'weiter' => '/', 'email' => '', 'aktiv' => '']);
+    }
+    $k = $ergebnis['kunde'];
+    $zweck = $ergebnis['zweck'];
+    $zugeordnet = 0;
+    if ((int) $k['email_bestaetigt'] !== 1) {
+        kundeAktualisieren((int) $k['id'], ['email_bestaetigt' => 1]);
+        if ($k['art'] === 'privat') {
+            $zugeordnet = bestellungenZuordnen((int) $k['id'], (string) $k['email']);
+        }
+        $k = kundeLaden((int) $k['id']);
+    }
+    if ($k['art'] === 'business' && (int) ($k['firma_aktiv'] ?? 0) !== 1) {
+        ansicht('login', ['titel' => t('login.titel'), 'fehler' => t('login.fehler'), 'weiter' => '/', 'email' => '', 'aktiv' => '']);
+    }
+    kundeSitzungSetzen($k, true);
+    if ($zweck === 'registrieren' || $zweck === 'einladung') {
+        hinweisSetzen(t('willkommen.bestaetigt', $zugeordnet));
+        umleiten(url('passwort', ['neu' => 1]));
+    }
+    if ($zweck === 'passwort') {
+        umleiten(url('passwort'));
+    }
+    umleiten(url());
+}
+
+if ($pfad === '/logout') {
+    if ($methode === 'POST') {
+        csrfPruefen();
+        kundeAbmelden();
+    }
+    umleiten(url('login'));
+}
+
+// ------------------------------------------------------------- Angemeldet
+
+$ich = anmeldungErzwingen($pfad);
+if ($methode === 'POST') {
+    csrfPruefen();
+}
+$firma = $ich['art'] === 'business' ? firmaLaden((int) $ich['firma_id']) : null;
+// Unterkunden der Firma (Firmengruppe, Standorte): Inhaber wählen je Sendung, Mitarbeiter mit fester Zuordnung buchen nur für ihren
+$unterkunden = $firma !== null ? unterkundenDerFirma((int) $firma['id'], true) : [];
+$festerUnterkunde = $firma !== null ? festerUnterkunde($ich) : 0;
+if ($festerUnterkunde > 0 && !in_array($festerUnterkunde, array_map('intval', array_column($unterkunden, 'id')), true)) {
+    $festerUnterkunde = 0; // deaktiviert → wieder Hauptfirma
+}
+
+if ($pfad === '/passwort') {
+    $fehler = null;
+    $frei = !empty($_SESSION['passwort_frei']) || $ich['passwort_hash'] === null;
+    if ($methode === 'POST') {
+        $neu = (string) ($_POST['neu'] ?? '');
+        if (!$frei && !password_verify((string) ($_POST['alt'] ?? ''), (string) $ich['passwort_hash'])) {
+            $fehler = t('passwort.alt_falsch');
+        } elseif (($fehler = kundePasswortRegel($neu, sprache())) === null) {
+            if ($neu !== (string) ($_POST['wiederholung'] ?? '')) {
+                $fehler = t('passwort.ungleich');
+            } else {
+                kundeAktualisieren((int) $ich['id'], ['passwort_hash' => password_hash($neu, PASSWORD_DEFAULT)]);
+                $_SESSION['passwort_frei'] = false;
+                hinweisSetzen(t('passwort.gespeichert'));
+                umleiten(url());
+            }
+        }
+    }
+    ansicht('passwort', ['titel' => t('passwort.titel'), 'fehler' => $fehler, 'frei' => $frei, 'neu' => isset($_GET['neu']), 'aktiv' => 'einstellungen']);
+}
+
+if ($pfad === '/') {
+    if ($ich['art'] === 'business') {
+        $firma = businessErzwingen($ich);
+        [$letzte] = eigeneBestellungen($ich, 5);
+        ansicht('uebersicht', ['titel' => t('nav.uebersicht'), 'k' => firmaKennzahlen((int) $firma['id']), 'letzte' => $letzte, 'firma' => $firma, 'guthaben' => guthabenStand($ich), 'aktiv' => 'uebersicht']);
+    }
+    [$letzte] = eigeneBestellungen($ich, 5);
+    ansicht('uebersicht', ['titel' => t('nav.uebersicht'), 'letzte' => $letzte, 'absender' => json_decode((string) $ich['absender_json'], true) ?: [], 'guthaben' => guthabenStand($ich), 'aktiv' => 'uebersicht']);
+}
+
+// ------------------------------------------------- Bestellungen / Sendungen
+
+if ($pfad === '/bestellungen' || $pfad === '/sendungen') {
+    if ($pfad === '/sendungen') {
+        businessErzwingen($ich);
+        if (!sendungenSehenErlaubt()) {
+            kundenRechtErzwingen('versand');
+        }
+    } else {
+        privatErzwingen($ich);
+    }
+    $status = saeubern($_GET['status'] ?? '', 20);
+    $q = saeubern($_GET['q'] ?? '', 60);
+    $unterkundeFilter = isset($_GET['unterkunde']) && $_GET['unterkunde'] !== '' ? (int) $_GET['unterkunde'] : null;
+    $seite = seiteLesen();
+    [$zeilen, $gesamt] = eigeneBestellungen($ich, 50, ($seite - 1) * 50, $status, $q, $unterkundeFilter);
+    ansicht('bestellungen', ['titel' => t($pfad === '/sendungen' ? 'nav.sendungen' : 'nav.bestellungen'), 'zeilen' => $zeilen, 'gesamt' => $gesamt, 'seite' => $seite, 'status' => $status, 'q' => $q, 'pfad' => ltrim($pfad, '/'),
+        'unterkunden' => $festerUnterkunde > 0 ? [] : $unterkunden, 'unterkundeFilter' => $unterkundeFilter, 'aktiv' => ltrim($pfad, '/')]);
+}
+
+if (preg_match('#^/(bestellungen|sendungen)/(NE-\d{4}-[0-9A-F]{8})$#', $pfad, $t)) {
+    if ($t[1] === 'sendungen') {
+        businessErzwingen($ich);
+        if (!sendungenSehenErlaubt()) {
+            kundenRechtErzwingen('versand');
+        }
+    } else {
+        privatErzwingen($ich);
+    }
+    $b = eigeneBestellung($ich, $t[2]);
+    if ($b === null) {
+        fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
+    }
+    $st = $db->prepare('SELECT id, status FROM reklamationen WHERE bestellung_id = ? ORDER BY id DESC LIMIT 1');
+    $st->execute([$b['id']]);
+    ansicht('bestellung', ['titel' => $b['ext_ref'], 'b' => $b, 'pfad' => $t[1], 'ereignisse' => sendungsereignisse((int) $b['id']), 'reklamation' => $st->fetch() ?: null, 'guthaben' => guthabenStand($ich), 'aktiv' => $t[1]]);
+}
+
+require __DIR__ . '/src/routen_versand.php';
+
+if ($pfad === '/preise') {
+    businessErzwingen($ich);
+    kundenRechtEinesErzwingen([['versand', 'sehen'], ['buchhaltung', 'sehen']]);
+    $preislisteId = preislisteFuerKonto($ich);
+    ansicht('preise', ['titel' => t('preise.titel'), 'preise' => preislisteFuerAnzeige($preislisteId), 'zusatz' => zusatzleistungen(true, $preislisteId), 'eigene' => $preislisteId !== null, 'aktiv' => 'preise']);
+}
+
+// ------------------------------------------------------------------ Rechnungen
+
+// Rechnungsarchiv für alle Kunden: Sammelrechnungen, Einzelrechnungen, Gutschriften, Nachweise (lib/belege.php)
+if ($pfad === '/rechnungen') {
+    if ($ich['art'] === 'business') {
+        kundenRechtErzwingen('buchhaltung');
+    }
+    $jahr = (int) ($_GET['jahr'] ?? 0) > 2000 ? (int) $_GET['jahr'] : null;
+    $q = saeubern($_GET['q'] ?? '', 40);
+    $artFilter = in_array($_GET['art'] ?? '', BELEG_ARTEN, true) ? (string) $_GET['art'] : '';
+    ansicht('rechnungen', ['titel' => t('rechnungen.titel'), 'archiv' => belegeFuerKonto($ich, $jahr, $q, $artFilter), 'jahr' => $jahr, 'q' => $q, 'art' => $artFilter, 'unterkunden' => $unterkunden, 'aktiv' => 'rechnungen']);
+}
+
+if (preg_match('#^/rechnungen/([A-Za-z0-9][A-Za-z0-9_-]{1,60})(\.pdf)?$#', $pfad, $t)) {
+    $firma = businessErzwingen($ich);
+    kundenRechtErzwingen('buchhaltung');
+    $r = rechnungNachNummer($t[1]);
+    if ($r === null || (int) $r['firma_id'] !== (int) $firma['id'] || ($festerUnterkunde > 0 && (int) $r['unterkunde_id'] !== $festerUnterkunde)) {
+        fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
+    }
+    if (isset($t[2])) {
+        $datei = rechnungPfad($r);
+        if (!is_file($datei)) {
+            fehlerSeite(404, t('fehler.404'), t('rechnungen.entwurf'));
+        }
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . $r['nummer'] . '.pdf"');
+        header('Content-Length: ' . (string) filesize($datei));
+        readfile($datei);
+        exit;
+    }
+    ansicht('rechnung', ['titel' => $r['nummer'], 'r' => $r, 'positionen' => rechnungPositionen((int) $r['id']), 'aktiv' => 'rechnungen']);
+}
+
+// --------------------------------------------------------- Benutzer und Firma
+
+// Benutzergruppen: Inhaber oder Bereich „Verwaltung“ (lib/kunden.php, konto/src/rechte_kunde.php)
+if ($pfad === '/benutzer/gruppen' || $pfad === '/benutzer/gruppen/neu' || preg_match('#^/benutzer/gruppen/(\d+)(?:/(loeschen))?$#', $pfad, $t)) {
+    $firma = verwaltungErzwingen($ich, $methode === 'POST' ? 'bearbeiten' : 'sehen');
+    $darfV = istInhaber($ich) || darfKunde('verwaltung', 'bearbeiten');
+    $gruppe = null;
+    if (isset($t[1])) {
+        $gruppe = gruppeLaden((int) $firma['id'], (int) $t[1]);
+        if ($gruppe === null) {
+            fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
+        }
+    }
+    $fehler = null;
+    $werte = ['name' => $gruppe['name'] ?? '', 'beschreibung' => $gruppe['beschreibung'] ?? '', 'rechte' => $gruppe['rechte'] ?? array_fill_keys(KUNDEN_BEREICHE, '')];
+    if ($methode === 'POST') {
+        try {
+            if (($t[2] ?? '') === 'loeschen') {
+                $n = gruppeLoeschen((int) $firma['id'], (int) $gruppe['id']);
+                hinweisSetzen(t('gruppen.geloescht', $gruppe['name']) . ($n > 0 ? ' ' . t('gruppen.geloescht.benutzer', $n) : ''));
+                umleiten(url('benutzer/gruppen'));
+            }
+            if ($pfad !== '/benutzer/gruppen') {
+                $werte = ['name' => feld('name', 60), 'beschreibung' => feld('beschreibung', 300), 'rechte' => gruppenRechteNormalisieren((array) ($_POST['rechte'] ?? []))];
+                if ($gruppe !== null && (int) ($ich['gruppe_id'] ?? 0) === (int) $gruppe['id'] && !istInhaber($ich) && $werte['rechte']['verwaltung'] !== 'bearbeiten') {
+                    throw new InvalidArgumentException('selbst'); // eigene Gruppe: Verwaltung nicht selbst entziehen
+                }
+                gruppeSpeichern((int) $firma['id'], $werte, $gruppe !== null ? (int) $gruppe['id'] : null);
+                hinweisSetzen(t('gruppen.gespeichert', $werte['name']));
+                umleiten(url('benutzer/gruppen'));
+            }
+        } catch (InvalidArgumentException $e) {
+            $fehler = t('gruppen.fehler.' . $e->getMessage());
+        }
+    }
+    if ($pfad === '/benutzer/gruppen') {
+        ansicht('gruppen', ['titel' => t('gruppen.titel'), 'firma' => $firma, 'gruppen' => gruppenDerFirma((int) $firma['id'], sprache()), 'darf' => $darfV, 'aktiv' => 'benutzer']);
+    }
+    ansicht('gruppe_form', ['titel' => $gruppe !== null ? $gruppe['name'] : t('gruppen.neu'), 'firma' => $firma, 'g' => $gruppe, 'werte' => $werte, 'fehler' => $fehler, 'darf' => $darfV, 'aktiv' => 'benutzer']);
+}
+
+if ($pfad === '/benutzer' || $pfad === '/benutzer/einladen' || preg_match('#^/benutzer/(\d+)/(deaktivieren|aktivieren|einladen|gruppe|unterkunde|rolle)$#', $pfad, $t)) {
+    $firma = verwaltungErzwingen($ich, $methode === 'POST' ? 'bearbeiten' : 'sehen');
+    $gruppen = gruppenDerFirma((int) $firma['id'], sprache());
+    $gruppenIds = array_map('intval', array_column($gruppen, 'id'));
+    if ($methode === 'POST' && $pfad === '/benutzer/einladen') {
+        try {
+            $gruppeId = (int) feld('gruppe_id', 10);
+            $uId = $festerUnterkunde > 0 ? $festerUnterkunde : (int) feld('unterkunde_id', 10);
+            $id = firmenBenutzerEinladen($firma, feld('email', 254), feld('name', 100), 'mitarbeiter', sprache(), in_array($gruppeId, $gruppenIds, true) ? $gruppeId : null);
+            if ($uId > 0 && in_array($uId, array_map('intval', array_column($unterkunden, 'id')), true)) {
+                kundeAktualisieren($id, ['unterkunde_id' => $uId]);
+            }
+            hinweisSetzen(t('benutzer.eingeladen', mb_strtolower(feld('email', 254))));
+        } catch (InvalidArgumentException $e) {
+            hinweisSetzen($e->getMessage(), 'fehler');
+        }
+        umleiten(url('benutzer'));
+    }
+    if ($methode === 'POST' && isset($t[1])) {
+        $ziel = kundeLaden((int) $t[1]);
+        if ($ziel === null || (int) $ziel['firma_id'] !== (int) $firma['id']) {
+            fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
+        }
+        $zielInhaber = ($ziel['firmenrolle'] ?? '') === 'inhaber';
+        $selbst = (int) $ziel['id'] === (int) $ich['id'];
+        if ($t[2] === 'einladen') {
+            firmenBenutzerEinladen($firma, (string) $ziel['email'], (string) $ziel['name'], (string) $ziel['firmenrolle'], (string) $ziel['sprache']);
+            hinweisSetzen(t('benutzer.eingeladen', $ziel['email']));
+        } elseif ($t[2] === 'rolle') {
+            // Inhaber ernennen oder absetzen: nur echte Inhaber, der letzte bleibt
+            inhaberErzwingen($ich);
+            $neuInhaber = !empty($_POST['inhaber']);
+            if ($zielInhaber && !$neuInhaber && inhaberAnzahl((int) $firma['id']) <= 1) {
+                hinweisSetzen(t('benutzer.letzter'), 'fehler');
+            } else {
+                kundeAktualisieren((int) $ziel['id'], ['firmenrolle' => $neuInhaber ? 'inhaber' : 'mitarbeiter']);
+                hinweisSetzen($neuInhaber ? t('benutzer.rolle.ernannt', $ziel['name']) : t('benutzer.rolle.entzogen', $ziel['name']));
+            }
+        } elseif ($zielInhaber && !istInhaber($ich)) {
+            fehlerSeite(403, t('fehler.403'), t('benutzer.inhaber_geschuetzt')); // Verwaltung darf Inhaber nicht anfassen
+        } elseif ($t[2] === 'gruppe') {
+            $gruppeId = (int) feld('gruppe_id', 10);
+            if ($selbst && !istInhaber($ich)) {
+                hinweisSetzen(t('benutzer.selbst.gruppe'), 'fehler');
+            } elseif ($gruppeId > 0 && !in_array($gruppeId, $gruppenIds, true)) {
+                fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
+            } else {
+                kundeAktualisieren((int) $ziel['id'], ['gruppe_id' => $gruppeId > 0 ? $gruppeId : null]);
+                hinweisSetzen(t('benutzer.gruppe.gesetzt', $ziel['name'], $gruppeId > 0 ? (gruppeLaden((int) $firma['id'], $gruppeId)['name'] ?? '') : t('benutzer.gruppe.keine')));
+            }
+        } elseif ($t[2] === 'unterkunde') {
+            $uId = (int) feld('unterkunde_id', 10);
+            if ($uId > 0 && !in_array($uId, array_map('intval', array_column($unterkunden, 'id')), true)) {
+                fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));
+            }
+            kundeAktualisieren((int) $ziel['id'], ['unterkunde_id' => $uId > 0 ? $uId : null]);
+            hinweisSetzen(t('benutzer.unterkunde.gesetzt', $ziel['name']));
+        } elseif ($selbst) {
+            hinweisSetzen(t('benutzer.selbst'), 'fehler');
+        } elseif ($t[2] === 'deaktivieren' && $zielInhaber && inhaberAnzahl((int) $firma['id']) <= 1) {
+            hinweisSetzen(t('benutzer.letzter'), 'fehler');
+        } else {
+            kundeAktualisieren((int) $ziel['id'], ['aktiv' => $t[2] === 'aktivieren' ? 1 : 0]);
+        }
+        umleiten(url('benutzer'));
+    }
+    ansicht('benutzer', ['titel' => t('benutzer.titel'), 'firma' => $firma, 'zeilen' => firmenBenutzer((int) $firma['id']), 'gruppen' => $gruppen, 'unterkunden' => $festerUnterkunde > 0 ? [] : $unterkunden,
+        'darf' => istInhaber($ich) || darfKunde('verwaltung', 'bearbeiten'), 'inhaber' => istInhaber($ich), 'aktiv' => 'benutzer']);
+}
+
+if ($pfad === '/firma') {
+    $firma = verwaltungErzwingen($ich, $methode === 'POST' ? 'bearbeiten' : 'sehen');
+    $fehler = null;
+    if ($methode === 'POST') {
+        $daten = ['name' => feld('name', 120), 'strasse' => feld('strasse', 120), 'plz' => feld('plz', 12), 'ort' => feld('ort', 80), 'land' => strtoupper(feld('land', 2)), 'ust_id' => feld('ust_id', 30), 'rechnungs_email' => mb_strtolower(feld('rechnungs_email', 254))];
+        if (mb_strlen($daten['name']) < 2 || $daten['strasse'] === '' || $daten['plz'] === '' || $daten['ort'] === '' || !preg_match('/^[A-Z]{2}$/', $daten['land'])
+            || ($daten['rechnungs_email'] !== '' && filter_var($daten['rechnungs_email'], FILTER_VALIDATE_EMAIL) === false)) {
+            $fehler = t('neu.fehler');
+            $firma = array_merge($firma, $daten);
+        } else {
+            firmaAktualisieren((int) $firma['id'], $daten);
+            hinweisSetzen(t('firma.gespeichert'));
+            umleiten(url('firma'));
+        }
+    }
+    ansicht('firma', ['titel' => t('firma.titel'), 'firma' => $firma, 'fehler' => $fehler, 'unterkunden' => unterkundenDerFirma((int) $firma['id']), 'aktiv' => 'firma']);
+}
+
+// --------------------------------------------------------------- Einstellungen
+
+if ($pfad === '/einstellungen' || $pfad === '/einstellungen/absender' || $pfad === '/einstellungen/schliessen') {
+    if ($methode === 'POST') {
+        if ($pfad === '/einstellungen/schliessen') {
+            kundeAktualisieren((int) $ich['id'], ['aktiv' => 0]);
+            kundeAbmelden();
+            hinweisSetzen(t('einstellungen.geschlossen'));
+            umleiten(url('login'));
+        }
+        if ($pfad === '/einstellungen/absender') {
+            privatErzwingen($ich);
+            $absender = ['name' => feld('name', 100), 'strasse' => feld('strasse', 120), 'plz' => feld('plz', 12), 'ort' => feld('ort', 80)];
+            kundeAktualisieren((int) $ich['id'], ['absender_json' => json_encode($absender, JSON_UNESCAPED_UNICODE)]);
+        } else {
+            $name = feld('name', 100);
+            $spracheNeu = feld('sprache', 2) === 'en' ? 'en' : 'de';
+            if (mb_strlen($name) >= 2) {
+                kundeAktualisieren((int) $ich['id'], ['name' => $name, 'sprache' => $spracheNeu]);
+                $_SESSION['sprache'] = $spracheNeu;
+            }
+        }
+        hinweisSetzen(t('einstellungen.gespeichert'));
+        umleiten(url('einstellungen', ['sprache' => $_SESSION['sprache'] ?? sprache()]));
+    }
+    ansicht('einstellungen', ['titel' => t('einstellungen.titel'), 'absender' => json_decode((string) $ich['absender_json'], true) ?: [], 'aktiv' => 'einstellungen']);
+}
+
+fehlerSeite(404, t('fehler.404'), t('fehler.404.text'));

@@ -1,0 +1,246 @@
+# NEOS Kundenportal — eigenes Konto, nur eigene Daten
+
+Kundenportal unter `neos24.com/konto/` für Privat- und Geschäftskunden. PHP 8.x ohne
+Abhängigkeiten, gleiche Konfiguration und Datenbank wie Checkout und internes Dashboard
+(`api/revolut/`, `intern/`), gemeinsame Helfer in `lib/`. Deutsch und Englisch (`?sprache=en`,
+gemerkt in Sitzung und Konto).
+
+## Was Kunden sehen
+
+| | Privatkunde | Geschäftskunde (Firmenkonto) |
+|---|---|---|
+| Konto entsteht | selbst über „Registrieren“ (E-Mail wird per Link bestätigt) | vom NEOS-Team im Dashboard freigeschaltet, Inhaber per Einladung |
+| Bestellungen / Sendungen | alle Bestellungen, die mit der bestätigten E-Mail bezahlt wurden | alle Sendungen der Firma, von allen Firmenbenutzern |
+| Neue Sendung | im Portal (oder über die Startseite): Kategorie Brief / Dokumente oder Paket, Ziel weltweit (Zollhinweis außerhalb der EU), Carrier-Vergleich, Zusatzleistungen, Abholung; Zahlung per Revolut oder Guthaben. Paletten nur per Palettenanfrage | im Portal: wie links; auf Rechnung oder vom Guthaben |
+| Labels | NEOS-Label (PDF A6) je Sendung, Sammeldruck A4 aus der Liste | wie links |
+| Tracking | Verlauf in der Sendung; öffentlich unter `konto/tracking` (Nummer + PLZ des Empfängers) | wie links |
+| Adressbuch, Paketvorlagen | eigenes Adressbuch je Konto (Empfänger, Absender, Standard-Absender), CSV-Export und Import (CSV/XLSX); Vorlagen mit Gewicht, Maßen, Zusatzleistungen | eigenes Adressbuch je Benutzer plus „Firmenadressen“, die ein Benutzer für alle freigibt (ändern darf Ersteller oder Inhaber); Paketvorlagen firmenweit |
+| Sendungsimport | — | viele Sendungen auf einmal aus CSV oder Excel: tolerante Spaltennamen, Vorschau mit Preis und Fehlern je Zeile, Fehlerzeilen als CSV, Dublettenschutz über die Referenz, dann beauftragen (auf Rechnung) und Labels gesammelt drucken |
+| Guthaben | Aufladen per Revolut, Sendungen davon bezahlen, Erstattungen landen hier | wie links, firmenweit |
+| Retoure, Reklamation | Rücksendung mit einem Klick (Adressen getauscht); Reklamation mit Art, Beschreibung, Betrag | wie links |
+| Preise | Startseite (brutto) | Netto-Preisliste im Portal |
+| Rechnungen | Belegarchiv: Rechnungen, Nachberechnungen, Gutschriften (Lexware-PDFs) und Gewichtsnachweise je Bestellung, Filter nach Jahr, Art und Nummer | Archiv wie links plus monatliche Sammelrechnungen als PDF mit Positionen im Detail |
+| Benutzer, Benutzergruppen | — | Inhaber (oder Benutzer mit Bereich „Verwaltung“) lädt Mitarbeiter als Subaccounts ein, ordnet ihnen eine Benutzergruppe und einen Unterkunden zu, deaktiviert sie, ernennt weitere Inhaber; Gruppen mit Rechten je Bereich (Versand, Lager, Retouren, Buchhaltung, Verwaltung: sehen / bearbeiten), Vorlagen je Firma — siehe „Benutzergruppen und Rechte“ |
+| Einstellungen | Name, Sprache, Passwort, Absenderadresse, Konto schließen | Name, Sprache, Passwort, Konto schließen; Inhaber: Firmendaten |
+
+## Anmeldung
+
+- **Passwort** (optional): bcrypt, mindestens 10 Zeichen, Sperre nach 5 Fehlversuchen für
+  15 Minuten, Bremse je IP (`konto.anmeldung`).
+- **Anmeldelink** ohne Passwort: 32 Zufallsbytes, in der Datenbank nur als SHA-256, 15 Minuten
+  gültig, einmalig (`konto.linkGueltigkeit`). Die Antwort auf „Link schicken“ ist immer gleich —
+  ob es das Konto gibt oder nicht.
+- **Registrierung** (nur Privatkunden): Name + E-Mail → Bestätigungslink → Konto aktiv, alle
+  Bestellungen dieser E-Mail werden zugeordnet, danach optional Passwort setzen. Bei bereits
+  vergebener E-Mail geht ein normaler Anmeldelink raus.
+- **Einladung** (Geschäftskunden): 7 Tage gültig (`konto.einladungGueltigkeit`), Zweck
+  Inhaber oder Mitarbeiter, führt zum Passwort-Setzen.
+- **Passwort vergessen**: Link mit Zweck „Passwort“, dann neues Passwort ohne altes.
+- Sitzung `neos_konto` mit Cookie-Pfad `/konto/`, httponly, SameSite Lax, Secure bei HTTPS,
+  Ablauf nach 14 Tagen ohne Aktivität (`konto.sitzungsdauer`); CSRF in jedem Formular;
+  Herkunftsprüfung bei POST.
+
+## Datentrennung
+
+Alles läuft über `src/sendungen.php`. Jede Abfrage bekommt den angemeldeten Kunden und filtert
+**immer** — Privatkunde `kunde_id = ?`, Geschäftskunde `firma_id = ?`; ein Mitarbeiter mit fest
+zugeordnetem Unterkunden zusätzlich `unterkunde_id = ?` (auch bei Rechnungen). Eine fremde Bestellnummer
+ergibt 404, ein fremdes Rechnungs-PDF 404, eine Firmenfunktion für Privatkunden 403, die
+Benutzerverwaltung für Mitarbeiter 403. Rechnungs-PDFs liegen außerhalb des Webroots
+(`daten/rechnungen/`) und werden nur über `konto/rechnungen/{Nummer}.pdf` nach Firmenprüfung
+ausgeliefert. Der Verlauf einer Sendung zeigt nur Statuswechsel und Label, keine internen Notizen
+oder Revolut-Rohdaten.
+
+`konto/ich` liefert dem Checkout der Startseite (`assets/checkout.js`) Name, E-Mail und
+Absenderadresse eines angemeldeten Privatkunden zur Vorbelegung — nur mit gültiger Sitzung.
+
+## Sendungen: Carrier-Vergleich, Zusatzleistungen, Zahlung
+
+Das Formular „Neue Sendung“ (`konto/sendungen/neu`, beide Kundengruppen) zeigt zu Zielland und
+Gewicht **alle aktiven Carrier** der Routingmatrix-Zelle mit Nettopreis, Bruttopreis und
+Laufzeit; Priorität 1 ist als „Empfohlen“ vorausgewählt (`angeboteFuer()` in `lib/versand.php`).
+Zuerst wählt der Kunde die **Kategorie**: Brief / Dokumente (Klassen bis 2 kg, kein Volumengewicht,
+keine Maße) oder Paket; **Palette** führt zur Palettenanfrage (`konto/sendungen/palette`: Ziel,
+Anzahl, Art, Gewicht, Abholung, Nachricht → Anfrage `typ = palette` mit Kundennummer im Dashboard und
+Mail ans Postfach, `palettenanfrageAnlegen()` in `lib/versand.php`; Business: Recht Versand
+bearbeiten). Das Gewicht in kg wird der kleinsten passenden Gewichtsklasse **der Kategorie**
+zugeordnet (`gewichtsklasseFuerGewicht()`, Maximalgewicht je Klasse aus dem Dashboard); Zielländer
+außerhalb der EU sind mit * markiert und zeigen den Zollhinweis (`landIstEu()`). Zusatzleistungen
+(Versicherung mit Warenwert, Abholung mit Werktag ab morgen und Zeitfenster, Nachnahme mit
+Betrag, SMS) kommen aus der Tabelle `zusatzleistungen`, die das Dashboard unter „Preise“ pflegt.
+Die Summe (Porto + Zusatz = netto, MwSt., brutto) rechnet `konto.js` live und der Server beim
+Anlegen verbindlich (`bestellungAnlegen()`).
+
+Zahlungsarten: **Revolut** (Privatkunden; Popup auf `…/bezahlen`, Rücksprung nach 3-D-Secure
+mit `?zurueck=1`, Statusabgleich über `…/status`), **Guthaben** (beide; Prepaid, Aufladung per
+Revolut unter `konto/guthaben` als `NG-`-Order, Webhook und Statusabfrage buchen einmalig) und
+**Rechnung** (Geschäftskunden; Sammelrechnung). Sendungen auf Rechnung oder vom Guthaben sind
+sofort `beauftragt`, bekommen Label und Abholungs-Ereignis und eine Bestätigungsmail.
+
+Der **Versandstatus** (`versandstatus`, Ereignisse in `sendungsereignisse`) läuft getrennt vom
+Bestell-/Zahlungsstatus: angelegt → bezahlt → Label erstellt → Abholung beauftragt → an Carrier
+übergeben → unterwegs → in Zustellung → zugestellt (oder Rücksendung, Zustellproblem,
+storniert). Bis zur Carrier-Anbindung (`lib/carrier.php`, Stubs) pflegt das Team die Stufen im
+Dashboard; das öffentliche Tracking zeigt denselben Verlauf.
+
+**Reklamationen** (Art, Beschreibung, geforderter Betrag) bearbeitet das Team im Dashboard;
+eine Erstattung wird dem Guthaben gutgeschrieben und der Kunde per Mail informiert.
+**Nachberechnungen** aus der Rechnungsprüfung des Dashboards (Carrier hat schwerer gewogen als
+gebucht) erscheinen als eigene Position „Nachberechnung“ mit Erklärung (gewogenes Gewicht,
+gebuchte und tatsächliche Klasse), dem **Nachweis Gewichtsabweichung** als PDF
+(`…/nachweis.pdf`) und der Rechnung aus Lexware (`…/rechnung.pdf`, sobald vorhanden). Die
+Differenz folgt der Preisliste des Kunden. Innerhalb der Widerspruchsfrist
+(`rechnungspruefung.widerspruchTage`) kann der Kunde direkt am Beleg **widersprechen**
+(Reklamation „Widerspruch Nachberechnung“); nimmt das Team die Nachberechnung zurück, zeigt das
+Portal das an und bezahlte Beträge kommen als Guthaben zurück. Firmen sehen Nachberechnungen auf
+der nächsten Sammelrechnung, Privatkunden zahlen sie vom Guthaben oder per Revolut (Erinnerung
+nach `erinnerungTage`). **Retouren** sind eigene Bestellungen (`art = retoure`, `retoure_zu`)
+mit getauschten Adressen zum Preis der Routingmatrix.
+
+**Kundenpreislisten:** hat das Team für die Firma oder den Privatkunden eine eigene Preisliste
+angelegt, zeigen Formular, „Preise“ und CSV-Import diese Konditionen (Zusatzleistungen
+eingeschlossen); die Bestellung merkt sich die Liste.
+
+**Vorbeugung gegen Gewichtsnachberechnungen:** Aus den Maßen rechnet das Formular das
+**Volumengewicht** (L × B × H ÷ Faktor des Carriers, Standard 5000) und hebt die Gewichtsklasse
+an, wenn es das reale Gewicht übersteigt — live in `konto.js` und verbindlich in
+`bestellungAnlegen()` (`volumen_gramm`). Lag das vom Carrier gemessene Gewicht bei den letzten
+Sendungen im Schnitt deutlich über der Angabe (≥ 300 g oder ≥ 15 %), zeigt das Formular einen
+Warnhinweis und verlangt die Bestätigung „Gewicht geprüft“. Labels für Klassen über 10 kg bzw.
+20 kg tragen das Gewichtssymbol.
+
+**Rechnungen (Belegarchiv):** „Rechnungen“ gibt es für alle Kunden (`lib/belege.php`,
+`belegeFuerKonto()`): Sammelrechnungen der Firma bzw. des Unterkunden, Einzelrechnungen und
+Nachberechnungen (Lexware-Nummer, Lexware-PDF), Gutschriften (`…/gutschrift.pdf`) und
+Gewichtsnachweise (`…/nachweis.pdf`) — je Eintrag Datum, Belegnummer, Art, Bezug (Sendung oder
+Zeitraum), Betrag, Status und PDF; Filter nach Jahr, Art und Suche (Nummer, Sendung, Referenz),
+Summenzeile. Es gibt keinen eigenen PDF-Nachbau für Einzelbelege: Mit Lexware Office vergibt Lexware
+die Rechnungsnummer und liefert das PDF; bis zur Übergabe steht „wird erstellt“. Sammelrechnungen
+ohne Lexware kommen weiter aus `lib/rechnung_pdf.php`. Das Team sieht dieselbe Liste in der
+Privatkunden-Akte (Karte „Belege“).
+
+**Adressbuch je Benutzer:** Jeder Account hat sein eigenes Adressbuch (Empfänger, Absender mit
+Standard-Absender je Benutzer). In Firmen kann ein Benutzer eine Adresse „für die Firma
+freigeben“ (`adressen.geteilt`); sie erscheint dann bei allen Firmenbenutzern unter
+„Firmenadressen“ und im Sendungsformular mit Zusatz „(Firma)“. Ändern und löschen darf der
+Ersteller oder ein Inhaber (`adresseDarfBearbeiten()`), sonst 403. Export als CSV, Import aus
+CSV/XLSX mit toleranten Spaltennamen (`Empfänger`, `Straße`, `Stadt`, `Country` …); Dubletten
+(Name + Straße + PLZ) werden übersprungen. Bestehende Firmenadressen ohne Ersteller gelten als
+freigegeben.
+
+**Sendungsimport (Firmen):** CSV oder XLSX (`lib/tabelle_lesen.php`, erstes Blatt mit Daten),
+Spaltennamen tolerant (`lib/import.php`, `IMPORT_SYNONYME`: `zielland|land|country`,
+`gewicht_kg|gewicht|weight`, `gewicht_g|gramm`, `name|empfaenger|recipient`, `strasse|straße|street`,
+`plz|zip|postcode`, `ort|stadt|city`, `referenz|ref|order`, `unterkunde|kostenstelle`,
+`kategorie|category|typ` mit Werten brief / paket — leer = Paket, palette ist ein Fehler „nur auf
+Anfrage“ …), Ländernamen
+DE/EN werden zu ISO-Codes, Gewichte als „1,2“, „1.2 kg“, „1200 g“ oder „1.200 g“. Fehlende
+Pflichtspalten werden genannt. Jede Zeile wird trocken geprüft (Gewichtsklasse, Preis, Adresse,
+E-Mail, Unterkunde); eine Referenz, zu der die Firma in den letzten 30 Tagen schon eine Sendung hat
+oder die in der Datei doppelt vorkommt, gilt als Dublette (Häkchen „trotzdem anlegen“).
+Fehlerzeilen lassen sich als CSV mit Fehlertext herunterladen, nach „beauftragen“ zeigt die
+Ergebnisliste die Sendungsnummern mit Label und Sammeldruck. Vorlagen `import/vorlage.csv` und
+`import/vorlage.xlsx` (`lib/tabelle_schreiben.php`).
+
+**Kundennummer und Unterkunden:** Jedes Konto hat eine Kundennummer (Firma `K-100001`,
+Privatkunde eigene Nummer; Übersicht, Firma, Einstellungen, Rechnungen). Hat das Team unter der
+Firma Unterkunden angelegt (weitere Unternehmen der Gruppe, Standorte — `K-100001-01`, `-02` …),
+wählt der Inhaber bei jeder Sendung „Abrechnen für“ (Hauptfirma oder Unterkunde; der Wechsel
+lädt Preisliste und Absender des Unterkunden), Listen und Rechnungen lassen sich danach filtern,
+der Sendungsimport kennt die Spalte `unterkunde` (Nummer oder Name) oder eine Auswahl für alle
+Zeilen. Ein Mitarbeiter, den das Team fest einem Unterkunden zugeordnet hat, bucht nur für
+diesen und sieht nur dessen Sendungen und Rechnungen. Die Seite „Firma“ listet die Unterkunden
+(nur lesend — Anlage und Pflege durch NEOS).
+
+## Benutzergruppen und Rechte
+
+Firmenbenutzer sind Subaccounts der Firma. **Neue Benutzer haben alle Rechte**, bis ihnen der
+Inhaber eine Benutzergruppe zuordnet (`kunden.gruppe_id`, Tabelle `benutzergruppen`, Funktionen in
+`lib/kunden.php`: `gruppenDerFirma`, `gruppeSpeichern`, `gruppeLoeschen`, `kundenRechteVon`). Eine
+Gruppe legt je Bereich fest: kein Zugriff, sehen oder bearbeiten (bearbeiten schließt sehen ein).
+Jede Firma bekommt beim ersten Aufruf die Vorlagen Lager, Versand, Retouren, Buchhaltung und
+Alle Rechte, die der Inhaber ändern, löschen oder um eigene Gruppen ergänzen kann.
+
+| Bereich | sehen | bearbeiten |
+|---|---|---|
+| Versand | Sendungen, Preise, Adressbuch und Vorlagen lesen | Neue Sendung, Bezahlen, Sendungsimport, Adressbuch und Vorlagen pflegen |
+| Lager | Sendungen mit Sendungsverlauf | Labels drucken (einzeln und Sammeldruck) |
+| Retouren | Reklamationen | Retoure, Reklamation, Widerspruch anlegen |
+| Buchhaltung | Belegarchiv, Sammelrechnungen, Guthaben, Preise | Guthaben aufladen |
+| Verwaltung | Benutzer, Gruppen, Firmendaten lesen | Benutzer einladen und deaktivieren, Gruppen und Unterkunden zuordnen, Gruppen und Firmendaten ändern |
+
+Inhaber (`firmenrolle = inhaber`) haben immer alle Rechte, unabhängig von einer Gruppe; nur ein
+Inhaber kann weitere Inhaber ernennen oder die Rolle entziehen (`/benutzer/{id}/rolle`), der letzte
+aktive Inhaber bleibt geschützt. Wer den Bereich „Verwaltung“ bearbeiten darf, hat damit den
+Vollzugriff, kann aber Inhaber nicht deaktivieren oder umgruppieren und sich selbst die Verwaltung
+nicht entziehen. Das Menü zeigt nur freigegebene Bereiche (`konto/src/views/layout.php`), Routen
+prüfen mit `kundenRechtErzwingen()` bzw. `verwaltungErzwingen()` (`konto/src/rechte_kunde.php`,
+`konto/src/auth.php`), fehlende Rechte enden als 403 mit Bereich und Stufe. Das NEOS-Team sieht
+Gruppen und Zuordnung an der Firma im Dashboard und kann die Gruppe je Benutzer setzen.
+
+## Geschäftskunden: Ablauf
+
+1. Anfrage über das Kontaktformular landet im Dashboard (Kunden & Anfragen).
+2. Team klickt „Firmenkonto anlegen“ (Firma, Anschrift, Rechnungs-E-Mail, Inhaber) → Kundennummer,
+   Einladung per Mail, Anfrage → „Konto angelegt“; optional Unterkunden anlegen und Mitarbeiter
+   zuordnen.
+3. Inhaber setzt Passwort, ergänzt unter „Firma“ die Anschrift (Absender), lädt Mitarbeiter ein.
+4. Sendungen werden im Portal beauftragt: Status `beauftragt`, `zahlungsart rechnung`,
+   Nettopreis, Carrier und Einkaufspreis aus der Routingmatrix zum Zeitpunkt der Buchung,
+   `unterkunde_id` des gewählten Rechnungsempfängers.
+5. Zum Monatsende erzeugt das Team je Rechnungsempfänger (Firma oder Unterkunde) die
+   Sammelrechnung (Dashboard → Firma → „Rechnung erzeugen“ mit „Abrechnen für“ oder Seite des
+   Unterkunden): mit Lexware Office vergibt Lexware Nummer und PDF (Kontakt des Empfängers, netto,
+   dessen Zahlungsziel, Kundennummer in der Einleitung), sonst Nummer `NR-<Jahr>-<lfd. Nummer>`
+   und PDF nach `daten/rechnungen/` (mit Kundennummer); Sendungen bekommen `rechnung_id`, Mail
+   mit PDF (und Nachweisen zu Nachberechnungen) an die Rechnungs-E-Mail des Empfängers. Status
+   bezahlt kommt aus Lexware (Cron/Webhook) oder wird im Dashboard gesetzt; Stornieren gibt die
+   Sendungen wieder zur Abrechnung frei. Stammdaten und Sendungen laufen parallel nach Odoo (siehe
+   `intern/README.md`, Synchronisation).
+
+Absender, Bankverbindung und Pflichtangaben der Rechnung stehen in der Konfiguration unter
+`firma`; `rechnung.zahlungszielTage` und das Zahlungsziel je Firma bestimmen die Fälligkeit.
+
+## Dateien
+
+```
+konto/index.php        Front-Controller, alle Routen
+konto/src/bootstrap.php  Sitzung, ansicht(), fehlerSeite(), Basis-URL
+konto/src/auth.php     kundeAktuell(), kundeAnmelden(), Guards (business/privat/inhaber/verwaltung)
+konto/src/rechte_kunde.php  Rechte je Bereich aus der Benutzergruppe: darfKunde(), kundenRechtErzwingen()
+konto/src/sendungen.php  eigeneBestellungen(), eigeneBestellung(), kundenVerlauf(), firmaKennzahlen()
+konto/src/routen_versand.php  Neue Sendung, Bezahlen (Revolut/Guthaben), Labels, Tracking, Retoure, Reklamation,
+                       Adressbuch (je Benutzer, Freigabe, CSV-Export/-Import), Paketvorlagen, Sendungsimport, Guthaben
+konto/src/texte.php    t() — alle Texte DE/EN (texte_versand.php: Versandfunktionen)
+konto/src/views/       Ansichten; assets/konto.css baut auf ../assets/neos.css auf; assets/konto.js
+                       (Angebote, Summen, Zusatzleistungen, Sammeldruck, Revolut-Popup, Aufladung)
+lib/versand.php        Angebote je Zelle, Zusatzleistungen, bestellungAnlegen(), Guthaben und Aufladungen,
+                       Versandstatus/Ereignisse, Tracking, Adressbuch, Vorlagen, Retouren, Reklamationen
+lib/belege.php         Belegarchiv: Sammelrechnungen, Einzelrechnungen, Gutschriften, Nachweise je Konto
+lib/import.php         Sendungsimport: Spaltensynonyme, Gewichts-/Länderparser, Trockenprüfung, Dubletten, Fehlerbericht
+lib/tabelle_lesen.php, lib/tabelle_schreiben.php  CSV/XLSX lesen und XLSX schreiben ohne Abhängigkeiten
+lib/carrier.php        Carrier-Schnittstelle (Label, Abholung, Tracking) — noch Stubs
+lib/label_pdf.php      NEOS-Label (Code 128) als PDF, A6 einzeln oder A4 vierfach
+lib/kunden.php         Konten, Firmen, Unterkunden, Benutzergruppen und Rechte, Rechnungsempfänger, Anmeldelinks, Einladungs-/Link-Mails
+lib/kundennummern.php  Kundennummern (Zähler, Unterkunden-Nummern, Migration)
+lib/sync.php, lib/odoo.php  Synchronisation der Stammdaten mit Lexware Office und Odoo (Warteschlange, Rückrichtung, Konflikte)
+lib/rechnungen.php     Sammelrechnung erzeugen, Nummernkreis, Status (mit Lexware: Übergabe statt eigener Nummer)
+lib/rechnung_pdf.php   PDF mit FPDF (lib/pdf/, vendored) — Rückfallebene ohne Lexware
+lib/preislisten.php    Kundenpreislisten (je Konto eine Matrix), Anzeige- und Angebotsfunktionen
+lib/nachberechnung_pdf.php  Nachweis Gewichtsabweichung (PDF) zur Nachberechnung
+lib/lexware.php        Lexware Office: Kontakte, Rechnungen, Gutschriften, PDFs, Zahlungsstatus, Warteschlange
+```
+
+## Lokal ausprobieren
+
+```bash
+# Testkonfiguration: Mails als Textdateien unter daten/mails/ (Transport 'datei')
+cat > /tmp/neos-test-config.php <<'PHP'
+<?php return ['daten' => '/tmp/neos-daten', 'transport' => 'datei', 'salz' => 'test', 'basisUrl' => 'http://127.0.0.1:8901'];
+PHP
+NEOS_KONFIG=/tmp/neos-test-config.php php neos24/site/intern/einrichten.php admin@example.com "Test Admin"
+NEOS_KONFIG=/tmp/neos-test-config.php php -S 127.0.0.1:8901 -t neos24/site neos24/site/intern/dev-router.php
+# http://127.0.0.1:8901/konto/registrieren → Link aus /tmp/neos-daten/mails/*.txt öffnen
+```
+
+Screenshots zur Abnahme: `../screenshots/konto-*.png` (1280 und 375 px, DE und EN).
