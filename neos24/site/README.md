@@ -24,6 +24,7 @@ cd neos24/site && python3 -m http.server 8080   # http://localhost:8080
 | `api/lexware/`, `api/odoo/` | Webhook-Empfänger für Lexware Office (Zahlungsstatus, Kontakte) und Odoo (Partner); Cron-Aufgaben in `intern/aufgaben.php` (lexware, erinnern, postfach, sync) — Kundennummern, Unterkunden und Synchronisation der Stammdaten mit Lexware und Odoo siehe `intern/README.md` |
 | `assets/neos.js` | Zielgruppen-Reiter, Burger-Menü, Scroll-Reveal, FAQ-Einzelöffnung, Formular-Validierung, aktiver Nav-Punkt — die Seite läuft auch ohne JS (dann Business) |
 | `assets/fonts.css` + `assets/fonts/` | Sora, Hanken Grotesk, JetBrains Mono als variable WOFF2 (OFL), selbst gehostet — kein Google-Fonts-Aufruf beim Besuch |
+| `docs/` | Technische Gesamtübersicht für IT-Kollegen — `UEBERSICHT.md` (Deutsch) und `OVERVIEW.md` (Englisch) mit Architektur, allen Funktionen, Routen, Tabellen, Konfiguration, Integrationen, Design, Betrieb und Links in den Code; daraus erzeugte PDFs `UEBERSICHT.pdf` / `OVERVIEW.pdf` |
 | `screenshots/` | Playwright-Aufnahmen bei 1280 und 375 px zur Abnahme (`en-*` englische Seite, `*-privat` / `*-private` Privatkunden-Reiter, `checkout-*` Bezahlformular, `intern-*` Dashboard, `konto-*` Kundenportal, `kontakt-*` Formularbestätigung) |
 
 ## Zuordnung zu den PDFs
