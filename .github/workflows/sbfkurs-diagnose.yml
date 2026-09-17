@@ -1,0 +1,217 @@
+# SBF-Kurs-Diagnose: Warum antwortet die Subdomain nicht mit der App? — vom
+# GitHub-Runner aus, nach dem Muster der Womo-Diagnose (Schlüssel-Pinning,
+# CLI-Gateway, SSH über frisch gesetztes Systembenutzer-Passwort). Ändert am
+# Server nichts außer dem Systembenutzer-Passwort für diesen Lauf.
+#
+# Geprüft wird von innen (auf dem Server selbst): nginx, Apache direkt,
+# Hosting-Einstellungen der Subdomain laut Plesk, Webroot-Inhalt, Protokolle
+# der Subdomain und ob das PHP des Servers die App überhaupt ausführt.
+
+name: SBF-Kurs-Diagnose
+
+on:
+  workflow_dispatch:
+    inputs:
+      plesk_passwort:
+        description: "Plesk-Admin-Passwort (leer = Repository-Secret PLESK_PASSWORT verwenden)"
+        required: false
+        default: ""
+        type: string
+      subdomain:
+        description: "Subdomain der Kursanwendung"
+        required: true
+        default: sbfkurs.kandzior.de
+        type: string
+      vergleich:
+        description: "Funktionierende Schwester-Subdomain zum Vergleich"
+        required: true
+        default: womo.kandzior.de
+        type: string
+      domain:
+        description: "Elterndomain in Plesk"
+        required: true
+        default: kandzior.de
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PLESK: https://95.216.18.216:8443
+      DOMAIN: ${{ inputs.domain }}
+      SUB: ${{ inputs.subdomain }}
+      VERGLEICH: ${{ inputs.vergleich }}
+    steps:
+      - name: Passwort auflösen und maskieren
+        env:
+          PLESK_PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+        run: |
+          [ -n "$PLESK_PW" ] \
+            || { echo "::error::Kein Plesk-Passwort: weder als Eingabe übergeben noch als Repository-Secret PLESK_PASSWORT hinterlegt."; exit 1; }
+          echo "::add-mask::$PLESK_PW"
+
+      - name: Plesk erreichen und Schlüssel festnageln
+        id: pin
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}
+          PIN=$(openssl s_client -connect "$HOST" -servername plesk </dev/null 2>/dev/null \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary | base64)
+          echo "pin=sha256//$PIN" >> "$GITHUB_OUTPUT"
+          CODE=$(curl -sk --pinnedpubkey "sha256//$PIN" -o /dev/null -w '%{http_code}' \
+            -u "admin:$PW" "$PLESK/api/v2/server")
+          [ "$CODE" = 200 ] || { echo "::error::Plesk-API antwortet mit HTTP $CODE."; exit 1; }
+
+      - name: Hosting-Einstellungen laut Plesk (Subdomain und Vergleich)
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          for d in "$SUB" "$VERGLEICH"; do
+            echo "== site --info $d =="
+            cli site --info "$d" | jq -r '.stdout // .stderr // empty' \
+              | grep -iE 'Domain name|status|Hosting type|WWW|root|PHP|SSL|nginx|Apache|cgi|Web statistics|Document' || true
+            echo
+          done
+          echo "== php_handler --list =="
+          cli php_handler --list | jq -r '.stdout // .stderr // empty' | head -30
+
+      - name: Zugang für diesen Lauf vorbereiten (SSH)
+        id: ssh
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          INFO=$(api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--info","'"$DOMAIN"'"]}' "$PLESK/api/v2/cli/site/call")
+          SYSUSER=$(echo "$INFO" | jq -r '.stdout' | sed -n 's/^FTP Login:[[:space:]]*//p' | head -1)
+          [ -n "$SYSUSER" ] || { echo "::error::Systembenutzer nicht ermittelbar."; exit 1; }
+          SSH_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$SSH_PASS"
+          OK=""
+          for util in site subscription; do
+            ANTWORT=$(api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update",$d,"-passwd",$p]}')" \
+              "$PLESK/api/v2/cli/$util/call")
+            if echo "$ANTWORT" | jq -e '.code == 0' >/dev/null; then OK=ja; break; fi
+          done
+          [ "$OK" = ja ] || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
+          echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
+          echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
+
+      - name: Von innen anfragen — nginx, Apache direkt, Vergleichs-Subdomain
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q sshpass >/dev/null
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          timeout 120 sshpass -p "$SSH_PASS" ssh \
+            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$HOST" \
+            "SUB='$SUB' VERGLEICH='$VERGLEICH' HOST='$HOST' bash -s" <<'SKRIPT'
+              kopf() { echo; echo "===== $* ====="; }
+              frag() { # $1 = Beschriftung, Rest = curl-Argumente
+                local was=$1; shift
+                echo "--- $was"
+                curl -sk -m 10 -o /tmp/antwort.txt -D /tmp/kopf.txt "$@" \
+                  && { head -1 /tmp/kopf.txt; grep -iE '^(server|content-type|location|x-powered-by):' /tmp/kopf.txt; head -c 300 /tmp/antwort.txt; echo; } \
+                  || echo "(keine Antwort)"
+              }
+              for d in "$SUB" "$VERGLEICH"; do
+                kopf "$d über nginx (443, wie von außen)"
+                frag "/status"  --resolve "$d:443:127.0.0.1" "https://$d/status"
+                frag "/"        --resolve "$d:443:127.0.0.1" "https://$d/"
+                kopf "$d über nginx (80)"
+                frag "/status"  --resolve "$d:80:127.0.0.1" "http://$d/status"
+                kopf "$d direkt an Apache (7080/7081)"
+                frag "7080 /status" -H "Host: $d" "http://127.0.0.1:7080/status"
+                frag "7081 /status" -H "Host: $d" "https://127.0.0.1:7081/status"
+                frag "7080 /index.php" -H "Host: $d" "http://127.0.0.1:7080/index.php"
+              done
+              kopf "Lauschende Ports (nginx/Apache)"
+              (ss -ltnp 2>/dev/null || netstat -ltn 2>/dev/null) | grep -E ':(80|443|7080|7081) ' || echo "(nicht sichtbar)"
+          SKRIPT
+
+      - name: Webroot, Protokolle, vHost-Konfiguration
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          timeout 120 sshpass -p "$SSH_PASS" ssh \
+            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$HOST" \
+            "SUB='$SUB' VERGLEICH='$VERGLEICH' bash -s" <<'SKRIPT'
+              kopf() { echo; echo "===== $* ====="; }
+              kopf "Heimatverzeichnis"
+              pwd; ls -la | grep -E 'sbfkurs|womo|httpdocs' || true
+              kopf "sbfkurs-app/public"
+              ls -la sbfkurs-app/public 2>&1 | head -20
+              echo "--- .htaccess"; cat sbfkurs-app/public/.htaccess 2>&1
+              kopf "womo-app/public (Vergleich)"
+              ls -la womo-app/public 2>&1 | head -20
+              kopf "Protokolle der Subdomain"
+              ls -la "logs/$SUB/" 2>&1 | head -20
+              for f in error_log proxy_error_log access_ssl_log access_log; do
+                echo "--- logs/$SUB/$f (Ende)"; tail -n 8 "logs/$SUB/$f" 2>&1
+              done
+              kopf "vHost-Konfiguration (falls lesbar)"
+              for d in "$SUB" "$VERGLEICH"; do
+                echo "--- /var/www/vhosts/system/$d/conf/"
+                ls -la "/var/www/vhosts/system/$d/conf/" 2>&1 | head -20
+                for f in httpd.conf last_httpd.conf nginx.conf last_nginx.conf; do
+                  p="/var/www/vhosts/system/$d/conf/$f"
+                  [ -r "$p" ] && { echo "--- $p"; grep -nE 'DocumentRoot|ServerName|AllowOverride|proxy_pass|root |fcgi|php|Include|ErrorOverride|<Directory' "$p" | head -40; }
+                done
+              done
+              kopf "Datei-Rechte auf dem Weg zum Webroot"
+              namei -l "$(pwd)/sbfkurs-app/public/index.php" 2>&1 || ls -ld "$(pwd)" "$(pwd)/sbfkurs-app" "$(pwd)/sbfkurs-app/public"
+          SKRIPT
+
+      - name: PHP des Servers führt die App aus?
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          timeout 120 sshpass -p "$SSH_PASS" ssh \
+            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$HOST" 'bash -s' <<'SKRIPT'
+              echo "== verfügbare PHP-Versionen =="; ls -d /opt/plesk/php/*/bin/php 2>/dev/null
+              PHP=$(ls -d /opt/plesk/php/8.[2-9]/bin/php 2>/dev/null | sort -V | head -1)
+              PHP=${PHP:-$(ls -d /opt/plesk/php/*/bin/php 2>/dev/null | sort -V | tail -1)}
+              PHP=${PHP:-php}
+              echo "Verwendet: $PHP ($($PHP -v | head -1))"
+              echo "== Syntax =="
+              $PHP -l sbfkurs-app/public/index.php; $PHP -l sbfkurs-app/src/bootstrap.php
+              echo "== /status über den eingebauten Server (CLI) =="
+              cd sbfkurs-app/public
+              SBFKURS_KONFIG="$HOME/sbfkurs-config.php" $PHP -S 127.0.0.1:8099 index.php >/tmp/php-s.log 2>&1 &
+              PID=$!
+              sleep 2
+              curl -s -m 5 http://127.0.0.1:8099/status; echo
+              curl -s -m 5 -o /dev/null -w 'HTTP %{http_code} -> %{redirect_url}\n' http://127.0.0.1:8099/
+              kill $PID 2>/dev/null || true
+              echo "--- Protokoll des eingebauten Servers"; tail -n 20 /tmp/php-s.log
+          SKRIPT
