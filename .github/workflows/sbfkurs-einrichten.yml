@@ -340,10 +340,22 @@ jobs:
               || echo "(Protokolle nicht erreichbar)"
           }
           echo "== /status: bereit muss true sein =="
-          ANTWORT=$(curl -sk --resolve "$SUB:443:$IP" "https://$SUB/status")
-          echo "$ANTWORT"
-          echo "$ANTWORT" | jq -e '.ok == true and .dienst == "sbfkurs" and .bereit == true' >/dev/null \
-            || { echo "::error::Die App meldet sich nicht bereit — kommt PHP-Quelltext statt JSON, fehlt die PHP-Anbindung der Subdomain (in Plesk: PHP für $SUB aktivieren)."; diagnose; exit 1; }
+          # Plesk schreibt die vHost-Konfiguration sofort, Apache/nginx laden
+          # sie aber erst mit Verzögerung nach (Neustart-Intervall). Bis dahin
+          # antwortet der Standard-vHost mit 404 — deshalb bis zu drei Minuten
+          # geduldig nachfragen (gelernt in den Läufen 3 bis 5).
+          ANTWORT=""
+          for versuch in $(seq 1 18); do
+            ANTWORT=$(curl -sk --resolve "$SUB:443:$IP" "https://$SUB/status" || true)
+            if echo "$ANTWORT" | jq -e '.ok == true and .dienst == "sbfkurs" and .bereit == true' >/dev/null 2>&1; then
+              echo "$ANTWORT (Versuch $versuch)"
+              break
+            fi
+            echo "Versuch $versuch: noch nicht die App — $(echo "$ANTWORT" | tr -d '\n' | head -c 80)"
+            sleep 10
+          done
+          echo "$ANTWORT" | jq -e '.ok == true and .dienst == "sbfkurs" and .bereit == true' >/dev/null 2>&1 \
+            || { echo "::error::Die App meldet sich nicht bereit — kommt PHP-Quelltext statt JSON, fehlt die PHP-Anbindung der Subdomain; kommt die Plesk-Startseite oder ein 404, hat die Subdomain kein Zertifikat oder die Konfiguration wurde nicht neu erzeugt (Workflow »SBF-Kurs-Diagnose«)."; diagnose; exit 1; }
           echo "== / muss zur Anmeldung umleiten =="
           CODE_HTTP=$(curl -sk -o /dev/null -w '%{http_code}' --resolve "$SUB:443:$IP" "https://$SUB/")
           ORT=$(curl -sk -o /dev/null -D - --resolve "$SUB:443:$IP" "https://$SUB/" | tr -d '\r' | sed -n 's/^Location: //p')
