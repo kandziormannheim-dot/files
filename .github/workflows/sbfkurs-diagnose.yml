@@ -1,11 +1,15 @@
 # SBF-Kurs-Diagnose: Warum antwortet die Subdomain nicht mit der App? — vom
 # GitHub-Runner aus, nach dem Muster der Womo-Diagnose (Schlüssel-Pinning,
-# CLI-Gateway, SSH über frisch gesetztes Systembenutzer-Passwort). Ändert am
-# Server nichts außer dem Systembenutzer-Passwort für diesen Lauf.
+# CLI-Gateway, SSH über frisch gesetztes Systembenutzer-Passwort).
 #
 # Geprüft wird von innen (auf dem Server selbst): nginx, Apache direkt,
-# Hosting-Einstellungen der Subdomain laut Plesk, Webroot-Inhalt, Protokolle
-# der Subdomain und ob das PHP des Servers die App überhaupt ausführt.
+# Hosting-Einstellungen der Subdomain laut Plesk (CLI und XML-API),
+# Webroot-Inhalt, Protokolle der Subdomain, lesbare vHost-Dateien.
+#
+# Der letzte Schritt repariert: PHP-Handler wie bei der Vergleichs-Subdomain,
+# SSL aus/an und Webroot neu setzen (erzwingt die Neuerzeugung der
+# vHost-Konfiguration), dazu »plesk repair web«, sofern das Gateway es
+# durchreicht. Jeder Schritt meldet, ob /status danach antwortet.
 
 name: SBF-Kurs-Diagnose
 
@@ -238,3 +242,99 @@ jobs:
             echo "== site --info $d (vollständig) =="; zeig "$(cli site --info "$d")"
           done
           echo "== subscription --info $DOMAIN =="; zeig "$(cli subscription --info "$DOMAIN")" | head -60
+
+      - name: Hosting-Eigenschaften über die XML-API (PHP-Handler, Webroot, SSL)
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          xml() { # $1 = Domainname → alle Hosting-Eigenschaften als "name=value"
+            curl -sk --pinnedpubkey "$PIN" -H "HTTP_AUTH_LOGIN: admin" -H "HTTP_AUTH_PASSWD: $PW" \
+              -H 'Content-Type: text/xml' \
+              -d "<packet><site><get><filter><name>$1</name></filter><dataset><hosting/><gen_info/><stat/></dataset></get></site></packet>" \
+              "$PLESK/enterprise/control/agent.php" \
+              | python3 -c '
+          import sys, xml.etree.ElementTree as ET
+          w = ET.fromstring(sys.stdin.read())
+          for r in w.iter("result"):
+              st = r.findtext("status"); print("status:", st)
+              if st != "ok":
+                  print("fehler:", r.findtext("errcode"), r.findtext("errtext")); continue
+              g = r.find("data/gen_info")
+              if g is not None:
+                  for k in ("name","status","real_size","dns_ip_address","htype","guid"):
+                      v = g.findtext(k); print(f"gen_info.{k}={v}") if v is not None else None
+              for p in r.iter("property"):
+                  n, v = p.findtext("name"), p.findtext("value")
+                  if n and n not in ("ftp_password",): print(f"{n}={v}")
+          '
+          }
+          for d in "$SUB" "$VERGLEICH"; do
+            echo "== $d =="; xml "$d"; echo
+          done
+          echo "== REST: Domain-Status =="
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          for d in "$SUB" "$VERGLEICH"; do
+            ID=$(api "$PLESK/api/v2/domains?name=$d" | jq -r '.[0].id // empty')
+            echo "$d: id=$ID status=$(api "$PLESK/api/v2/domains/$ID/status" | jq -c .)"
+          done
+          echo "== verfügbare CLI-Utilities mit repair/httpd im Namen =="
+          api "$PLESK/api/v2/cli/commands" | jq -r '.[]' 2>/dev/null | grep -iE 'repair|httpd|nginx|reconf' || echo "(keine)"
+
+      - name: Reparaturversuch — Handler wie Vergleichs-Subdomain, SSL neu, Konfiguration neu erzeugen
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -uo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          zeig() { jq -c '{code, stdout: (.stdout // "")[:300], stderr: (.stderr // "")[:300]}' <<<"$1"; }
+          handler() {
+            curl -sk --pinnedpubkey "$PIN" -H "HTTP_AUTH_LOGIN: admin" -H "HTTP_AUTH_PASSWD: $PW" \
+              -H 'Content-Type: text/xml' \
+              -d "<packet><site><get><filter><name>$1</name></filter><dataset><hosting/></dataset></get></site></packet>" \
+              "$PLESK/enterprise/control/agent.php" \
+              | python3 -c '
+          import sys, xml.etree.ElementTree as ET
+          w = ET.fromstring(sys.stdin.read())
+          for p in w.iter("property"):
+              if p.findtext("name") == "php_handler_id": print(p.findtext("value") or "")
+          '
+          }
+          IP=${PLESK#https://}; IP=${IP%:8443}
+          test_status() { curl -sk -m 10 -o /dev/null -w '%{http_code}' --resolve "$SUB:443:$IP" "https://$SUB/status"; }
+          echo "Vorher: /status -> HTTP $(test_status)"
+
+          H_SOLL=$(handler "$VERGLEICH"); H_IST=$(handler "$SUB")
+          echo "PHP-Handler: $SUB=»$H_IST«, $VERGLEICH=»$H_SOLL«"
+          if [ -n "$H_SOLL" ] && [ "$H_IST" != "$H_SOLL" ]; then
+            echo "== PHP-Handler auf »$H_SOLL« setzen =="
+            zeig "$(cli site --update "$SUB" -php_handler_id "$H_SOLL")"
+            echo "Danach: /status -> HTTP $(test_status)"
+          fi
+
+          echo "== SSL aus und wieder an (erzwingt Neuerzeugung der vHost-Konfiguration) =="
+          zeig "$(cli site --update "$SUB" -ssl false)"
+          zeig "$(cli site --update "$SUB" -ssl true)"
+          sleep 5
+          echo "Danach: /status -> HTTP $(test_status)"
+
+          echo "== Webroot erneut setzen =="
+          zeig "$(cli site --update "$SUB" -www-root sbfkurs-app/public)"
+          sleep 5
+          echo "Danach: /status -> HTTP $(test_status)"
+
+          echo "== plesk repair web (falls über das Gateway erreichbar) =="
+          zeig "$(cli repair web "$SUB" -y)"
+          sleep 5
+          echo "Danach: /status -> HTTP $(test_status)"
+          echo "Antwort jetzt:"; curl -sk -m 10 --resolve "$SUB:443:$IP" "https://$SUB/status" | head -c 300; echo
+          echo "Assets: $(curl -sk -m 10 -o /dev/null -w '%{http_code}' --resolve "$SUB:443:$IP" "https://$SUB/assets/style.css")"
