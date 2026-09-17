@@ -1,0 +1,24 @@
+{
+  "id": "see",
+  "titel": "SBF See — Sportbootführerschein See",
+  "kurz": "Amtlicher Führerschein zum Führen von Sportbooten mit Motor auf den Seeschifffahrtsstraßen und in der 3-Seemeilen-Zone.",
+  "reihenfolge": 5,
+  "freigeschaltet": true,
+  "praxis": ["buchstabieren"],
+  "trainer": { "sicherAb": 2 },
+  "pruefung": {
+    "_zuPruefen": "Zahlen nach bestem Wissen (Sportbootführerscheinverordnung, Durchführungsrichtlinien): 30 Fragen = 7 Basisfragen + 23 spezifische Fragen See, 60 Minuten, bestanden mit höchstens 2 falschen Basisfragen und höchstens 5 falschen spezifischen Fragen. Gegen die aktuelle Prüfungsordnung abgleichen.",
+    "fragenProBogen": 30,
+    "zeitMinuten": 60,
+    "mindestRichtig": 23,
+    "fragenMischen": true,
+    "antwortenMischen": true,
+    "amtlicheBoegen": "boegen.json",
+    "zusammensetzung": { "basis": 7, "see": 23 },
+    "mindestRichtigJeModul": { "basis": 5, "see": 18 },
+    "weitereTeile": [
+      { "id": "navigation", "titel": "Navigationsaufgabe auf der Übungsseekarte (Kartenaufgabe mit mehreren Teilaufgaben)", "simuliert": null },
+      { "id": "praxis", "titel": "Praktische Prüfung: Manöver unter Motor, Knoten, Sicherheitsfragen", "simuliert": null }
+    ]
+  }
+}

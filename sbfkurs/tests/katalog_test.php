@@ -15,7 +15,7 @@ foreach (zertifikateLaden($konfig) as $kennung => $z) {
     pruefe(count(lektionenLaden($konfig, $kennung)) >= 8, "„{$kennung}“: mindestens acht Lektionen");
     pruefe(count(fragenLaden($konfig, $kennung)['fragen']) >= 10, "„{$kennung}“: mindestens zehn Fragen");
 }
-pruefeGleich(['src', 'ubi', 'fkn', 'lrc'], array_keys(zertifikateLaden($konfig)), 'Reihenfolge der Zertifikate');
+pruefeGleich(['src', 'ubi', 'fkn', 'lrc', 'see', 'binnen'], array_keys(zertifikateLaden($konfig)), 'Reihenfolge der Zertifikate');
 
 $tafel = buchstabiertafelLaden($konfig);
 pruefeGleich(26, count($tafel['buchstaben']), 'Buchstabiertafel vollständig');

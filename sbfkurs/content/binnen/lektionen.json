@@ -1,0 +1,31 @@
+{
+  "lektionen": [
+    { "slug": "01-grundlagen", "titel": "Der SBF Binnen — Geltung, Pflichten, erste Begriffe",
+      "kurz": "Wo der Schein gilt, wann er Pflicht ist, was Berg- und Talfahrt bedeuten und die Begriffe, die in jeder Frage stecken.",
+      "dauerMin": 15, "module": ["basis", "binnen"] },
+    { "slug": "02-schifffahrtszeichen", "titel": "Schifffahrtszeichen und Fahrwasserbezeichnung",
+      "kurz": "Verbots-, Gebots-, Einschränkungs- und Hinweiszeichen, Sperrsignale und die Tonnen auf Flüssen, Kanälen und Seen.",
+      "dauerMin": 25, "module": ["binnen"] },
+    { "slug": "03-fahrregeln", "titel": "Fahrregeln der Binnenschifffahrtsstraßen-Ordnung",
+      "kurz": "Begegnen, Überholen, Kreuzen, blaue Tafel, Vorrang der Großschifffahrt und die Pflichten der Kleinfahrzeuge.",
+      "dauerMin": 30, "module": ["basis", "binnen"] },
+    { "slug": "04-lichter-schallsignale", "titel": "Lichterführung und Schallsignale binnen",
+      "kurz": "Nachtbezeichnung von Kleinfahrzeugen, Fahrgastschiffen, Schubverbänden, Fähren und Stillliegern; Tagzeichen; die Schallsignale.",
+      "dauerMin": 25, "module": ["binnen"] },
+    { "slug": "05-schleusen-bruecken-wehre", "titel": "Schleusen, Brücken, Wehre und Häfen",
+      "kurz": "Wie du eine Schleuse sicher durchfährst, was Brückensignale bedeuten, warum Wehre tödlich sind und wie du dich im Hafen verhältst.",
+      "dauerMin": 20, "module": ["binnen"] },
+    { "slug": "06-seemannschaft-motor", "titel": "Seemannschaft: Knoten, Manöver, Anker, Motor",
+      "kurz": "Die Prüfungsknoten, An- und Ablegen in Strömung, Ankern, Mann über Bord und die Technik des Bootsmotors.",
+      "dauerMin": 25, "module": ["basis"] },
+    { "slug": "07-segeln", "titel": "Segeln auf Binnengewässern",
+      "kurz": "Kurse zum Wind, Wende und Halse, Reffen, Kentern und die Ausweichregeln unter Segel — der Stoff der Antriebsart Segel.",
+      "dauerMin": 25, "module": ["segel"] },
+    { "slug": "08-wetter-umwelt-notfaelle", "titel": "Wetter, Umwelt und Notfälle binnen",
+      "kurz": "Gewitter und Sturmwarnung auf Seen, Umweltregeln, Notzeichen und Erste Hilfe.",
+      "dauerMin": 20, "module": ["basis", "binnen"] },
+    { "slug": "09-pruefung", "titel": "So läuft die Prüfung",
+      "kurz": "Theoriebogen, praktische Prüfung unter Motor oder Segel, Sonderregeln auf dem Rhein und ein Plan für die letzten Tage.",
+      "dauerMin": 10, "module": ["basis"] }
+  ]
+}

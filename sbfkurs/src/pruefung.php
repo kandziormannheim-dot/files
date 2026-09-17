@@ -189,22 +189,85 @@ function pruefungBewerten(array $pruefung, array $eingaben, array $katalog, ?int
         $antworten[$position] = ['frage_id' => $eintrag['frage_id'], 'gegeben' => $gegeben, 'richtig' => $istRichtig];
     }
     $gesamt = count($pruefung['fragen']);
-    $mindest = (int) ($regeln['mindestRichtig'] ?? 0);
-    // Verkürzter Bogen (Beispielkatalog): Schwelle anteilig
-    if ($gesamt > 0 && $gesamt < (int) ($regeln['fragenProBogen'] ?? $gesamt)) {
-        $mindest = (int) ceil($mindest * $gesamt / (int) $regeln['fragenProBogen']);
-    }
+    $mindest = schwelle($regeln, $gesamt);
+    $module = modulErgebnisse($regeln, $antworten, $katalog);
     $ueberzogen = $jetzt > pruefungEnde($pruefung) + PRUEFUNG_KULANZ;
 
     return [
         'richtig' => $richtig,
         'gesamt' => $gesamt,
         'mindest' => $mindest,
-        'bestanden' => $richtig >= $mindest,
+        'bestanden' => $richtig >= $mindest && alleModuleBestanden($module),
         'ueberzogen' => $ueberzogen,
         'dauer' => max(0, $jetzt - (int) strtotime($pruefung['gestartet_am'] . ' UTC')),
         'antworten' => $antworten,
+        'module' => $module,
     ];
+}
+
+/** Bestehensgrenze für einen Bogen mit $gesamt Fragen — verkürzter Bogen (Beispielkatalog): anteilig. */
+function schwelle(array $regeln, int $gesamt): int
+{
+    $mindest = (int) ($regeln['mindestRichtig'] ?? 0);
+    $soll = (int) ($regeln['fragenProBogen'] ?? $gesamt);
+    if ($gesamt > 0 && $soll > 0 && $gesamt < $soll) {
+        $mindest = (int) ceil($mindest * $gesamt / $soll);
+    }
+
+    return $mindest;
+}
+
+/**
+ * Ergebnis je Modul, sofern die Regeln Schwellen je Modul kennen (SBF:
+ * Basisfragen und spezifische Fragen zählen getrennt). Liefert
+ * [modul => ['titel', 'richtig', 'gesamt', 'mindest', 'bestanden']];
+ * die Schwelle wird anteilig gesenkt, wenn der Bogen im Modul kürzer ist.
+ */
+function modulErgebnisse(array $regeln, array $antworten, array $katalog): array
+{
+    $schwellen = $regeln['mindestRichtigJeModul'] ?? [];
+    if ($schwellen === []) {
+        return [];
+    }
+    $titel = [];
+    foreach ($katalog['module'] ?? [] as $m) {
+        $titel[$m['id']] = $m['titel'] ?? $m['id'];
+    }
+    $ergebnis = [];
+    foreach ($schwellen as $modul => $mindest) {
+        $ergebnis[$modul] = ['titel' => $titel[$modul] ?? $modul, 'richtig' => 0, 'gesamt' => 0, 'mindest' => (int) $mindest, 'bestanden' => true];
+    }
+    foreach ($antworten as $a) {
+        $modul = $katalog['fragen'][$a['frage_id']]['modul'] ?? null;
+        if ($modul === null || !isset($ergebnis[$modul])) {
+            continue;
+        }
+        $ergebnis[$modul]['gesamt']++;
+        if ($a['richtig']) {
+            $ergebnis[$modul]['richtig']++;
+        }
+    }
+    foreach ($ergebnis as $modul => &$e) {
+        $soll = (int) ($regeln['zusammensetzung'][$modul] ?? $e['gesamt']);
+        if ($e['gesamt'] > 0 && $soll > 0 && $e['gesamt'] < $soll) {
+            $e['mindest'] = (int) ceil($e['mindest'] * $e['gesamt'] / $soll);
+        }
+        $e['bestanden'] = $e['richtig'] >= $e['mindest'];
+    }
+    unset($e);
+
+    return $ergebnis;
+}
+
+function alleModuleBestanden(array $module): bool
+{
+    foreach ($module as $m) {
+        if (!$m['bestanden']) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /** Abgeben: bewerten und speichern. Ein zweites Abgeben ändert nichts. */
@@ -228,15 +291,16 @@ function pruefungAbgeben(PDO $db, array $pruefung, array $eingaben, array $katal
     return $ergebnis;
 }
 
-/** Ergebnis einer bereits abgegebenen Prüfung aus den gespeicherten Daten. */
-function pruefungErgebnis(array $pruefung): array
+/**
+ * Ergebnis einer bereits abgegebenen Prüfung aus den gespeicherten Daten.
+ * Mit Katalog auch die Aufschlüsselung je Modul (Bestanden-Wert bleibt der
+ * gespeicherte).
+ */
+function pruefungErgebnis(array $pruefung, array $katalog = []): array
 {
     $regeln = $pruefung['regeln'];
     $gesamt = (int) $pruefung['gesamt'];
-    $mindest = (int) ($regeln['mindestRichtig'] ?? 0);
-    if ($gesamt > 0 && $gesamt < (int) ($regeln['fragenProBogen'] ?? $gesamt)) {
-        $mindest = (int) ceil($mindest * $gesamt / (int) $regeln['fragenProBogen']);
-    }
+    $mindest = schwelle($regeln, $gesamt);
     $antworten = [];
     foreach ($pruefung['antworten'] as $position => $a) {
         $antworten[$position] = ['frage_id' => $a['frage_id'], 'gegeben' => $a['gegeben'] === null ? null : (int) $a['gegeben'], 'richtig' => (int) $a['richtig'] === 1];
@@ -253,6 +317,7 @@ function pruefungErgebnis(array $pruefung): array
         'ueberzogen' => (int) $pruefung['ueberzogen'] === 1,
         'dauer' => max(0, $dauer),
         'antworten' => $antworten,
+        'module' => $katalog === [] ? [] : modulErgebnisse($regeln, $antworten, $katalog),
     ];
 }
 

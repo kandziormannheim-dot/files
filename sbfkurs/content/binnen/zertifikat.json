@@ -1,0 +1,24 @@
+{
+  "id": "binnen",
+  "titel": "SBF Binnen — Sportbootführerschein Binnen",
+  "kurz": "Amtlicher Führerschein zum Führen von Sportbooten mit Motor (und wahlweise unter Segel) auf den Binnenschifffahrtsstraßen.",
+  "reihenfolge": 6,
+  "freigeschaltet": true,
+  "praxis": [],
+  "trainer": { "sicherAb": 2 },
+  "pruefung": {
+    "_zuPruefen": "Zahlen nach bestem Wissen (Sportbootführerscheinverordnung, Durchführungsrichtlinien) für die Antriebsart Motor: 30 Fragen = 7 Basisfragen + 23 spezifische Fragen Binnen, 60 Minuten, bestanden mit höchstens 2 falschen Basisfragen und höchstens 5 falschen spezifischen Fragen. Für die Antriebsart Segel kommt ein eigener Fragenteil hinzu (Modul „segel“ im Trainer). Gegen die aktuelle Prüfungsordnung abgleichen.",
+    "fragenProBogen": 30,
+    "zeitMinuten": 60,
+    "mindestRichtig": 23,
+    "fragenMischen": true,
+    "antwortenMischen": true,
+    "amtlicheBoegen": "boegen.json",
+    "zusammensetzung": { "basis": 7, "binnen": 23 },
+    "mindestRichtigJeModul": { "basis": 5, "binnen": 18 },
+    "weitereTeile": [
+      { "id": "praxis", "titel": "Praktische Prüfung unter Motor: Manöver, Knoten, Sicherheitsfragen", "simuliert": null },
+      { "id": "segel", "titel": "Antriebsart Segel: zusätzlicher Fragenteil Segeln und praktische Prüfung unter Segel", "simuliert": null }
+    ]
+  }
+}

@@ -11,6 +11,10 @@
  *       --ziel sbfkurs/content/src/fragen.json \
  *       [--zusammenfuehren] [--stand 2023-08]
  *
+ * --pdf und --txt dürfen mehrfach vorkommen — die SBF-Kataloge bestehen aus
+ * getrennten Dateien (Basisfragen, spezifische Fragen), die in einer
+ * fragen.json landen; die Fragennummern laufen dort durch.
+ *
  * Das Textlayout der PDFs ist von Ausgabe zu Ausgabe verschieden — deshalb
  * stecken alle Muster im Profil, nicht hier. Der Bericht (import-bericht.json
  * neben dem Ziel) macht Fehlparsing sichtbar, statt es zu verschlucken.
@@ -22,7 +26,7 @@ require dirname(__DIR__) . '/src/bootstrap.php';
 
 $optionen = getopt('', ['profil:', 'pdf:', 'txt:', 'ziel:', 'zusammenfuehren', 'stand:']);
 if (!isset($optionen['profil'], $optionen['ziel']) || (!isset($optionen['pdf']) && !isset($optionen['txt']))) {
-    fwrite(STDERR, "Aufruf: --profil <json> (--pdf <datei> | --txt <datei>) --ziel <fragen.json> [--zusammenfuehren] [--stand JJJJ-MM]\n");
+    fwrite(STDERR, "Aufruf: --profil <json> (--pdf <datei> | --txt <datei>)… --ziel <fragen.json> [--zusammenfuehren] [--stand JJJJ-MM]\n");
     exit(2);
 }
 
@@ -31,13 +35,17 @@ if ($profil === null) {
     fwrite(STDERR, "Profil nicht lesbar: {$optionen['profil']}\n");
     exit(2);
 }
-$profil += ['kopfzeilen' => [], 'modulRegex' => '', 'modulZuordnung' => [], 'module' => [], 'standardModul' => '', 'antwortenOhneKennung' => false, 'richtigIstErste' => true, 'bildMarker' => []];
+$profil += ['kopfzeilen' => [], 'modulRegex' => '', 'modulZuordnung' => [], 'modulNachNummer' => [], 'module' => [], 'standardModul' => '', 'antwortenOhneKennung' => false, 'richtigIstErste' => true, 'bildMarker' => []];
 
 // ------------------------------------------------------------ Text holen
 
-$text = isset($optionen['txt'])
-    ? (string) file_get_contents((string) $optionen['txt'])
-    : textAusPdf((string) $optionen['pdf']);
+$text = '';
+foreach ((array) ($optionen['txt'] ?? []) as $datei) {
+    $text .= (string) file_get_contents((string) $datei) . "\n\n";
+}
+foreach ((array) ($optionen['pdf'] ?? []) as $datei) {
+    $text .= textAusPdf((string) $datei) . "\n\n";
+}
 if (trim($text) === '') {
     fwrite(STDERR, "Kein Text gewonnen.\n");
     exit(1);
@@ -171,6 +179,16 @@ function katalogParsen(array $zeilen, array $profil): array
 
     foreach ($fragen as &$f) {
         $f['bild'] = $bildMarker !== '' && preg_match(muster($bildMarker, 'ui'), $f['text'] . ' ' . implode(' ', $f['antworten'])) === 1;
+        // Modul nach Fragennummer (SBF: 1–72 Basisfragen, danach spezifische
+        // Fragen) schlägt die Überschriften-Erkennung.
+        foreach ($profil['modulNachNummer'] as $bereich) {
+            $ab = (int) ($bereich['ab'] ?? 1);
+            $bis = (int) ($bereich['bis'] ?? PHP_INT_MAX);
+            if ($f['nr'] >= $ab && $f['nr'] <= $bis) {
+                $f['modul'] = (string) $bereich['modul'];
+                break;
+            }
+        }
     }
     unset($f);
 

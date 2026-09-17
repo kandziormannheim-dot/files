@@ -184,6 +184,13 @@ Regeln, die `katalog-pruefen.php` durchsetzt:
 
 - `zusammensetzung` muss in Summe `fragenProBogen` ergeben; die Schlüssel sind
   Modul-IDs aus `fragen.json`. Fehlt sie, zieht die Anwendung gleichmäßig.
+- `mindestRichtigJeModul` (optional) — eigene Bestehensgrenze je Modul, etwa
+  `{ "basis": 5, "see": 18 }` für die Sportbootführerscheine, bei denen
+  Basisfragen und spezifische Fragen getrennt zählen. Jedes genannte Modul
+  braucht einen Eintrag in `zusammensetzung`; der Wert darf dessen Anzahl nicht
+  übersteigen. Bestanden ist eine Prüfung nur, wenn `mindestRichtig` **und**
+  alle Modulgrenzen erreicht sind; die Ergebnisseite schlüsselt je Modul auf.
+  Bei verkürzten Bögen werden auch die Modulgrenzen anteilig gesenkt.
 - `_zuPruefen` — solange dieser Schlüssel existiert, zeigt die Prüfungsseite die
   Fußnote „Regeln nach bestem Wissen; maßgeblich ist die aktuelle
   Prüfungsordnung". Wer die Werte gegen die Prüfungsordnung geprüft hat,
@@ -294,6 +301,26 @@ php sbfkurs/werkzeuge/katalog-import.php \
     --ziel sbfkurs/content/src/fragen.json \
     --zusammenfuehren
 ```
+
+Die Kataloge zu den Sportbootführerscheinen bestehen aus mehreren Dateien
+(Basisfragen, spezifische Fragen See bzw. Binnen und Segeln). `--pdf` und
+`--txt` dürfen deshalb mehrfach vorkommen; die Fragennummern laufen über die
+Dateien durch, und das Profil ordnet die Module über `modulNachNummer`
+(Nummernbereiche) statt über Überschriften zu:
+
+```bash
+php sbfkurs/werkzeuge/katalog-import.php \
+    --profil sbfkurs/werkzeuge/import-profile/elwis-sbf-see.json \
+    --pdf ~/Downloads/Basisfragen.pdf \
+    --pdf ~/Downloads/Spezifische-Fragen-See.pdf \
+    --ziel sbfkurs/content/see/fragen.json \
+    --zusammenfuehren
+```
+
+Für den SBF Binnen kommt `--pdf Spezifische-Fragen-Segeln.pdf` hinzu (Profil
+`elwis-sbf-binnen.json`). Die Bereichsgrenzen in den Profilen sind Annahmen —
+nach dem Import zeigt der Bericht die Fragenzahl je Modul; stimmt sie nicht mit
+dem Katalog überein, die Grenzen im Profil anpassen und erneut importieren.
 
 Was passiert:
 

@@ -52,6 +52,7 @@ function zertifikatNormieren(array $z): array
         'antwortenMischen' => true,
         'amtlicheBoegen' => null,
         'zusammensetzung' => [],
+        'mindestRichtigJeModul' => [],
         'weitereTeile' => [],
     ];
 
@@ -276,6 +277,16 @@ function katalogPruefen(array $konfig, string $kennung): array
         }
         if ($summe !== (int) $regeln['fragenProBogen']) {
             $fehler[] = "zertifikat.json: Zusammensetzung ergibt $summe, fragenProBogen ist {$regeln['fragenProBogen']}.";
+        }
+    }
+    // Schwellen je Modul (SBF: Basisfragen und spezifische Fragen getrennt)
+    foreach ($regeln['mindestRichtigJeModul'] as $modul => $mindest) {
+        if (!array_key_exists($modul, $module)) {
+            $fehler[] = "zertifikat.json: mindestRichtigJeModul nennt unbekanntes Modul „{$modul}“.";
+        } elseif (!isset($zusammensetzung[$modul])) {
+            $fehler[] = "zertifikat.json: mindestRichtigJeModul „{$modul}“ braucht einen Eintrag in zusammensetzung.";
+        } elseif (!is_int($mindest) || $mindest < 0 || $mindest > (int) $zusammensetzung[$modul]) {
+            $fehler[] = "zertifikat.json: mindestRichtigJeModul „{$modul}“ muss zwischen 0 und {$zusammensetzung[$modul]} liegen.";
         }
     }
     if (isset($regeln['_zuPruefen'])) {
