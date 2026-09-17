@@ -1,0 +1,72 @@
+{
+  "_kommentar": "Szenarien des DSC-Controller-Simulators (public/assets/dsc.js). 'erwartet' ist die Bedienfolge, die das Skript Schritt für Schritt abgleicht. Aktionen: menue (Menüpunkt bestätigen: distress|individual|all-ships|ack), nature (Art der Not: undesignated|fire|flooding|collision|grounding|capsizing|sinking|adrift|abandoning|piracy|mob), position (auto|manuell), distress-taste (haltenSek), mmsi (Ziffernfolge), kategorie (routine|safety|urgency), kanal (Kanalnummer), senden, quittung (senden|nicht-senden), ptt (Sprechfunk auf dem angezeigten Kanal). 'zertifikat' begrenzt ein Szenario auf Kurse; fehlt es, gilt es überall.",
+  "geraet": {
+    "kanaele": ["06", "08", "16", "67", "70", "72", "77"],
+    "eigeneMmsi": "211123450",
+    "schiffsname": "SEEADLER"
+  },
+  "szenarien": [
+    {
+      "id": "distress-feuer",
+      "zertifikat": ["src", "lrc"],
+      "titel": "Notalarm: Feuer an Bord",
+      "lage": "Auf deiner Yacht SEEADLER brennt es im Motorraum, das Feuer ist nicht unter Kontrolle. Das GPS liefert die Position. Setze einen DSC-Notalarm mit Art der Not ab und beginne danach den Sprechfunk-Notverkehr auf Kanal 16.",
+      "erwartet": [
+        { "aktion": "menue", "wert": "distress", "text": "Menü DISTRESS wählen" },
+        { "aktion": "nature", "wert": "fire", "text": "Art der Not: FIRE" },
+        { "aktion": "position", "wert": "auto", "text": "Position vom GPS übernehmen" },
+        { "aktion": "distress-taste", "haltenSek": 5, "text": "DISTRESS-Taste 5 Sekunden halten" },
+        { "aktion": "kanal", "wert": "16", "text": "Kanal 16 (Gerät schaltet automatisch um)" },
+        { "aktion": "ptt", "text": "Sprechfunk: MAYDAY-Notruf und Notmeldung" }
+      ]
+    },
+    {
+      "id": "distress-undesignated",
+      "zertifikat": ["src", "lrc"],
+      "titel": "Notalarm ohne Zeit für Angaben",
+      "lage": "Ein Mensch ist über Bord gegangen, du bist allein an Bord und musst sofort alarmieren. Für Menüangaben ist keine Zeit — setze den schnellen Notalarm ab.",
+      "erwartet": [
+        { "aktion": "distress-taste", "haltenSek": 5, "text": "Klappe öffnen und DISTRESS 5 Sekunden halten (Art der Not: UNDESIGNATED)" },
+        { "aktion": "kanal", "wert": "16", "text": "Kanal 16" },
+        { "aktion": "ptt", "text": "Sprechfunk: MAYDAY" }
+      ]
+    },
+    {
+      "id": "routine-individual",
+      "titel": "Routineanruf an ein anderes Schiff",
+      "lage": "Du willst die Yacht ALBATROS (MMSI 211987650) per DSC anrufen und auf dem Arbeitskanal 72 mit ihr sprechen.",
+      "erwartet": [
+        { "aktion": "menue", "wert": "individual", "text": "Menü INDIVIDUAL CALL wählen" },
+        { "aktion": "mmsi", "wert": "211987650", "text": "MMSI 211987650 eingeben" },
+        { "aktion": "kategorie", "wert": "routine", "text": "Kategorie ROUTINE" },
+        { "aktion": "kanal", "wert": "72", "text": "Arbeitskanal 72 vorschlagen" },
+        { "aktion": "senden", "text": "Anruf senden" },
+        { "aktion": "ptt", "text": "Nach der Quittung auf Kanal 72 sprechen" }
+      ]
+    },
+    {
+      "id": "ack-empfangen",
+      "zertifikat": ["src", "lrc"],
+      "titel": "Fremden Notalarm empfangen",
+      "lage": "Dein Controller meldet einen empfangenen DSC-Notalarm eines anderen Schiffs in deiner Nähe. Du bist eine Sportbootfunkstelle in Reichweite einer Küstenfunkstelle. Was tust du?",
+      "erwartet": [
+        { "aktion": "quittung", "wert": "nicht-senden", "text": "Keine DSC-Quittung senden — das ist Sache der Küstenfunkstelle" },
+        { "aktion": "kanal", "wert": "16", "text": "Kanal 16 abhören" },
+        { "aktion": "ptt", "text": "Erst sprechen, wenn keine Küstenfunkstelle antwortet (RECEIVED MAYDAY)" }
+      ]
+    },
+    {
+      "id": "all-ships-safety",
+      "zertifikat": ["src", "lrc"],
+      "titel": "Sicherheitsanruf an alle Schiffe",
+      "lage": "Du hast einen treibenden Container gesichtet und willst alle Schiffe in der Nähe warnen: DSC-Anruf an alle mit Kategorie SAFETY, danach SÉCURITÉ-Meldung auf Kanal 16.",
+      "erwartet": [
+        { "aktion": "menue", "wert": "all-ships", "text": "Menü ALL SHIPS wählen" },
+        { "aktion": "kategorie", "wert": "safety", "text": "Kategorie SAFETY" },
+        { "aktion": "senden", "text": "Anruf senden" },
+        { "aktion": "kanal", "wert": "16", "text": "Kanal 16" },
+        { "aktion": "ptt", "text": "Sprechfunk: SÉCURITÉ-Meldung" }
+      ]
+    }
+  ]
+}

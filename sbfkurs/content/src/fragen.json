@@ -1,0 +1,182 @@
+{
+  "zertifikat": "src",
+  "quelle": { "name": "Beispielfragen, selbst verfasst", "stand": "2026-09", "amtlich": false },
+  "module": [
+    { "id": "grundlagen", "titel": "Grundlagen und Rechtliches" },
+    { "id": "verkehrsabwicklung", "titel": "Verkehrsabwicklung" },
+    { "id": "dsc-gmdss", "titel": "DSC und GMDSS" },
+    { "id": "notverkehr", "titel": "Not-, Dringlichkeits- und Sicherheitsverkehr" }
+  ],
+  "fragen": [
+    {
+      "id": "src-001",
+      "nr": 1,
+      "modul": "grundlagen",
+      "text": "Wofür steht die Abkürzung GMDSS?",
+      "antworten": [
+        "Global Maritime Distress and Safety System",
+        "General Maritime Digital Selective System",
+        "German Maritime Distress Signalling Service",
+        "Global Marine Data and Surveillance System"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Das GMDSS ist das weltweite Seenot- und Sicherheitsfunksystem der IMO. Das SRC berechtigt zur Teilnahme daran im Seegebiet A1.",
+      "lektion": "01-gmdss",
+      "beispiel": true
+    },
+    {
+      "id": "src-002",
+      "nr": 2,
+      "modul": "grundlagen",
+      "text": "Welche Dokumente müssen für den Betrieb einer UKW-Seefunkanlage auf einem Sportboot vorhanden sein?",
+      "antworten": [
+        "Ein Funkbetriebszeugnis des Bedieners und eine Frequenzzuteilung für das Boot",
+        "Nur ein Sportbootführerschein See des Schiffsführers",
+        "Nur die Bedienungsanleitung des Funkgeräts",
+        "Ein Funkbetriebszeugnis für jede Person an Bord"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Die Person, die die Anlage bedient, braucht ein Zeugnis (z. B. SRC); das Boot braucht eine Frequenzzuteilung der Bundesnetzagentur mit Rufzeichen und MMSI. Beides ist an Bord mitzuführen.",
+      "lektion": "02-recht",
+      "beispiel": true
+    },
+    {
+      "id": "src-003",
+      "nr": 3,
+      "modul": "grundlagen",
+      "text": "Wovon hängt die Reichweite einer UKW-Seefunkverbindung in erster Linie ab?",
+      "antworten": [
+        "Von der Höhe der Antennen beider Stationen, da sich UKW quasi-optisch ausbreitet",
+        "Ausschließlich von der Sendeleistung, da UKW der Erdkrümmung folgt",
+        "Von der Tageszeit, da UKW an der Ionosphäre reflektiert wird",
+        "Von der Wassertemperatur im Fahrtgebiet"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "UKW-Wellen breiten sich näherungsweise geradlinig aus. Entscheidend ist deshalb, wie hoch die Antennen stehen; die Sendeleistung ändert die Reichweite nur wenig.",
+      "lektion": "03-ukw-anlage",
+      "beispiel": true
+    },
+    {
+      "id": "src-004",
+      "nr": 4,
+      "modul": "verkehrsabwicklung",
+      "text": "Wie ist die MMSI eines deutschen Sportbootes aufgebaut?",
+      "antworten": [
+        "Neun Ziffern, beginnend mit der Länderkennung 211",
+        "Neun Ziffern, beginnend mit zwei Nullen und der Länderkennung 211",
+        "Sechs Ziffern, frei vom Eigner wählbar",
+        "Ein Buchstabe D gefolgt von bis zu fünf Buchstaben oder Ziffern"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Schiffs-MMSIs sind neunstellig und beginnen mit der Länderkennung (MID), für Deutschland 211. Mit zwei Nullen beginnen die MMSIs von Küstenfunkstellen; die Kombination mit D ist das Rufzeichen.",
+      "lektion": "04-verkehrsabwicklung",
+      "beispiel": true
+    },
+    {
+      "id": "src-005",
+      "nr": 5,
+      "modul": "verkehrsabwicklung",
+      "text": "Zwei Sportboote haben sich auf Kanal 16 gerufen und wollen ein Gespräch führen. Wie gehen sie richtig vor?",
+      "antworten": [
+        "Sie vereinbaren einen Schiff-Schiff-Arbeitskanal, z. B. Kanal 72, und wechseln dorthin",
+        "Sie führen das Gespräch auf Kanal 16, solange es kurz bleibt",
+        "Sie wechseln auf Kanal 70 und sprechen dort",
+        "Sie wechseln auf einen Duplexkanal einer Küstenfunkstelle"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Kanal 16 dient nur dem Anruf und dem Notverkehr, Kanal 70 ausschließlich DSC. Auf Duplexkanälen können zwei Schiffe einander nicht hören. Bleibt ein Simplex-Arbeitskanal wie 72 oder 77.",
+      "lektion": "04-verkehrsabwicklung",
+      "beispiel": true
+    },
+    {
+      "id": "src-006",
+      "nr": 6,
+      "modul": "verkehrsabwicklung",
+      "text": "Wie wird die Kanalnummer 16 im Sprechfunk korrekt ausgesprochen?",
+      "antworten": [
+        "one six",
+        "sixteen",
+        "one-six-zero",
+        "sechzehn"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Zahlen werden im Seefunk Ziffer für Ziffer gesprochen, damit sich z. B. sixteen und sixty nicht verwechseln lassen.",
+      "lektion": "04-verkehrsabwicklung",
+      "beispiel": true
+    },
+    {
+      "id": "src-007",
+      "nr": 7,
+      "modul": "dsc-gmdss",
+      "text": "Welche Aussage über UKW-Kanal 70 ist richtig?",
+      "antworten": [
+        "Kanal 70 ist ausschließlich dem digitalen Selektivruf (DSC) vorbehalten; Sprechfunk ist dort verboten",
+        "Kanal 70 ist der Anrufkanal für Sprechfunk zwischen Sportbooten",
+        "Kanal 70 ist ein Duplexkanal für Küstenfunkstellen",
+        "Kanal 70 wird nach dem DSC-Anruf auch für das anschließende Gespräch genutzt"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Auf Kanal 70 laufen nur die digitalen DSC-Telegramme. Der Sprechfunk danach findet auf Kanal 16 oder einem Arbeitskanal statt.",
+      "lektion": "05-dsc",
+      "beispiel": true
+    },
+    {
+      "id": "src-008",
+      "nr": 8,
+      "modul": "dsc-gmdss",
+      "text": "Auf welcher Frequenz sendet eine EPIRB ihren Notalarm an das Satellitensystem COSPAS-SARSAT?",
+      "antworten": [
+        "406 MHz",
+        "518 kHz",
+        "156,8 MHz",
+        "9 GHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Die EPIRB alarmiert über Satellit auf 406 MHz. 518 kHz ist die NAVTEX-Frequenz, 156,8 MHz ist Kanal 16 und im 9-GHz-Band antwortet der SART auf Schiffsradare.",
+      "lektion": "08-gmdss-bausteine",
+      "beispiel": true
+    },
+    {
+      "id": "src-009",
+      "nr": 9,
+      "modul": "notverkehr",
+      "text": "Wie ist ein Notruf im Sprechfunk aufgebaut?",
+      "antworten": [
+        "MAYDAY (dreimal), THIS IS, Schiffsname (dreimal), Rufzeichen und MMSI",
+        "PAN PAN (dreimal), ALL STATIONS (dreimal), THIS IS, Schiffsname",
+        "Schiffsname (dreimal), MAYDAY, Position, OVER",
+        "MAYDAY RELAY (dreimal), Schiffsname, Position, OUT"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Der Notruf macht alle auf Kanal 16 aufmerksam: dreimal MAYDAY, dann THIS IS mit dem eigenen Namen dreimal, Rufzeichen und MMSI. Unmittelbar danach folgt die Notmeldung mit Position, Art der Not und erbetener Hilfe.",
+      "lektion": "06-notverkehr",
+      "beispiel": true
+    },
+    {
+      "id": "src-010",
+      "nr": 10,
+      "modul": "notverkehr",
+      "text": "Wer darf die Funkstille mit den Worten SEELONCE MAYDAY anordnen?",
+      "antworten": [
+        "Die Station in Not oder die Station, die den Notverkehr leitet",
+        "Jede Station, die den Notverkehr mithört",
+        "Nur die Bundesnetzagentur",
+        "Ausschließlich die Schiffe, die zur Hilfe unterwegs sind"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "SEELONCE MAYDAY ist der Station in Not und der Leitstelle des Notverkehrs vorbehalten. Andere Stationen, die den Notverkehr gestört sehen, verwenden SEELONCE DISTRESS.",
+      "lektion": "06-notverkehr",
+      "beispiel": true
+    }
+  ]
+}

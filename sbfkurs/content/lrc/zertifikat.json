@@ -1,0 +1,24 @@
+{
+  "id": "lrc",
+  "titel": "LRC — Long Range Certificate",
+  "kurz": "Allgemeines Funkbetriebszeugnis für den Seefunk auf Grenz- und Kurzwelle sowie über Satellit — gültig in allen GMDSS-Seegebieten A1 bis A4.",
+  "reihenfolge": 4,
+  "freigeschaltet": true,
+  "praxis": ["funkverkehr", "buchstabieren", "englisch", "dsc"],
+  "trainer": { "sicherAb": 2 },
+  "pruefung": {
+    "_zuPruefen": "Zahlen nach bestem Wissen; gegen die aktuelle Prüfungsordnung abgleichen.",
+    "fragenProBogen": 30,
+    "zeitMinuten": 45,
+    "mindestRichtig": 24,
+    "fragenMischen": true,
+    "antwortenMischen": true,
+    "amtlicheBoegen": "boegen.json",
+    "zusammensetzung": { "gmdss": 8, "mf-hf": 9, "satellit": 7, "notverkehr": 6 },
+    "weitereTeile": [
+      { "id": "uebersetzung", "titel": "Übersetzung Englisch → Deutsch, Fragen Deutsch → Englisch", "simuliert": "englisch" },
+      { "id": "diktat", "titel": "Aufnahme einer englischen Notmeldung nach Diktat", "simuliert": null },
+      { "id": "praxis", "titel": "Praktische Prüfung am Gerät", "simuliert": "dsc" }
+    ]
+  }
+}

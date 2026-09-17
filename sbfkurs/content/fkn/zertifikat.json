@@ -1,0 +1,20 @@
+{
+  "id": "fkn",
+  "titel": "FKN — Fachkundenachweis Seenotsignalmittel (Pyroschein)",
+  "kurz": "Sachkundenachweis nach Sprengstoffrecht für Erwerb, Besitz und Gebrauch pyrotechnischer Seenotsignalmittel an Bord.",
+  "reihenfolge": 3,
+  "freigeschaltet": true,
+  "praxis": [],
+  "trainer": { "sicherAb": 2 },
+  "pruefung": {
+    "_zuPruefen": "Zahlen nach bestem Wissen; gegen die aktuelle Prüfungsordnung (DSV/DMYV) abgleichen.",
+    "fragenProBogen": 30,
+    "zeitMinuten": 30,
+    "mindestRichtig": 24,
+    "fragenMischen": true,
+    "antwortenMischen": true,
+    "amtlicheBoegen": "boegen.json",
+    "zusammensetzung": { "recht": 8, "signalmittel": 10, "handhabung": 7, "lagerung": 5 },
+    "weitereTeile": []
+  }
+}

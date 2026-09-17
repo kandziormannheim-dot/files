@@ -1,0 +1,35 @@
+{
+  "buchstaben": {
+    "A": "Alfa", "B": "Bravo", "C": "Charlie", "D": "Delta", "E": "Echo", "F": "Foxtrot",
+    "G": "Golf", "H": "Hotel", "I": "India", "J": "Juliett", "K": "Kilo", "L": "Lima",
+    "M": "Mike", "N": "November", "O": "Oscar", "P": "Papa", "Q": "Quebec", "R": "Romeo",
+    "S": "Sierra", "T": "Tango", "U": "Uniform", "V": "Victor", "W": "Whiskey", "X": "X-ray",
+    "Y": "Yankee", "Z": "Zulu"
+  },
+  "ziffern": {
+    "0": "Nadazero", "1": "Unaone", "2": "Bissotwo", "3": "Terrathree", "4": "Kartefour",
+    "5": "Pantafive", "6": "Soxisix", "7": "Setteseven", "8": "Oktoeight", "9": "Novenine"
+  },
+  "varianten": {
+    "Alfa": ["Alpha"],
+    "Juliett": ["Juliet"],
+    "X-ray": ["Xray", "X ray"],
+    "Whiskey": ["Whisky"],
+    "Nadazero": ["Zero"],
+    "Unaone": ["One"],
+    "Bissotwo": ["Two"],
+    "Terrathree": ["Three"],
+    "Kartefour": ["Four"],
+    "Pantafive": ["Five"],
+    "Soxisix": ["Six"],
+    "Setteseven": ["Seven"],
+    "Oktoeight": ["Eight"],
+    "Novenine": ["Nine"]
+  },
+  "woerter": [
+    "SEEADLER", "KIEL", "CUXHAVEN", "HAMBURG", "BREMEN", "ROSTOCK", "MAYDAY", "PANPAN",
+    "SECURITE", "MMSI", "GMDSS", "EPIRB", "NAVTEX", "SART", "KANAL", "RUFZEICHEN",
+    "LOTSE", "SCHLEUSE", "WESER", "ELBE", "NORDSEE", "OSTSEE", "SYLT", "HELGOLAND",
+    "FEHMARN", "DUISBURG", "KOBLENZ", "MAINZ", "DONAU", "RHEIN", "YACHT", "SKIPPER"
+  ]
+}

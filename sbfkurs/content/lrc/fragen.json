@@ -1,0 +1,182 @@
+{
+  "zertifikat": "lrc",
+  "quelle": { "name": "Beispielfragen, selbst verfasst", "stand": "2026-09", "amtlich": false },
+  "module": [
+    { "id": "gmdss", "titel": "GMDSS und Seegebiete" },
+    { "id": "mf-hf", "titel": "Grenz- und Kurzwelle" },
+    { "id": "satellit", "titel": "Satellitenfunk und MSI" },
+    { "id": "notverkehr", "titel": "Not-, Dringlichkeits- und Sicherheitsverkehr" }
+  ],
+  "fragen": [
+    {
+      "id": "lrc-001",
+      "nr": 1,
+      "modul": "gmdss",
+      "text": "Wie ist das GMDSS-Seegebiet A2 definiert?",
+      "antworten": [
+        "Das Gebiet außerhalb von A1, das von mindestens einer Grenzwellen-Küstenfunkstelle mit DSC-Wache auf 2187,5 kHz versorgt wird",
+        "Das Gebiet innerhalb der UKW-DSC-Reichweite mindestens einer Küstenfunkstelle",
+        "Das Gebiet, das von einem anerkannten mobilen Satellitenfunkdienst versorgt wird",
+        "Die Polargebiete, in denen nur Kurzwelle zur Verfügung steht"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "A2 ist das Gebiet in Reichweite einer MF-DSC-Küstenfunkstelle (Wache auf 2187,5 kHz), ausgenommen A1. UKW-Reichweite ist A1, Satellit ist A3, der Rest ist A4.",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": true
+    },
+    {
+      "id": "lrc-002",
+      "nr": 2,
+      "modul": "gmdss",
+      "text": "Welches Zeugnis berechtigt zur Bedienung aller GMDSS-Funkanlagen auf einem Sportboot in allen Seegebieten?",
+      "antworten": [
+        "Das Long Range Certificate (LRC)",
+        "Das Short Range Certificate (SRC)",
+        "Das UKW-Sprechfunkzeugnis für den Binnenschifffahrtsfunk (UBI)",
+        "Der Sportbootführerschein See"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Das LRC ist das allgemeine Funkbetriebszeugnis für den Seefunk auf nicht ausrüstungspflichtigen Schiffen — UKW, Grenz- und Kurzwelle sowie Satellit, Seegebiete A1 bis A4. Das SRC ist auf UKW und A1 beschränkt.",
+      "lektion": "02-recht-international",
+      "beispiel": true
+    },
+    {
+      "id": "lrc-003",
+      "nr": 3,
+      "modul": "gmdss",
+      "text": "Wofür steht die Abkürzung AAIC im Seefunk?",
+      "antworten": [
+        "Accounting Authority Identification Code — Kennung der Abrechnungsstelle für gebührenpflichtigen Funkverkehr",
+        "Automatic Alerting and Identification Code — Kennung im DSC-Notalarm",
+        "Area A1 Identification Code — Kennung einer UKW-Küstenfunkstelle",
+        "Automatic Antenna Impedance Control — Kurzbezeichnung des Antennentuners"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Über die im Zeugnis der Frequenzzuteilung eingetragene Abrechnungsstelle (AAIC) rechnen Küsten- und Satellitenfunkstellen den öffentlichen Nachrichtenverkehr ab. Not-, Dringlichkeits- und Sicherheitsverkehr ist gebührenfrei.",
+      "lektion": "02-recht-international",
+      "beispiel": true
+    },
+    {
+      "id": "lrc-004",
+      "nr": 4,
+      "modul": "mf-hf",
+      "text": "Welche Frequenz ist die internationale Not- und Anruffrequenz für Sprechfunk im Grenzwellenbereich?",
+      "antworten": [
+        "2182 kHz",
+        "2187,5 kHz",
+        "518 kHz",
+        "8291 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "2182 kHz ist die Sprechfunk-Notfrequenz auf Grenzwelle. 2187,5 kHz ist die zugehörige DSC-Frequenz, 518 kHz gehört NAVTEX, 8291 kHz ist die Sprechfunk-Notfrequenz im 8-MHz-Band.",
+      "lektion": "04-dsc-mf-hf",
+      "beispiel": true
+    },
+    {
+      "id": "lrc-005",
+      "nr": 5,
+      "modul": "mf-hf",
+      "text": "Warum ist auf Kurzwelle tagsüber eine höhere Frequenz für große Entfernungen besser geeignet als nachts?",
+      "antworten": [
+        "Weil die D-Schicht der Ionosphäre bei Tageslicht niedrige Frequenzen stark dämpft und höhere Frequenzen von der F-Schicht reflektiert werden",
+        "Weil die Bodenwelle bei hohen Frequenzen tagsüber weiter reicht",
+        "Weil die Sendeleistung der Anlage tagsüber automatisch erhöht wird",
+        "Weil Küstenfunkstellen tagsüber nur auf hohen Frequenzen wachen"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Tagsüber absorbiert die D-Schicht niedrige Frequenzen, nachts verschwindet sie und die F-Schicht reflektiert auch niedrige Bänder über große Entfernungen. Faustregel: tags hoch, nachts niedrig.",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": true
+    },
+    {
+      "id": "lrc-006",
+      "nr": 6,
+      "modul": "mf-hf",
+      "text": "Welche Frequenz ist die DSC-Notfrequenz im 8-MHz-Band?",
+      "antworten": [
+        "8414,5 kHz",
+        "8291 kHz",
+        "8376,5 kHz",
+        "8416,5 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Die HF-DSC-Notfrequenzen sind 4207,5 / 6312 / 8414,5 / 12577 / 16804,5 kHz. 8291 kHz ist die zugehörige Sprechfunkfrequenz, 8376,5 kHz die NBDP-Notfrequenz und 8416,5 kHz eine MSI-Frequenz für Fernschreibfunk.",
+      "lektion": "04-dsc-mf-hf",
+      "beispiel": true
+    },
+    {
+      "id": "lrc-007",
+      "nr": 7,
+      "modul": "satellit",
+      "text": "Auf welcher Frequenz sendet NAVTEX Sicherheitsinformationen in englischer Sprache?",
+      "antworten": [
+        "518 kHz",
+        "490 kHz",
+        "2182 kHz",
+        "4209,5 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Der internationale NAVTEX-Dienst sendet auf 518 kHz auf Englisch; 490 kHz ist für Aussendungen in der Landessprache vorgesehen. 4209,5 kHz ist die Kurzwellenfrequenz für NAVTEX in tropischen Gebieten.",
+      "lektion": "06-msi",
+      "beispiel": true
+    },
+    {
+      "id": "lrc-008",
+      "nr": 8,
+      "modul": "satellit",
+      "text": "Auf welcher Frequenz sendet eine Satelliten-Notfunkbake (EPIRB) den Notalarm an das Cospas-Sarsat-System?",
+      "antworten": [
+        "406 MHz",
+        "121,5 MHz",
+        "156,525 MHz",
+        "9 GHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Die EPIRB alarmiert auf 406 MHz mit ihrer eindeutigen Kennung. Das Signal auf 121,5 MHz dient nur der Nahbereichspeilung durch Rettungskräfte; 9 GHz ist die Radar-SART-Frequenz.",
+      "lektion": "07-epirb-sart",
+      "beispiel": true
+    },
+    {
+      "id": "lrc-009",
+      "nr": 9,
+      "modul": "notverkehr",
+      "text": "Du empfängst auf Kurzwelle einen DSC-Notalarm eines weit entfernten Schiffes. Wie verhältst du dich richtig?",
+      "antworten": [
+        "Nicht per DSC quittieren, auf der zugehörigen Sprechfunk-Notfrequenz mithören und die Küstenfunkstelle bzw. das RCC informieren, wenn keine Quittung erfolgt",
+        "Sofort einen DSC-Notalarm-Quittung senden, damit die Wiederholungen aufhören",
+        "Den Notalarm sofort als Distress Relay an alle Schiffe weiterleiten",
+        "Den Alarm ignorieren, weil auf Kurzwelle grundsätzlich nur Küstenfunkstellen zuständig sind"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Auf HF quittieren Schiffe nie per DSC — das würde die Wiederholungen des Alarms stoppen, ohne dass ein RCC informiert ist. Stattdessen mithören, kurze Wartezeit einräumen und dann Küstenfunkstelle oder RCC verständigen.",
+      "lektion": "08-notverkehr-international",
+      "beispiel": true
+    },
+    {
+      "id": "lrc-010",
+      "nr": 10,
+      "modul": "notverkehr",
+      "text": "Mit welchem Zeichen wird eine funkärztliche Beratung (Radio Medical) eingeleitet?",
+      "antworten": [
+        "PAN PAN (dreimal), Dringlichkeitsverkehr",
+        "MAYDAY (dreimal), Notverkehr",
+        "SÉCURITÉ (dreimal), Sicherheitsverkehr",
+        "MEDICO (dreimal), medizinischer Routineverkehr"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "Eine Radio-Medical-Anfrage betrifft die Sicherheit einer Person, ohne dass unmittelbare Lebensgefahr für Schiff und Besatzung besteht — also Dringlichkeitsverkehr mit PAN PAN. Über das MRCC wird der funkärztliche Beratungsdienst (TMAS) vermittelt.",
+      "lektion": "08-notverkehr-international",
+      "beispiel": true
+    }
+  ]
+}

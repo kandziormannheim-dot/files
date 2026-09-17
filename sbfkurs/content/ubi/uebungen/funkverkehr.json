@@ -1,0 +1,39 @@
+{
+  "uebungen": [
+    {
+      "id": "schleuse-anruf", "typ": "lueckentext", "titel": "Anruf einer Schleuse",
+      "einleitung": "Das Sportboot MÖWE fährt auf dem Main zu Berg und befindet sich etwa zwei Kilometer unterhalb der Schleuse Griesheim. Du meldest dich auf dem Kanal der Schleuse zur Schleusung an.",
+      "text": "{{1}} {{1}}\n{{2}} Sportboot {{3}}\n{{4}}\n{{1}}, {{2}} {{3}}\nZu {{5}}, etwa zwei Kilometer unterhalb der Schleuse\nBitte um {{6}}\n{{4}}\n(Die Schleuse antwortet: Einfahrt in fünfzehn Minuten hinter dem Güterschiff.)\n{{1}}, {{2}} {{3}}\n{{7}}, Einfahrt in fünfzehn Minuten hinter dem Güterschiff\n{{8}}",
+      "luecken": {
+        "1": { "loesung": ["SCHLEUSE GRIESHEIM"], "hinweis": "die gerufene Landfunkstelle" },
+        "2": { "loesung": ["HIER IST"], "hinweis": "leitet den eigenen Namen ein" },
+        "3": { "loesung": ["MÖWE", "MOEWE"] },
+        "4": { "loesung": ["KOMMEN"], "hinweis": "ich erwarte Antwort" },
+        "5": { "loesung": ["BERG"], "hinweis": "Fahrtrichtung stromaufwärts" },
+        "6": { "loesung": ["SCHLEUSUNG"] },
+        "7": { "loesung": ["VERSTANDEN"], "hinweis": "Bestätigung der Anweisung" },
+        "8": { "loesung": ["ENDE"], "hinweis": "das Gespräch ist beendet" }
+      }
+    },
+    {
+      "id": "mayday-binnen", "typ": "lueckentext", "titel": "Der Notruf auf der Binnenwasserstraße",
+      "einleitung": "Das Sportboot MÖWE hat auf dem Rhein bei Kilometer 552 am rechten Ufer einen Brand im Motorraum. Vier Personen sind an Bord. Setze den Notruf mit Notmeldung auf Deutsch ab.",
+      "text": "{{1}} {{1}} {{1}}\n{{2}} Sportboot {{3}}, Sportboot {{3}}, Sportboot {{3}}\n{{1}} Sportboot {{3}}\nPosition {{4}}, rechtes Ufer\n{{5}}\nWir benötigen {{6}}\nVier Personen an Bord\n{{7}}",
+      "luecken": {
+        "1": { "loesung": ["MAYDAY"], "hinweis": "das Notzeichen, dreimal" },
+        "2": { "loesung": ["HIER IST"] },
+        "3": { "loesung": ["MÖWE", "MOEWE"] },
+        "4": { "loesung": ["RHEIN KILOMETER 552", "RHEIN KILOMETER FÜNF FÜNF ZWO", "RHEIN KILOMETER FUENF FUENF ZWO", "RHEIN KM 552"], "hinweis": "Wasserstraße und Stromkilometer" },
+        "5": { "loesung": ["BRAND IM MOTORRAUM", "FEUER IM MOTORRAUM"], "hinweis": "Art der Not" },
+        "6": { "loesung": ["SOFORTIGE HILFE", "SOFORT HILFE"], "hinweis": "erbetene Hilfe" },
+        "7": { "loesung": ["KOMMEN"] }
+      }
+    },
+    {
+      "id": "notmeldung-aufbau-binnen", "typ": "reihenfolge", "titel": "Aufbau der Notmeldung binnen",
+      "einleitung": "Bringe die Bestandteile von Notruf und Notmeldung im Binnenschifffahrtsfunk in die richtige Reihenfolge.",
+      "elemente": ["MAYDAY (dreimal)", "hier ist + Name des Fahrzeugs (dreimal)", "MAYDAY + Name des Fahrzeugs", "Position (Wasserstraße, Stromkilometer, Uferseite)", "Art der Not", "Erbetene Hilfe", "Weitere Angaben (Personen an Bord, Fahrzeugbeschreibung)", "kommen"],
+      "loesung": [0, 1, 2, 3, 4, 5, 6, 7]
+    }
+  ]
+}

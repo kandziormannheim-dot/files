@@ -1,0 +1,111 @@
+/* Design Tokens: SBF-Kurs
+   Phase 4 von 7 im Designer-Flow. Vorgänger: INFORMATION_ARCHITECTURE.md.
+   Nachfolger: TASKS.md (Phase 5).
+
+   Ästhetik: Scandinavian Functionalism, hell. Ein Akzent (Marineblau),
+   drei Bewertungsfarben, Systemschrift. Diese Datei ist die Quelle;
+   sbfkurs/public/assets/style.css übernimmt die Werte von Hand — die
+   PHP-Anwendung hat keinen Build-Schritt, und ein Sync-Skript für 20
+   Zeilen wäre mehr Werkzeug als Nutzen.
+
+   Kontraste (WCAG, gerechnet):
+     --tinte  #16212b auf --grund #f4f6f8  → 14,9:1
+     --leise  #5a6873 auf --karte #ffffff  →  5,6:1
+     --akzent #0b4f8a auf --karte #ffffff  →  8,2:1  (Text und Rahmen)
+     #ffffff auf --akzent #0b4f8a           →  8,2:1  (Knöpfe, Kopfzeile)
+     --gut    #1f7a4d auf --gut-hell #e4f3ea →  4,9:1
+     --fehler #a3262c auf --fehler-hell #fbe8e9 → 6,3:1
+     --warn   #8a5a00 auf --warn-hell #fff5d6 → 5,8:1
+*/
+
+:root {
+    /* ---- Primitive */
+    --blau-900: #083b67;
+    --blau-700: #0b4f8a;
+    --blau-100: #e3eef8;
+    --grau-900: #16212b;
+    --grau-600: #5a6873;
+    --grau-300: #d5dde3;
+    --grau-100: #f4f6f8;
+    --weiss: #ffffff;
+    --gruen-700: #1f7a4d;
+    --gruen-100: #e4f3ea;
+    --gelb-700: #8a5a00;
+    --gelb-100: #fff5d6;
+    --rot-700: #a3262c;
+    --rot-100: #fbe8e9;
+
+    /* ---- Semantisch */
+    --tinte: var(--grau-900);
+    --leise: var(--grau-600);
+    --linie: var(--grau-300);
+    --grund: var(--grau-100);
+    --karte: var(--weiss);
+    --akzent: var(--blau-700);
+    --akzent-dunkel: var(--blau-900);
+    --akzent-hell: var(--blau-100);
+    --gut: var(--gruen-700);
+    --gut-hell: var(--gruen-100);
+    --warn: var(--gelb-700);
+    --warn-hell: var(--gelb-100);
+    --fehler: var(--rot-700);
+    --fehler-hell: var(--rot-100);
+
+    /* ---- Typografie */
+    --schrift: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --schrift-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --groesse-text: 1.0625rem;     /* 17 px — Lesetext */
+    --groesse-frage: 1.2rem;
+    --groesse-h1: 1.7rem;
+    --groesse-h2: 1.2rem;
+    --groesse-klein: 0.9rem;
+    --zeilenhoehe: 1.55;
+    --lesebreite: 68ch;
+
+    /* ---- Raum und Form */
+    --abstand-1: 0.25rem;
+    --abstand-2: 0.5rem;
+    --abstand-3: 1rem;
+    --abstand-4: 1.5rem;
+    --abstand-5: 2.5rem;
+    --radius: 10px;
+    --radius-klein: 8px;
+    --schatten: 0 1px 2px rgba(22, 33, 43, 0.06);
+    --inhaltsbreite: 64rem;
+    --inhaltsbreite-breit: 72rem;   /* Prüfungsbogen, DSC */
+
+    /* ---- Komponenten */
+    --knopf-polster: 0.7rem 1.2rem;
+    --feld-polster: 0.65rem 0.7rem;
+    --antwort-polster: 0.65rem 0.8rem;
+    --buchstabe-groesse: 1.8rem;
+    --timer-groesse: 1.6rem;
+    --funk-grund: var(--grau-900);
+    --funk-tinte: var(--grau-100);
+    --funk-station: #9fc3e6;
+    --dsc-display-grund: #b7d8b0;
+    --dsc-display-tinte: #10230f;
+    --dsc-gehaeuse: #2b3138;
+    --distress: #c8161d;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --tinte: #e6ebef;
+        --leise: #a2adb7;
+        --linie: #35424d;
+        --grund: #141b21;
+        --karte: #1c252d;
+        --akzent: #6fb1ea;
+        --akzent-dunkel: #8cc3f2;
+        --akzent-hell: #1e3247;
+        --gut: #6fcf97;
+        --gut-hell: #1d3328;
+        --warn: #e5b85c;
+        --warn-hell: #3a2f14;
+        --fehler: #f28b8f;
+        --fehler-hell: #3d1f21;
+        --funk-grund: #0b1a27;
+        --funk-tinte: #e6ebef;
+    }
+}
