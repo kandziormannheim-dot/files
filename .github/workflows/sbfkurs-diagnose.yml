@@ -48,12 +48,17 @@ jobs:
       VERGLEICH: ${{ inputs.vergleich }}
     steps:
       - name: Passwort auflösen und maskieren
+        # Eingabe geht vor; ohne Eingabe zählen die Repository-Secrets.
+        # Eingaben werden aus dem Ereignis-JSON maskiert — ein Schritt-env
+        # stünde sonst im Protokollkopf, bevor die Maske greift; Secrets
+        # maskiert GitHub von selbst.
         env:
-          PLESK_PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PLESK_PASSWORT: ${{ secrets.PLESK_PASSWORT }}
         run: |
-          [ -n "$PLESK_PW" ] \
+          EINGABE=$(jq -r '.inputs.plesk_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          [ -n "$EINGABE" ] || [ -n "$PLESK_PASSWORT" ] \
             || { echo "::error::Kein Plesk-Passwort: weder als Eingabe übergeben noch als Repository-Secret PLESK_PASSWORT hinterlegt."; exit 1; }
-          echo "::add-mask::$PLESK_PW"
 
       - name: Plesk erreichen und Schlüssel festnageln
         id: pin
@@ -138,17 +143,28 @@ jobs:
                   && { head -1 /tmp/kopf.txt; grep -iE '^(server|content-type|location|x-powered-by):' /tmp/kopf.txt; head -c 300 /tmp/antwort.txt; echo; } \
                   || echo "(keine Antwort)"
               }
+              # Über die öffentliche IP mit passender SNI — genau der Weg, den
+              # Browser und Selbsttest nehmen. /assets/style.css unterscheidet
+              # „falscher vHost“ (404) von „Rewrite greift nicht“ (CSS kommt).
               for d in "$SUB" "$VERGLEICH"; do
-                kopf "$d über nginx (443, wie von außen)"
-                frag "/status"  --resolve "$d:443:127.0.0.1" "https://$d/status"
-                frag "/"        --resolve "$d:443:127.0.0.1" "https://$d/"
-                kopf "$d über nginx (80)"
-                frag "/status"  --resolve "$d:80:127.0.0.1" "http://$d/status"
-                kopf "$d direkt an Apache (7080/7081)"
+                kopf "$d über nginx auf der öffentlichen IP (443, SNI passend)"
+                frag "/status"           --resolve "$d:443:$HOST" "https://$d/status"
+                frag "/"                 --resolve "$d:443:$HOST" "https://$d/"
+                frag "/index.php"        --resolve "$d:443:$HOST" "https://$d/index.php"
+                frag "/assets/style.css" --resolve "$d:443:$HOST" "https://$d/assets/style.css"
+                frag "www.$d /status"    --resolve "www.$d:443:$HOST" "https://www.$d/status"
+                kopf "$d über nginx auf der öffentlichen IP (80)"
+                frag "/status"           --resolve "$d:80:$HOST" "http://$d/status"
+                kopf "$d direkt an Apache auf der öffentlichen IP (7081, SNI passend)"
+                frag "/status"           --resolve "$d:7081:$HOST" "https://$d:7081/status"
+                frag "/assets/style.css" --resolve "$d:7081:$HOST" "https://$d:7081/assets/style.css"
+                kopf "$d direkt an Apache über 127.0.0.1 (nur Host-Kopf)"
                 frag "7080 /status" -H "Host: $d" "http://127.0.0.1:7080/status"
                 frag "7081 /status" -H "Host: $d" "https://127.0.0.1:7081/status"
-                frag "7080 /index.php" -H "Host: $d" "http://127.0.0.1:7080/index.php"
               done
+              kopf "Wer antwortet ohne passenden Namen? (Standard-vHost)"
+              frag "7081 Host: unbekannt.example" -H "Host: unbekannt.example" "https://127.0.0.1:7081/status"
+              frag "443 Host: unbekannt.example" --resolve "unbekannt.example:443:$HOST" "https://unbekannt.example/status"
               kopf "Lauschende Ports (nginx/Apache)"
               (ss -ltnp 2>/dev/null || netstat -ltn 2>/dev/null) | grep -E ':(80|443|7080|7081) ' || echo "(nicht sichtbar)"
           SKRIPT
@@ -187,31 +203,38 @@ jobs:
               done
               kopf "Datei-Rechte auf dem Weg zum Webroot"
               namei -l "$(pwd)/sbfkurs-app/public/index.php" 2>&1 || ls -ld "$(pwd)" "$(pwd)/sbfkurs-app" "$(pwd)/sbfkurs-app/public"
+              kopf "Serverweite vHost-Dateien (falls lesbar)"
+              for v in /etc/apache2/plesk.conf.d/vhosts /etc/nginx/plesk.conf.d/vhosts /etc/apache2/plesk.conf.d /etc/nginx/plesk.conf.d; do
+                echo "--- $v"; ls -la "$v" 2>&1 | head -40
+              done
+              for f in /etc/apache2/plesk.conf.d/vhosts/*kandzior* /etc/nginx/plesk.conf.d/vhosts/*kandzior* /etc/apache2/plesk.conf.d/server.conf /etc/nginx/plesk.conf.d/server.conf; do
+                [ -r "$f" ] && { echo "--- $f"; grep -nE 'VirtualHost|ServerName|ServerAlias|DocumentRoot|AllowOverride|server_name|listen|root |proxy_pass|SSLCertificate|ssl_certificate|Include' "$f" | head -60; }
+              done
+              echo "--- Wildcard-/Alias-Treffer in allen lesbaren vHost-Dateien"
+              grep -lE 'ServerAlias .*\*|server_name .*\*' /etc/apache2/plesk.conf.d/vhosts/* /etc/nginx/plesk.conf.d/vhosts/* 2>/dev/null || echo "(keine lesbaren Treffer)"
+              echo "--- welche vHost-Dateien nennen $SUB?"
+              grep -lF "$SUB" /etc/apache2/plesk.conf.d/vhosts/* /etc/nginx/plesk.conf.d/vhosts/* 2>/dev/null || echo "(keine lesbaren Treffer)"
           SKRIPT
 
-      - name: PHP des Servers führt die App aus?
+      - name: Alle Domains, Aliasse und volle Hosting-Infos laut Plesk
         env:
-          SSH_USER: ${{ steps.ssh.outputs.user }}
-          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
         run: |
           set -euo pipefail
-          HOST=${PLESK#https://}; HOST=${HOST%:8443}
-          timeout 120 sshpass -p "$SSH_PASS" ssh \
-            -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 "$SSH_USER@$HOST" 'bash -s' <<'SKRIPT'
-              echo "== verfügbare PHP-Versionen =="; ls -d /opt/plesk/php/*/bin/php 2>/dev/null
-              PHP=$(ls -d /opt/plesk/php/8.[2-9]/bin/php 2>/dev/null | sort -V | head -1)
-              PHP=${PHP:-$(ls -d /opt/plesk/php/*/bin/php 2>/dev/null | sort -V | tail -1)}
-              PHP=${PHP:-php}
-              echo "Verwendet: $PHP ($($PHP -v | head -1))"
-              echo "== Syntax =="
-              $PHP -l sbfkurs-app/public/index.php; $PHP -l sbfkurs-app/src/bootstrap.php
-              echo "== /status über den eingebauten Server (CLI) =="
-              cd sbfkurs-app/public
-              SBFKURS_KONFIG="$HOME/sbfkurs-config.php" $PHP -S 127.0.0.1:8099 index.php >/tmp/php-s.log 2>&1 &
-              PID=$!
-              sleep 2
-              curl -s -m 5 http://127.0.0.1:8099/status; echo
-              curl -s -m 5 -o /dev/null -w 'HTTP %{http_code} -> %{redirect_url}\n' http://127.0.0.1:8099/
-              kill $PID 2>/dev/null || true
-              echo "--- Protokoll des eingebauten Servers"; tail -n 20 /tmp/php-s.log
-          SKRIPT
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          zeig() { jq -r '"code=\(.code)\n\(.stdout // "")\n\(.stderr // "")"' <<<"$1" | sed -n '1,120p'; }
+          echo "== site --list =="; zeig "$(cli site --list)"
+          echo "== domalias --list =="; zeig "$(cli domalias --list)"
+          echo "== subdomain --list (falls es das gibt) =="; zeig "$(cli subdomain --list)" | head -20
+          for d in "$SUB" "$VERGLEICH"; do
+            echo "== site --info $d (vollständig) =="; zeig "$(cli site --info "$d")"
+          done
+          echo "== subscription --info $DOMAIN =="; zeig "$(cli subscription --info "$DOMAIN")" | head -60

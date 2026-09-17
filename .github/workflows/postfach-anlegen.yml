@@ -42,9 +42,14 @@ jobs:
       WEITERLEITUNG: ${{ inputs.weiterleitung }}
     steps:
       - name: Passwörter maskieren
+        # Aus dem Ereignis-JSON gelesen, nicht über env/Ausdruck: Der Wert
+        # eines Schritt-env erscheint sonst im Protokollkopf, bevor die
+        # Maske greift.
         run: |
-          echo "::add-mask::${{ inputs.plesk_passwort }}"
-          echo "::add-mask::${{ inputs.mail_passwort }}"
+          for feld in plesk_passwort mail_passwort; do
+            WERT=$(jq -r ".inputs.$feld // \"\"" "$GITHUB_EVENT_PATH")
+            [ -z "$WERT" ] || echo "::add-mask::$WERT"
+          done
 
       - name: Plesk erreichen und Schlüssel festnageln
         id: pin

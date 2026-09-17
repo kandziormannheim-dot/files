@@ -38,12 +38,17 @@ jobs:
       TESTEMPFAENGER: ${{ inputs.testempfaenger }}
     steps:
       - name: Passwort auflösen und maskieren
+        # Eingabe geht vor; ohne Eingabe zählen die Repository-Secrets.
+        # Eingaben werden aus dem Ereignis-JSON maskiert — ein Schritt-env
+        # stünde sonst im Protokollkopf, bevor die Maske greift; Secrets
+        # maskiert GitHub von selbst.
         env:
-          PLESK_PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PLESK_PASSWORT: ${{ secrets.PLESK_PASSWORT }}
         run: |
-          [ -n "$PLESK_PW" ] \
+          EINGABE=$(jq -r '.inputs.plesk_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          [ -n "$EINGABE" ] || [ -n "$PLESK_PASSWORT" ] \
             || { echo "::error::Kein Plesk-Passwort: weder als Eingabe übergeben noch als Repository-Secret PLESK_PASSWORT hinterlegt."; exit 1; }
-          echo "::add-mask::$PLESK_PW"
 
       - name: Plesk erreichen und Schlüssel festnageln
         id: pin

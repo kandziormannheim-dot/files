@@ -74,18 +74,25 @@ jobs:
       SUB: ${{ inputs.subdomain }}
     steps:
       - name: Passwörter auflösen und maskieren
+        # Eingabe geht vor; ohne Eingabe zählen die Repository-Secrets.
+        # Eingaben werden aus dem Ereignis-JSON maskiert — ein Schritt-env
+        # stünde sonst im Protokollkopf, bevor die Maske greift; Secrets
+        # maskiert GitHub von selbst.
         env:
-          PLESK_PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
-          KURS_PW: ${{ inputs.admin_passwort || secrets.SBFKURS_ADMIN_PASSWORT }}
+          PLESK_PASSWORT: ${{ secrets.PLESK_PASSWORT }}
+          SBFKURS_ADMIN_PASSWORT: ${{ secrets.SBFKURS_ADMIN_PASSWORT }}
         run: |
-          [ -n "$PLESK_PW" ] \
+          EINGABE=$(jq -r '.inputs.plesk_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          [ -n "$EINGABE" ] || [ -n "$PLESK_PASSWORT" ] \
             || { echo "::error::Kein Plesk-Passwort: weder als Eingabe übergeben noch als Repository-Secret PLESK_PASSWORT hinterlegt (Settings → Secrets and variables → Actions)."; exit 1; }
+          EINGABE=$(jq -r '.inputs.admin_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          KURS_PW=${EINGABE:-$SBFKURS_ADMIN_PASSWORT}
           [ -n "$KURS_PW" ] \
             || { echo "::error::Kein Admin-Passwort für den Kurs: weder als Eingabe übergeben noch als Repository-Secret SBFKURS_ADMIN_PASSWORT hinterlegt."; exit 1; }
           [ "${#KURS_PW}" -ge 10 ] \
             || { echo "::error::Das Admin-Passwort braucht mindestens 10 Zeichen — die Anwendung verlangt das auch von allen anderen Konten."; exit 1; }
-          echo "::add-mask::$PLESK_PW"
-          echo "::add-mask::$KURS_PW"
 
       - name: Quellcode holen
         uses: actions/checkout@v4

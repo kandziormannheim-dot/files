@@ -52,7 +52,12 @@ jobs:
       MODUS: ${{ inputs.modus }}
     steps:
       - name: Passwort maskieren
-        run: echo "::add-mask::${{ inputs.plesk_passwort }}"
+        # Aus dem Ereignis-JSON gelesen, nicht über env/Ausdruck: Der Wert
+        # eines Schritt-env erscheint sonst im Protokollkopf, bevor die
+        # Maske greift. Repository-Secrets sind ohnehin maskiert.
+        run: |
+          PW=$(jq -r '.inputs.plesk_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$PW" ] || echo "::add-mask::$PW"
 
       - name: Plesk erreichen und Schlüssel festnageln
         id: pin
