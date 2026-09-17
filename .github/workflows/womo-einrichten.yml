@@ -69,19 +69,22 @@ jobs:
       EMPFAENGER: ${{ inputs.empfaenger }}
     steps:
       - name: Passwörter auflösen und maskieren
+        # Eingabe geht vor; ohne Eingabe zählen die Repository-Secrets.
+        # Eingaben werden aus dem Ereignis-JSON maskiert — ein Schritt-env
+        # stünde sonst im Protokollkopf, bevor die Maske greift; Secrets
+        # maskiert GitHub von selbst.
         env:
-          PLESK_PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
-          WOMO_PW: ${{ inputs.womo_admin_passwort || secrets.WOMO_ADMIN_PASSWORT }}
+          PLESK_PASSWORT: ${{ secrets.PLESK_PASSWORT }}
+          WOMO_ADMIN_PASSWORT: ${{ secrets.WOMO_ADMIN_PASSWORT }}
         run: |
-          # Eingabe geht vor; ohne Eingabe zählen die Repository-Secrets
-          # PLESK_PASSWORT und WOMO_ADMIN_PASSWORT — so kann der Lauf auch
-          # ohne Tipparbeit gestartet werden.
-          [ -n "$PLESK_PW" ] \
+          EINGABE=$(jq -r '.inputs.plesk_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          [ -n "$EINGABE" ] || [ -n "$PLESK_PASSWORT" ] \
             || { echo "::error::Kein Plesk-Passwort: weder als Eingabe übergeben noch als Repository-Secret PLESK_PASSWORT hinterlegt (Settings → Secrets and variables → Actions)."; exit 1; }
-          [ -n "$WOMO_PW" ] \
+          EINGABE=$(jq -r '.inputs.womo_admin_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          [ -n "$EINGABE" ] || [ -n "$WOMO_ADMIN_PASSWORT" ] \
             || { echo "::error::Kein Womo-Anmeldepasswort: weder als Eingabe übergeben noch als Repository-Secret WOMO_ADMIN_PASSWORT hinterlegt."; exit 1; }
-          echo "::add-mask::$PLESK_PW"
-          echo "::add-mask::$WOMO_PW"
 
       - name: Quellcode holen
         uses: actions/checkout@v4

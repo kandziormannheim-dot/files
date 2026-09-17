@@ -60,14 +60,17 @@ jobs:
       IPV6: ${{ inputs.ipv6 }}
     steps:
       - name: Token auflösen und maskieren
+        # Eingabe geht vor; ohne Eingabe zählen die Repository-Secrets.
+        # Eingaben werden aus dem Ereignis-JSON maskiert — ein Schritt-env
+        # stünde sonst im Protokollkopf, bevor die Maske greift; Secrets
+        # maskiert GitHub von selbst.
         env:
-          TOKEN: ${{ inputs.dns_token || secrets.DNS_TOKEN }}
+          DNS_TOKEN: ${{ secrets.DNS_TOKEN }}
         run: |
-          # Eingabe geht vor; ohne Eingabe zählt das Repository-Secret
-          # DNS_TOKEN — so kann der Lauf auch ohne Tipparbeit starten.
-          [ -n "$TOKEN" ] \
+          EINGABE=$(jq -r '.inputs.dns_token // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          [ -n "$EINGABE" ] || [ -n "$DNS_TOKEN" ] \
             || { echo "::error::Kein Token: weder als Eingabe übergeben noch als Repository-Secret DNS_TOKEN hinterlegt (Settings → Secrets and variables → Actions)."; exit 1; }
-          echo "::add-mask::$TOKEN"
 
       - name: Zone finden (klassische DNS-API, dann Cloud-API)
         id: zone
