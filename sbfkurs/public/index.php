@@ -331,7 +331,7 @@ if (preg_match('#^/pruefung/(\d+)(/abgeben|/ergebnis)?$#', $pfad, $t)) {
         if ($pruefung['abgegeben_am'] === null) {
             umleiten("/pruefung/{$pruefung['id']}");
         }
-        ansicht('pruefung_ergebnis', ['z' => $z, 'kennung' => $kennung, 'pruefung' => $pruefung, 'ergebnis' => pruefungErgebnis($pruefung), 'katalog' => $katalog]);
+        ansicht('pruefung_ergebnis', ['z' => $z, 'kennung' => $kennung, 'pruefung' => $pruefung, 'ergebnis' => pruefungErgebnis($pruefung, $katalog), 'katalog' => $katalog]);
     }
     ansicht('pruefung_bogen', ['z' => $z, 'kennung' => $kennung, 'pruefung' => $pruefung, 'katalog' => $katalog, 'ende' => pruefungEnde($pruefung)]);
 }

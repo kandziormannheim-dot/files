@@ -7,6 +7,13 @@ $falsche = array_filter($ergebnis['antworten'], static fn (array $a): bool => !$
 <section class="karte ergebnis <?= $ergebnis['bestanden'] ? 'ist-richtig' : 'ist-falsch' ?>">
     <h1><?= $ergebnis['bestanden'] ? 'Bestanden' : 'Nicht bestanden' ?></h1>
     <p class="ergebnis-zahl"><strong><?= (int) $ergebnis['richtig'] ?></strong> von <?= (int) $ergebnis['gesamt'] ?> richtig <small>(nötig: <?= (int) $ergebnis['mindest'] ?>)</small></p>
+    <?php if ($ergebnis['module'] !== []) { ?>
+    <ul class="modul-ergebnis">
+        <?php foreach ($ergebnis['module'] as $m) { ?>
+        <li><?= e($m['titel']) ?>: <strong><?= (int) $m['richtig'] ?></strong> von <?= (int) $m['gesamt'] ?> <small>(nötig: <?= (int) $m['mindest'] ?>)</small> <span class="status status-<?= $m['bestanden'] ? 'gut' : 'schlecht' ?>"><?= $m['bestanden'] ? 'erreicht' : 'nicht erreicht' ?></span></li>
+        <?php } ?>
+    </ul>
+    <?php } ?>
     <p>Abgegeben <?= e(zeitAnzeigen($pruefung['abgegeben_am'])) ?> nach <?= e(dauerAnzeigen($ergebnis['dauer'])) ?>.
     <?php if ($ergebnis['ueberzogen']) { ?><strong>In der echten Prüfung wäre die Zeit überschritten gewesen.</strong><?php } ?></p>
     <p class="knopfreihe">

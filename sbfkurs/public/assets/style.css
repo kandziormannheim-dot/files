@@ -331,6 +331,8 @@ form.inline { display: inline; }
 .ergebnis h1 { margin-bottom: 0.2rem; }
 .ergebnis-zahl { font-size: 1.3rem; margin: 0 0 0.4rem; }
 .ergebnis-zahl strong { font-size: 1.8rem; }
+.modul-ergebnis { list-style: none; padding: 0; margin: 0 0 0.6rem; }
+.modul-ergebnis li { margin: 0.2rem 0; }
 
 /* --------------------------------------------------------------- Übungen */
 

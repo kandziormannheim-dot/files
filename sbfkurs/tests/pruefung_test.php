@@ -100,4 +100,31 @@ $kp = pruefungLaden($db, $benutzerId, $kid);
 $kerg = pruefungBewerten($kp, [], $klein);
 pruefeGleich(2, $kerg['mindest'], 'verkürzter Bogen: Schwelle anteilig (4/6 von 3 → 2)');
 
+// Schwellen je Modul (SBF: Basisfragen und spezifische Fragen getrennt)
+pruefungAbgeben($db, $kp, [], $klein); // offene Prüfung schließen, sonst würde sie fortgesetzt
+$zm = zertifikatNormieren(['id' => 'tt', 'pruefung' => ['fragenProBogen' => 6, 'zeitMinuten' => 1, 'mindestRichtig' => 4,
+    'zusammensetzung' => ['a' => 4, 'b' => 2], 'mindestRichtigJeModul' => ['a' => 2, 'b' => 2]]]);
+$mid = pruefungStarten($db, $benutzerId, 'tt', $zm, $katalog, [], 'zufall');
+$mp = pruefungLaden($db, $benutzerId, $mid);
+$alle = [];
+$bModule = [];
+foreach ($mp['fragen'] as $i => $e) {
+    $alle[$i + 1] = (string) array_search(0, $e['reihenfolge'], true);
+    if (($katalog['fragen'][$e['frage_id']]['modul'] ?? '') === 'b') {
+        $bModule[] = $i + 1;
+    }
+}
+$merg = pruefungBewerten($mp, $alle, $katalog);
+pruefeGleich(2, $merg['module']['b']['richtig'] ?? null, 'Modulergebnis zählt richtige je Modul');
+pruefe($merg['bestanden'], 'alle Module erreicht → bestanden');
+// Gesamt reicht (5 von 6), aber Modul b hat nur 1 von 2 → nicht bestanden
+$einsFalsch = $alle;
+$einsFalsch[$bModule[0]] = (string) array_search(1, $mp['fragen'][$bModule[0] - 1]['reihenfolge'], true);
+$merg2 = pruefungBewerten($mp, $einsFalsch, $katalog);
+pruefeGleich(5, $merg2['richtig'], 'gesamt über der Schwelle');
+pruefe(!$merg2['bestanden'] && !$merg2['module']['b']['bestanden'], 'Modulschwelle verfehlt → nicht bestanden');
+pruefungAbgeben($db, $mp, $einsFalsch, $katalog);
+$gespeichert = pruefungErgebnis(pruefungLaden($db, $benutzerId, $mid), $katalog);
+pruefe(!$gespeichert['bestanden'] && ($gespeichert['module']['b']['richtig'] ?? null) === 1, 'gespeichertes Ergebnis mit Modulaufschlüsselung');
+
 exit(testErgebnis());

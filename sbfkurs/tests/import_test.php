@@ -47,9 +47,35 @@ $bericht = jsonLesen("$verzeichnis/src/import-bericht.json") ?? [];
 pruefe(isset($bericht['pruefen']['src-004']), 'Bericht nennt die zu prüfende Frage');
 pruefe(!str_contains(implode(' ', array_column($fragen, 'text')), 'Seite 1'), 'Kopf-/Fußzeilen entfernt');
 
+// Mehrere Eingabedateien und Modulzuordnung nach Fragennummer (SBF-Kataloge)
+mkdir("$verzeichnis/see", 0700, true);
+jsonSchreiben("$verzeichnis/see/zertifikat.json", ['id' => 'see', 'titel' => 'SBF See', 'pruefung' => ['fragenProBogen' => 4, 'zeitMinuten' => 5, 'mindestRichtig' => 3, 'zusammensetzung' => ['basis' => 2, 'see' => 2], 'mindestRichtigJeModul' => ['basis' => 1, 'see' => 2]]]);
+jsonSchreiben("$verzeichnis/see/lektionen.json", ['lektionen' => []]);
+$befehl = sprintf(
+    '%s %s --profil %s --txt %s --txt %s --ziel %s 2>&1',
+    escapeshellarg(PHP_BINARY),
+    escapeshellarg(dirname(__DIR__) . '/werkzeuge/katalog-import.php'),
+    escapeshellarg(dirname(__DIR__) . '/werkzeuge/import-profile/elwis-sbf-see.json'),
+    escapeshellarg(__DIR__ . '/fixtures/katalog-muster-sbf-basis.txt'),
+    escapeshellarg(__DIR__ . '/fixtures/katalog-muster-sbf-see.txt'),
+    escapeshellarg("$verzeichnis/see/fragen.json")
+);
+exec($befehl, $ausgabe2, $code2);
+pruefeGleich(0, $code2, 'SBF-Import aus zwei Dateien läuft durch: ' . implode(' | ', $ausgabe2));
+$see = [];
+foreach ((jsonLesen("$verzeichnis/see/fragen.json") ?? [])['fragen'] ?? [] as $f) {
+    $see[$f['id']] = $f;
+}
+pruefeGleich(4, count($see), 'Fragen beider Dateien übernommen');
+pruefeGleich('basis', $see['see-001']['modul'] ?? null, 'Nr. 1 → Basisfragen');
+pruefeGleich('see', $see['see-073']['modul'] ?? null, 'Nr. 73 → spezifische Fragen See');
+pruefe(str_contains($see['see-073']['text'] ?? '', 'in Fahrt?'), 'eingerückte Fortsetzungszeile angehängt');
+
 // Aufräumen
 foreach (glob("$verzeichnis/src/*") ?: [] as $d) { unlink($d); }
+foreach (glob("$verzeichnis/see/*") ?: [] as $d) { unlink($d); }
 rmdir("$verzeichnis/src");
+rmdir("$verzeichnis/see");
 rmdir($verzeichnis);
 
 exit(testErgebnis());

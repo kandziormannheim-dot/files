@@ -11,7 +11,8 @@ $regeln = $z['pruefung'];
     <h2>So läuft die Prüfung</h2>
     <ul>
         <li><strong><?= (int) $regeln['fragenProBogen'] ?> Fragen</strong> in <strong><?= (int) $regeln['zeitMinuten'] ?> Minuten</strong>.</li>
-        <li>Bestanden ab <strong><?= (int) $regeln['mindestRichtig'] ?> richtigen</strong> Antworten.</li>
+        <li>Bestanden ab <strong><?= (int) $regeln['mindestRichtig'] ?> richtigen</strong> Antworten<?php if ($regeln['mindestRichtigJeModul'] !== []) { ?>, und zwar je Teil:
+            <?php $teile = []; foreach ($katalog['module'] as $m) { if (isset($regeln['mindestRichtigJeModul'][$m['id']])) { $teile[] = 'mindestens ' . (int) $regeln['mindestRichtigJeModul'][$m['id']] . ' von ' . (int) ($regeln['zusammensetzung'][$m['id']] ?? 0) . ' ' . ($m['titel'] ?? $m['id']); } } echo e(implode(', ', $teile)); ?><?php } ?>.</li>
         <?php if ($regeln['zusammensetzung'] !== []) { ?>
         <li>Zusammensetzung:
             <?php $teile = []; foreach ($katalog['module'] as $m) { if (isset($regeln['zusammensetzung'][$m['id']])) { $teile[] = (int) $regeln['zusammensetzung'][$m['id']] . '× ' . ($m['titel'] ?? $m['id']); } } echo e(implode(', ', $teile)); ?>.

@@ -33,7 +33,7 @@ $praxisLinks = ['funkverkehr' => "/uebung/$kennung/funkverkehr", 'buchstabieren'
 
 <section class="karte">
     <h2>Prüfungssimulation</h2>
-    <p><?= (int) $z['pruefung']['fragenProBogen'] ?> Fragen in <?= (int) $z['pruefung']['zeitMinuten'] ?> Minuten, bestanden ab <?= (int) $z['pruefung']['mindestRichtig'] ?> richtigen.</p>
+    <p><?= (int) $z['pruefung']['fragenProBogen'] ?> Fragen in <?= (int) $z['pruefung']['zeitMinuten'] ?> Minuten, bestanden ab <?= (int) $z['pruefung']['mindestRichtig'] ?> richtigen<?= $z['pruefung']['mindestRichtigJeModul'] !== [] ? ' — mit eigener Mindestzahl je Fragenteil' : '' ?>.</p>
     <?php if ($stand['pruefungen']['letzte'] !== []) { ?>
     <ul class="verlauf-kurz">
         <?php foreach ($stand['pruefungen']['letzte'] as $p) { ?>

@@ -3,9 +3,10 @@
 Die Anwendung unter [`sbfkurs/`](../../sbfkurs/) ist eine Lernplattform nach
 dem Vorbild der bekannten Online-Kurse zum Sportbootführerschein: Lektionen in
 Kapiteln, ein Lerntrainer über den Fragenkatalog, eine Prüfungssimulation mit
-Zeitlimit und ein persönlicher Lernstand. Abgedeckt sind vier Zeugnisse —
-**SRC** (Seefunk UKW), **UBI** (Binnenschifffahrtsfunk), **FKN** (Pyroschein)
-und **LRC** (Grenz-/Kurzwelle, Satellit) — dazu die Praxismodule
+Zeitlimit und ein persönlicher Lernstand. Abgedeckt sind sechs Scheine und
+Zeugnisse — **SBF See** und **SBF Binnen** (Sportbootführerscheine, mit
+gemeinsamem Basisteil), **SRC** (Seefunk UKW), **UBI** (Binnenschifffahrtsfunk),
+**FKN** (Pyroschein) und **LRC** (Grenz-/Kurzwelle, Satellit) — dazu die Praxismodule
 Funkverkehr-Trainer (Lückentexte, Reihenfolgen), Buchstabiertafel,
 Englisch-Übersetzung und ein DSC-Controller-Simulator.
 
