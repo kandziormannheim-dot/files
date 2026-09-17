@@ -292,8 +292,36 @@ jobs:
           echo "A $SUB: $(dig +short "$SUB" A | tr '\n' ' ')"
           A=$(cli extension --exec letsencrypt cli.php -d "$SUB")
           echo "$A" | jq -r '"code=\(.code)\n--- stdout ---\n\((.stdout // "")[:800])\n--- stderr ---\n\((.stderr // "")[:1500])"'
-          echo "$A" | jq -e '.code == 0' >/dev/null \
-            || echo "::warning::Let's Encrypt für $SUB scheiterte — meist fehlt nur der DNS-Eintrag (Workflow »DNS-Eintrag setzen«, Name »sbfkurs«). Danach diesen Workflow erneut laufen lassen."
+          if echo "$A" | jq -e '.code == 0' >/dev/null; then
+            exit 0
+          fi
+          echo "::warning::Let's Encrypt für $SUB scheiterte — meist fehlt nur der DNS-Eintrag (Workflow »DNS-Eintrag setzen«, Name »sbfkurs«). Danach diesen Workflow erneut laufen lassen."
+
+          # Ohne zugewiesenes Zertifikat bedient nginx die Subdomain über HTTPS
+          # gar nicht: Anfragen landen beim Standard-vHost (Plesk-Startseite
+          # bzw. 404), obwohl PHP, Webroot und .htaccess stimmen — so gesehen
+          # bei der Ersteinrichtung (Diagnose-Workflow). Übergangsweise ein
+          # vorhandenes Zertifikat zuweisen; Let's Encrypt ersetzt es beim
+          # nächsten Lauf, sobald der DNS-Eintrag steht.
+          echo "== Rückfall: vorhandenes Zertifikat zuweisen, damit HTTPS bedient wird =="
+          gut() { echo "$1" | jq -e '.code == 0' >/dev/null; }
+          echo "-- Zertifikate im Abo von $DOMAIN --"
+          cli certificate --list -domain "$DOMAIN" | jq -r '.stdout // .stderr // empty' | sed -n '1,15p'
+          echo "-- Zertifikate im Server-Pool --"
+          cli certificate --list -admin | jq -r '.stdout // .stderr // empty' | sed -n '1,15p'
+          ZUGEWIESEN=""
+          for name in "Lets Encrypt $DOMAIN" "default certificate"; do
+            A=$(cli site --update "$SUB" -certificate-name "$name")
+            if gut "$A"; then ZUGEWIESEN=$name; break; fi
+            echo "»$name«: $(echo "$A" | jq -r '(.stderr // .stdout // "")[:200]')"
+          done
+          if [ -n "$ZUGEWIESEN" ]; then
+            echo "Übergangszertifikat »$ZUGEWIESEN« zugewiesen — Browser warnen, bis Let's Encrypt klappt."
+          else
+            echo "::warning::Kein Übergangszertifikat zuweisbar — HTTPS bleibt bis zum Let's-Encrypt-Zertifikat unbedient."
+          fi
+          echo "-- Kontrolle --"
+          cli site --info "$SUB" | jq -r '.stdout // ""' | grep -E '^Certificate:' || true
 
       - name: Selbsttest
         env:
