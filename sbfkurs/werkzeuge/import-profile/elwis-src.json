@@ -4,7 +4,8 @@
   "quelle": {
     "name": "Gesamtfragenkatalog SRC (Verkehrsblatt, Leseversion ELWIS)",
     "stand": "2018-10",
-    "amtlich": true
+    "amtlich": true,
+    "freigabe": "Nutzung für diesen Kurs durch die Fachstelle der WSV für Verkehrstechniken (FVT/ABVT Koblenz) freigegeben; Freigabe dem Betreiber am 2026-09-18 mitgeteilt."
   },
   "kopfzeilen": [
     "^\\s*Gesamtfragenkatalog.*$",

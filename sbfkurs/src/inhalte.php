@@ -114,7 +114,7 @@ function fragenLaden(array $konfig, string $kennung): array
 {
     $katalog = jsonLesen(inhaltePfad($konfig) . "/$kennung/fragen.json") ?? [];
     $katalog += ['zertifikat' => $kennung, 'quelle' => [], 'module' => [], 'fragen' => []];
-    $katalog['quelle'] += ['name' => 'unbekannt', 'stand' => '', 'amtlich' => false];
+    $katalog['quelle'] += ['name' => 'unbekannt', 'stand' => '', 'amtlich' => false, 'freigabe' => ''];
     $nachId = [];
     foreach ($katalog['fragen'] as $frage) {
         if (isset($frage['id'])) {

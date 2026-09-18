@@ -1,1328 +1,1329 @@
 {
-    "zertifikat": "lrc",
-    "quelle": {
-        "name": "Fragenkatalog II LRC (Verkehrsblatt, Leseversion ELWIS)",
-        "stand": "2024-02",
-        "amtlich": true
+  "zertifikat": "lrc",
+  "quelle": {
+    "name": "Fragenkatalog II LRC (Verkehrsblatt, Leseversion ELWIS)",
+    "stand": "2024-02",
+    "amtlich": true,
+    "freigabe": "Nutzung für diesen Kurs durch die Fachstelle der WSV für Verkehrstechniken (FVT/ABVT Koblenz) freigegeben; Freigabe dem Betreiber am 2026-09-18 mitgeteilt."
+  },
+  "module": [
+    {
+      "id": "gmdss",
+      "titel": "I. Mobiler Seefunkdienst, Satellitenfunk und GMDSS"
     },
-    "module": [
-        {
-            "id": "gmdss",
-            "titel": "I. Mobiler Seefunkdienst, Satellitenfunk und GMDSS"
-        },
-        {
-            "id": "funkeinrichtungen",
-            "titel": "II. Funkeinrichtungen und Seefunkstellen"
-        },
-        {
-            "id": "dsc",
-            "titel": "III. Digitaler Selektivruf (DSC)"
-        },
-        {
-            "id": "mf-hf",
-            "titel": "IV. GW/KW-Sprechfunk und Funkwellenausbreitung"
-        },
-        {
-            "id": "betriebsverfahren",
-            "titel": "V. Betriebsverfahren"
-        },
-        {
-            "id": "inmarsat",
-            "titel": "VI. Inmarsat"
-        }
-    ],
-    "fragen": [
-        {
-            "id": "lrc-001",
-            "nr": 1,
-            "modul": "gmdss",
-            "text": "Welche Funkstelle wird im mobilen Seefunkdienst über Satelliten als „Mobile Earth Station“ (MES) bezeichnet?",
-            "antworten": [
-                "Schiffs-Erdfunkstelle",
-                "Land-Erdfunkstelle",
-                "Küstenfunkstelle",
-                "Rettungsleitstelle"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-002",
-            "nr": 2,
-            "modul": "gmdss",
-            "text": "Was ist eine „Schiffs-Erdfunkstelle“?",
-            "antworten": [
-                "Mobile Erdfunkstelle des mobilen Seefunkdienstes über Satelliten an Bord eines Schiffes",
-                "Mobile Empfangsanlage für Satellitenrundfunk an Bord eines Schiffes",
-                "Mobile Funkstelle an Bord eines Schiffes ausschließlich für die Kommunikation mit Funkstellen an Land über Satelliten",
-                "Mobile Funkstelle des COSPAS-SARSAT-Systems an Bord eines Schiffes"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-003",
-            "nr": 3,
-            "modul": "gmdss",
-            "text": "Was ist eine „Land-Erdfunkstelle“ (LES)?",
-            "antworten": [
-                "Ortsfeste Funkstelle des mobilen Seefunkdienstes über Satelliten",
-                "Küstenfunkstelle für den öffentlichen Nachrichtenaustausch auf Grenzwelle",
-                "Funkstelle des Revier- und Hafenfunkdienstes auf UKW",
-                "Mobile Funkstelle des Navigationsfunkdienstes über Satelliten"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-004",
-            "nr": 4,
-            "modul": "gmdss",
-            "text": "Was bedeutet „azimuth angle“?",
-            "antworten": [
-                "Winkel zwischen Meridian und Satellit vom Schiff aus gesehen",
-                "Winkel zwischen Kurs des Schiffes und Satellit",
-                "Winkel aus Seitenpeilung des Satelliten vom Schiff aus",
-                "Winkel zwischen Horizont und Satellit"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-005",
-            "nr": 5,
-            "modul": "gmdss",
-            "text": "Was bedeutet „elevation angle“?",
-            "antworten": [
-                "Winkel zwischen Horizont und Satellit vom Schiff aus gesehen",
-                "Winkel zwischen Horizont und Satellit vom Satellit aus gesehen",
-                "Winkel zwischen Antenne und Satellit vom Schiff aus gesehen",
-                "Winkel zwischen Antenne und Satellit vom Satellit aus gesehen"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-006",
-            "nr": 6,
-            "modul": "gmdss",
-            "text": "Welche Erdteile gehören nach den Festlegungen der Internationalen Fernmeldeunion (International Telecommunication Union [ITU]) zur Region 1?",
-            "antworten": [
-                "Europa und Afrika",
-                "Europa und Asien",
-                "Nord- und Südamerika",
-                "Australien und Ozeanien"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-007",
-            "nr": 7,
-            "modul": "gmdss",
-            "text": "Wie wird das Seegebiet innerhalb der Überdeckung eines geostationären Satelliten des Inmarsat-Systems bezeichnet, der ununterbrochen für Alarmierungen zur Verfügung steht?",
-            "antworten": [
-                "A3",
-                "A1",
-                "A2",
-                "A4"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-008",
-            "nr": 8,
-            "modul": "gmdss",
-            "text": "Welchen geografischen Bereich umfasst das Seegebiet A4 im Weltweiten Seenot- und Sicherheitsfunksystem (GMDSS)?",
-            "antworten": [
-                "Gewässer nördlich von ca. 70 Grad Nord und südlich von ca. 70 Grad Süd",
-                "Gewässer südlich von ca. 70 Grad Nord und nördlich von ca. 70 Grad Süd",
-                "Gewässer westlich und östlich vom Nullmeridian bis 70° Länge",
-                "Gewässer 10° nördlich und 10° südlich vom Äquator"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-009",
-            "nr": 9,
-            "modul": "gmdss",
-            "text": "Welches Alarmierungssystem ist für das Seegebiet A4 nicht geeignet?",
-            "antworten": [
-                "Inmarsat-System",
-                "COSPAS-SARSAT",
-                "Kurzwellen-DSC",
-                "Grenzwellen-DSC"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-010",
-            "nr": 10,
-            "modul": "gmdss",
-            "text": "Wie heißt das Positionsmeldesystem für Such- und Rettungszwecke?",
-            "antworten": [
-                "AMVER",
-                "SafetyNet",
-                "COSPAS-SARSAT",
-                "Radar"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-011",
-            "nr": 11,
-            "modul": "gmdss",
-            "text": "Welchen Frequenzbereich benutzt AIS?",
-            "antworten": [
-                "Ultrakurzwelle (UKW/VHF)",
-                "Grenzwelle (GW/MF)",
-                "Kurzwelle (KW/HF)",
-                "Langwelle (LW/LF)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-012",
-            "nr": 12,
-            "modul": "gmdss",
-            "text": "Welches ist die Frequenz für NAVTEX-Aussendungen im Kurzwellenbereich?",
-            "antworten": [
-                "4209,5 kHz",
-                "8125 kHz",
-                "6312 kHz",
-                "12577 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-013",
-            "nr": 13,
-            "modul": "gmdss",
-            "text": "Womit kann im Seenotfall ein Alarm über Satelliten ausgelöst werden?",
-            "antworten": [
-                "Schiffs-Erdfunkstelle (Ship Earth Station [SES]), Satelliten-Seenotfunkbake (EPIRB)",
-                "UKW-DSC-Anlage, Satelliten-Seenotfunkbake (EPIRB)",
-                "Schiffs-Erdfunkstelle (Ship Earth Station [SES]), Erweiterter Gruppenanruf (EGC)",
-                "Tragbares Funkgerät für Überlebensfahrzeuge, KW-Sender"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-014",
-            "nr": 14,
-            "modul": "gmdss",
-            "text": "Welches Satelliten-System benutzt für die Seenotalarmierung auch polumlaufende Satelliten?",
-            "antworten": [
-                "COSPAS-SARSAT",
-                "Inmarsat",
-                "GEOSAR",
-                "AMVER"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "01-gmdss-seegebiete",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-015",
-            "nr": 15,
-            "modul": "funkeinrichtungen",
-            "text": "Welches Funkzeugnis ist mindestens erforderlich, um mit einer Seefunkstelle auf einem Sportfahrzeug am Weltweiten Seenot- und Sicherheitsfunksystem (GMDSS) im Seegebiet A3 teilnehmen zu können?",
-            "antworten": [
-                "Allgemeines Funkbetriebszeugnis (Long Range Certificate [LRC])",
-                "Beschränkt Gültiges Funkbetriebszeugnis (Short Range Certificate [SRC])",
-                "Beschränkt Gültiges Betriebszeugnis für Funker (Restricted Operator's Certificate [ROC])",
-                "Amateurfunkzeugnis (Klasse A)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-016",
-            "nr": 16,
-            "modul": "funkeinrichtungen",
-            "text": "Welche Funkdienste dürfen von dem Inhaber eines Allgemeinen Funkbetriebszeugnisses (LRC) ausgeübt werden?",
-            "antworten": [
-                "Mobiler Seefunkdienst und mobiler Seefunkdienst über Satelliten",
-                "Mobiler Seefunkdienst und mobiler Flugfunkdienst",
-                "Mobiler Seefunkdienst und Amateurfunkdienst",
-                "Mobiler Seefunkdienst und Navigationsfunkdienst"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-017",
-            "nr": 17,
-            "modul": "funkeinrichtungen",
-            "text": "Welche Funkanlagen dürfen von dem Inhaber eines LRC bedient werden?",
-            "antworten": [
-                "Seefunkanlagen im UKW-, Grenz- und Kurzwellenbereich und über Satellit auf Sportfahrzeugen und Traditionsschiffen",
-                "Funkanlagen im See- und Binnenfunk auf Sportfahrzeugen",
-                "Funkanlagen im UKW-Bereich und über Satellit (z. B. Inmarsat oder COSPAS-SARSAT) auf Sportfahrzeugen",
-                "Funkanlagen auf nicht funkausrüstungspflichtigen Fahrzeugen mit Ausnahme von UKW"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-018",
-            "nr": 18,
-            "modul": "funkeinrichtungen",
-            "text": "Welches Funkzeugnis muss der Führer eines Sportfahrzeugs oder Traditionsschiffes, das mit einer Kurzwellen/Grenzwellen–DSC–Funkanlage ausgerüstet ist, mindestens besitzen?",
-            "antworten": [
-                "Allgemeines Funkbetriebszeugnis (Long Range Certificate [LRC])",
-                "Beschränkt Gültiges Funkbetriebszeugnis (Short Range Certificate [SRC])",
-                "UKW-Sprechfunkzeugnis für den Binnenschifffahrtsfunk (UBI)",
-                "Beschränkt Gültiges Betriebszeugnis für Funker (Restricted Operator´s Certificate [ROC])"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-019",
-            "nr": 19,
-            "modul": "dsc",
-            "text": "Welche Grenzwellenfrequenz (GW/MF) wird national und international zum Routineanruf zwischen Schiffen per Digitalen Selektivruf (DSC) benutzt?",
-            "antworten": [
-                "2177 kHz",
-                "2189,5 kHz",
-                "2187,5 kHz",
-                "2182 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "04-dsc-mf-hf",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-020",
-            "nr": 20,
-            "modul": "dsc",
-            "text": "Welche Grenzwellenfrequenz (GW/MF) benutzt eine Küstenfunkstelle zur Beantwortung eines Routineanrufs per Digitalen Selektivruf (DSC)?",
-            "antworten": [
-                "2177,0 kHz",
-                "2182,0 kHz",
-                "2614,0 kHz",
-                "2189,5 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "04-dsc-mf-hf",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-021",
-            "nr": 21,
-            "modul": "dsc",
-            "text": "Welche Grenzwellenfrequenz (GW/MF) wird für einen Routineanruf (international) an eine fremde Küstenfunkstelle per Digitalen Selektivruf (DSC) benutzt?",
-            "antworten": [
-                "2189,5 kHz",
-                "2177,0 kHz",
-                "2182,0 kHz",
-                "2187,5 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "04-dsc-mf-hf",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-022",
-            "nr": 22,
-            "modul": "dsc",
-            "text": "Welche Frequenzbereiche werden für die Alarmierung mittels Digitalen Selektivrufs (DSC) im Kurzwellen-Bereich (KW/HF) benutzt?",
-            "antworten": [
-                "Frequenzbereiche 4, 6, 8, 12 und 16 MHz",
-                "Frequenzbereiche 1, 2, 8, 12 und 16 MHz",
-                "Frequenzbereiche 3, 4, 20, und 30 MHz",
-                "Frequenzbereiche 4, 6, 8, 40 und 60 MHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "04-dsc-mf-hf",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-023",
-            "nr": 23,
-            "modul": "dsc",
-            "text": "Welche Frequenz und welches Verfahren benutzt eine Seefunkstelle zur Bestätigung eines auf 2187,5 kHz empfangenen Notalarms?",
-            "antworten": [
-                "2182.0 kHz im Sprechfunkverfahren",
-                "2187,5 kHz im Sprechfunkverfahren",
-                "2614.0 kHz im Sprechfunkverfahren",
-                "3161.0 kHz im Sprechfunkverfahren"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "04-dsc-mf-hf",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-024",
-            "nr": 24,
-            "modul": "dsc",
-            "text": "Wodurch wird im Kurzwellenbereich (KW/HF) die Empfangsbereitschaft für Aussendungen in Not- und Sicherheitsfällen technisch gewährleistet?",
-            "antworten": [
-                "Eingeschalteter Wachempfänger im Scan-Betrieb",
-                "Eingeschalteter Wachempfänger im Dual-Watch-Betrieb",
-                "Eingeschalteter Wachempfänger im 6-MHz-Kurzwellenband",
-                "Eingeschalteter Wachempfänger im 8-MHz-Kurzwellenband"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "04-dsc-mf-hf",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-025",
-            "nr": 25,
-            "modul": "mf-hf",
-            "text": "Welche Frequenzen umfasst der Grenzwellenbereich (GW/MF)?",
-            "antworten": [
-                "1605 bis 4000 kHz",
-                "4000 bis 27500 kHz",
-                "156 bis 174 MHz",
-                "1705 bis 4100 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-026",
-            "nr": 26,
-            "modul": "mf-hf",
-            "text": "Wie wird die Sendeart „Einseitenband mit unterdrücktem Träger“ bezeichnet?",
-            "antworten": [
-                "SSB oder J3E",
-                "SSB oder R3E",
-                "SSB oder H3E",
-                "SSB oder A3E"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-027",
-            "nr": 27,
-            "modul": "mf-hf",
-            "text": "Welcher Frequenz- bzw. Wellenbereich ist ausreichend, um am Tage eine Mindestreichweite von 150 Seemeilen zu erzielen?",
-            "antworten": [
-                "Grenzwelle (GW/MF)",
-                "Kurzwelle (KW/HF)",
-                "Ultrakurzwelle (UKW/VHF)",
-                "Langwelle (LW/LF)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-028",
-            "nr": 28,
-            "modul": "mf-hf",
-            "text": "In welchen Frequenz- bzw. Wellenbereichen spielt die Bodenwelle die entscheidende Rolle bei der Ausbreitung?",
-            "antworten": [
-                "Langwelle (LW/LF) und tagsüber Mittel- und Grenzwelle (MW/MF, GW/MF)",
-                "Kurzwelle (KW/HF) und tagsüber Ultrakurzwelle (UKW/VHF)",
-                "Ultrakurzwelle (UKW/VHF) und tagsüber Kurzwelle (KW/HF)",
-                "Grenzwelle (GW/MF) und tagsüber Langwelle (LW/LF)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-029",
-            "nr": 29,
-            "modul": "mf-hf",
-            "text": "In welchen terrestrischen Frequenz- bzw. Wellenbereichen sollte ein Schiff – für das Seegebiet A2 ausgerüstet – in einer Entfernung von ca. 150 Seemeilen von der Küste einen Notalarm auslösen, um eine Küstenfunkstelle sowie die in der Nähe befindlichen Seefunkstellen zu erreichen?",
-            "antworten": [
-                "Grenzwelle (GW/MF) und Ultrakurzwelle (UKW/VHF)",
-                "Kurzwelle (KW/HF) und Langwelle (LW/LF)",
-                "Kurzwelle (KW/HF) und Ultrakurzwelle (UKW/VHF)",
-                "Grenzwelle (GW/MF) und Langwelle (LW/LF)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-030",
-            "nr": 30,
-            "modul": "mf-hf",
-            "text": "Welchen Einfluss können Gewitter auf den Empfang von NAVTEX-Aussendungen auf Mittelwelle haben?",
-            "antworten": [
-                "Störungen bis zur vollständigen Unlesbarkeit",
-                "Unverändert hohe Übertragungsqualität",
-                "Überreichweiten",
-                "Entstehung „Toter Zonen“"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-031",
-            "nr": 31,
-            "modul": "mf-hf",
-            "text": "Welcher Frequenz- bzw. Wellenbereich wird für den Weitverkehr im terrestrischen Seefunkdienst benutzt?",
-            "antworten": [
-                "Kurzwelle (KW/HF)",
-                "Grenzwelle (GW/MF)",
-                "Langwelle (LW/LF)",
-                "Ultrakurzwelle (UKW/VHF)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-032",
-            "nr": 32,
-            "modul": "mf-hf",
-            "text": "Welche Frequenzen umfasst der allgemeine Kurzwellenbereich (KW/HF)?",
-            "antworten": [
-                "3 bis 30 MHz",
-                "30 bis 300 MHz",
-                "30 bis 300 kHz",
-                "Unter 30 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-033",
-            "nr": 33,
-            "modul": "mf-hf",
-            "text": "In welchem Frequenz- bzw. Wellenbereich spielt die Raumwelle die entscheidende Rolle bei der Ausbreitung?",
-            "antworten": [
-                "Kurzwelle (KW/HF)",
-                "Langwelle (LW/LF)",
-                "Ultrakurzwelle (UKW/VHF)",
-                "Grenzwelle (GW/MF)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-034",
-            "nr": 34,
-            "modul": "mf-hf",
-            "text": "In welchem Frequenz- bzw. Wellenbereich tritt die „Tote Zone“ besonders auf?",
-            "antworten": [
-                "Kurzwelle (KW/HF)",
-                "Langwelle (LW/LF)",
-                "Ultrakurzwelle (UKW/VHF)",
-                "Grenzwelle (GW/MF)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-035",
-            "nr": 35,
-            "modul": "mf-hf",
-            "text": "Um die Mittagszeit wird zur Überbrückung einer bestimmten Entfernung eine Frequenz im 16-MHz-Bereich benutzt. Welcher Frequenzbereich sollte für die Überbrückung derselben Entfernung gegen Mitternacht vorzugsweise gewählt werden?",
-            "antworten": [
-                "Niedrigerer Frequenzbereich",
-                "Gleicher Frequenzbereich",
-                "Höherer Frequenzbereich",
-                "UKW-Frequenzbereich"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-036",
-            "nr": 36,
-            "modul": "mf-hf",
-            "text": "Welche Aussage trifft für den Kurzwellen-Funkverkehr zu?",
-            "antworten": [
-                "Die Ausbreitungseigenschaften der Kurzwellen unterliegen tageszeitlichen, jahreszeitlichen und durch die Sonnenaktivität bedingten Schwankungen; Funkverbindungen lassen sich nicht mit Sicherheit vorausplanen",
-                "Im Kurzwellenbereich sind jederzeit weltweite Funkverbindungen zwischen beliebig wählbaren Standorten möglich",
-                "Bei Internet und E-Mail über Kurzwelle lässt sich die übliche DSL- Geschwindigkeit erreichen",
-                "Bei klarer Sicht und geringer Bewölkung ist die Verständigung im Kurzwellenbereich besonders gut"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-037",
-            "nr": 37,
-            "modul": "mf-hf",
-            "text": "Welche Eigenschaften sollte eine Schiffsantenne für die Überbrückung von großen Entfernungen über Kurzwellen besitzen und warum?",
-            "antworten": [
-                "Die Antenne sollte die Sendeenergie möglichst flach abstrahlen, um mit wenigen Sprüngen (hops) den Empfangsort zu erreichen",
-                "Die Antenne sollte gut isoliert sein, damit man sich beim Senden nicht verbrennen kann",
-                "Die Antenne sollte möglichst lang sein, um eine große Wirkungsfläche zu haben und eine hohe Anzahl von Sprüngen (hops) zu ermöglichen",
-                "Die Antenne sollte die Sendeenergie möglichst steil abstrahlen, um Personen an Bord nicht zu gefährden"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-038",
-            "nr": 38,
-            "modul": "mf-hf",
-            "text": "Eine Yacht ist im Mittelmeer von Rom nach Neapel unterwegs. Die Crew möchte tagsüber über Kiel Radio eine E-Mail versenden. Welcher Frequenzbereich ist dafür meistens geeignet?",
-            "antworten": [
-                "Kurzwelle bei 8 MHz",
-                "Grenzwelle",
-                "Kurzwelle bei 4 MHz",
-                "VHF"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-039",
-            "nr": 39,
-            "modul": "mf-hf",
-            "text": "Eine Yacht ist im karibischen Meer vor Barbados unterwegs. Der Schiffsführer möchte in den Abendstunden eine Verbindung zu Miami Radio aufbauen. Welcher Frequenzbereich ist dafür meistens geeignet?",
-            "antworten": [
-                "Kurzwelle bei 6 MHz",
-                "Grenzwelle",
-                "Kurzwelle bei 16 MHz",
-                "VHF"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-040",
-            "nr": 40,
-            "modul": "mf-hf",
-            "text": "Eine Yacht steht 100 Seemeilen westlich Stavanger. Der Schiffsführer möchte Verbindung zu Rogaland Radio aufnehmen. Welcher Frequenzbereich ist dafür vorzugsweise geeignet?",
-            "antworten": [
-                "Grenzwelle",
-                "Kurzwelle zwischen 4 MHz und 6 MHz",
-                "Kurzwelle zwischen 10 MHz und 16 MHz",
-                "VHF"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "03-grenz-kurzwelle",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-041",
-            "nr": 41,
-            "modul": "betriebsverfahren",
-            "text": "Wer bestimmt bei einer Verbindung zwischen See- und Küstenfunkstelle die zu benutzende Arbeitsfrequenz?",
-            "antworten": [
-                "Küstenfunkstelle",
-                "Seefunkstelle",
-                "Schiffsführer",
-                "On-Scene Coordinator"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-042",
-            "nr": 42,
-            "modul": "betriebsverfahren",
-            "text": "Welches von der Internationalen Fernmeldeunion (International Telecommunication Union [ITU]) herausgegebene Verzeichnis enthält Angaben über Arbeitsfrequenzen von Küstenfunkstellen?",
-            "antworten": [
-                "Verzeichnis der Küstenfunkstellen (List of Coast Stations)",
-                "Verzeichnis der Seefunkstellen (List of Ship Stations)",
-                "Inmarsat-Handbuch",
-                "Handbuch für den Seefunkdienst und den Seefunkdienst über Satelliten (Manual for Use by the Maritime Mobile and Maritime Mobile-Satellite Services)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-043",
-            "nr": 43,
-            "modul": "betriebsverfahren",
-            "text": "Welche Frequenzbereiche dürfen in deutschen Häfen benutzt werden?",
-            "antworten": [
-                "Ultrakurzwellen (UKW/VHF), Ultrahohe Frequenzen (UHF) und der 1,6-GHz- Bereich (Inmarsat)",
-                "Ultrakurzwellen (UKW/VHF) und Grenzwellen (GW/MF)",
-                "Mittelwellen (MW/MF), Grenzwellen(GW/MF) und Kurzwellen(KW/HF)",
-                "Ultrakurzwellen (UKW/VHF) und Kurzwellen (KW/HF)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-044",
-            "nr": 44,
-            "modul": "betriebsverfahren",
-            "text": "Was bedeutet die Angabe „ITU-Channel 1604“?",
-            "antworten": [
-                "Kanal 04 im 16-MHz-Seefunkband",
-                "Kanal 16 im 4-MHz-Seefunkband",
-                "Kanal 1604 im Kurzwellenband",
-                "Kanal 16 und Kanal 04 im Ultrakurzwellenband"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-045",
-            "nr": 45,
-            "modul": "betriebsverfahren",
-            "text": "Welches ist die internationale Not- und Sicherheitsfrequenz für den Sprechfunkverkehr im Grenzwellenbereich (GW/MF)?",
-            "antworten": [
-                "2182,0 kHz",
-                "2187,5 kHz",
-                "2614.0 kHz",
-                "3161,0 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-046",
-            "nr": 46,
-            "modul": "betriebsverfahren",
-            "text": "Welche Frequenz im Grenzwellenbereich (GW/MF) soll im Weltweiten Seenot- und Sicherheitsfunksystem (GMDSS) nach Ankündigung per DSC für die Aussendung einer Dringlichkeitsmeldung „An alle Funkstellen“ grundsätzlich benutzt werden?",
-            "antworten": [
-                "2182,0 kHz",
-                "2187,5 kHz",
-                "2614.0 kHz",
-                "3161,0 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-047",
-            "nr": 47,
-            "modul": "betriebsverfahren",
-            "text": "Wie ist zu verfahren, wenn während eines Notverkehrs auf 2182 kHz die Ankündigung und Aussendung einer Dringlichkeitsmeldung „An alle Funkstellen“ von einer Seefunkstelle vorgenommen werden soll?",
-            "antworten": [
-                "Zuerst Ankündigung per Digitalen Selektivruf (DSC) auf 2187,5 kHz, dann Aussendung auf einer Schiff-Schiff-Frequenz",
-                "Zuerst die Funkstelle, die den Funkverkehr leitet, auf 2182 kHz um Erlaubnis fragen, dann Aussendung auf einer Schiff-Schiff-Frequenz",
-                "Zuerst Ankündigung auf 2182 kHz, dann Aussendung auf einer Schiff-Schiff-Frequenz",
-                "Zuerst Ankündigung per Digitalen Selektivruf (DSC), dann Aussendung auf 2182 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-048",
-            "nr": 48,
-            "modul": "betriebsverfahren",
-            "text": "Wie ist zu verfahren, wenn eine wichtige Meldung im Grenzwellen-Bereich (GW/MF) auszusenden ist, welche die Sicherheit der Seeschifffahrt betrifft?",
-            "antworten": [
-                "Zuerst Ankündigung per Digitalen Selektivruf (DSC) auf 2187,5 kHz, dann Aussendung der Sicherheitsmeldung per Sprechfunk auf einer GW-Schiff-Schiff- Arbeitsfrequenz",
-                "Zuerst Ankündigung auf 2182 kHz, dann Aussendung der Sicherheitsmeldung per Sprechfunk auf einer KW-Schiff-Schiff-Arbeitsfrequenz",
-                "Zuerst Ankündigung auf 2182 kHz, dann Aussendung der Sicherheitsmeldung per Sprechfunk auf 2182 kHz",
-                "Zuerst Ankündigung per Digitalen Selektivruf (DSC) auf 2187,5 kHz, dann Aussendung der Sicherheitsmeldung per Sprechfunk auf 2187,5 kHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-049",
-            "nr": 49,
-            "modul": "betriebsverfahren",
-            "text": "Auf welcher Frequenz wird im Kurzwellenbereich (KW/HF) der Notverkehr im Sprechfunkverfahren abgewickelt?",
-            "antworten": [
-                "Notfrequenz für Sprechfunk des Kurzwellenbandes, in dem die Notalarmierung ausgesendet worden ist",
-                "Notfrequenz für Sprechfunk nach Maßgabe des Inmarsat-Handbuchs",
-                "Notfrequenz für Sprechfunk des Kurzwellenbandes 6 MHz",
-                "Notfrequenz für Sprechfunk des Kurzwellenbandes 8 MHz"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-050",
-            "nr": 50,
-            "modul": "betriebsverfahren",
-            "text": "Welche Sendeart wird bei Aussendungen des Sprech-Seefunkdienstes grundsätzlich im Grenz- und Kurzwellenbereich verwendet?",
-            "antworten": [
-                "Einseitenband mit unterdrücktem Träger, SSB, J3E",
-                "Analoge Frequenzmodulation, FM, F3E",
-                "Einseitenband mit reduziertem Träger, (R3E)",
-                "Zweiseitenbandmodulation, AM, A3E"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "08-notverkehr-international",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-051",
-            "nr": 51,
-            "modul": "inmarsat",
-            "text": "Welche Veröffentlichung enthält Angaben über die Abdeckungsbereiche der Inmarsat-Satelliten?",
-            "antworten": [
-                "Inmarsat-Handbuch",
-                "Nachrichten für Seefahrer (NfS)",
-                "Mitteilungen für Seefunkstellen (MfS)",
-                "Jachtfunkdienst"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-052",
-            "nr": 52,
-            "modul": "inmarsat",
-            "text": "Welche Veröffentlichung enthält Angaben über Land-Erdfunkstellen (LES)?",
-            "antworten": [
-                "Inmarsat-Handbuch",
-                "Jachtfunkdienst",
-                "Nachrichten für Seefahrer",
-                "Mitteilungen für Seefunkstellen und Schiffsfunkstellen"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-053",
-            "nr": 53,
-            "modul": "inmarsat",
-            "text": "Welche Aufgaben hat ein Point of Service Activation (PSA)?",
-            "antworten": [
-                "Freischaltung der Schiffs-Erdfunkstelle",
-                "Freischaltung der Arbeitskanäle für Notrufe",
-                "Freischaltung der Satellitentransponder",
-                "Freischaltung der Inmarsat-Dienste"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-054",
-            "nr": 54,
-            "modul": "inmarsat",
-            "text": "Welche Aufgaben hat die Network Co-ordination Station (NCS)?",
-            "antworten": [
-                "Automatische Vergabe der Arbeitskanäle an Land-Erdfunkstellen (LES) und Schiffs-Erdfunkstellen (MES)",
-                "Freischaltung der Land-Erdfunkstellen (LES) und Schiffs-Erdfunkstellen (MES)",
-                "Abwicklung des Grenzwellen-Verkehrs per DSC",
-                "Abwicklung des Seefunkdienstes über Satellitennetze (SES)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-055",
-            "nr": 55,
-            "modul": "inmarsat",
-            "text": "Wie sind die Satelliten des Inmarsat-Systems positioniert?",
-            "antworten": [
-                "Geostationär",
-                "Polumlaufend",
-                "Polumlaufend und geostationär",
-                "Exzentrisch"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-056",
-            "nr": 56,
-            "modul": "inmarsat",
-            "text": "Über welchem Breitengrad befinden sich die Satelliten des Inmarsat-Systems?",
-            "antworten": [
-                "0 Grad",
-                "90 Grad N",
-                "70 Grad S",
-                "45 Grad S"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-057",
-            "nr": 57,
-            "modul": "inmarsat",
-            "text": "Welches Seegebiet deckt der Satellit mit der Bezeichnung AOR-E im Inmarsat-System hauptsächlich ab?",
-            "antworten": [
-                "Atlantik",
-                "Polarmeere",
-                "Pazifischer Ozean",
-                "Indischer Ozean"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-058",
-            "nr": 58,
-            "modul": "inmarsat",
-            "text": "Welches Seegebiet deckt der Satellit mit der Bezeichnung IOR im Inmarsat-System hauptsächlich ab?",
-            "antworten": [
-                "Indischer Ozean",
-                "Westlicher Atlantik",
-                "Östlicher Atlantik",
-                "Pazifischer Ozean"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-059",
-            "nr": 59,
-            "modul": "inmarsat",
-            "text": "Welcher Satellit deckt das Seegebiet des Pazifischen Ozeans im Inmarsat-System hauptsächlich ab?",
-            "antworten": [
-                "POR",
-                "AOR-E",
-                "AOR-W",
-                "IOR"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-060",
-            "nr": 60,
-            "modul": "inmarsat",
-            "text": "Eine Yacht steht vor Hawaii. Der Schiffsführer möchte eine Verbindung nach Europa über Inmarsat herstellen. Welcher Satellit sollte vorzugsweise benutzt werden?",
-            "antworten": [
-                "Pacific Ocean Region (POR)",
-                "Indian Ocean Region (IOR)",
-                "Atlantic Ocean Region – East (AOR-E)",
-                "Atlantic Ocean Region – West (AOR-W)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-061",
-            "nr": 61,
-            "modul": "inmarsat",
-            "text": "Eine Yacht ist vor den Malediven unterwegs. Der Schiffsführer möchte eine Verbindung nach Europa über Inmarsat herstellen. Welcher Satellit sollte vorzugsweise benutzt werden?",
-            "antworten": [
-                "Indian Ocean Region (IOR)",
-                "Atlantic Ocean Region – East (AOR-E)",
-                "Atlantic Ocean Region – West (AOR-W)",
-                "Pacific Ocean Region (POR)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-062",
-            "nr": 62,
-            "modul": "inmarsat",
-            "text": "Wie wird das Seegebiet außerhalb der Abdeckung durch Inmarsat-Satelliten bezeichnet?",
-            "antworten": [
-                "Seegebiet A4",
-                "Seegebiet A1",
-                "Seegebiet A2",
-                "Seegebiet A3"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-063",
-            "nr": 63,
-            "modul": "inmarsat",
-            "text": "Wie wird das Seegebiet bezeichnet, das innerhalb der Sprechfunkreichweite einer Grenzwellen-Küstenfunkstelle liegt, die ununterbrochen für DSC- Alarmierungen zur Verfügung steht?",
-            "antworten": [
-                "Seegebiet A2",
-                "Seegebiet A1",
-                "Seegebiet A3",
-                "Seegebiet A4"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-064",
-            "nr": 64,
-            "modul": "inmarsat",
-            "text": "Zur Herstellung welcher Verbindungen wird im Inmarsat-System die Vorwahl +870 benötigt?",
-            "antworten": [
-                "Verbindungen zu Inmarsat-Terminals",
-                "Verbindungen zu Festnetz-Anschlüssen",
-                "Verbindungen innerhalb des Seegebiets A4",
-                "Verbindungen zur Verbreitung von MSI"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-065",
-            "nr": 65,
-            "modul": "inmarsat",
-            "text": "Welches ist die erste Ziffer einer Inmarsat-C-Rufnummer?",
-            "antworten": [
-                "4",
-                "3",
-                "2",
-                "1"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-066",
-            "nr": 66,
-            "modul": "inmarsat",
-            "text": "Welchem Inmarsat-Dienst ist die Identifikationsnummer (ID) 421135910 zugeordnet?",
-            "antworten": [
-                "Inmarsat C",
-                "Inmarsat Mini-M",
-                "Inmarsat F",
-                "Inmarsat Fleet"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-067",
-            "nr": 67,
-            "modul": "inmarsat",
-            "text": "Welche Dienste bietet Inmarsat C?",
-            "antworten": [
-                "Telex, Datenübertragung und Telefax Richtung See–Land",
-                "Telefonie, Datenübertragung und SMS",
-                "Telefonie, Datenübertragung und ISDN",
-                "Telex, Telefax Richtung See–Land und Telefonie"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-068",
-            "nr": 68,
-            "modul": "inmarsat",
-            "text": "Mit welcher Aussendung kann die Funktionsfähigkeit der eigenen Inmarsat-C-Anlage überprüft werden?",
-            "antworten": [
-                "Nachricht von der eigenen an die eigene Anlage",
-                "Nachricht an ein LUT",
-                "Nachricht an ein MRCC",
-                "Nachricht an ein anderes Schiff"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-069",
-            "nr": 69,
-            "modul": "inmarsat",
-            "text": "Was ist bei dem Ausschalten einer Inmarsat C-Anlage zu beachten?",
-            "antworten": [
-                "Vorheriges Ausloggen",
-                "Vom Bordnetz trennen",
-                "Zuerst auf „stand by“ schalten, dann vom Bordnetz trennen",
-                "Der CES mitteilen, ab wann das Schiff nicht zu erreichen ist"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-070",
-            "nr": 70,
-            "modul": "inmarsat",
-            "text": "Welches Verfahren wird für den Anruf von Land an bestimmte Schiffs- Erdfunkstellen benutzt?",
-            "antworten": [
-                "Erweiterter Gruppenanruf (EGC)",
-                "Digitaler Selektivruf (DSC)",
-                "Tonruf (SSFC)",
-                "Mehrfrequenzwahlverfahren (DTMF)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-071",
-            "nr": 71,
-            "modul": "inmarsat",
-            "text": "Welcher Dienst verwendet den Erweiterten Gruppenanruf (EGC)?",
-            "antworten": [
-                "Informationsdienst über Satelliten",
-                "Informationsdienst über NAVTEX",
-                "Informationsdienst über UKW-Sprechfunk",
-                "Informationsdienst über Grenzwelle"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-072",
-            "nr": 72,
-            "modul": "inmarsat",
-            "text": "Welche Meldungen werden im mobilen Seefunkdienst über „Enhanced Group Call (EGC)“ ausgesendet?",
-            "antworten": [
-                "Sicherheitsmeldungen für die Schifffahrt (MSI) oder Informationen an bestimmte Empfänger",
-                "Nachrichten für Seefahrer oder Sammelanrufe",
-                "Regelmäßige Wetterberichte oder nautische Warnnachrichten für bestimmte Seegebiete",
-                "Küstenwetterberichte oder Dringlichkeitsmeldungen"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-073",
-            "nr": 73,
-            "modul": "inmarsat",
-            "text": "Was ist für den Empfang eines Enhanced Group Call (EGC) erforderlich?",
-            "antworten": [
-                "Satelliten-Empfänger",
-                "NAVTEX-Empfänger",
-                "UKW-Empfänger",
-                "DSC-Wachempfänger"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-074",
-            "nr": 74,
-            "modul": "inmarsat",
-            "text": "An wen wird ein über Inmarsat ausgelöster Notalarm umgehend geleitet?",
-            "antworten": [
-                "Rettungsleitstelle (RCC) oder Seenotleitstelle (MRCC)",
-                "Küsten-Erdfunkstelle (CES) oder On-Scene Co-ordinator (OSC)",
-                "International Maritime Organization (IMO) oder Seenotleitstelle (MRCC)",
-                "Rettungsleitstelle (RCC) oder Küsten-Erdfunkstelle (CES)"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-075",
-            "nr": 75,
-            "modul": "inmarsat",
-            "text": "Welcher Dienst sendet Nachrichten für die Sicherheit der Seeschifffahrt (MSI) auf Satellitenfrequenzen aus?",
-            "antworten": [
-                "SafetyNet",
-                "GALILEO",
-                "COSPAS-SARSAT",
-                "NAVTEX"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        },
-        {
-            "id": "lrc-076",
-            "nr": 76,
-            "modul": "inmarsat",
-            "text": "Welche Informationen werden über das Internationale Sicherheitsnetz (SafetyNet) verbreitet?",
-            "antworten": [
-                "Informationen für die Sicherheit der Seeschifffahrt (Maritime Safety Information [MSI])",
-                "AMVER-Meldungen des weltweiten Positionsmeldesystems für Such- und Rettungszwecke",
-                "Notmeldungen von COSPAS-SARSAT-Satelliten-Seenotfunkbaken (EPIRB)",
-                "NAVTEX-Warnnachrichten und -Sicherheitsmeldungen"
-            ],
-            "richtig": 0,
-            "bild": null,
-            "hinweis": "",
-            "lektion": "05-satellit",
-            "beispiel": false
-        }
-    ]
+    {
+      "id": "funkeinrichtungen",
+      "titel": "II. Funkeinrichtungen und Seefunkstellen"
+    },
+    {
+      "id": "dsc",
+      "titel": "III. Digitaler Selektivruf (DSC)"
+    },
+    {
+      "id": "mf-hf",
+      "titel": "IV. GW/KW-Sprechfunk und Funkwellenausbreitung"
+    },
+    {
+      "id": "betriebsverfahren",
+      "titel": "V. Betriebsverfahren"
+    },
+    {
+      "id": "inmarsat",
+      "titel": "VI. Inmarsat"
+    }
+  ],
+  "fragen": [
+    {
+      "id": "lrc-001",
+      "nr": 1,
+      "modul": "gmdss",
+      "text": "Welche Funkstelle wird im mobilen Seefunkdienst über Satelliten als „Mobile Earth Station“ (MES) bezeichnet?",
+      "antworten": [
+        "Schiffs-Erdfunkstelle",
+        "Land-Erdfunkstelle",
+        "Küstenfunkstelle",
+        "Rettungsleitstelle"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-002",
+      "nr": 2,
+      "modul": "gmdss",
+      "text": "Was ist eine „Schiffs-Erdfunkstelle“?",
+      "antworten": [
+        "Mobile Erdfunkstelle des mobilen Seefunkdienstes über Satelliten an Bord eines Schiffes",
+        "Mobile Empfangsanlage für Satellitenrundfunk an Bord eines Schiffes",
+        "Mobile Funkstelle an Bord eines Schiffes ausschließlich für die Kommunikation mit Funkstellen an Land über Satelliten",
+        "Mobile Funkstelle des COSPAS-SARSAT-Systems an Bord eines Schiffes"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-003",
+      "nr": 3,
+      "modul": "gmdss",
+      "text": "Was ist eine „Land-Erdfunkstelle“ (LES)?",
+      "antworten": [
+        "Ortsfeste Funkstelle des mobilen Seefunkdienstes über Satelliten",
+        "Küstenfunkstelle für den öffentlichen Nachrichtenaustausch auf Grenzwelle",
+        "Funkstelle des Revier- und Hafenfunkdienstes auf UKW",
+        "Mobile Funkstelle des Navigationsfunkdienstes über Satelliten"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-004",
+      "nr": 4,
+      "modul": "gmdss",
+      "text": "Was bedeutet „azimuth angle“?",
+      "antworten": [
+        "Winkel zwischen Meridian und Satellit vom Schiff aus gesehen",
+        "Winkel zwischen Kurs des Schiffes und Satellit",
+        "Winkel aus Seitenpeilung des Satelliten vom Schiff aus",
+        "Winkel zwischen Horizont und Satellit"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-005",
+      "nr": 5,
+      "modul": "gmdss",
+      "text": "Was bedeutet „elevation angle“?",
+      "antworten": [
+        "Winkel zwischen Horizont und Satellit vom Schiff aus gesehen",
+        "Winkel zwischen Horizont und Satellit vom Satellit aus gesehen",
+        "Winkel zwischen Antenne und Satellit vom Schiff aus gesehen",
+        "Winkel zwischen Antenne und Satellit vom Satellit aus gesehen"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-006",
+      "nr": 6,
+      "modul": "gmdss",
+      "text": "Welche Erdteile gehören nach den Festlegungen der Internationalen Fernmeldeunion (International Telecommunication Union [ITU]) zur Region 1?",
+      "antworten": [
+        "Europa und Afrika",
+        "Europa und Asien",
+        "Nord- und Südamerika",
+        "Australien und Ozeanien"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-007",
+      "nr": 7,
+      "modul": "gmdss",
+      "text": "Wie wird das Seegebiet innerhalb der Überdeckung eines geostationären Satelliten des Inmarsat-Systems bezeichnet, der ununterbrochen für Alarmierungen zur Verfügung steht?",
+      "antworten": [
+        "A3",
+        "A1",
+        "A2",
+        "A4"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-008",
+      "nr": 8,
+      "modul": "gmdss",
+      "text": "Welchen geografischen Bereich umfasst das Seegebiet A4 im Weltweiten Seenot- und Sicherheitsfunksystem (GMDSS)?",
+      "antworten": [
+        "Gewässer nördlich von ca. 70 Grad Nord und südlich von ca. 70 Grad Süd",
+        "Gewässer südlich von ca. 70 Grad Nord und nördlich von ca. 70 Grad Süd",
+        "Gewässer westlich und östlich vom Nullmeridian bis 70° Länge",
+        "Gewässer 10° nördlich und 10° südlich vom Äquator"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-009",
+      "nr": 9,
+      "modul": "gmdss",
+      "text": "Welches Alarmierungssystem ist für das Seegebiet A4 nicht geeignet?",
+      "antworten": [
+        "Inmarsat-System",
+        "COSPAS-SARSAT",
+        "Kurzwellen-DSC",
+        "Grenzwellen-DSC"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-010",
+      "nr": 10,
+      "modul": "gmdss",
+      "text": "Wie heißt das Positionsmeldesystem für Such- und Rettungszwecke?",
+      "antworten": [
+        "AMVER",
+        "SafetyNet",
+        "COSPAS-SARSAT",
+        "Radar"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-011",
+      "nr": 11,
+      "modul": "gmdss",
+      "text": "Welchen Frequenzbereich benutzt AIS?",
+      "antworten": [
+        "Ultrakurzwelle (UKW/VHF)",
+        "Grenzwelle (GW/MF)",
+        "Kurzwelle (KW/HF)",
+        "Langwelle (LW/LF)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-012",
+      "nr": 12,
+      "modul": "gmdss",
+      "text": "Welches ist die Frequenz für NAVTEX-Aussendungen im Kurzwellenbereich?",
+      "antworten": [
+        "4209,5 kHz",
+        "8125 kHz",
+        "6312 kHz",
+        "12577 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-013",
+      "nr": 13,
+      "modul": "gmdss",
+      "text": "Womit kann im Seenotfall ein Alarm über Satelliten ausgelöst werden?",
+      "antworten": [
+        "Schiffs-Erdfunkstelle (Ship Earth Station [SES]), Satelliten-Seenotfunkbake (EPIRB)",
+        "UKW-DSC-Anlage, Satelliten-Seenotfunkbake (EPIRB)",
+        "Schiffs-Erdfunkstelle (Ship Earth Station [SES]), Erweiterter Gruppenanruf (EGC)",
+        "Tragbares Funkgerät für Überlebensfahrzeuge, KW-Sender"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-014",
+      "nr": 14,
+      "modul": "gmdss",
+      "text": "Welches Satelliten-System benutzt für die Seenotalarmierung auch polumlaufende Satelliten?",
+      "antworten": [
+        "COSPAS-SARSAT",
+        "Inmarsat",
+        "GEOSAR",
+        "AMVER"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "01-gmdss-seegebiete",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-015",
+      "nr": 15,
+      "modul": "funkeinrichtungen",
+      "text": "Welches Funkzeugnis ist mindestens erforderlich, um mit einer Seefunkstelle auf einem Sportfahrzeug am Weltweiten Seenot- und Sicherheitsfunksystem (GMDSS) im Seegebiet A3 teilnehmen zu können?",
+      "antworten": [
+        "Allgemeines Funkbetriebszeugnis (Long Range Certificate [LRC])",
+        "Beschränkt Gültiges Funkbetriebszeugnis (Short Range Certificate [SRC])",
+        "Beschränkt Gültiges Betriebszeugnis für Funker (Restricted Operator's Certificate [ROC])",
+        "Amateurfunkzeugnis (Klasse A)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-016",
+      "nr": 16,
+      "modul": "funkeinrichtungen",
+      "text": "Welche Funkdienste dürfen von dem Inhaber eines Allgemeinen Funkbetriebszeugnisses (LRC) ausgeübt werden?",
+      "antworten": [
+        "Mobiler Seefunkdienst und mobiler Seefunkdienst über Satelliten",
+        "Mobiler Seefunkdienst und mobiler Flugfunkdienst",
+        "Mobiler Seefunkdienst und Amateurfunkdienst",
+        "Mobiler Seefunkdienst und Navigationsfunkdienst"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-017",
+      "nr": 17,
+      "modul": "funkeinrichtungen",
+      "text": "Welche Funkanlagen dürfen von dem Inhaber eines LRC bedient werden?",
+      "antworten": [
+        "Seefunkanlagen im UKW-, Grenz- und Kurzwellenbereich und über Satellit auf Sportfahrzeugen und Traditionsschiffen",
+        "Funkanlagen im See- und Binnenfunk auf Sportfahrzeugen",
+        "Funkanlagen im UKW-Bereich und über Satellit (z. B. Inmarsat oder COSPAS-SARSAT) auf Sportfahrzeugen",
+        "Funkanlagen auf nicht funkausrüstungspflichtigen Fahrzeugen mit Ausnahme von UKW"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-018",
+      "nr": 18,
+      "modul": "funkeinrichtungen",
+      "text": "Welches Funkzeugnis muss der Führer eines Sportfahrzeugs oder Traditionsschiffes, das mit einer Kurzwellen/Grenzwellen–DSC–Funkanlage ausgerüstet ist, mindestens besitzen?",
+      "antworten": [
+        "Allgemeines Funkbetriebszeugnis (Long Range Certificate [LRC])",
+        "Beschränkt Gültiges Funkbetriebszeugnis (Short Range Certificate [SRC])",
+        "UKW-Sprechfunkzeugnis für den Binnenschifffahrtsfunk (UBI)",
+        "Beschränkt Gültiges Betriebszeugnis für Funker (Restricted Operator´s Certificate [ROC])"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-019",
+      "nr": 19,
+      "modul": "dsc",
+      "text": "Welche Grenzwellenfrequenz (GW/MF) wird national und international zum Routineanruf zwischen Schiffen per Digitalen Selektivruf (DSC) benutzt?",
+      "antworten": [
+        "2177 kHz",
+        "2189,5 kHz",
+        "2187,5 kHz",
+        "2182 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "04-dsc-mf-hf",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-020",
+      "nr": 20,
+      "modul": "dsc",
+      "text": "Welche Grenzwellenfrequenz (GW/MF) benutzt eine Küstenfunkstelle zur Beantwortung eines Routineanrufs per Digitalen Selektivruf (DSC)?",
+      "antworten": [
+        "2177,0 kHz",
+        "2182,0 kHz",
+        "2614,0 kHz",
+        "2189,5 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "04-dsc-mf-hf",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-021",
+      "nr": 21,
+      "modul": "dsc",
+      "text": "Welche Grenzwellenfrequenz (GW/MF) wird für einen Routineanruf (international) an eine fremde Küstenfunkstelle per Digitalen Selektivruf (DSC) benutzt?",
+      "antworten": [
+        "2189,5 kHz",
+        "2177,0 kHz",
+        "2182,0 kHz",
+        "2187,5 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "04-dsc-mf-hf",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-022",
+      "nr": 22,
+      "modul": "dsc",
+      "text": "Welche Frequenzbereiche werden für die Alarmierung mittels Digitalen Selektivrufs (DSC) im Kurzwellen-Bereich (KW/HF) benutzt?",
+      "antworten": [
+        "Frequenzbereiche 4, 6, 8, 12 und 16 MHz",
+        "Frequenzbereiche 1, 2, 8, 12 und 16 MHz",
+        "Frequenzbereiche 3, 4, 20, und 30 MHz",
+        "Frequenzbereiche 4, 6, 8, 40 und 60 MHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "04-dsc-mf-hf",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-023",
+      "nr": 23,
+      "modul": "dsc",
+      "text": "Welche Frequenz und welches Verfahren benutzt eine Seefunkstelle zur Bestätigung eines auf 2187,5 kHz empfangenen Notalarms?",
+      "antworten": [
+        "2182.0 kHz im Sprechfunkverfahren",
+        "2187,5 kHz im Sprechfunkverfahren",
+        "2614.0 kHz im Sprechfunkverfahren",
+        "3161.0 kHz im Sprechfunkverfahren"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "04-dsc-mf-hf",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-024",
+      "nr": 24,
+      "modul": "dsc",
+      "text": "Wodurch wird im Kurzwellenbereich (KW/HF) die Empfangsbereitschaft für Aussendungen in Not- und Sicherheitsfällen technisch gewährleistet?",
+      "antworten": [
+        "Eingeschalteter Wachempfänger im Scan-Betrieb",
+        "Eingeschalteter Wachempfänger im Dual-Watch-Betrieb",
+        "Eingeschalteter Wachempfänger im 6-MHz-Kurzwellenband",
+        "Eingeschalteter Wachempfänger im 8-MHz-Kurzwellenband"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "04-dsc-mf-hf",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-025",
+      "nr": 25,
+      "modul": "mf-hf",
+      "text": "Welche Frequenzen umfasst der Grenzwellenbereich (GW/MF)?",
+      "antworten": [
+        "1605 bis 4000 kHz",
+        "4000 bis 27500 kHz",
+        "156 bis 174 MHz",
+        "1705 bis 4100 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-026",
+      "nr": 26,
+      "modul": "mf-hf",
+      "text": "Wie wird die Sendeart „Einseitenband mit unterdrücktem Träger“ bezeichnet?",
+      "antworten": [
+        "SSB oder J3E",
+        "SSB oder R3E",
+        "SSB oder H3E",
+        "SSB oder A3E"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-027",
+      "nr": 27,
+      "modul": "mf-hf",
+      "text": "Welcher Frequenz- bzw. Wellenbereich ist ausreichend, um am Tage eine Mindestreichweite von 150 Seemeilen zu erzielen?",
+      "antworten": [
+        "Grenzwelle (GW/MF)",
+        "Kurzwelle (KW/HF)",
+        "Ultrakurzwelle (UKW/VHF)",
+        "Langwelle (LW/LF)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-028",
+      "nr": 28,
+      "modul": "mf-hf",
+      "text": "In welchen Frequenz- bzw. Wellenbereichen spielt die Bodenwelle die entscheidende Rolle bei der Ausbreitung?",
+      "antworten": [
+        "Langwelle (LW/LF) und tagsüber Mittel- und Grenzwelle (MW/MF, GW/MF)",
+        "Kurzwelle (KW/HF) und tagsüber Ultrakurzwelle (UKW/VHF)",
+        "Ultrakurzwelle (UKW/VHF) und tagsüber Kurzwelle (KW/HF)",
+        "Grenzwelle (GW/MF) und tagsüber Langwelle (LW/LF)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-029",
+      "nr": 29,
+      "modul": "mf-hf",
+      "text": "In welchen terrestrischen Frequenz- bzw. Wellenbereichen sollte ein Schiff – für das Seegebiet A2 ausgerüstet – in einer Entfernung von ca. 150 Seemeilen von der Küste einen Notalarm auslösen, um eine Küstenfunkstelle sowie die in der Nähe befindlichen Seefunkstellen zu erreichen?",
+      "antworten": [
+        "Grenzwelle (GW/MF) und Ultrakurzwelle (UKW/VHF)",
+        "Kurzwelle (KW/HF) und Langwelle (LW/LF)",
+        "Kurzwelle (KW/HF) und Ultrakurzwelle (UKW/VHF)",
+        "Grenzwelle (GW/MF) und Langwelle (LW/LF)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-030",
+      "nr": 30,
+      "modul": "mf-hf",
+      "text": "Welchen Einfluss können Gewitter auf den Empfang von NAVTEX-Aussendungen auf Mittelwelle haben?",
+      "antworten": [
+        "Störungen bis zur vollständigen Unlesbarkeit",
+        "Unverändert hohe Übertragungsqualität",
+        "Überreichweiten",
+        "Entstehung „Toter Zonen“"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-031",
+      "nr": 31,
+      "modul": "mf-hf",
+      "text": "Welcher Frequenz- bzw. Wellenbereich wird für den Weitverkehr im terrestrischen Seefunkdienst benutzt?",
+      "antworten": [
+        "Kurzwelle (KW/HF)",
+        "Grenzwelle (GW/MF)",
+        "Langwelle (LW/LF)",
+        "Ultrakurzwelle (UKW/VHF)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-032",
+      "nr": 32,
+      "modul": "mf-hf",
+      "text": "Welche Frequenzen umfasst der allgemeine Kurzwellenbereich (KW/HF)?",
+      "antworten": [
+        "3 bis 30 MHz",
+        "30 bis 300 MHz",
+        "30 bis 300 kHz",
+        "Unter 30 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-033",
+      "nr": 33,
+      "modul": "mf-hf",
+      "text": "In welchem Frequenz- bzw. Wellenbereich spielt die Raumwelle die entscheidende Rolle bei der Ausbreitung?",
+      "antworten": [
+        "Kurzwelle (KW/HF)",
+        "Langwelle (LW/LF)",
+        "Ultrakurzwelle (UKW/VHF)",
+        "Grenzwelle (GW/MF)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-034",
+      "nr": 34,
+      "modul": "mf-hf",
+      "text": "In welchem Frequenz- bzw. Wellenbereich tritt die „Tote Zone“ besonders auf?",
+      "antworten": [
+        "Kurzwelle (KW/HF)",
+        "Langwelle (LW/LF)",
+        "Ultrakurzwelle (UKW/VHF)",
+        "Grenzwelle (GW/MF)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-035",
+      "nr": 35,
+      "modul": "mf-hf",
+      "text": "Um die Mittagszeit wird zur Überbrückung einer bestimmten Entfernung eine Frequenz im 16-MHz-Bereich benutzt. Welcher Frequenzbereich sollte für die Überbrückung derselben Entfernung gegen Mitternacht vorzugsweise gewählt werden?",
+      "antworten": [
+        "Niedrigerer Frequenzbereich",
+        "Gleicher Frequenzbereich",
+        "Höherer Frequenzbereich",
+        "UKW-Frequenzbereich"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-036",
+      "nr": 36,
+      "modul": "mf-hf",
+      "text": "Welche Aussage trifft für den Kurzwellen-Funkverkehr zu?",
+      "antworten": [
+        "Die Ausbreitungseigenschaften der Kurzwellen unterliegen tageszeitlichen, jahreszeitlichen und durch die Sonnenaktivität bedingten Schwankungen; Funkverbindungen lassen sich nicht mit Sicherheit vorausplanen",
+        "Im Kurzwellenbereich sind jederzeit weltweite Funkverbindungen zwischen beliebig wählbaren Standorten möglich",
+        "Bei Internet und E-Mail über Kurzwelle lässt sich die übliche DSL- Geschwindigkeit erreichen",
+        "Bei klarer Sicht und geringer Bewölkung ist die Verständigung im Kurzwellenbereich besonders gut"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-037",
+      "nr": 37,
+      "modul": "mf-hf",
+      "text": "Welche Eigenschaften sollte eine Schiffsantenne für die Überbrückung von großen Entfernungen über Kurzwellen besitzen und warum?",
+      "antworten": [
+        "Die Antenne sollte die Sendeenergie möglichst flach abstrahlen, um mit wenigen Sprüngen (hops) den Empfangsort zu erreichen",
+        "Die Antenne sollte gut isoliert sein, damit man sich beim Senden nicht verbrennen kann",
+        "Die Antenne sollte möglichst lang sein, um eine große Wirkungsfläche zu haben und eine hohe Anzahl von Sprüngen (hops) zu ermöglichen",
+        "Die Antenne sollte die Sendeenergie möglichst steil abstrahlen, um Personen an Bord nicht zu gefährden"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-038",
+      "nr": 38,
+      "modul": "mf-hf",
+      "text": "Eine Yacht ist im Mittelmeer von Rom nach Neapel unterwegs. Die Crew möchte tagsüber über Kiel Radio eine E-Mail versenden. Welcher Frequenzbereich ist dafür meistens geeignet?",
+      "antworten": [
+        "Kurzwelle bei 8 MHz",
+        "Grenzwelle",
+        "Kurzwelle bei 4 MHz",
+        "VHF"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-039",
+      "nr": 39,
+      "modul": "mf-hf",
+      "text": "Eine Yacht ist im karibischen Meer vor Barbados unterwegs. Der Schiffsführer möchte in den Abendstunden eine Verbindung zu Miami Radio aufbauen. Welcher Frequenzbereich ist dafür meistens geeignet?",
+      "antworten": [
+        "Kurzwelle bei 6 MHz",
+        "Grenzwelle",
+        "Kurzwelle bei 16 MHz",
+        "VHF"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-040",
+      "nr": 40,
+      "modul": "mf-hf",
+      "text": "Eine Yacht steht 100 Seemeilen westlich Stavanger. Der Schiffsführer möchte Verbindung zu Rogaland Radio aufnehmen. Welcher Frequenzbereich ist dafür vorzugsweise geeignet?",
+      "antworten": [
+        "Grenzwelle",
+        "Kurzwelle zwischen 4 MHz und 6 MHz",
+        "Kurzwelle zwischen 10 MHz und 16 MHz",
+        "VHF"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "03-grenz-kurzwelle",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-041",
+      "nr": 41,
+      "modul": "betriebsverfahren",
+      "text": "Wer bestimmt bei einer Verbindung zwischen See- und Küstenfunkstelle die zu benutzende Arbeitsfrequenz?",
+      "antworten": [
+        "Küstenfunkstelle",
+        "Seefunkstelle",
+        "Schiffsführer",
+        "On-Scene Coordinator"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-042",
+      "nr": 42,
+      "modul": "betriebsverfahren",
+      "text": "Welches von der Internationalen Fernmeldeunion (International Telecommunication Union [ITU]) herausgegebene Verzeichnis enthält Angaben über Arbeitsfrequenzen von Küstenfunkstellen?",
+      "antworten": [
+        "Verzeichnis der Küstenfunkstellen (List of Coast Stations)",
+        "Verzeichnis der Seefunkstellen (List of Ship Stations)",
+        "Inmarsat-Handbuch",
+        "Handbuch für den Seefunkdienst und den Seefunkdienst über Satelliten (Manual for Use by the Maritime Mobile and Maritime Mobile-Satellite Services)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-043",
+      "nr": 43,
+      "modul": "betriebsverfahren",
+      "text": "Welche Frequenzbereiche dürfen in deutschen Häfen benutzt werden?",
+      "antworten": [
+        "Ultrakurzwellen (UKW/VHF), Ultrahohe Frequenzen (UHF) und der 1,6-GHz- Bereich (Inmarsat)",
+        "Ultrakurzwellen (UKW/VHF) und Grenzwellen (GW/MF)",
+        "Mittelwellen (MW/MF), Grenzwellen(GW/MF) und Kurzwellen(KW/HF)",
+        "Ultrakurzwellen (UKW/VHF) und Kurzwellen (KW/HF)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-044",
+      "nr": 44,
+      "modul": "betriebsverfahren",
+      "text": "Was bedeutet die Angabe „ITU-Channel 1604“?",
+      "antworten": [
+        "Kanal 04 im 16-MHz-Seefunkband",
+        "Kanal 16 im 4-MHz-Seefunkband",
+        "Kanal 1604 im Kurzwellenband",
+        "Kanal 16 und Kanal 04 im Ultrakurzwellenband"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-045",
+      "nr": 45,
+      "modul": "betriebsverfahren",
+      "text": "Welches ist die internationale Not- und Sicherheitsfrequenz für den Sprechfunkverkehr im Grenzwellenbereich (GW/MF)?",
+      "antworten": [
+        "2182,0 kHz",
+        "2187,5 kHz",
+        "2614.0 kHz",
+        "3161,0 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-046",
+      "nr": 46,
+      "modul": "betriebsverfahren",
+      "text": "Welche Frequenz im Grenzwellenbereich (GW/MF) soll im Weltweiten Seenot- und Sicherheitsfunksystem (GMDSS) nach Ankündigung per DSC für die Aussendung einer Dringlichkeitsmeldung „An alle Funkstellen“ grundsätzlich benutzt werden?",
+      "antworten": [
+        "2182,0 kHz",
+        "2187,5 kHz",
+        "2614.0 kHz",
+        "3161,0 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-047",
+      "nr": 47,
+      "modul": "betriebsverfahren",
+      "text": "Wie ist zu verfahren, wenn während eines Notverkehrs auf 2182 kHz die Ankündigung und Aussendung einer Dringlichkeitsmeldung „An alle Funkstellen“ von einer Seefunkstelle vorgenommen werden soll?",
+      "antworten": [
+        "Zuerst Ankündigung per Digitalen Selektivruf (DSC) auf 2187,5 kHz, dann Aussendung auf einer Schiff-Schiff-Frequenz",
+        "Zuerst die Funkstelle, die den Funkverkehr leitet, auf 2182 kHz um Erlaubnis fragen, dann Aussendung auf einer Schiff-Schiff-Frequenz",
+        "Zuerst Ankündigung auf 2182 kHz, dann Aussendung auf einer Schiff-Schiff-Frequenz",
+        "Zuerst Ankündigung per Digitalen Selektivruf (DSC), dann Aussendung auf 2182 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-048",
+      "nr": 48,
+      "modul": "betriebsverfahren",
+      "text": "Wie ist zu verfahren, wenn eine wichtige Meldung im Grenzwellen-Bereich (GW/MF) auszusenden ist, welche die Sicherheit der Seeschifffahrt betrifft?",
+      "antworten": [
+        "Zuerst Ankündigung per Digitalen Selektivruf (DSC) auf 2187,5 kHz, dann Aussendung der Sicherheitsmeldung per Sprechfunk auf einer GW-Schiff-Schiff- Arbeitsfrequenz",
+        "Zuerst Ankündigung auf 2182 kHz, dann Aussendung der Sicherheitsmeldung per Sprechfunk auf einer KW-Schiff-Schiff-Arbeitsfrequenz",
+        "Zuerst Ankündigung auf 2182 kHz, dann Aussendung der Sicherheitsmeldung per Sprechfunk auf 2182 kHz",
+        "Zuerst Ankündigung per Digitalen Selektivruf (DSC) auf 2187,5 kHz, dann Aussendung der Sicherheitsmeldung per Sprechfunk auf 2187,5 kHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-049",
+      "nr": 49,
+      "modul": "betriebsverfahren",
+      "text": "Auf welcher Frequenz wird im Kurzwellenbereich (KW/HF) der Notverkehr im Sprechfunkverfahren abgewickelt?",
+      "antworten": [
+        "Notfrequenz für Sprechfunk des Kurzwellenbandes, in dem die Notalarmierung ausgesendet worden ist",
+        "Notfrequenz für Sprechfunk nach Maßgabe des Inmarsat-Handbuchs",
+        "Notfrequenz für Sprechfunk des Kurzwellenbandes 6 MHz",
+        "Notfrequenz für Sprechfunk des Kurzwellenbandes 8 MHz"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-050",
+      "nr": 50,
+      "modul": "betriebsverfahren",
+      "text": "Welche Sendeart wird bei Aussendungen des Sprech-Seefunkdienstes grundsätzlich im Grenz- und Kurzwellenbereich verwendet?",
+      "antworten": [
+        "Einseitenband mit unterdrücktem Träger, SSB, J3E",
+        "Analoge Frequenzmodulation, FM, F3E",
+        "Einseitenband mit reduziertem Träger, (R3E)",
+        "Zweiseitenbandmodulation, AM, A3E"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "08-notverkehr-international",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-051",
+      "nr": 51,
+      "modul": "inmarsat",
+      "text": "Welche Veröffentlichung enthält Angaben über die Abdeckungsbereiche der Inmarsat-Satelliten?",
+      "antworten": [
+        "Inmarsat-Handbuch",
+        "Nachrichten für Seefahrer (NfS)",
+        "Mitteilungen für Seefunkstellen (MfS)",
+        "Jachtfunkdienst"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-052",
+      "nr": 52,
+      "modul": "inmarsat",
+      "text": "Welche Veröffentlichung enthält Angaben über Land-Erdfunkstellen (LES)?",
+      "antworten": [
+        "Inmarsat-Handbuch",
+        "Jachtfunkdienst",
+        "Nachrichten für Seefahrer",
+        "Mitteilungen für Seefunkstellen und Schiffsfunkstellen"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-053",
+      "nr": 53,
+      "modul": "inmarsat",
+      "text": "Welche Aufgaben hat ein Point of Service Activation (PSA)?",
+      "antworten": [
+        "Freischaltung der Schiffs-Erdfunkstelle",
+        "Freischaltung der Arbeitskanäle für Notrufe",
+        "Freischaltung der Satellitentransponder",
+        "Freischaltung der Inmarsat-Dienste"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-054",
+      "nr": 54,
+      "modul": "inmarsat",
+      "text": "Welche Aufgaben hat die Network Co-ordination Station (NCS)?",
+      "antworten": [
+        "Automatische Vergabe der Arbeitskanäle an Land-Erdfunkstellen (LES) und Schiffs-Erdfunkstellen (MES)",
+        "Freischaltung der Land-Erdfunkstellen (LES) und Schiffs-Erdfunkstellen (MES)",
+        "Abwicklung des Grenzwellen-Verkehrs per DSC",
+        "Abwicklung des Seefunkdienstes über Satellitennetze (SES)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-055",
+      "nr": 55,
+      "modul": "inmarsat",
+      "text": "Wie sind die Satelliten des Inmarsat-Systems positioniert?",
+      "antworten": [
+        "Geostationär",
+        "Polumlaufend",
+        "Polumlaufend und geostationär",
+        "Exzentrisch"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-056",
+      "nr": 56,
+      "modul": "inmarsat",
+      "text": "Über welchem Breitengrad befinden sich die Satelliten des Inmarsat-Systems?",
+      "antworten": [
+        "0 Grad",
+        "90 Grad N",
+        "70 Grad S",
+        "45 Grad S"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-057",
+      "nr": 57,
+      "modul": "inmarsat",
+      "text": "Welches Seegebiet deckt der Satellit mit der Bezeichnung AOR-E im Inmarsat-System hauptsächlich ab?",
+      "antworten": [
+        "Atlantik",
+        "Polarmeere",
+        "Pazifischer Ozean",
+        "Indischer Ozean"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-058",
+      "nr": 58,
+      "modul": "inmarsat",
+      "text": "Welches Seegebiet deckt der Satellit mit der Bezeichnung IOR im Inmarsat-System hauptsächlich ab?",
+      "antworten": [
+        "Indischer Ozean",
+        "Westlicher Atlantik",
+        "Östlicher Atlantik",
+        "Pazifischer Ozean"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-059",
+      "nr": 59,
+      "modul": "inmarsat",
+      "text": "Welcher Satellit deckt das Seegebiet des Pazifischen Ozeans im Inmarsat-System hauptsächlich ab?",
+      "antworten": [
+        "POR",
+        "AOR-E",
+        "AOR-W",
+        "IOR"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-060",
+      "nr": 60,
+      "modul": "inmarsat",
+      "text": "Eine Yacht steht vor Hawaii. Der Schiffsführer möchte eine Verbindung nach Europa über Inmarsat herstellen. Welcher Satellit sollte vorzugsweise benutzt werden?",
+      "antworten": [
+        "Pacific Ocean Region (POR)",
+        "Indian Ocean Region (IOR)",
+        "Atlantic Ocean Region – East (AOR-E)",
+        "Atlantic Ocean Region – West (AOR-W)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-061",
+      "nr": 61,
+      "modul": "inmarsat",
+      "text": "Eine Yacht ist vor den Malediven unterwegs. Der Schiffsführer möchte eine Verbindung nach Europa über Inmarsat herstellen. Welcher Satellit sollte vorzugsweise benutzt werden?",
+      "antworten": [
+        "Indian Ocean Region (IOR)",
+        "Atlantic Ocean Region – East (AOR-E)",
+        "Atlantic Ocean Region – West (AOR-W)",
+        "Pacific Ocean Region (POR)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-062",
+      "nr": 62,
+      "modul": "inmarsat",
+      "text": "Wie wird das Seegebiet außerhalb der Abdeckung durch Inmarsat-Satelliten bezeichnet?",
+      "antworten": [
+        "Seegebiet A4",
+        "Seegebiet A1",
+        "Seegebiet A2",
+        "Seegebiet A3"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-063",
+      "nr": 63,
+      "modul": "inmarsat",
+      "text": "Wie wird das Seegebiet bezeichnet, das innerhalb der Sprechfunkreichweite einer Grenzwellen-Küstenfunkstelle liegt, die ununterbrochen für DSC- Alarmierungen zur Verfügung steht?",
+      "antworten": [
+        "Seegebiet A2",
+        "Seegebiet A1",
+        "Seegebiet A3",
+        "Seegebiet A4"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-064",
+      "nr": 64,
+      "modul": "inmarsat",
+      "text": "Zur Herstellung welcher Verbindungen wird im Inmarsat-System die Vorwahl +870 benötigt?",
+      "antworten": [
+        "Verbindungen zu Inmarsat-Terminals",
+        "Verbindungen zu Festnetz-Anschlüssen",
+        "Verbindungen innerhalb des Seegebiets A4",
+        "Verbindungen zur Verbreitung von MSI"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-065",
+      "nr": 65,
+      "modul": "inmarsat",
+      "text": "Welches ist die erste Ziffer einer Inmarsat-C-Rufnummer?",
+      "antworten": [
+        "4",
+        "3",
+        "2",
+        "1"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-066",
+      "nr": 66,
+      "modul": "inmarsat",
+      "text": "Welchem Inmarsat-Dienst ist die Identifikationsnummer (ID) 421135910 zugeordnet?",
+      "antworten": [
+        "Inmarsat C",
+        "Inmarsat Mini-M",
+        "Inmarsat F",
+        "Inmarsat Fleet"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-067",
+      "nr": 67,
+      "modul": "inmarsat",
+      "text": "Welche Dienste bietet Inmarsat C?",
+      "antworten": [
+        "Telex, Datenübertragung und Telefax Richtung See–Land",
+        "Telefonie, Datenübertragung und SMS",
+        "Telefonie, Datenübertragung und ISDN",
+        "Telex, Telefax Richtung See–Land und Telefonie"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-068",
+      "nr": 68,
+      "modul": "inmarsat",
+      "text": "Mit welcher Aussendung kann die Funktionsfähigkeit der eigenen Inmarsat-C-Anlage überprüft werden?",
+      "antworten": [
+        "Nachricht von der eigenen an die eigene Anlage",
+        "Nachricht an ein LUT",
+        "Nachricht an ein MRCC",
+        "Nachricht an ein anderes Schiff"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-069",
+      "nr": 69,
+      "modul": "inmarsat",
+      "text": "Was ist bei dem Ausschalten einer Inmarsat C-Anlage zu beachten?",
+      "antworten": [
+        "Vorheriges Ausloggen",
+        "Vom Bordnetz trennen",
+        "Zuerst auf „stand by“ schalten, dann vom Bordnetz trennen",
+        "Der CES mitteilen, ab wann das Schiff nicht zu erreichen ist"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-070",
+      "nr": 70,
+      "modul": "inmarsat",
+      "text": "Welches Verfahren wird für den Anruf von Land an bestimmte Schiffs- Erdfunkstellen benutzt?",
+      "antworten": [
+        "Erweiterter Gruppenanruf (EGC)",
+        "Digitaler Selektivruf (DSC)",
+        "Tonruf (SSFC)",
+        "Mehrfrequenzwahlverfahren (DTMF)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-071",
+      "nr": 71,
+      "modul": "inmarsat",
+      "text": "Welcher Dienst verwendet den Erweiterten Gruppenanruf (EGC)?",
+      "antworten": [
+        "Informationsdienst über Satelliten",
+        "Informationsdienst über NAVTEX",
+        "Informationsdienst über UKW-Sprechfunk",
+        "Informationsdienst über Grenzwelle"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-072",
+      "nr": 72,
+      "modul": "inmarsat",
+      "text": "Welche Meldungen werden im mobilen Seefunkdienst über „Enhanced Group Call (EGC)“ ausgesendet?",
+      "antworten": [
+        "Sicherheitsmeldungen für die Schifffahrt (MSI) oder Informationen an bestimmte Empfänger",
+        "Nachrichten für Seefahrer oder Sammelanrufe",
+        "Regelmäßige Wetterberichte oder nautische Warnnachrichten für bestimmte Seegebiete",
+        "Küstenwetterberichte oder Dringlichkeitsmeldungen"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-073",
+      "nr": 73,
+      "modul": "inmarsat",
+      "text": "Was ist für den Empfang eines Enhanced Group Call (EGC) erforderlich?",
+      "antworten": [
+        "Satelliten-Empfänger",
+        "NAVTEX-Empfänger",
+        "UKW-Empfänger",
+        "DSC-Wachempfänger"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-074",
+      "nr": 74,
+      "modul": "inmarsat",
+      "text": "An wen wird ein über Inmarsat ausgelöster Notalarm umgehend geleitet?",
+      "antworten": [
+        "Rettungsleitstelle (RCC) oder Seenotleitstelle (MRCC)",
+        "Küsten-Erdfunkstelle (CES) oder On-Scene Co-ordinator (OSC)",
+        "International Maritime Organization (IMO) oder Seenotleitstelle (MRCC)",
+        "Rettungsleitstelle (RCC) oder Küsten-Erdfunkstelle (CES)"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-075",
+      "nr": 75,
+      "modul": "inmarsat",
+      "text": "Welcher Dienst sendet Nachrichten für die Sicherheit der Seeschifffahrt (MSI) auf Satellitenfrequenzen aus?",
+      "antworten": [
+        "SafetyNet",
+        "GALILEO",
+        "COSPAS-SARSAT",
+        "NAVTEX"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    },
+    {
+      "id": "lrc-076",
+      "nr": 76,
+      "modul": "inmarsat",
+      "text": "Welche Informationen werden über das Internationale Sicherheitsnetz (SafetyNet) verbreitet?",
+      "antworten": [
+        "Informationen für die Sicherheit der Seeschifffahrt (Maritime Safety Information [MSI])",
+        "AMVER-Meldungen des weltweiten Positionsmeldesystems für Such- und Rettungszwecke",
+        "Notmeldungen von COSPAS-SARSAT-Satelliten-Seenotfunkbaken (EPIRB)",
+        "NAVTEX-Warnnachrichten und -Sicherheitsmeldungen"
+      ],
+      "richtig": 0,
+      "bild": null,
+      "hinweis": "",
+      "lektion": "05-satellit",
+      "beispiel": false
+    }
+  ]
 }

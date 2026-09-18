@@ -328,9 +328,12 @@ LRC als Verkehrsblatt-Bekanntmachungen, deren Lesefassungen der Fachstelle
 FVT/ABVT Koblenz ebenfalls über elwis.de verteilt werden) sind Grundlage der
 Prüfungen und werden als Fragen-Daten übernommen. Die Lesefassungen der
 Funk-Kataloge tragen einen Vermerk „Alle Rechte vorbehalten" der Fachstelle;
-rechtsverbindlich und amtlich bekannt gemacht sind die Texte im Verkehrsblatt.
-Übernommen werden ausschließlich die Fragen und Antworten — Fotos, Zeichnungen
-und Layout der PDFs nicht. Die Lektionstexte bleiben eigenes Werk.
+die Fachstelle hat die Nutzung für diesen Kurs freigegeben (dem Betreiber am
+2026-09-18 mitgeteilt). Die Freigabe steht je Katalog in `quelle.freigabe`
+der `fragen.json` und in den Import-Profilen, damit ein erneuter Import sie
+nicht verliert; die Admin-Seite „Inhalte" zeigt sie an. Übernommen werden
+ausschließlich die Fragen und Antworten — Fotos, Zeichnungen und Layout der
+PDFs nicht. Die Lektionstexte bleiben eigenes Werk.
 
 Voraussetzung ist Python 3 mit PyMuPDF (`python3 -m pip install pymupdf`);
 `werkzeuge/pdf-text.py` gewinnt daraus den Text. Fehlt PyMuPDF, fällt das

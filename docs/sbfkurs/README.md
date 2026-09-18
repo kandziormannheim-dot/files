@@ -25,7 +25,9 @@ sie gepflegt werden, steht im Autorenhandbuch [`INHALTE.md`](INHALTE.md).
 - **Lektionen:** eigene Texte, 8–10 je Zeugnis, fertig.
 - **Fragen:** Für **SRC** (Gesamtfragenkatalog 10/2018 plus Anpassungsprüfung),
   **LRC** (Fragenkatalog II, 02/2024) und **SBF Binnen** (08/2023, 300 Fragen)
-  sind die amtlichen Kataloge importiert. Die 73 Bildfragen des Binnen-Katalogs
+  sind die amtlichen Kataloge importiert; die Nutzung der SRC/LRC-Lesefassungen
+  hat die Fachstelle FVT/ABVT Koblenz freigegeben (vermerkt in `quelle.freigabe`).
+  Die 73 Bildfragen des Binnen-Katalogs
   zeigen **eigene, schematisch gezeichnete SVG-Grafiken** (Tafelzeichen,
   Lichter, Sichtzeichen, Schallsignale, Segelskizzen) — nichts ist aus den PDFs
   übernommen; Schallsignale lassen sich anhören. **SBF See, UBI und FKN** haben
