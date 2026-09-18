@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-labelledby="t">
+<title id="t">Ein gelber Rhombus.</title>
+<rect width="200" height="200" fill="#ffffff"/>
+<polygon points="100.0,30.0 100.0,170.0 30.0,100.0" fill="#f2c500" stroke="#1a1a1a" stroke-width="1.5"/><polygon points="100.0,30.0 170.0,100.0 100.0,170.0" fill="#f2c500" stroke="#1a1a1a" stroke-width="1.5"/>
+</svg>

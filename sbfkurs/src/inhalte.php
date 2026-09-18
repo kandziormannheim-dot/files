@@ -118,7 +118,7 @@ function fragenLaden(array $konfig, string $kennung): array
     $nachId = [];
     foreach ($katalog['fragen'] as $frage) {
         if (isset($frage['id'])) {
-            $nachId[$frage['id']] = $frage + ['bild' => null, 'hinweis' => '', 'lektion' => null, 'beispiel' => false, 'pruefen' => false];
+            $nachId[$frage['id']] = $frage + ['bild' => null, 'bildText' => '', 'schall' => null, 'hinweis' => '', 'lektion' => null, 'beispiel' => false, 'pruefen' => false];
         }
     }
     $katalog['fragen'] = $nachId;
@@ -126,6 +126,28 @@ function fragenLaden(array $konfig, string $kennung): array
         || array_filter($nachId, static fn (array $f): bool => !empty($f['beispiel'])) !== [];
 
     return $katalog;
+}
+
+/**
+ * Textfassung eines Fragebilds für das alt-Attribut: „bildText“ der Frage,
+ * sonst der <title> der SVG-Datei (die selbst gezeichneten Grafiken tragen
+ * ihre Beschreibung dort), sonst ein allgemeiner Hinweis.
+ */
+function bildAltText(array $konfig, string $kennung, array $frage): string
+{
+    if (trim((string) ($frage['bildText'] ?? '')) !== '') {
+        return trim((string) $frage['bildText']);
+    }
+    $datei = basename((string) ($frage['bild'] ?? ''));
+    if ($datei !== '' && str_ends_with(strtolower($datei), '.svg')) {
+        $pfad = inhaltePfad($konfig) . "/$kennung/bilder/$datei";
+        $kopf = is_file($pfad) ? (string) file_get_contents($pfad, false, null, 0, 2000) : '';
+        if (preg_match('#<title[^>]*>(.*?)</title>#s', $kopf, $t)) {
+            return trim(html_entity_decode($t[1], ENT_QUOTES | ENT_XML1, 'UTF-8'));
+        }
+    }
+
+    return 'Abbildung zur Frage';
 }
 
 /** Amtliche Bögen, falls vorhanden; leere Liste sonst. */
@@ -147,10 +169,10 @@ function boegenLaden(array $konfig, string $kennung, array $zertifikat): array
     return $boegen;
 }
 
-/** Übungen eines Praxismoduls (funkverkehr | englisch), nach id indiziert. */
+/** Übungen eines Praxismoduls (funkverkehr | englisch | diktat), nach id indiziert. */
 function uebungenLaden(array $konfig, string $kennung, string $modul): array
 {
-    if (!in_array($modul, ['funkverkehr', 'englisch'], true)) {
+    if (!in_array($modul, ['funkverkehr', 'englisch', 'diktat'], true)) {
         return [];
     }
     $daten = jsonLesen(inhaltePfad($konfig) . "/$kennung/uebungen/$modul.json");
@@ -366,6 +388,13 @@ function uebungPruefen(string $modul, string $id, array $u): array
                 $fehler[] = "Übung „{$id}“: schluesselwoerter müssen Listen von Varianten sein.";
                 break;
             }
+        }
+    } elseif ($modul === 'diktat') {
+        if (trim((string) ($u['text'] ?? '')) === '') {
+            $fehler[] = "Übung „{$id}“: text (der diktierte Wortlaut) ist Pflicht.";
+        }
+        if (!in_array($u['sprache'] ?? '', ['en', 'de'], true)) {
+            $fehler[] = "Übung „{$id}“: sprache muss en oder de sein.";
         }
     }
 

@@ -7,7 +7,7 @@ $geraet = $szenarien['geraet'] + ['kanaele' => ['16', '70', '06', '08', '72', '7
 ?>
 <p class="brotkrumen"><a href="/">Kurse</a> › DSC-Simulator</p>
 <h1>DSC-Controller-Simulator</h1>
-<p class="kurz">Ein vereinfachter UKW-Controller mit DSC: Menü mit MENU/ENT/CLR und den Pfeiltasten bedienen, Ziffern eintippen, Kanal wählen — und die rote DISTRESS-Taste nur unter der Klappe und nur lange gedrückt. Jedes Szenario zählt die erwarteten Schritte mit.</p>
+<p class="kurz">Ein nachgebautes UKW-Funkgerät mit DSC-Controller: Menü mit MENU/ENT/CLR und den Pfeiltasten bedienen, Ziffern eintippen, Kanal und Sendeleistung wählen, zum Sprechen die PTT-Taste halten — die Gegenstelle antwortet im Sprechfunk-Fenster (auf Wunsch vorgelesen). Die rote DISTRESS-Taste sitzt unter einer Klappe und wirkt nur lange gedrückt. Jedes Szenario zählt die erwarteten Schritte mit.</p>
 
 <?php if ($liste === []) { ?>
 <p class="karte">Noch keine Szenarien hinterlegt.</p>
@@ -31,6 +31,12 @@ $geraet = $szenarien['geraet'] + ['kanaele' => ['16', '70', '06', '08', '72', '7
             <button type="button" data-neustart class="zweit">Szenario neu starten</button>
         </p>
     </div>
+    <div class="dsc-funk" data-funk hidden>
+        <p class="kasten-titel">Sprechfunk</p>
+        <p><strong>Du (PTT halten):</strong> <span data-funk-du>…</span></p>
+        <p><strong>Gegenstelle:</strong> <span data-funk-antwort>…</span></p>
+        <label class="inline"><input type="checkbox" data-funk-vorlesen checked> Antwort vorlesen (Sprachausgabe des Browsers)</label>
+    </div>
     <form method="post" action="/uebung/dsc/ergebnis" data-dsc-ergebnis hidden>
         <?= csrfFeld() ?>
         <input type="hidden" name="szenario" value="">
@@ -42,7 +48,7 @@ $geraet = $szenarien['geraet'] + ['kanaele' => ['16', '70', '06', '08', '72', '7
 
 <section class="karte dsc-geraet" data-dsc data-szenarien="<?= e(json_encode($liste, JSON_UNESCAPED_UNICODE)) ?>" data-geraet="<?= e(json_encode($geraet, JSON_UNESCAPED_UNICODE)) ?>">
     <div class="dsc-display" aria-live="polite">
-        <div class="dsc-zeile dsc-status"><span data-anzeige-kanal>CH 16</span><span data-anzeige-mmsi>MMSI <?= e($geraet['eigeneMmsi']) ?></span></div>
+        <div class="dsc-zeile dsc-status"><span data-anzeige-kanal>CH 16</span><span data-anzeige-leistung>25 W</span><span data-anzeige-mmsi>MMSI <?= e($geraet['eigeneMmsi']) ?></span></div>
         <div class="dsc-zeile" data-zeile="1">DSC READY</div>
         <div class="dsc-zeile" data-zeile="2"></div>
         <div class="dsc-zeile" data-zeile="3"></div>
@@ -64,7 +70,8 @@ $geraet = $szenarien['geraet'] + ['kanaele' => ['16', '70', '06', '08', '72', '7
             <span class="dsc-beschriftung">Kanal</span>
             <button type="button" data-taste="kanal-hoch">CH ▲</button>
             <button type="button" data-taste="kanal-runter">CH ▼</button>
-            <button type="button" data-taste="ptt" class="ptt">PTT</button>
+            <button type="button" data-taste="leistung">25 W → 1 W</button>
+            <button type="button" data-taste="ptt" class="ptt" aria-label="Sprechtaste halten">PTT <small>halten</small></button>
         </div>
         <div class="dsc-block dsc-distress">
             <button type="button" class="klappe" data-klappe aria-expanded="false">DISTRESS<br><small>Klappe öffnen</small></button>

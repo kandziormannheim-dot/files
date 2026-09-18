@@ -1,0 +1,26 @@
+{
+  "_kommentar": "Diktat-Übungen UBI (eigene Texte, deutscher Binnenschifffahrtsfunk): 'text' ist der diktierte Wortlaut, 'sprache' de.",
+  "uebungen": [
+    {
+      "id": "mayday-wassereinbruch",
+      "titel": "Notmeldung: Wassereinbruch auf dem Rhein",
+      "sprache": "de",
+      "hinweis": "Notverkehr auf Kanal 10 (Schiff–Schiff) im Binnenschifffahrtsfunk: Notruf, Schiffsname, Standort mit Kilometer, Art der Not, Hilfeersuchen.",
+      "text": "MAYDAY MAYDAY MAYDAY. HIER IST SPORTBOOT MÖWE MÖWE MÖWE. MAYDAY MÖWE. STANDORT RHEIN KILOMETER 640 KOMMA 5, LINKES UFER, HÖHE KOBLENZ. WASSEREINBRUCH NACH KOLLISION MIT TREIBGUT, BOOT SINKT. ICH BENÖTIGE SOFORT HILFE. DREI PERSONEN AN BORD. KOMMEN."
+    },
+    {
+      "id": "panpan-maschinenausfall",
+      "titel": "Dringlichkeitsmeldung: Maschinenausfall",
+      "sprache": "de",
+      "hinweis": "Dringlichkeit: PAN PAN sechsmal, AN ALLE dreimal, dann die Meldung.",
+      "text": "PAN PAN PAN PAN PAN PAN. AN ALLE AN ALLE AN ALLE. HIER IST SPORTBOOT SEESTERN SEESTERN SEESTERN. STANDORT MOSEL KILOMETER 12 KOMMA 3, OBERHALB DER SCHLEUSE KOBLENZ. MASCHINENAUSFALL, TREIBE IN RICHTUNG WEHR. ICH BENÖTIGE SCHLEPPHILFE. ZWEI PERSONEN AN BORD. KOMMEN."
+    },
+    {
+      "id": "securite-treibgut",
+      "titel": "Sicherheitsmeldung: Treibgut",
+      "sprache": "de",
+      "hinweis": "Sicherheitsmeldung an alle Fahrzeuge im Revier.",
+      "text": "SÉCURITÉ SÉCURITÉ SÉCURITÉ. AN ALLE AN ALLE AN ALLE. HIER IST REVIERZENTRALE OBERWESEL. SCHIFFFAHRTSWARNUNG. IM BEREICH RHEIN KILOMETER 550 BIS 555 TREIBT EIN BAUMSTAMM IN DER FAHRRINNE. VORSICHTIG FAHREN UND AUSREICHEND ABSTAND HALTEN. ENDE."
+    }
+  ]
+}

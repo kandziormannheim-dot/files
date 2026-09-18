@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 200" width="420" height="200" role="img" aria-labelledby="t">
+<title id="t">Zwei Tafelzeichen: roter Rahmen mit durchgestrichenem Poller; roter Rahmen mit durchgestrichenem P.</title>
+<rect width="420" height="200" fill="#ffffff"/>
+<g transform="translate(0 0) scale(1)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#c8102e"/><rect x="30" y="30" width="140" height="140" fill="#ffffff"/><g fill="#1a1a1a"><rect x="78" y="60" width="44" height="90" rx="6"/><rect x="66" y="52" width="68" height="18" rx="6"/><rect x="40" y="96" width="120" height="12" transform="rotate(-8 100 102)"/></g><line x1="30" y1="30" x2="170" y2="170" stroke="#c8102e" stroke-width="14" stroke-linecap="round"/></g><g transform="translate(220 0) scale(1)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#c8102e"/><rect x="30" y="30" width="140" height="140" fill="#ffffff"/><text x="100.0" y="136.0" font-family="system-ui, sans-serif" font-size="104" font-weight="700" text-anchor="middle" fill="#1a1a1a">P</text><line x1="30" y1="30" x2="170" y2="170" stroke="#c8102e" stroke-width="14" stroke-linecap="round"/></g>
+</svg>

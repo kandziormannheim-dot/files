@@ -1,0 +1,26 @@
+{
+  "_kommentar": "Diktat-Übungen LRC (eigene Texte, Grenz-/Kurzwelle und Satellit): 'text' ist der diktierte Wortlaut, 'sprache' en|de, 'sprechtext' optional.",
+  "uebungen": [
+    {
+      "id": "mayday-mf",
+      "titel": "Notmeldung auf Grenzwelle",
+      "sprache": "en",
+      "hinweis": "Notverkehr auf 2182 kHz nach DSC-Alarm auf 2187,5 kHz — mit Rufzeichen und voller Position.",
+      "text": "MAYDAY MAYDAY MAYDAY. THIS IS SAILING YACHT POLARSTERN POLARSTERN POLARSTERN. CALL SIGN DELTA KILO ALFA BRAVO. MMSI 211334455. MAYDAY POLARSTERN. POSITION FIVE SIX DEGREES ZERO TWO MINUTES NORTH, ZERO ZERO THREE DEGREES FOUR FIVE MINUTES EAST. DISMASTED AND TAKING WATER. I REQUIRE IMMEDIATE ASSISTANCE. FIVE PERSONS ON BOARD. OVER."
+    },
+    {
+      "id": "panpan-medico",
+      "titel": "Dringlichkeit: funkärztliche Beratung",
+      "sprache": "en",
+      "hinweis": "Ein Medico-Gespräch wird über die Küstenfunkstelle angefordert.",
+      "text": "PAN PAN PAN PAN PAN PAN. ALL STATIONS ALL STATIONS ALL STATIONS. THIS IS MOTOR YACHT ORION ORION ORION. MMSI 211778899. POSITION FOUR SEVEN DEGREES ONE FIVE MINUTES NORTH, ZERO ZERO EIGHT DEGREES THREE ZERO MINUTES WEST. ONE CREW MEMBER SERIOUSLY INJURED, HEAD INJURY, UNCONSCIOUS. I REQUIRE MEDICAL ADVICE. REQUEST RADIO MEDICAL. OVER."
+    },
+    {
+      "id": "securite-sturm",
+      "titel": "Sicherheitsmeldung: Sturmwarnung",
+      "sprache": "en",
+      "hinweis": "Meteorologische Warnung einer Küstenfunkstelle, wie sie auch über NAVTEX käme.",
+      "text": "SECURITE SECURITE SECURITE. ALL SHIPS ALL SHIPS ALL SHIPS. THIS IS LYNGBY RADIO LYNGBY RADIO LYNGBY RADIO. GALE WARNING. SKAGERRAK AND KATTEGAT. WESTERLY GALE FORCE EIGHT EXPECTED FROM ONE EIGHT ZERO ZERO UTC, INCREASING TO SEVERE GALE FORCE NINE OVERNIGHT. OUT."
+    }
+  ]
+}

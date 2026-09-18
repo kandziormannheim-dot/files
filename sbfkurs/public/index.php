@@ -375,7 +375,7 @@ if (preg_match('#^/uebung/dsc(/ergebnis)?$#', $pfad, $t)) {
     ansicht('uebung_dsc', ['szenarien' => $szenarien, 'kennung' => zertifikatKennung($kennung), 'stand' => praxisStand($db, $konfig, $benutzerId, $kennung !== '' ? $kennung : 'src', 'dsc')]);
 }
 
-if (preg_match('#^/uebung/([a-z][a-z0-9-]*)/(funkverkehr|englisch)(?:/([a-z0-9][a-z0-9-]*))?$#', $pfad, $t)) {
+if (preg_match('#^/uebung/([a-z][a-z0-9-]*)/(funkverkehr|englisch|diktat)(?:/([a-z0-9][a-z0-9-]*))?$#', $pfad, $t)) {
     $kennung = $t[1];
     $modul = $t[2];
     $z = zertifikatOderAbbruch($konfig, $benutzer, $kennung);
@@ -395,6 +395,15 @@ if (preg_match('#^/uebung/([a-z][a-z0-9-]*)/(funkverkehr|englisch)(?:/([a-z0-9][
     }
     $ergebnis = null;
     $daten = ['z' => $z, 'kennung' => $kennung, 'modul' => $modul, 'uebung' => $uebung, 'uebungen' => $uebungen];
+
+    if ($modul === 'diktat') {
+        $eingabe = saeubern($_POST['eingabe'] ?? '');
+        if ($methode === 'POST' && $eingabe !== '') {
+            $ergebnis = diktatAuswerten($uebung, $eingabe);
+            uebungErgebnisSpeichern($db, $benutzerId, $kennung, 'diktat', $uebung['id'], $ergebnis['punkte'], $ergebnis['maximal'], ['prozent' => $ergebnis['prozent'], 'zusaetzlich' => $ergebnis['zusaetzlich']]);
+        }
+        ansicht('uebung_diktat', $daten + ['ergebnis' => $ergebnis, 'eingabe' => $eingabe]);
+    }
 
     if ($modul === 'englisch') {
         $eingabe = saeubern($_POST['eingabe'] ?? '');

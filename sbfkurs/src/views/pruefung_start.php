@@ -20,7 +20,8 @@ $regeln = $z['pruefung'];
         <?php } ?>
         <?php foreach ($regeln['weitereTeile'] as $teil) { ?>
         <li>Weiterer Prüfungsteil: <?= e($teil['titel']) ?>
-            <?php if (!empty($teil['simuliert'])) { ?><small>(hier: <?= $teil['simuliert'] === 'englisch' ? '<a href="/uebung/' . e($kennung) . '/englisch">Englisch-Übungen</a>' : ($teil['simuliert'] === 'dsc' ? '<a href="/uebung/dsc?kurs=' . e($kennung) . '">DSC-Simulator</a>' : e($teil['simuliert'])) ?>)</small><?php } else { ?><small>(nicht simuliert)</small><?php } ?>
+            <?php $simuliertLinks = ['englisch' => ['/uebung/' . $kennung . '/englisch', 'Englisch-Übungen'], 'diktat' => ['/uebung/' . $kennung . '/diktat', 'Diktat-Übungen'], 'dsc' => ['/uebung/dsc?kurs=' . $kennung, 'Funkgerät-Simulator']]; ?>
+            <?php if (!empty($teil['simuliert'])) { $sl = $simuliertLinks[$teil['simuliert']] ?? null; ?><small>(hier: <?= $sl !== null ? '<a href="' . e($sl[0]) . '">' . e($sl[1]) . '</a>' : e($teil['simuliert']) ?>)</small><?php } else { ?><small>(nicht simuliert)</small><?php } ?>
         </li>
         <?php } ?>
     </ul>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="240" height="200" role="img" aria-labelledby="t">
+<title id="t">Tafelzeichen: roter Rahmen, weißes Feld mit schwarzem Pfeil nach links.</title>
+<rect width="240" height="200" fill="#ffffff"/>
+<rect x="4" y="4" width="232" height="192" rx="6" fill="#c8102e"/><rect x="30" y="30" width="180" height="140" fill="#ffffff"/><line x1="200.0" y1="100.0" x2="78.4" y2="100.0" stroke="#1a1a1a" stroke-width="18.0"/><polygon points="46.0,100.0 78.4,76.6 78.4,123.4" fill="#1a1a1a"/>
+</svg>

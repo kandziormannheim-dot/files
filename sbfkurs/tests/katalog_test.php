@@ -17,6 +17,28 @@ foreach (zertifikateLaden($konfig) as $kennung => $z) {
 }
 pruefeGleich(['src', 'ubi', 'fkn', 'lrc', 'see', 'binnen'], array_keys(zertifikateLaden($konfig)), 'Reihenfolge der Zertifikate');
 
+// Importierte amtliche Kataloge: Umfang, Module, Bilder, Schallsignale
+$src = fragenLaden($konfig, 'src');
+pruefeGleich(217, count($src['fragen']), 'SRC: 180 Katalogfragen + 37 Anpassungsfragen');
+pruefe(!$src['beispielhaft'], 'SRC: amtlich, keine Beispielfragen mehr');
+pruefeGleich(56, count(array_filter($src['fragen'], static fn (array $f): bool => $f['modul'] === 'sar')), 'SRC: Abschnitt VII (SAR) hat 56 Fragen');
+pruefeGleich(76, count(fragenLaden($konfig, 'lrc')['fragen']), 'LRC: 76 Fragen');
+$binnen = fragenLaden($konfig, 'binnen');
+pruefeGleich(300, count($binnen['fragen']), 'Binnen: 300 Fragen');
+pruefeGleich(73, count(array_filter($binnen['fragen'], static fn (array $f): bool => !empty($f['bild']))), 'Binnen: 73 Bildfragen mit eigener SVG');
+pruefeGleich(9, count(array_filter($binnen['fragen'], static fn (array $f): bool => !empty($f['schall']))), 'Binnen: neun Fragen mit Schallsignal');
+pruefeGleich('lk', $binnen['fragen']['binnen-162']['schall'] ?? null, 'Binnen 162: ein langer, ein kurzer Ton');
+pruefe(str_starts_with(bildAltText($konfig, 'binnen', $binnen['fragen']['binnen-017']), 'Tafelzeichen: roter Rahmen'), 'Alt-Text kommt aus dem SVG-Titel');
+pruefeGleich('Abbildung zur Frage', bildAltText($konfig, 'binnen', ['bild' => 'gibtsnicht.svg']), 'Alt-Text-Rückfall ohne Datei');
+pruefeGleich('Eigener Text', bildAltText($konfig, 'binnen', ['bild' => '017.svg', 'bildText' => 'Eigener Text']), 'bildText der Frage hat Vorrang');
+foreach (['src', 'lrc', 'ubi'] as $k) {
+    pruefe(count(uebungenLaden($konfig, $k, 'diktat')) >= 3, "„{$k}“: mindestens drei Diktat-Übungen");
+}
+$dsc = dscSzenarienLaden($konfig);
+pruefe(count(array_filter($dsc['szenarien'], static fn (array $s): bool => in_array('ubi', (array) ($s['zertifikat'] ?? ['ubi']), true))) >= 2, 'DSC: Szenarien für den Binnenfunk');
+$mitAntwort = array_filter($dsc['szenarien'], static fn (array $s): bool => array_filter($s['erwartet'], static fn (array $e): bool => $e['aktion'] === 'ptt' && !empty($e['sprechtext'])) !== []);
+pruefeGleich(count($dsc['szenarien']), count($mitAntwort), 'DSC: jedes Szenario hat einen Sprechfunk-Schritt mit Wortlaut');
+
 $tafel = buchstabiertafelLaden($konfig);
 pruefeGleich(26, count($tafel['buchstaben']), 'Buchstabiertafel vollständig');
 

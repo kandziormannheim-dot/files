@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-labelledby="t">
+<title id="t">Tafelzeichen: roter Rahmen, ein Pfeil nach oben und einer nach unten nebeneinander, roter Schrägstrich.</title>
+<rect width="200" height="200" fill="#ffffff"/>
+<g transform="translate(0 0) scale(1)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#c8102e"/><rect x="30" y="30" width="140" height="140" fill="#ffffff"/><line x1="76.0" y1="48.0" x2="76.0" y2="124.8" stroke="#1a1a1a" stroke-width="14.0"/><polygon points="76.0,150.0 57.8,124.8 94.2,124.8" fill="#1a1a1a"/><line x1="124.0" y1="150.0" x2="124.0" y2="73.2" stroke="#1a1a1a" stroke-width="14.0"/><polygon points="124.0,48.0 142.2,73.2 105.8,73.2" fill="#1a1a1a"/><line x1="30" y1="30" x2="170" y2="170" stroke="#c8102e" stroke-width="14" stroke-linecap="round"/></g>
+</svg>

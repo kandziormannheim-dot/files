@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-labelledby="t">
+<title id="t">Tafelzeichen: roter Rahmen, zwei schwarze Wellenlinien, roter Schrägstrich.</title>
+<rect width="200" height="200" fill="#ffffff"/>
+<g transform="translate(0 0) scale(1)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#c8102e"/><rect x="30" y="30" width="140" height="140" fill="#ffffff"/><g fill="none" stroke="#1a1a1a" stroke-width="12" stroke-linecap="round"><path d="M46 84 q27 -22 54 0 t54 0"/><path d="M46 118 q27 -22 54 0 t54 0"/></g><line x1="30" y1="30" x2="170" y2="170" stroke="#c8102e" stroke-width="14" stroke-linecap="round"/></g>
+</svg>

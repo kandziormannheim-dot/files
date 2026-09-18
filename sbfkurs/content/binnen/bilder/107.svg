@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-labelledby="t">
+<title id="t">Blaue Tafel mit weißem Dreieck, darin drei blaue Kegel übereinander, Spitzen nach unten.</title>
+<rect width="200" height="200" fill="#ffffff"/>
+<g transform="translate(0 0) scale(1)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#0057a8"/><polygon points="100,26 180,166 20,166" fill="#ffffff"/><polygon points="91.0,66.0 109.0,66.0 100.0,84.0" fill="#0057a8"/><polygon points="91.0,98.0 109.0,98.0 100.0,116.0" fill="#0057a8"/><polygon points="91.0,130.0 109.0,130.0 100.0,148.0" fill="#0057a8"/></g>
+</svg>

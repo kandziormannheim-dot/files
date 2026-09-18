@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" width="360" height="200" role="img" aria-labelledby="t">
+<title id="t">Zwei gelbe Rhomben nebeneinander.</title>
+<rect width="360" height="200" fill="#ffffff"/>
+<polygon points="100.0,30.0 100.0,170.0 30.0,100.0" fill="#f2c500" stroke="#1a1a1a" stroke-width="1.5"/><polygon points="100.0,30.0 170.0,100.0 100.0,170.0" fill="#f2c500" stroke="#1a1a1a" stroke-width="1.5"/><polygon points="260.0,30.0 260.0,170.0 190.0,100.0" fill="#f2c500" stroke="#1a1a1a" stroke-width="1.5"/><polygon points="260.0,30.0 330.0,100.0 260.0,170.0" fill="#f2c500" stroke="#1a1a1a" stroke-width="1.5"/>
+</svg>

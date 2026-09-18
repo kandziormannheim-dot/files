@@ -56,4 +56,20 @@ $stand = praxisStand($db, $konfig, $benutzerId, 'src', 'funkverkehr');
 pruefeGleich(100, $stand['beste']['x']['beste'], 'bestes Ergebnis zählt');
 pruefeGleich(2, $stand['beste']['x']['versuche'], 'Versuche gezählt');
 
+// Diktat: Wortabgleich in Reihenfolge, Tippfehler halb, überzählige Wörter gezählt
+$d = ['text' => 'MAYDAY MAYDAY MAYDAY. THIS IS SEEADLER. FIRE ON BOARD. OVER.'];
+$e = diktatAuswerten($d, 'Mayday Mayday Mayday, this is Seeadler. Fire on board. Over');
+pruefeGleich(100, $e['prozent'], 'Diktat vollständig richtig');
+pruefeGleich(20, $e['punkte'], 'zehn Wörter → 20 halbe Punkte');
+pruefeGleich(20, $e['maximal'], 'Maximum in halben Punkten');
+$e = diktatAuswerten($d, 'MAYDAY MAYDAY THIS IS SEADLER FIRE ON BOARD OVER');
+pruefeGleich(8, $e['richtig'], 'ein Wort fehlt, eines mit Tippfehler → acht ganz richtig');
+pruefe($e['woerter'][5]['wert'] === 0.5, 'SEADLER zählt halb');
+pruefe(in_array(0.0, array_map(static fn (array $w): float => $w['wert'], array_slice($e['woerter'], 0, 3)), true), 'ein MAYDAY als fehlend markiert');
+$e = diktatAuswerten($d, 'MAYDAY MAYDAY MAYDAY THIS IS SEEADLER FIRE ON BOARD OVER OVER OVER');
+pruefeGleich(2, $e['zusaetzlich'], 'überzählige Wörter gezählt');
+pruefeGleich(100, $e['prozent'], 'überzählige Wörter kosten keine Punkte');
+pruefeGleich(0, diktatAuswerten($d, '')['prozent'], 'leere Mitschrift → 0 %');
+pruefeGleich(0, diktatAuswerten(['text' => ''], 'x')['prozent'], 'leerer Diktattext → 0 %, kein Absturz');
+
 exit(testErgebnis());
