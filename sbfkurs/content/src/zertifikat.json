@@ -4,21 +4,49 @@
   "kurz": "Beschränkt gültiges Funkbetriebszeugnis für den Seefunk (UKW, GMDSS-Seegebiet A1).",
   "reihenfolge": 1,
   "freigeschaltet": true,
-  "praxis": ["funkverkehr", "buchstabieren", "englisch", "dsc"],
-  "trainer": { "sicherAb": 2 },
+  "praxis": [
+    "funkverkehr",
+    "buchstabieren",
+    "englisch",
+    "diktat",
+    "dsc"
+  ],
+  "trainer": {
+    "sicherAb": 2
+  },
   "pruefung": {
-    "_zuPruefen": "Zahlen nach bestem Wissen; gegen die aktuelle Prüfungsordnung abgleichen.",
+    "_zuPruefen": "Zahlen nach bestem Wissen: 24 Fragen in 30 Minuten, bestanden ab 18 richtigen; Zusammensetzung anteilig nach Katalogabschnitten I–VII. Das Modul „anpassung“ (Anpassungsprüfung für ausländische Zeugnisse) ist nur im Trainer, nicht im Bogen. Gegen die Prüfungsordnung abgleichen.",
     "fragenProBogen": 24,
     "zeitMinuten": 30,
     "mindestRichtig": 18,
     "fragenMischen": true,
     "antwortenMischen": true,
     "amtlicheBoegen": "boegen.json",
-    "zusammensetzung": { "grundlagen": 6, "verkehrsabwicklung": 8, "dsc-gmdss": 6, "notverkehr": 4 },
+    "zusammensetzung": {
+      "gmdss": 3,
+      "funkeinrichtungen": 4,
+      "dsc": 2,
+      "ukw": 2,
+      "betriebsverfahren": 4,
+      "navtex": 1,
+      "sar": 8
+    },
     "weitereTeile": [
-      { "id": "uebersetzung", "titel": "Übersetzung Englisch → Deutsch, Fragen Deutsch → Englisch", "simuliert": "englisch" },
-      { "id": "diktat", "titel": "Aufnahme einer englischen Notmeldung nach Diktat", "simuliert": null },
-      { "id": "praxis", "titel": "Praktische Prüfung am Gerät", "simuliert": "dsc" }
+      {
+        "id": "uebersetzung",
+        "titel": "Übersetzung Englisch → Deutsch, Fragen Deutsch → Englisch",
+        "simuliert": "englisch"
+      },
+      {
+        "id": "diktat",
+        "titel": "Aufnahme einer englischen Notmeldung nach Diktat",
+        "simuliert": "diktat"
+      },
+      {
+        "id": "praxis",
+        "titel": "Praktische Prüfung am Gerät",
+        "simuliert": "dsc"
+      }
     ]
   }
 }

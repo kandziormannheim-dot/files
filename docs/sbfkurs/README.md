@@ -8,7 +8,8 @@ Zeugnisse — **SBF See** und **SBF Binnen** (Sportbootführerscheine, mit
 gemeinsamem Basisteil), **SRC** (Seefunk UKW), **UBI** (Binnenschifffahrtsfunk),
 **FKN** (Pyroschein) und **LRC** (Grenz-/Kurzwelle, Satellit) — dazu die Praxismodule
 Funkverkehr-Trainer (Lückentexte, Reihenfolgen), Buchstabiertafel,
-Englisch-Übersetzung und ein DSC-Controller-Simulator.
+Englisch-Übersetzung, Diktat (Meldung nach Sprachausgabe mitschreiben) und ein
+nachgebautes UKW-Funkgerät mit DSC-Controller.
 
 Technisch ist sie die Schwester der Womo-Schadensakte
 ([`docs/womo/`](../womo/README.md)): PHP ohne Framework, SQLite, Konfiguration
@@ -22,12 +23,20 @@ sie gepflegt werden, steht im Autorenhandbuch [`INHALTE.md`](INHALTE.md).
 ## Was heute drin ist — und was noch fehlt
 
 - **Lektionen:** eigene Texte, 8–10 je Zeugnis, fertig.
-- **Fragen:** je Zeugnis **10 selbst formulierte Beispielfragen**. Die
-  amtlichen Kataloge (ELWIS bzw. DSV/DMYV) konnten nicht mitgeliefert werden;
-  sie werden mit `werkzeuge/katalog-import.php` aus den PDFs importiert
-  (Anleitung in `INHALTE.md`). Bis dahin zeigt die Anwendung überall das Band
-  „Beispielfragen — noch nicht der amtliche Katalog“, Prüfungsbögen sind
-  entsprechend verkürzt.
+- **Fragen:** Für **SRC** (Gesamtfragenkatalog 10/2018 plus Anpassungsprüfung),
+  **LRC** (Fragenkatalog II, 02/2024) und **SBF Binnen** (08/2023, 300 Fragen)
+  sind die amtlichen Kataloge importiert. Die 73 Bildfragen des Binnen-Katalogs
+  zeigen **eigene, schematisch gezeichnete SVG-Grafiken** (Tafelzeichen,
+  Lichter, Sichtzeichen, Schallsignale, Segelskizzen) — nichts ist aus den PDFs
+  übernommen; Schallsignale lassen sich anhören. **SBF See, UBI und FKN** haben
+  noch je 10–14 selbst formulierte Beispielfragen; ihre Kataloge werden mit
+  `werkzeuge/katalog-import.php` aus den PDFs importiert (Anleitung in
+  `INHALTE.md`). Solange zeigt die Anwendung dort das Band „Beispielfragen —
+  noch nicht der amtliche Katalog“, Prüfungsbögen sind entsprechend verkürzt.
+- **Tonspuren als Text:** Diktat-Übungen (SRC, LRC englisch; UBI deutsch) lesen
+  eigene Not-, Dringlichkeits- und Sicherheitsmeldungen über die Sprachausgabe
+  des Browsers vor; die Textfassung ist immer einblendbar. Das Funkgerät im
+  DSC-Simulator hat Sprechtaste, Sendeleistung und antwortende Gegenstelle.
 - **Prüfungsregeln** (Fragen je Bogen, Zeit, Bestehensgrenze) stehen je
   Zeugnis in `content/<zert>/zertifikat.json` — nach bestem Wissen, als
   „zu prüfen“ markiert. Vor dem Livegang gegen die aktuelle Prüfungsordnung

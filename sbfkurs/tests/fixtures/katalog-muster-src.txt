@@ -1,0 +1,34 @@
+Gesamtfragenkatalog für das das beschränkt gültige Funkbetriebszeugnis
+Inhaltsverzeichnis
+I. Mobiler Seefunkdienst und weltweites Seenot- und Sicherheitsfunksystem………Fragen 001 – 023
+II. Funkeinrichtungen und Seefunkstellen…………………………………………………Fragen 024 – 052
+I. Mobiler Seefunkdienst und weltweites Seenot- und Sicherheitsfunksystem
+(GMDSS)
+1. Wofür steht die Abkürzung GMDSS? [1]
+1) Global Maritime Distress and Safety System
+2) General Maritime Digital Selective System
+3) German Maritime Distress Signalling Service
+4) Global Marine Data and Surveillance System
+2. [2] Welches Funkzeugnis ist für die Bedienung einer UKW-Seefunk-
+anlage mit DSC mindestens erforderlich?
+1) Beschränkt gültiges Funkbetriebszeugnis (Short Range Certificate
+[SRC])
+2) UBI
+3) LRC
+4) Kein Zeugnis
+Alle Rechte vorbehalten. Abdruck, Vervielfältigung und Veröffentlichung – auch auszugsweise – nur mit Genehmigung
+Stand: 10/2018 Korrektur 07012019 2
+Gesamtfragenkatalog für das das beschränkt gültige Funkbetriebszeugnis
+3. Welcher Kanal ist der internationale Not-, Dringlichkeits-, Sicherheits- und [3]
+Anrufkanal im UKW-Seefunk?
+1) Kanal 16
+2) Kanal 70
+3) Kanal 06
+4) Kanal 13
+II. Funkeinrichtungen und Seefunkstellen
+4. Was ist auf der Abbildung zu sehen? (siehe Abbildung) [4]
+1) Eine UKW-Seefunkanlage
+2) Ein NAVTEX-Empfänger
+3) Ein Radargerät
+Alle Rechte vorbehalten. Abdruck, Vervielfältigung und Veröffentlichung – auch auszugsweise – nur mit Genehmigung
+Stand: 10/2018 Korrektur 07012019 3

@@ -1,6 +1,8 @@
-/* SBF-Kurs — DSC-Controller-Simulator.
+/* SBF-Kurs — DSC-Controller-Simulator (nachgebautes UKW-Funkgerät).
    Ein vereinfachter UKW-Controller mit DSC als Zustandsautomat: Menübaum,
-   Eingabepuffer, Kanalwahl, DISTRESS-Taste mit Haltezeit. Jedes Szenario
+   Eingabepuffer, Kanalwahl, Sendeleistung 1 W/25 W, Sprechtaste (PTT) zum
+   Halten mit Antwort der Gegenstelle (Text, auf Wunsch vorgelesen) und
+   DISTRESS-Taste mit Haltezeit. Jedes Szenario
    nennt die erwartete Bedienfolge (content/dsc/szenarien.json); das Skript
    gleicht Schritt für Schritt ab, protokolliert Fehltritte und übergibt das
    Ergebnis an ein normales Formular — kein JSON-Endpunkt, kein Inline-Code. */
@@ -25,6 +27,13 @@
     var ergebnisFormular = document.querySelector('form[data-dsc-ergebnis]');
     var distressTaste = geraet.querySelector('[data-distress]');
     var klappe = geraet.querySelector('[data-klappe]');
+    var pttTaste = geraet.querySelector('[data-taste="ptt"]');
+    var leistungTaste = geraet.querySelector('[data-taste="leistung"]');
+    var anzeigeLeistung = geraet.querySelector('[data-anzeige-leistung]');
+    var funkKasten = document.querySelector('[data-funk]');
+    var funkDu = document.querySelector('[data-funk-du]');
+    var funkAntwort = document.querySelector('[data-funk-antwort]');
+    var funkVorlesen = document.querySelector('[data-funk-vorlesen]');
 
     // ---------------------------------------------------------- Menübaum
     var NATURES = ['undesignated', 'fire', 'flooding', 'collision', 'grounding', 'capsizing', 'sinking', 'adrift', 'abandoning', 'piracy', 'mob'];
@@ -36,6 +45,7 @@
     function neuerZustand() {
         return {
             kanal: '16',
+            leistung: '25',       // Sendeleistung in Watt
             menue: null,          // null | 'haupt' | 'distress' | 'individual' | 'all-ships' | 'ack'
             auswahl: 0,
             eingabe: '',
@@ -117,9 +127,10 @@
                 z.fertig = true;
             }
         } else {
-            // Kanalwechsel und Menü-Navigation sind nur dann Fehltritte, wenn
-            // sie eine erwartete Aktion vorwegnehmen; reines Blättern nicht.
-            var harmlos = (aktion === 'kanal' && !(erwartet && erwartet.aktion === 'kanal')) || aktion === 'blaettern';
+            // Kanalwechsel, Leistungswahl und Menü-Navigation sind nur dann
+            // Fehltritte, wenn sie eine erwartete Aktion vorwegnehmen; reines
+            // Blättern nicht.
+            var harmlos = ((aktion === 'kanal' || aktion === 'leistung') && !(erwartet && erwartet.aktion === aktion)) || aktion === 'blaettern';
             if (!harmlos) {
                 z.fehltritte++;
                 z.protokoll.push({ schritt: z.schritt, aktion: aktion, wert: wert, ok: false });
@@ -159,10 +170,65 @@
         }
     }
 
+    function leistungZeigen() {
+        if (anzeigeLeistung) { anzeigeLeistung.textContent = zustand.leistung + ' W'; }
+        if (leistungTaste) { leistungTaste.textContent = zustand.leistung === '25' ? '25 W → 1 W' : '1 W → 25 W'; }
+    }
+
+    // ---------------------------------------------------------- Sprechfunk (PTT halten)
+    var sprechText = (function () {
+        var synth = window.speechSynthesis;
+        var Utter = window.SpeechSynthesisUtterance;
+        return function (text, sprache) {
+            if (!synth || !Utter || !funkVorlesen || !funkVorlesen.checked) { return; }
+            synth.cancel();
+            var u = new Utter(text.replace(/(\d)(?=\d)/g, '$1 '));
+            u.lang = sprache === 'de' ? 'de-DE' : 'en-GB';
+            u.rate = 0.9;
+            var stimmen = synth.getVoices().filter(function (v) { return v.lang.replace('_', '-').toLowerCase().indexOf(u.lang.slice(0, 2)) === 0; });
+            if (stimmen[0]) { u.voice = stimmen[0]; }
+            synth.speak(u);
+        };
+    })();
+
+    function pttStart(ev) {
+        ev.preventDefault();
+        var z = zustand;
+        if (pttTaste.classList.contains('sendet')) { return; }
+        pttTaste.classList.add('sendet');
+        var erwartet = z.szenario && !z.fertig ? z.szenario.erwartet[z.schritt] : null;
+        var passendesPtt = erwartet && erwartet.aktion === 'ptt' ? erwartet : null;
+        zeigen('TX  CH ' + z.kanal + '  ' + z.leistung + ' W', passendesPtt && passendesPtt.sprechtext ? 'Du sprichst …' : '(Sprechfunk)', '');
+        if (funkKasten) {
+            funkKasten.hidden = false;
+            funkDu.textContent = passendesPtt && passendesPtt.sprechtext ? passendesPtt.sprechtext : '(Sprechfunk auf Kanal ' + z.kanal + ' — laut Szenario ist jetzt kein Sprechen vorgesehen)';
+            funkAntwort.textContent = '…';
+        }
+    }
+    function pttEnde() {
+        if (!pttTaste.classList.contains('sendet')) { return; }
+        pttTaste.classList.remove('sendet');
+        var z = zustand;
+        var erwartet = z.szenario && !z.fertig ? z.szenario.erwartet[z.schritt] : null;
+        var passendesPtt = erwartet && erwartet.aktion === 'ptt' ? erwartet : null;
+        ereignis('ptt');
+        if (passendesPtt && passendesPtt.antwort) {
+            zeigen('RX  CH ' + z.kanal, 'Gegenstelle antwortet', '');
+            if (funkAntwort) { funkAntwort.textContent = passendesPtt.antwort; }
+            sprechText(passendesPtt.antwort, z.szenario.sprache || 'en');
+        } else {
+            zeigen('RX  CH ' + z.kanal, '', '');
+            if (funkAntwort) { funkAntwort.textContent = '(keine Antwort)'; }
+        }
+    }
+
     function szenarioStarten(id) {
         var s = szenarien.filter(function (x) { return x.id === id; })[0];
         zustand = neuerZustand();
         zustand.szenario = s || null;
+        if (window.speechSynthesis) { window.speechSynthesis.cancel(); }
+        if (funkKasten) { funkKasten.hidden = true; }
+        leistungZeigen();
         if (s) {
             // Szenarien mit „quittung“ beginnen mit einem eingehenden Notalarm.
             zustand.eingehend = s.erwartet.some(function (e) { return e.aktion === 'quittung'; });
@@ -220,10 +286,11 @@
                 z.kanal = kanaele[i];
                 ereignis('kanal', z.kanal);
                 break;
-            case 'ptt':
-                ereignis('ptt');
-                zeigen('TX  CH ' + z.kanal, '(Sprechfunk)', '');
-                return;
+            case 'leistung':
+                z.leistung = z.leistung === '25' ? '1' : '25';
+                leistungZeigen();
+                ereignis('leistung', z.leistung);
+                break;
         }
         menueZeigen();
     }
@@ -372,8 +439,16 @@
 
     // ---------------------------------------------------------- Verdrahtung
     geraet.querySelectorAll('[data-taste]').forEach(function (k) {
+        if (k.dataset.taste === 'ptt') { return; }
         k.addEventListener('click', function () { taste(k.dataset.taste); });
     });
+    if (pttTaste) {
+        pttTaste.addEventListener('pointerdown', pttStart);
+        pttTaste.addEventListener('pointerup', pttEnde);
+        pttTaste.addEventListener('pointerleave', pttEnde);
+        pttTaste.addEventListener('keydown', function (ev) { if (ev.key === ' ' || ev.key === 'Enter') { pttStart(ev); } });
+        pttTaste.addEventListener('keyup', pttEnde);
+    }
     geraet.querySelectorAll('[data-ziffer]').forEach(function (k) {
         k.addEventListener('click', function () { ziffer(k.dataset.ziffer); });
     });
@@ -390,5 +465,6 @@
     }
 
     zustand = neuerZustand();
+    leistungZeigen();
     menueZeigen();
 })();

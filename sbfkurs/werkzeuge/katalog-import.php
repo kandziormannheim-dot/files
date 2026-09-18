@@ -15,6 +15,11 @@
  * getrennten Dateien (Basisfragen, spezifische Fragen), die in einer
  * fragen.json landen; die Fragennummern laufen dort durch.
  *
+ * --anhaengen behält die vorhandenen Fragen anderer Module (etwa den
+ * Hauptkatalog), wenn ein zweiter Katalog mit eigenem Modul dazukommt
+ * (SRC-Anpassungsprüfung); das Profil hebt dessen Nummern per nummerOffset
+ * aus dem Nummernkreis des Hauptkatalogs heraus.
+ *
  * Das Textlayout der PDFs ist von Ausgabe zu Ausgabe verschieden — deshalb
  * stecken alle Muster im Profil, nicht hier. Der Bericht (import-bericht.json
  * neben dem Ziel) macht Fehlparsing sichtbar, statt es zu verschlucken.
@@ -24,9 +29,9 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/src/bootstrap.php';
 
-$optionen = getopt('', ['profil:', 'pdf:', 'txt:', 'ziel:', 'zusammenfuehren', 'stand:']);
+$optionen = getopt('', ['profil:', 'pdf:', 'txt:', 'ziel:', 'zusammenfuehren', 'anhaengen', 'stand:']);
 if (!isset($optionen['profil'], $optionen['ziel']) || (!isset($optionen['pdf']) && !isset($optionen['txt']))) {
-    fwrite(STDERR, "Aufruf: --profil <json> (--pdf <datei> | --txt <datei>)… --ziel <fragen.json> [--zusammenfuehren] [--stand JJJJ-MM]\n");
+    fwrite(STDERR, "Aufruf: --profil <json> (--pdf <datei> | --txt <datei>)… --ziel <fragen.json> [--zusammenfuehren] [--anhaengen] [--stand JJJJ-MM]\n");
     exit(2);
 }
 
@@ -35,7 +40,7 @@ if ($profil === null) {
     fwrite(STDERR, "Profil nicht lesbar: {$optionen['profil']}\n");
     exit(2);
 }
-$profil += ['kopfzeilen' => [], 'modulRegex' => '', 'modulZuordnung' => [], 'modulNachNummer' => [], 'module' => [], 'standardModul' => '', 'antwortenOhneKennung' => false, 'richtigIstErste' => true, 'bildMarker' => []];
+$profil += ['kopfzeilen' => [], 'modulRegex' => '', 'modulZuordnung' => [], 'modulNachNummer' => [], 'module' => [], 'standardModul' => '', 'antwortenOhneKennung' => false, 'antwortenJeFrage' => 4, 'fortlaufend' => false, 'leerzeilenIgnorieren' => false, 'nummerOffset' => 0, 'bilder' => [], 'lektionJeModul' => [], 'richtigIstErste' => true, 'bildMarker' => [], 'entfernen' => [], 'ohneBild' => [], 'schall' => []];
 
 // ------------------------------------------------------------ Text holen
 
@@ -51,28 +56,36 @@ if (trim($text) === '') {
     exit(1);
 }
 
-/** pdftotext -layout aufrufen; fehlt poppler, mit Hinweis abbrechen. */
+/** Text aus der PDF holen: pdf-text.py (PyMuPDF), sonst pdftotext; fehlt beides, abbrechen. */
 function textAusPdf(string $pdf): string
 {
     if (!is_file($pdf)) {
         fwrite(STDERR, "PDF nicht gefunden: $pdf\n");
         exit(1);
     }
-    $prozess = proc_open(['pdftotext', '-layout', '-enc', 'UTF-8', $pdf, '-'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-    if (!is_resource($prozess)) {
-        fwrite(STDERR, "pdftotext nicht gefunden (Paket poppler-utils). Alternativ den Text anders extrahieren und mit --txt übergeben.\n");
-        exit(1);
+    $befehle = [
+        // pdf-text.py (PyMuPDF) baut Zeilen aus den Wortpositionen und zieht
+        // die in den Funk-Katalogen mittig neben dem Text stehenden Kennungen
+        // vor die erste Zeile des Eintrags (siehe Kopf der Datei). pdftotext
+        // ließe sie in der zweiten Zeile stehen, taugt aber für die
+        // Inline-Kataloge (SBF) als Rückfall.
+        ['python3', __DIR__ . '/pdf-text.py', $pdf],
+        ['pdftotext', '-layout', '-enc', 'UTF-8', $pdf, '-'],
+    ];
+    foreach ($befehle as $befehl) {
+        $prozess = @proc_open($befehl, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        if (!is_resource($prozess)) {
+            continue;
+        }
+        $text = (string) stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        if (proc_close($prozess) === 0 && trim($text) !== '') {
+            return $text;
+        }
     }
-    $text = (string) stream_get_contents($pipes[1]);
-    $fehler = (string) stream_get_contents($pipes[2]);
-    fclose($pipes[1]);
-    fclose($pipes[2]);
-    if (proc_close($prozess) !== 0) {
-        fwrite(STDERR, "pdftotext scheiterte: $fehler\n");
-        exit(1);
-    }
-
-    return $text;
+    fwrite(STDERR, "Weder PyMuPDF (python3 -m pip install pymupdf) noch pdftotext (poppler-utils) verfügbar. Alternativ den Text anders extrahieren und mit --txt übergeben.\n");
+    exit(1);
 }
 
 // ------------------------------------------------------ Zeilen normalisieren
@@ -83,13 +96,27 @@ function muster(string $regex, string $flags = 'u'): string
     return '/' . preg_replace('~(?<!\\\\)/~', '\\/', $regex) . '/' . $flags;
 }
 
-/** Kopf-/Fußzeilen entfernen, Silbentrennung zusammenziehen, Zeilen trimmen. */
-function zeilenNormalisieren(string $text, array $kopfzeilen): array
+/**
+ * Kopf-/Fußzeilen entfernen, Störtext streichen („entfernen“, z. B. die
+ * Verweisnummern „[117]“ der Funk-Kataloge), Silbentrennung zusammenziehen,
+ * Zeilen trimmen. Eine Zeile, die durch das Streichen leer wird, fällt weg —
+ * sie darf keine Blockgrenze erzeugen.
+ */
+function zeilenNormalisieren(string $text, array $kopfzeilen, array $entfernen = []): array
 {
     $zeilen = preg_split('/\R/u', str_replace("\f", "\n", $text)) ?: [];
     $ergebnis = [];
     foreach ($zeilen as $zeile) {
         $zeile = rtrim($zeile);
+        foreach ($entfernen as $muster) {
+            $gestrichen = preg_replace(muster($muster), '', $zeile);
+            if ($gestrichen !== null && $gestrichen !== $zeile) {
+                $zeile = rtrim($gestrichen);
+                if (trim($zeile) === '') {
+                    continue 2;
+                }
+            }
+        }
         $raus = false;
         foreach ($kopfzeilen as $muster) {
             if (preg_match(muster($muster, 'ui'), $zeile)) {
@@ -124,10 +151,33 @@ function katalogParsen(array $zeilen, array $profil): array
     $modul = $profil['standardModul'];
     $aktuell = null;    // laufende Frage
     $ziel = null;       // 'frage' | 'antwort'
+    $letzteNr = 0;
+    $lose = [];         // Zeilen nach einer Blockgrenze, noch nicht zugeordnet
     $bildMarker = implode('|', array_map(static fn (string $m): string => $m, $profil['bildMarker']));
+    $jeFrage = (int) $profil['antwortenJeFrage'];
+
+    $loseAnLetzteAntwort = static function () use (&$lose, &$aktuell, &$fragen): void {
+        if ($lose === []) {
+            return;
+        }
+        if ($aktuell !== null && $aktuell['antworten'] === []) {
+            // Noch keine Antwort: lose Zeilen sind Fragetext (Nummer stand
+            // allein auf der Zeile, der Text folgt nach einer Blockgrenze).
+            $aktuell['text'] = trim($aktuell['text'] . ' ' . implode(' ', $lose));
+        } elseif ($aktuell !== null) {
+            $aktuell['antworten'][count($aktuell['antworten']) - 1] .= ' ' . implode(' ', $lose);
+        } elseif ($fragen !== [] && $fragen[count($fragen) - 1]['antworten'] !== []) {
+            $letzte = count($fragen) - 1;
+            $n = count($fragen[$letzte]['antworten']) - 1;
+            $fragen[$letzte]['antworten'][$n] .= ' ' . implode(' ', $lose);
+        }
+        $lose = [];
+    };
 
     $abschliessen = static function () use (&$fragen, &$aktuell): void {
         if ($aktuell !== null) {
+            $aktuell['text'] = trim(preg_replace('/\s+/u', ' ', $aktuell['text']) ?? $aktuell['text']);
+            $aktuell['antworten'] = array_map(static fn (string $a): string => trim(preg_replace('/\s+/u', ' ', $a) ?? $a), $aktuell['antworten']);
             $fragen[] = $aktuell;
             $aktuell = null;
         }
@@ -135,46 +185,79 @@ function katalogParsen(array $zeilen, array $profil): array
 
     foreach ($zeilen as $zeile) {
         if (trim($zeile) === '') {
-            // Leerzeile: Fortsetzung endet, Frage bleibt offen bis zur nächsten Frage.
-            $ziel = null;
+            // Leerzeile: Fortsetzung endet. Mit leerzeilenIgnorieren gilt sie
+            // als Blockgrenze — die folgenden losen Zeilen kommen in einen
+            // Puffer und werden dem passenden Nachbarn zugeordnet: dem
+            // Fragetext, wenn die nächste Frage ohne Text beginnt (die Nummer
+            // steht in den Funk-Katalogen mittig neben mehrzeiligem Text),
+            // sonst der vorigen Antwort (Seitenumbruch mitten in der Antwort).
+            $ziel = $profil['leerzeilenIgnorieren'] ? 'lose' : null;
             continue;
+        }
+        if ($ziel === 'lose' && !preg_match(muster($profil['frageRegex']), $zeile) && !preg_match(muster($profil['antwortRegex']), $zeile)
+            && !($profil['modulRegex'] !== '' && preg_match(muster($profil['modulRegex']), $zeile))) {
+            $lose[] = trim($zeile);
+            continue;
+        }
+        $istFrage = preg_match(muster($profil['frageRegex']), $zeile, $f) === 1;
+        $istAntwort = $aktuell !== null && !$profil['antwortenOhneKennung'] && preg_match(muster($profil['antwortRegex']), $zeile, $a) === 1;
+        if ($istFrage && $istAntwort) {
+            // Inline-Kataloge nummerieren auch Antworten („1. …“): Die nächste
+            // Antwortnummer der offenen Frage gewinnt, sonst ist es eine Frage.
+            $nr = (int) $f[1];
+            $istFrage = !($nr <= $jeFrage && $nr === count($aktuell['antworten']) + 1 && count($aktuell['antworten']) < $jeFrage);
+            $istAntwort = !$istFrage;
         }
         // Frage vor Modul prüfen: „3. Welcher Kanal …“ sähe sonst wie eine
         // Überschrift aus. Überschriften tragen in den Katalogen keinen Punkt.
-        if (preg_match(muster($profil['frageRegex']), $zeile, $t)) {
+        // Fortlaufend nummerierte Kataloge: Nur die nächste Nummer eröffnet eine
+        // Frage — eine Zeile „16.“ mitten in einer Antwort bleibt Antworttext.
+        if ($istFrage && $profil['fortlaufend'] && (int) $f[1] !== $letzteNr + 1) {
+            $istFrage = false;
+        }
+        if ($istFrage && (int) $f[1] > $letzteNr) {
+            $text = trim($f[2] ?? '');
+            if ($text === '' && $lose !== []) {
+                $text = implode(' ', $lose);
+                $lose = [];
+            }
+            $loseAnLetzteAntwort();
             $abschliessen();
-            $aktuell = ['nr' => (int) $t[1], 'modul' => $modul, 'text' => trim($t[2]), 'antworten' => [], 'bild' => false];
+            $letzteNr = (int) $f[1];
+            $aktuell = ['nr' => $letzteNr, 'modul' => $modul, 'text' => $text, 'antworten' => [], 'bild' => false];
             $ziel = 'frage';
             continue;
         }
         if ($profil['modulRegex'] !== '' && preg_match(muster($profil['modulRegex']), $zeile, $t)) {
+            $loseAnLetzteAntwort();
             $abschliessen();
             $schluessel = (string) $t[1];
             $modul = $profil['modulZuordnung'][$schluessel] ?? $modul;
             $ziel = null;
             continue;
         }
-        if ($aktuell !== null && !$profil['antwortenOhneKennung'] && preg_match(muster($profil['antwortRegex']), $zeile, $t)) {
-            $aktuell['antworten'][] = trim($t[2]);
+        if ($istAntwort) {
+            $loseAnLetzteAntwort();
+            $aktuell['antworten'][] = trim($a[2] ?? '');
             $ziel = 'antwort';
             continue;
         }
         if ($aktuell !== null) {
             $stueck = trim($zeile);
-            if ($profil['antwortenOhneKennung'] && $ziel !== 'frage-fortsetzung' && ($ziel === null || $ziel === 'antwort-neu')) {
+            if ($profil['antwortenOhneKennung'] && ($ziel === null || $ziel === 'antwort-neu')) {
                 // Ohne Buchstabenkennung: jeder Absatz nach der Frage ist eine Antwort.
                 $aktuell['antworten'][] = $stueck;
                 $ziel = 'antwort';
                 continue;
             }
-            if ($ziel === 'frage' || $ziel === 'frage-fortsetzung') {
+            if ($ziel === 'frage') {
                 $aktuell['text'] .= ' ' . $stueck;
-                $ziel = $profil['antwortenOhneKennung'] ? 'frage' : 'frage';
             } elseif ($ziel === 'antwort' && $aktuell['antworten'] !== []) {
                 $aktuell['antworten'][count($aktuell['antworten']) - 1] .= ' ' . $stueck;
             }
         }
     }
+    $loseAnLetzteAntwort();
     $abschliessen();
 
     foreach ($fragen as &$f) {
@@ -197,7 +280,7 @@ function katalogParsen(array $zeilen, array $profil): array
 
 // ---------------------------------------------------------- Zusammenbauen
 
-$zeilen = zeilenNormalisieren($text, $profil['kopfzeilen']);
+$zeilen = zeilenNormalisieren($text, $profil['kopfzeilen'], $profil['entfernen']);
 $roh = katalogParsen($zeilen, $profil);
 if ($roh === []) {
     fwrite(STDERR, "Keine Fragen erkannt — frageRegex im Profil prüfen. Erste Zeilen:\n" . implode("\n", array_slice($zeilen, 0, 15)) . "\n");
@@ -206,8 +289,9 @@ if ($roh === []) {
 
 $kennung = (string) $profil['zertifikat'];
 $bisher = [];
-if (isset($optionen['zusammenfuehren']) && is_file((string) $optionen['ziel'])) {
-    foreach ((jsonLesen((string) $optionen['ziel']) ?? [])['fragen'] ?? [] as $f) {
+$vorhanden = jsonLesen((string) $optionen['ziel']) ?? [];
+if ((isset($optionen['zusammenfuehren']) || isset($optionen['anhaengen'])) && is_file((string) $optionen['ziel'])) {
+    foreach ($vorhanden['fragen'] ?? [] as $f) {
         if (isset($f['id']) && empty($f['beispiel'])) {
             $bisher[$f['id']] = $f;
         }
@@ -216,13 +300,18 @@ if (isset($optionen['zusammenfuehren']) && is_file((string) $optionen['ziel'])) 
 
 $bericht = ['fragen' => count($roh), 'module' => [], 'pruefen' => []];
 $fragen = [];
+$offset = (int) $profil['nummerOffset'];
 foreach ($roh as $f) {
-    $id = sprintf('%s-%03d', $kennung, $f['nr']);
+    $nr = $f['nr'] + $offset;
+    $id = sprintf('%s-%03d', $kennung, $nr);
+    $bild = $profil['bilder'][(string) $f['nr']] ?? $bisher[$id]['bild'] ?? null;
     $gruende = [];
     if (count($f['antworten']) !== 4) {
         $gruende[] = count($f['antworten']) . ' Antworten';
     }
-    if ($f['bild']) {
+    if ($f['bild'] && $bild === null && !in_array($f['nr'], array_map('intval', $profil['ohneBild']), true)) {
+        // Bildmarker im Text, aber kein Bild zugeordnet — es sei denn, das
+        // Profil bestätigt per „ohneBild“, dass die Frage ohne Bild auskommt.
         $gruende[] = 'Bildverweis';
     }
     if (mb_strlen($f['text']) < 15) {
@@ -230,14 +319,17 @@ foreach ($roh as $f) {
     }
     $eintrag = [
         'id' => $id,
-        'nr' => $f['nr'],
+        'nr' => $nr,
         'modul' => $f['modul'],
         'text' => $f['text'],
         'antworten' => $f['antworten'],
         'richtig' => $profil['richtigIstErste'] ? 0 : (int) ($bisher[$id]['richtig'] ?? 0),
-        'bild' => $bisher[$id]['bild'] ?? null,
+        'bild' => $bild,
+        // Schallsignal als Tonfolge (k = kurz, l = lang) — die Ansicht bietet
+        // dazu einen „Anhören“-Knopf, die Grafik bleibt die Textfassung.
+        'schall' => $profil['schall'][(string) $f['nr']] ?? $bisher[$id]['schall'] ?? null,
         'hinweis' => $bisher[$id]['hinweis'] ?? '',
-        'lektion' => $bisher[$id]['lektion'] ?? null,
+        'lektion' => $bisher[$id]['lektion'] ?? ($profil['lektionJeModul'][$f['modul']] ?? null),
         'beispiel' => false,
     ];
     if ($gruende !== []) {
@@ -248,15 +340,46 @@ foreach ($roh as $f) {
     $fragen[] = $eintrag;
 }
 
+$module = $profil['module'];
+if (isset($optionen['anhaengen'])) {
+    // Fragen anderer Module aus der vorhandenen Datei behalten, Modulliste vereinen.
+    $neueModule = array_column($profil['module'], 'id');
+    $behalten = [];
+    foreach ($vorhanden['fragen'] ?? [] as $f) {
+        if (empty($f['beispiel']) && !in_array($f['modul'] ?? '', $neueModule, true)) {
+            $behalten[] = $f;
+        }
+    }
+    $fragen = array_merge($behalten, $fragen);
+    $bekannt = array_column($module, 'id');
+    $alteModule = [];
+    foreach ($vorhanden['module'] ?? [] as $m) {
+        if (!in_array($m['id'], $bekannt, true)) {
+            $alteModule[] = $m;
+        }
+    }
+    $module = array_merge($alteModule, $module);
+    usort($fragen, static fn (array $a, array $b): int => $a['nr'] <=> $b['nr']);
+}
+
+$quelle = ($profil['quelle'] ?? []) + ['name' => 'Import', 'stand' => (string) ($optionen['stand'] ?? date('Y-m')), 'amtlich' => true];
+if (isset($optionen['stand'])) {
+    $quelle['stand'] = (string) $optionen['stand'];
+}
+if (isset($optionen['anhaengen']) && !empty($vorhanden['quelle']['name'])) {
+    // Der Hauptkatalog bleibt die Quelle; der angehängte Katalog wird unter
+    // „ergaenzt“ genannt (Name, Stand), ohne den Hauptstand zu überschreiben.
+    $ergaenzt = array_values(array_filter((array) ($vorhanden['quelle']['ergaenzt'] ?? []), static fn (array $q): bool => ($q['name'] ?? '') !== $quelle['name']));
+    $ergaenzt[] = ['name' => $quelle['name'], 'stand' => $quelle['stand']];
+    $quelle = $vorhanden['quelle'];
+    $quelle['ergaenzt'] = $ergaenzt;
+}
 $katalog = [
     'zertifikat' => $kennung,
-    'quelle' => ($profil['quelle'] ?? []) + ['name' => 'Import', 'stand' => (string) ($optionen['stand'] ?? date('Y-m')), 'amtlich' => true],
-    'module' => $profil['module'],
+    'quelle' => $quelle,
+    'module' => $module,
     'fragen' => $fragen,
 ];
-if (isset($optionen['stand'])) {
-    $katalog['quelle']['stand'] = (string) $optionen['stand'];
-}
 
 // -------------------------------------------------------- Prüfen, schreiben
 

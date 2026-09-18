@@ -144,7 +144,14 @@ Regeln, die `katalog-pruefen.php` durchsetzt:
   mischt beim Anzeigen — im Katalog darf die richtige Antwort also ruhig immer
   vorn stehen, wie es die amtlichen Kataloge tun.
 - `modul` muss in `module` vorkommen, `lektion` (falls gesetzt) im Lektionsindex,
-  `bild` (falls gesetzt) unter `bilder/`.
+  `bild` (falls gesetzt) unter `bilder/` (PNG, JPG, GIF, SVG, WebP).
+- `bildText` (optional) ist die Textfassung des Bildes für das `alt`-Attribut.
+  Fehlt er, nimmt die Anwendung bei SVG-Dateien deren `<title>` — die selbst
+  gezeichneten Grafiken (siehe unten) tragen ihre Beschreibung dort.
+- `schall` (optional) ist eine Tonfolge aus `k` (kurzer Ton, 1 s) und `l`
+  (langer Ton, 4 s), etwa `"lkk"`. Die Anwendung zeigt dann einen Knopf
+  „Signal anhören", der die Folge im Browser erzeugt (Web Audio); die
+  Grafik mit Punkt und Strich bleibt die Textfassung.
 - `hinweis` ist die Erklärung, die der Trainer nach der Antwort zeigt — ein bis
   drei Sätze, eigene Worte.
 - `beispiel: true` kennzeichnet selbst formulierte Fragen. Solange auch nur eine
@@ -280,70 +287,124 @@ und lässt den Lernenden selbst bewerten (richtig / teilweise / falsch).
 }
 ```
 
-### `dsc/szenarien.json`
+### `uebungen/diktat.json` — Meldung nach Diktat aufnehmen
+
+```json
+{
+  "uebungen": [
+    {
+      "id": "mayday-feuer", "titel": "Notmeldung: Feuer an Bord", "sprache": "en",
+      "hinweis": "Die Meldung kommt einmal im Stück.",
+      "text": "MAYDAY MAYDAY MAYDAY. THIS IS SAILING YACHT NORDWIND NORDWIND NORDWIND. MMSI 211456780. …"
+    }
+  ]
+}
+```
+
+`text` ist der diktierte Wortlaut und zugleich die Textfassung („Tonspur als
+Text"), die der Lernende einblenden kann. Vorgelesen wird im Browser über die
+Sprachausgabe des Systems (Web Speech API, Sprache nach `sprache`: `en` oder
+`de`; Ziffern werden einzeln gesprochen). `sprechtext` (optional) ersetzt den
+Text nur für die Sprachausgabe, wenn die Aussprache es braucht. Bewertet wird
+Wort für Wort in Reihenfolge: ein Tippfehler in langen Wörtern zählt halb,
+fehlende Wörter ganz; überzählige Wörter werden gezählt, kosten aber nichts.
+Praxismodul-Kennung: `diktat` (in `zertifikat.json` unter `praxis` und als
+`simuliert` eines Prüfungsteils).
+
+### `dsc/szenarien.json` — Funkgerät mit DSC-Controller
 
 Siehe Kommentar in der Datei selbst; jedes Szenario beschreibt eine Lage und
-die erwartete Bedienfolge am simulierten Controller.
+die erwartete Bedienfolge am nachgebauten Gerät (Menü, Ziffern, Kanal,
+Sendeleistung `leistung` 1/25 W, Sprechtaste `ptt`, DISTRESS-Klappe). Ein
+`ptt`-Schritt kann `sprechtext` (was der Lernende beim Halten der Taste sagt)
+und `antwort` (was die Gegenstelle nach dem Loslassen antwortet) tragen; die
+Antwort erscheint als Text und wird auf Wunsch vorgelesen (`sprache` je
+Szenario). Alle Wortlaute sind eigene Beispiele.
 
 ## Amtliche Fragenkataloge importieren
 
-Die amtlichen Kataloge (SRC, UBI, LRC auf elwis.de; FKN bei DSV/DMYV) sind
-amtliche Werke und dürfen übernommen werden. Die Lektionstexte bleiben eigenes
-Werk.
+Die amtlichen Fragenkataloge (SBF See und Binnen auf elwis.de; SRC, UBI und
+LRC als Verkehrsblatt-Bekanntmachungen, deren Lesefassungen der Fachstelle
+FVT/ABVT Koblenz ebenfalls über elwis.de verteilt werden) sind Grundlage der
+Prüfungen und werden als Fragen-Daten übernommen. Die Lesefassungen der
+Funk-Kataloge tragen einen Vermerk „Alle Rechte vorbehalten" der Fachstelle;
+rechtsverbindlich und amtlich bekannt gemacht sind die Texte im Verkehrsblatt.
+Übernommen werden ausschließlich die Fragen und Antworten — Fotos, Zeichnungen
+und Layout der PDFs nicht. Die Lektionstexte bleiben eigenes Werk.
 
-Voraussetzung: `pdftotext` (Paket `poppler-utils`). Alternativ die PDF
-anderweitig als Text speichern und mit `--txt` übergeben.
+Voraussetzung ist Python 3 mit PyMuPDF (`python3 -m pip install pymupdf`);
+`werkzeuge/pdf-text.py` gewinnt daraus den Text. Fehlt PyMuPDF, fällt das
+Skript auf `pdftotext` (poppler-utils) zurück, das aber die Tabellen der
+Funk-Kataloge nicht sauber liest. Alternativ die PDF anderweitig als Text
+speichern und mit `--txt` übergeben.
 
-```bash
-php sbfkurs/werkzeuge/katalog-import.php \
-    --profil sbfkurs/werkzeuge/import-profile/elwis-src.json \
-    --pdf ~/Downloads/Fragenkatalog-SRC.pdf \
-    --ziel sbfkurs/content/src/fragen.json \
-    --zusammenfuehren
-```
-
-Die Kataloge zu den Sportbootführerscheinen bestehen aus mehreren Dateien
-(Basisfragen, spezifische Fragen See bzw. Binnen und Segeln). `--pdf` und
-`--txt` dürfen deshalb mehrfach vorkommen; die Fragennummern laufen über die
-Dateien durch, und das Profil ordnet die Module über `modulNachNummer`
-(Nummernbereiche) statt über Überschriften zu:
+Die Profile in `werkzeuge/import-profile/` passen zu den Ausgaben, mit denen
+die Kataloge eingespielt wurden (Stand in der jeweiligen `quelle`):
 
 ```bash
-php sbfkurs/werkzeuge/katalog-import.php \
-    --profil sbfkurs/werkzeuge/import-profile/elwis-sbf-see.json \
-    --pdf ~/Downloads/Basisfragen.pdf \
-    --pdf ~/Downloads/Spezifische-Fragen-See.pdf \
-    --ziel sbfkurs/content/see/fragen.json \
-    --zusammenfuehren
+W=sbfkurs/werkzeuge; P=$W/import-profile; C=sbfkurs/content
+
+# SRC: Gesamtfragenkatalog 10/2018, danach die Anpassungsprüfung (Modul „anpassung", Nummern 501 ff.)
+php $W/katalog-import.php --profil $P/elwis-src.json --pdf Fragenkatalog-SRC-2018.pdf --ziel $C/src/fragen.json --stand 2018-10
+php $W/katalog-import.php --profil $P/elwis-src-anpassung.json --pdf Anpassungspruefung-SRC.pdf --ziel $C/src/fragen.json --anhaengen --stand 2011-10
+
+# LRC: Fragenkatalog II, Stand 02/2024
+php $W/katalog-import.php --profil $P/elwis-lrc.json --pdf Fragenkatalog-LRC.pdf --ziel $C/lrc/fragen.json --stand 2024-02
+
+# SBF Binnen: eine PDF (Basisfragen 1–72, Binnen 73–253, Segeln 254–300), Bilder vorher zeichnen
+php $W/bilder-zeichnen.php
+php $W/katalog-import.php --profil $P/elwis-sbf-binnen.json --pdf Fragenkatalog-Binnen.pdf --ziel $C/binnen/fragen.json --stand 2023-08
+
+# SBF See: Basisfragen und spezifische Fragen als getrennte Dateien
+php $W/katalog-import.php --profil $P/elwis-sbf-see.json --pdf Basisfragen.pdf --pdf Spezifische-Fragen-See.pdf --ziel $C/see/fragen.json --zusammenfuehren
 ```
 
-Für den SBF Binnen kommt `--pdf Spezifische-Fragen-Segeln.pdf` hinzu (Profil
-`elwis-sbf-binnen.json`). Die Bereichsgrenzen in den Profilen sind Annahmen —
-nach dem Import zeigt der Bericht die Fragenzahl je Modul; stimmt sie nicht mit
-dem Katalog überein, die Grenzen im Profil anpassen und erneut importieren.
+Optionen: `--pdf`/`--txt` dürfen mehrfach vorkommen (die Fragennummern laufen
+über die Dateien durch). `--zusammenfuehren` behält `hinweis`, `lektion`,
+`bild` und `schall` der bestehenden Datei je `id` und verwirft Beispielfragen.
+`--anhaengen` behält die Fragen der anderen Module (Hauptkatalog) und fügt
+den neuen Katalog mit eigenem Modul hinzu; die Quelle des Hauptkatalogs bleibt,
+der angehängte wird unter `quelle.ergaenzt` genannt. `--stand JJJJ-MM`
+überschreibt den Stand aus dem Profil.
 
 Was passiert:
 
-1. Text extrahieren, Kopf- und Fußzeilen nach dem Profil entfernen,
-   Silbentrennungen am Zeilenende zusammenziehen.
-2. Fragen und Antworten nach den regulären Ausdrücken im Profil erkennen.
-   Das Textlayout der PDFs ist von Ausgabe zu Ausgabe verschieden — passt ein
+1. Text gewinnen: `pdf-text.py` baut die Zeilen aus den Wortpositionen. In den
+   Funk-Katalogen stehen Fragennummer und Antwortkennung in einer schmalen
+   linken Spalte mittig neben mehrzeiligem Text; das Skript setzt sie vor die
+   erste Zeile des Eintrags. Kopf- und Fußzeilen (`kopfzeilen`) fallen weg,
+   Störtext (`entfernen`, etwa die Verweisnummern „[117]") wird gestrichen,
+   Silbentrennungen am Zeilenende werden zusammengezogen.
+2. Fragen und Antworten nach den regulären Ausdrücken im Profil erkennen
+   (`frageRegex`, `antwortRegex`, `fortlaufend`: nur die nächste Nummer eröffnet
+   eine Frage). Module kommen aus Überschriften (`modulRegex`/`modulZuordnung`)
+   oder — verlässlicher — aus Nummernbereichen (`modulNachNummer`). Das
+   Textlayout der PDFs ist von Ausgabe zu Ausgabe verschieden: passt ein
    Muster nicht, wird es im Profil angepasst, nicht im Skript.
-3. Bericht schreiben: `content/<zert>/import-bericht.json` listet Fragen ohne
-   vier Antworten, mit Bildverweis oder auffällig kurzem Text. Diese Fragen
-   bekommen `pruefen: true`.
-4. Mit `--zusammenfuehren` bleiben `hinweis`, `lektion` und `bild` der
-   bestehenden Datei je `id` erhalten; Beispielfragen werden verworfen.
+3. Je Frage ergänzen: `lektion` aus `lektionJeModul`, `bild` aus `bilder`
+   (Nummer → Datei unter `bilder/`), `schall` aus `schall` (Nummer → Tonfolge);
+   `nummerOffset` hebt einen zweiten Katalog aus dem Nummernkreis heraus.
+4. Bericht schreiben: `content/<zert>/import-bericht.json` (nicht
+   eingecheckt) listet Fragen ohne vier Antworten, mit Bildmarker aber ohne
+   Bild (außer sie stehen in `ohneBild`) oder mit auffällig kurzem Text. Diese
+   Fragen bekommen `pruefen: true`.
 5. Am Ende läuft dieselbe Validierung wie `katalog-pruefen.php`. Bei Fehlern
    landet das Ergebnis in `fragen.import.json` daneben, die alte Datei bleibt.
 
-Bilder: `pdfimages -png Katalog.pdf content/<zert>/bilder/roh` extrahiert alle
-Abbildungen; die passenden werden umbenannt (`<frage-id>.png`) und im JSON unter
-`bild` eingetragen.
+### Bilder: eigene Grafiken statt Katalog-Abbildungen
 
-Nach dem Import: `quelle.amtlich` auf `true` setzen, `stand` eintragen,
-Prüfungsregeln in `zertifikat.json` gegen die aktuelle Prüfungsordnung
-abgleichen und den Schlüssel `_zuPruefen` entfernen.
+Die Abbildungen der Kataloge (Tafelzeichen, Lichterführung, Sichtzeichen,
+Schallsignale, Segelskizzen) werden nicht aus den PDFs übernommen.
+`werkzeuge/bilder-zeichnen.php` erzeugt für den SBF Binnen 73 eigene,
+schematische SVGs nach `content/binnen/bilder/NNN.svg` aus wenigen Bausteinen
+(Tafel, Licht, Kegel, Flagge, Bootssilhouette, Segelboot von oben). Jede Datei
+trägt im `<title>` ihre Textfassung, die als Alt-Text dient. Das Skript ist
+deterministisch; die SVGs sind eingecheckt, das Skript dokumentiert ihre
+Herkunft. Neue Bildfragen: Motiv im Skript ergänzen, Nummer im Profil unter
+`bilder` eintragen, neu importieren.
+
+Nach dem Import: Prüfungsregeln in `zertifikat.json` gegen die aktuelle
+Prüfungsordnung abgleichen und den Schlüssel `_zuPruefen` entfernen.
 
 ## Prüfen
 

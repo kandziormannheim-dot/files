@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-labelledby="t">
+<title id="t">Tafelzeichen: roter Rahmen, weißes Feld mit der schwarzen Zahl 10.</title>
+<rect width="200" height="200" fill="#ffffff"/>
+<g transform="translate(0 0) scale(1)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#c8102e"/><rect x="30" y="30" width="140" height="140" fill="#ffffff"/><text x="100.0" y="128.0" font-family="system-ui, sans-serif" font-size="80" font-weight="700" text-anchor="middle" fill="#1a1a1a">10</text></g>
+</svg>

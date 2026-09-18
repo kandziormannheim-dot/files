@@ -1,7 +1,7 @@
 {
-  "_kommentar": "Szenarien des DSC-Controller-Simulators (public/assets/dsc.js). 'erwartet' ist die Bedienfolge, die das Skript Schritt für Schritt abgleicht. Aktionen: menue (Menüpunkt bestätigen: distress|individual|all-ships|ack), nature (Art der Not: undesignated|fire|flooding|collision|grounding|capsizing|sinking|adrift|abandoning|piracy|mob), position (auto|manuell), distress-taste (haltenSek), mmsi (Ziffernfolge), kategorie (routine|safety|urgency), kanal (Kanalnummer), senden, quittung (senden|nicht-senden), ptt (Sprechfunk auf dem angezeigten Kanal). 'zertifikat' begrenzt ein Szenario auf Kurse; fehlt es, gilt es überall.",
+  "_kommentar": "Szenarien des Funkgerät-/DSC-Simulators (public/assets/dsc.js). 'erwartet' ist die Bedienfolge, die das Skript Schritt für Schritt abgleicht. Aktionen: menue (Menüpunkt bestätigen: distress|individual|all-ships|ack), nature (Art der Not: undesignated|fire|flooding|collision|grounding|capsizing|sinking|adrift|abandoning|piracy|mob), position (auto|manuell), distress-taste (haltenSek), mmsi (Ziffernfolge), kategorie (routine|safety|urgency), kanal (Kanalnummer), leistung (1|25 Watt), senden, quittung (senden|nicht-senden), ptt (Sprechtaste halten; 'sprechtext' = was du sagst, 'antwort' = was die Gegenstelle nach dem Loslassen antwortet — als Text, auf Wunsch vorgelesen). 'sprache' (en|de) steuert die Sprachausgabe der Antworten. 'zertifikat' begrenzt ein Szenario auf Kurse; fehlt es, gilt es überall. Alle Texte sind eigene Beispiele.",
   "geraet": {
-    "kanaele": ["06", "08", "16", "67", "70", "72", "77"],
+    "kanaele": ["06", "08", "10", "12", "16", "20", "67", "70", "72", "77"],
     "eigeneMmsi": "211123450",
     "schiffsname": "SEEADLER"
   },
@@ -9,6 +9,7 @@
     {
       "id": "distress-feuer",
       "zertifikat": ["src", "lrc"],
+      "sprache": "en",
       "titel": "Notalarm: Feuer an Bord",
       "lage": "Auf deiner Yacht SEEADLER brennt es im Motorraum, das Feuer ist nicht unter Kontrolle. Das GPS liefert die Position. Setze einen DSC-Notalarm mit Art der Not ab und beginne danach den Sprechfunk-Notverkehr auf Kanal 16.",
       "erwartet": [
@@ -17,22 +18,28 @@
         { "aktion": "position", "wert": "auto", "text": "Position vom GPS übernehmen" },
         { "aktion": "distress-taste", "haltenSek": 5, "text": "DISTRESS-Taste 5 Sekunden halten" },
         { "aktion": "kanal", "wert": "16", "text": "Kanal 16 (Gerät schaltet automatisch um)" },
-        { "aktion": "ptt", "text": "Sprechfunk: MAYDAY-Notruf und Notmeldung" }
+        { "aktion": "ptt", "text": "Sprechfunk: MAYDAY-Notruf und Notmeldung",
+          "sprechtext": "MAYDAY MAYDAY MAYDAY. THIS IS SEEADLER SEEADLER SEEADLER. MMSI 211123450. MAYDAY SEEADLER. MMSI 211123450. POSITION 54 20 NORTH 010 45 EAST. FIRE IN THE ENGINE ROOM, NOT UNDER CONTROL. I REQUIRE IMMEDIATE ASSISTANCE. THREE PERSONS ON BOARD. OVER.",
+          "antwort": "MAYDAY SEEADLER SEEADLER SEEADLER. THIS IS BREMEN RESCUE BREMEN RESCUE BREMEN RESCUE. RECEIVED MAYDAY. LIFEBOAT IS ON ITS WAY, ESTIMATED TIME OF ARRIVAL TWENTY MINUTES. STAND BY ON CHANNEL 16. OVER." }
       ]
     },
     {
       "id": "distress-undesignated",
       "zertifikat": ["src", "lrc"],
+      "sprache": "en",
       "titel": "Notalarm ohne Zeit für Angaben",
       "lage": "Ein Mensch ist über Bord gegangen, du bist allein an Bord und musst sofort alarmieren. Für Menüangaben ist keine Zeit — setze den schnellen Notalarm ab.",
       "erwartet": [
         { "aktion": "distress-taste", "haltenSek": 5, "text": "Klappe öffnen und DISTRESS 5 Sekunden halten (Art der Not: UNDESIGNATED)" },
         { "aktion": "kanal", "wert": "16", "text": "Kanal 16" },
-        { "aktion": "ptt", "text": "Sprechfunk: MAYDAY" }
+        { "aktion": "ptt", "text": "Sprechfunk: MAYDAY",
+          "sprechtext": "MAYDAY MAYDAY MAYDAY. THIS IS SEEADLER SEEADLER SEEADLER. MMSI 211123450. MAYDAY SEEADLER. MAN OVERBOARD, POSITION 54 20 NORTH 010 45 EAST. I REQUIRE IMMEDIATE ASSISTANCE. OVER.",
+          "antwort": "MAYDAY SEEADLER. THIS IS BREMEN RESCUE. RECEIVED MAYDAY. ALL SHIPS IN THE VICINITY PROCEED TO POSITION 54 20 NORTH 010 45 EAST. OVER." }
       ]
     },
     {
       "id": "routine-individual",
+      "sprache": "en",
       "titel": "Routineanruf an ein anderes Schiff",
       "lage": "Du willst die Yacht ALBATROS (MMSI 211987650) per DSC anrufen und auf dem Arbeitskanal 72 mit ihr sprechen.",
       "erwartet": [
@@ -41,23 +48,43 @@
         { "aktion": "kategorie", "wert": "routine", "text": "Kategorie ROUTINE" },
         { "aktion": "kanal", "wert": "72", "text": "Arbeitskanal 72 vorschlagen" },
         { "aktion": "senden", "text": "Anruf senden" },
-        { "aktion": "ptt", "text": "Nach der Quittung auf Kanal 72 sprechen" }
+        { "aktion": "ptt", "text": "Nach der Quittung auf Kanal 72 sprechen",
+          "sprechtext": "ALBATROS ALBATROS. THIS IS SEEADLER SEEADLER. GOOD MORNING. WHAT IS YOUR ESTIMATED TIME OF ARRIVAL AT HEILIGENHAFEN? OVER.",
+          "antwort": "SEEADLER. THIS IS ALBATROS. GOOD MORNING. MY ESTIMATED TIME OF ARRIVAL IS 1400 LOCAL TIME. OVER." }
+      ]
+    },
+    {
+      "id": "hafen-1w",
+      "zertifikat": ["src", "lrc"],
+      "sprache": "en",
+      "titel": "Hafenanruf mit kleiner Leistung",
+      "lage": "Du läufst in den Hafen ein und willst die Hafenaufsicht auf Kanal 12 um einen Liegeplatz bitten. Die Küste ist nah — sende mit der kleinen Leistung, um andere nicht zu stören.",
+      "erwartet": [
+        { "aktion": "kanal", "wert": "12", "text": "Hafenkanal 12 wählen" },
+        { "aktion": "leistung", "wert": "1", "text": "Sendeleistung auf 1 W reduzieren" },
+        { "aktion": "ptt", "text": "Sprechfunk: Hafenaufsicht anrufen",
+          "sprechtext": "KIEL PORT CONTROL. THIS IS SAILING YACHT SEEADLER. REQUEST A BERTH FOR ONE NIGHT, LENGTH TEN METRES. OVER.",
+          "antwort": "SEEADLER. THIS IS KIEL PORT CONTROL. PROCEED TO PONTOON CHARLIE, BERTH TWELVE. OVER." }
       ]
     },
     {
       "id": "ack-empfangen",
       "zertifikat": ["src", "lrc"],
+      "sprache": "en",
       "titel": "Fremden Notalarm empfangen",
       "lage": "Dein Controller meldet einen empfangenen DSC-Notalarm eines anderen Schiffs in deiner Nähe. Du bist eine Sportbootfunkstelle in Reichweite einer Küstenfunkstelle. Was tust du?",
       "erwartet": [
         { "aktion": "quittung", "wert": "nicht-senden", "text": "Keine DSC-Quittung senden — das ist Sache der Küstenfunkstelle" },
         { "aktion": "kanal", "wert": "16", "text": "Kanal 16 abhören" },
-        { "aktion": "ptt", "text": "Erst sprechen, wenn keine Küstenfunkstelle antwortet (RECEIVED MAYDAY)" }
+        { "aktion": "ptt", "text": "Erst sprechen, wenn keine Küstenfunkstelle antwortet (RECEIVED MAYDAY)",
+          "sprechtext": "MAYDAY NORDWIND NORDWIND NORDWIND. THIS IS SEEADLER SEEADLER SEEADLER. RECEIVED MAYDAY. I AM TWO MILES SOUTH OF YOU, PROCEEDING TO YOUR POSITION, ESTIMATED TIME OF ARRIVAL FIFTEEN MINUTES. OVER.",
+          "antwort": "SEEADLER. THIS IS NORDWIND. THANK YOU. WE ARE STANDING BY ON CHANNEL 16. OVER." }
       ]
     },
     {
       "id": "all-ships-safety",
       "zertifikat": ["src", "lrc"],
+      "sprache": "en",
       "titel": "Sicherheitsanruf an alle Schiffe",
       "lage": "Du hast einen treibenden Container gesichtet und willst alle Schiffe in der Nähe warnen: DSC-Anruf an alle mit Kategorie SAFETY, danach SÉCURITÉ-Meldung auf Kanal 16.",
       "erwartet": [
@@ -65,7 +92,36 @@
         { "aktion": "kategorie", "wert": "safety", "text": "Kategorie SAFETY" },
         { "aktion": "senden", "text": "Anruf senden" },
         { "aktion": "kanal", "wert": "16", "text": "Kanal 16" },
-        { "aktion": "ptt", "text": "Sprechfunk: SÉCURITÉ-Meldung" }
+        { "aktion": "ptt", "text": "Sprechfunk: SÉCURITÉ-Meldung",
+          "sprechtext": "SECURITE SECURITE SECURITE. ALL SHIPS ALL SHIPS ALL SHIPS. THIS IS SEEADLER SEEADLER SEEADLER. MMSI 211123450. LARGE CONTAINER ADRIFT IN POSITION 54 10 NORTH 010 50 EAST. DANGER TO NAVIGATION. OUT.",
+          "antwort": "" }
+      ]
+    },
+    {
+      "id": "ubi-schleuse",
+      "zertifikat": ["ubi"],
+      "sprache": "de",
+      "titel": "Schleusenanruf im Binnenschifffahrtsfunk",
+      "lage": "Du näherst dich mit deinem Sportboot der Schleuse und willst dich zur Talschleusung anmelden. Die Schleuse hört laut Revierkarte auf Kanal 20. Im Verkehrskreis Nautische Information sendet das Gerät mit kleiner Leistung.",
+      "erwartet": [
+        { "aktion": "kanal", "wert": "20", "text": "Schleusenkanal 20 wählen" },
+        { "aktion": "leistung", "wert": "1", "text": "Sendeleistung auf 1 W" },
+        { "aktion": "ptt", "text": "Sprechfunk: Schleuse anrufen",
+          "sprechtext": "SCHLEUSE KOBLENZ, HIER IST SPORTBOOT SEEADLER. ICH BITTE UM TALSCHLEUSUNG. EIN SPORTBOOT, ZEHN METER LÄNGE. KOMMEN.",
+          "antwort": "SPORTBOOT SEEADLER, HIER IST SCHLEUSE KOBLENZ. VERSTANDEN. WARTEN SIE VOR DEM OBEREN VORHAFEN, EINFAHRT NACH DEM GRÜNEN LICHT HINTER DEM GÜTERSCHIFF. ENDE." }
+      ]
+    },
+    {
+      "id": "ubi-notruf",
+      "zertifikat": ["ubi"],
+      "sprache": "de",
+      "titel": "Notruf auf dem Schiff-Schiff-Kanal",
+      "lage": "Dein Sportboot hat nach einer Kollision Wassereinbruch auf dem Rhein bei Kilometer 640. Setze den Notruf auf Kanal 10 ab.",
+      "erwartet": [
+        { "aktion": "kanal", "wert": "10", "text": "Kanal 10 (Schiff–Schiff) wählen" },
+        { "aktion": "ptt", "text": "Sprechfunk: MAYDAY",
+          "sprechtext": "MAYDAY MAYDAY MAYDAY. HIER IST SPORTBOOT SEEADLER SEEADLER SEEADLER. MAYDAY SEEADLER. STANDORT RHEIN KILOMETER 640, LINKES UFER. WASSEREINBRUCH NACH KOLLISION, BOOT SINKT. ICH BENÖTIGE SOFORT HILFE. DREI PERSONEN AN BORD. KOMMEN.",
+          "antwort": "MAYDAY SEEADLER, HIER IST REVIERZENTRALE OBERWESEL. VERSTANDEN. HILFE IST UNTERWEGS, BLEIBEN SIE AUF KANAL 10. KOMMEN." }
       ]
     }
   ]

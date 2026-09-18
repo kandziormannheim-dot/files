@@ -1,7 +1,7 @@
 <?php
 $seitentitel = $z['titel'];
-$praxisNamen = ['funkverkehr' => 'Funkverkehr-Trainer', 'buchstabieren' => 'Buchstabiertafel', 'englisch' => 'Englisch', 'dsc' => 'DSC-Simulator'];
-$praxisLinks = ['funkverkehr' => "/uebung/$kennung/funkverkehr", 'buchstabieren' => '/uebung/buchstabieren', 'englisch' => "/uebung/$kennung/englisch", 'dsc' => "/uebung/dsc?kurs=$kennung"];
+$praxisNamen = ['funkverkehr' => 'Funkverkehr-Trainer', 'buchstabieren' => 'Buchstabiertafel', 'englisch' => 'Englisch', 'diktat' => 'Diktat', 'dsc' => 'Funkgerät und DSC-Simulator'];
+$praxisLinks = ['funkverkehr' => "/uebung/$kennung/funkverkehr", 'buchstabieren' => '/uebung/buchstabieren', 'englisch' => "/uebung/$kennung/englisch", 'diktat' => "/uebung/$kennung/diktat", 'dsc' => "/uebung/dsc?kurs=$kennung"];
 ?>
 <p class="brotkrumen"><a href="/">Kurse</a> › <?= e($z['titel']) ?></p>
 <h1><?= e($z['titel']) ?></h1>

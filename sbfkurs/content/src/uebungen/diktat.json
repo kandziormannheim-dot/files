@@ -1,0 +1,33 @@
+{
+  "_kommentar": "Diktat-Übungen (eigene Texte): 'text' ist der diktierte Wortlaut und zugleich die Textfassung, 'sprache' en|de steuert die Sprachausgabe, 'sprechtext' (optional) weicht vom Text ab, wenn die Aussprache es braucht. Bewertung Wort für Wort (diktatAuswerten).",
+  "uebungen": [
+    {
+      "id": "mayday-feuer",
+      "titel": "Notmeldung: Feuer an Bord",
+      "sprache": "en",
+      "hinweis": "Wie in der Prüfung: Die Meldung kommt einmal im Stück. Notruf, Schiffsname, MMSI, Position, Art der Not, Hilfeersuchen, Personen an Bord.",
+      "text": "MAYDAY MAYDAY MAYDAY. THIS IS SAILING YACHT NORDWIND NORDWIND NORDWIND. MMSI 211456780. MAYDAY NORDWIND. MMSI 211456780. POSITION THREE MILES NORTH OF FEHMARN LIGHTHOUSE. FIRE ON BOARD. I REQUIRE IMMEDIATE ASSISTANCE. THREE PERSONS ON BOARD. WE ARE ABANDONING SHIP. OVER."
+    },
+    {
+      "id": "panpan-maschine",
+      "titel": "Dringlichkeitsmeldung: Maschinenausfall",
+      "sprache": "en",
+      "hinweis": "Dringlichkeit: PAN PAN sechsmal, ALL STATIONS dreimal, dann die Meldung.",
+      "text": "PAN PAN PAN PAN PAN PAN. ALL STATIONS ALL STATIONS ALL STATIONS. THIS IS MOTOR YACHT ALBATROS ALBATROS ALBATROS. MMSI 211987650. POSITION FIVE FOUR DEGREES THREE ZERO MINUTES NORTH, ZERO ONE ZERO DEGREES ONE FIVE MINUTES EAST. ENGINE FAILURE, DRIFTING TOWARDS THE SHALLOWS. I REQUIRE A TUG. TWO PERSONS ON BOARD. OVER."
+    },
+    {
+      "id": "securite-treibgut",
+      "titel": "Sicherheitsmeldung: Treibgut",
+      "sprache": "en",
+      "hinweis": "Sicherheitsmeldung einer Küstenfunkstelle an alle Schiffe.",
+      "text": "SECURITE SECURITE SECURITE. ALL SHIPS ALL SHIPS ALL SHIPS. THIS IS BREMEN RESCUE BREMEN RESCUE BREMEN RESCUE. NAVIGATIONAL WARNING. A LARGE CONTAINER IS ADRIFT IN POSITION FIVE FOUR DEGREES ONE ZERO MINUTES NORTH, ZERO ZERO SEVEN DEGREES FIVE ZERO MINUTES EAST. DANGER TO NAVIGATION. ALL SHIPS KEEP A SHARP LOOKOUT. OUT."
+    },
+    {
+      "id": "mayday-relay",
+      "titel": "Notmeldung weitergeben: MAYDAY RELAY",
+      "sprache": "en",
+      "hinweis": "Ein fremder Notfall wird weitergegeben — MAYDAY RELAY dreimal, dann die eigene Station, dann die aufgenommene Meldung.",
+      "text": "MAYDAY RELAY MAYDAY RELAY MAYDAY RELAY. ALL STATIONS ALL STATIONS ALL STATIONS. THIS IS MOTOR YACHT SEEADLER SEEADLER SEEADLER. MMSI 211123450. FOLLOWING RECEIVED FROM FISHING VESSEL MOEWE AT ONE FOUR TWO ZERO UTC. MAYDAY. FISHING VESSEL MOEWE. POSITION TWO MILES WEST OF HELGOLAND. TAKING WATER, SINKING. FOUR PERSONS ON BOARD. REQUIRE IMMEDIATE ASSISTANCE. OVER."
+    }
+  ]
+}

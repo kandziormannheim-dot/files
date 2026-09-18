@@ -1,0 +1,60 @@
+{
+  "_kommentar": "Profil für den Fragenkatalog der Anpassungsprüfung zum SRC (Inhaber nicht allgemein anerkannter ausländischer Funkbetriebszeugnisse, FVT Koblenz 2011). Layout: „12. Fragetext“ und Antworten „1. …“ bis „4. …“ jeweils inline; richtig ist immer Antwort 1. Wird mit --anhaengen in den SRC-Katalog übernommen: eigenes Modul „anpassung“, Nummern ab 501, damit sie nicht mit dem Hauptkatalog kollidieren. Das Modul gehört nicht zum regulären Bogen (zusammensetzung), steht aber im Trainer.",
+  "zertifikat": "src",
+  "quelle": {
+    "name": "Anpassungsprüfung SRC (FVT Koblenz)",
+    "stand": "2011-03",
+    "amtlich": true
+  },
+  "kopfzeilen": [
+    "^\\s*Anpassungsprüfung zum SRC\\s*$",
+    "^\\s*FACHSTELLE DER WSV.*$",
+    "^\\s*FÜR VERKEHRSTECHNIKEN\\s*$",
+    "^\\s*Koblenz, den.*$",
+    "^\\s*Koblenz, \\d.*$",
+    "^\\s*Richtig ist immer.*$",
+    "^\\s*WASSER- UND SCHIFFFAHRTSVERWALTUNG.*$",
+    "^\\s*Anpassungsprüfung\\s*$",
+    "^\\s*Auszug.*$",
+    "^\\s*Der Termin für.*$",
+    "^\\s*Fragenkataloge zum Erwerb.*$",
+    "^\\s*Beschränkt Gültigen.*$",
+    "^\\s*\\(gültig ab.*$",
+    "^\\s*über Satelliten;\\s*$",
+    "^\\s*Anpassungsprüfung zum Beschränkt.*$",
+    "^\\s*Funkbetriebszeugnis \\(SRC\\) für Inhaber\\s*$",
+    "^\\s*nicht allgemein anerkannter.*$",
+    "^\\s*Funkbetriebszeugnisse\\s*$",
+    "^\\s*2009\\. S\\. 492.*$",
+    "^\\s*geändert vom.*$",
+    "^\\s*veröffentlichten\\s*$",
+    "^\\s*Fragenkataloge für die Prüfungen.*$",
+    "^\\s*Seite\\s*\\d*\\s*$"
+  ],
+  "modulRegex": "",
+  "modulZuordnung": {},
+  "module": [
+    {
+      "id": "anpassung",
+      "titel": "Anpassungsprüfung (ausländische Zeugnisse)"
+    }
+  ],
+  "standardModul": "anpassung",
+  "frageRegex": "^\\s*(\\d{1,3})\\.\\s+(.+)$",
+  "antwortRegex": "^\\s*([1-4])\\.\\s+(.+)$",
+  "antwortenOhneKennung": false,
+  "antwortenJeFrage": 4,
+  "fortlaufend": true,
+  "leerzeilenIgnorieren": true,
+  "nummerOffset": 500,
+  "richtigIstErste": true,
+  "lektionJeModul": {
+    "anpassung": "10-pruefung"
+  },
+  "bildMarker": [
+    "siehe Abbildung",
+    "Abb\\.",
+    "Skizze",
+    "abgebildet"
+  ]
+}

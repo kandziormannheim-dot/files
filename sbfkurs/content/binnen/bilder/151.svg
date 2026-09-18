@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" width="360" height="220" role="img" aria-labelledby="t">
+<title id="t">Am Tag, Fahrzeug von vorn: links eine rot-weiß-rote Tafel, rechts eine grün-weiß-grüne Tafel.</title>
+<rect width="360" height="220" fill="#ffffff"/>
+<rect y="150" width="360" height="70" fill="#dce9f2"/><g fill="none" stroke="#1a1a1a" stroke-width="3"><polygon points="110,150 250,150 236,178 124,178" fill="#f4f4f4"/><rect x="150" y="110" width="60" height="40" fill="#f4f4f4"/><line x1="180" y1="110" x2="180" y2="36"/><line x1="112" y1="76" x2="248" y2="76"/></g><path d="M0 190 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" fill="none" stroke="#8fb3cc" stroke-width="2"/><g transform="translate(66 28) scale(0.28)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#c8102e"/><rect x="4" y="76" width="192" height="48" fill="#ffffff"/></g><g transform="translate(238 28) scale(0.28)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#2e9e4f"/><rect x="4" y="76" width="192" height="48" fill="#ffffff"/></g>
+</svg>

@@ -1,25 +1,125 @@
 {
-  "_kommentar": "Profil für den ELWIS-Fragenkatalog SRC. Das Textlayout ist nur vermutet — passt ein Muster nicht, hier anpassen, nicht im Skript. Regexe sind PCRE ohne Delimiter (Schrägstriche werden maskiert). modul-/frage-/antwortRegex unterscheiden Groß-/Kleinschreibung; kopfzeilen und bildMarker nicht.",
+  "_kommentar": "Profil für den Gesamtfragenkatalog SRC (FVT/ABVT Koblenz, Leseversion des Verkehrsblatt-Katalogs, Stand 10/2018). Die PDF ist eine Tabelle: Fragennummer und Antwortkennung „1)“–„4)“ stehen in einer schmalen linken Spalte, bei mehrzeiligem Text mittig daneben; werkzeuge/pdf-text.py zieht sie vor die erste Zeile („12. Fragetext“). Die Verweisnummer „[12]“ neben der Frage wird per „entfernen“ gestrichen. Richtig ist immer Antwort 1. Abschnitte I–VII: die Zuordnung läuft über die Fragennummer (modulNachNummer), die Überschrift schließt nur den vorigen Eintrag ab. Regexe sind PCRE ohne Delimiter.",
   "zertifikat": "src",
-  "quelle": { "name": "Fragenkatalog SRC (ELWIS)", "stand": "", "amtlich": true },
-  "kopfzeilen": ["^\\s*Fragenkatalog\\s+SRC.*$", "^\\s*Seite\\s+\\d+(\\s+von\\s+\\d+)?\\s*$", "^\\s*Stand:.*$", "^\\s*-\\s*\\d+\\s*-\\s*$"],
-  "modulRegex": "^\\s*(?:Teil|Abschnitt|Modul)?\\s*([A-Z]|\\d{1,2})[.)]?\\s+([A-ZÄÖÜ][A-Za-zÄÖÜäöüß ,/()\\-–]{6,})\\s*$",
-  "modulZuordnung": {
-    "1": "grundlagen", "A": "grundlagen",
-    "2": "verkehrsabwicklung", "B": "verkehrsabwicklung",
-    "3": "dsc-gmdss", "C": "dsc-gmdss",
-    "4": "notverkehr", "D": "notverkehr"
+  "quelle": {
+    "name": "Gesamtfragenkatalog SRC (Verkehrsblatt, Leseversion ELWIS)",
+    "stand": "2018-10",
+    "amtlich": true
   },
-  "module": [
-    { "id": "grundlagen", "titel": "Grundlagen und Rechtliches" },
-    { "id": "verkehrsabwicklung", "titel": "Verkehrsabwicklung" },
-    { "id": "dsc-gmdss", "titel": "DSC und GMDSS" },
-    { "id": "notverkehr", "titel": "Not-, Dringlichkeits- und Sicherheitsverkehr" }
+  "kopfzeilen": [
+    "^\\s*Gesamtfragenkatalog.*$",
+    "^\\s*Alle Rechte vorbehalten.*$",
+    "^\\s*Stand:.*$",
+    "^\\s*\\d{1,3}\\s*$",
+    "^\\s*Fragenkatalog I\\s*$",
+    "^\\s*Mobiler Seefunkdienst für das beschränkt.*$",
+    "^\\s*Richtig ist immer.*$",
+    "^\\s*Dies ist eine Leseversion.*$",
+    "^\\s*Rechtsverbindlich sind.*$",
+    "^.*Fragen\\s+\\d{3}\\s*[–-]\\s*\\d{3}\\s*$",
+    "^\\s*Inhaltsverzeichnis\\s*$"
   ],
-  "standardModul": "grundlagen",
-  "frageRegex": "^\\s*(\\d{1,3})[.)]\\s+(.+)$",
-  "antwortRegex": "^\\s*([a-d])[.)]\\s+(.+)$",
+  "modulRegex": "^\\s*([IVX]{1,4})\\.\\s+\\S",
+  "modulZuordnung": {
+    "I": "gmdss",
+    "II": "funkeinrichtungen",
+    "III": "dsc",
+    "IV": "ukw",
+    "V": "betriebsverfahren",
+    "VI": "navtex",
+    "VII": "sar"
+  },
+  "modulNachNummer": [
+    {
+      "ab": 1,
+      "bis": 23,
+      "modul": "gmdss"
+    },
+    {
+      "ab": 24,
+      "bis": 52,
+      "modul": "funkeinrichtungen"
+    },
+    {
+      "ab": 53,
+      "bis": 68,
+      "modul": "dsc"
+    },
+    {
+      "ab": 69,
+      "bis": 84,
+      "modul": "ukw"
+    },
+    {
+      "ab": 85,
+      "bis": 115,
+      "modul": "betriebsverfahren"
+    },
+    {
+      "ab": 116,
+      "bis": 124,
+      "modul": "navtex"
+    },
+    {
+      "ab": 125,
+      "bis": 180,
+      "modul": "sar"
+    }
+  ],
+  "module": [
+    {
+      "id": "gmdss",
+      "titel": "I. Mobiler Seefunkdienst und GMDSS"
+    },
+    {
+      "id": "funkeinrichtungen",
+      "titel": "II. Funkeinrichtungen und Seefunkstellen"
+    },
+    {
+      "id": "dsc",
+      "titel": "III. Digitaler Selektivruf (DSC)"
+    },
+    {
+      "id": "ukw",
+      "titel": "IV. UKW-Sprechfunk"
+    },
+    {
+      "id": "betriebsverfahren",
+      "titel": "V. Betriebsverfahren und Rangfolgen"
+    },
+    {
+      "id": "navtex",
+      "titel": "VI. Warnnachrichten (NAVTEX)"
+    },
+    {
+      "id": "sar",
+      "titel": "VII. Suche und Rettung, EPIRB, SART"
+    }
+  ],
+  "standardModul": "gmdss",
+  "frageRegex": "^\\s*(\\d{1,3})\\.\\s*(.*)$",
+  "antwortRegex": "^\\s*([1-4])\\)\\s*(.*)$",
   "antwortenOhneKennung": false,
+  "antwortenJeFrage": 4,
+  "fortlaufend": true,
+  "leerzeilenIgnorieren": true,
   "richtigIstErste": true,
-  "bildMarker": ["siehe Abbildung", "Abb\\.", "Bild", "Skizze"]
+  "lektionJeModul": {
+    "gmdss": "01-gmdss",
+    "funkeinrichtungen": "03-ukw-anlage",
+    "dsc": "05-dsc",
+    "ukw": "04-verkehrsabwicklung",
+    "betriebsverfahren": "06-notverkehr",
+    "navtex": "08-gmdss-bausteine",
+    "sar": "08-gmdss-bausteine"
+  },
+  "bildMarker": [
+    "siehe Abbildung",
+    "Abb\\.",
+    "Skizze",
+    "abgebildet"
+  ],
+  "entfernen": [
+    "\\s*\\[\\d{1,3}\\]"
+  ]
 }

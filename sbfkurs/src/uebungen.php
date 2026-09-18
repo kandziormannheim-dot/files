@@ -112,6 +112,63 @@ function englischAuswerten(array $uebung, string $eingabe): array
 }
 
 /**
+ * Diktat auswerten: Mitschrift wortweise gegen den diktierten Text stellen.
+ * Die Wörter werden in Reihenfolge zugeordnet (längste gemeinsame Teilfolge),
+ * ein Tippfehler in langen Wörtern zählt halb (wie eingabeBewerten). Punkte
+ * in halben Punkten, damit uebungErgebnisSpeichern ganze Zahlen bekommt.
+ */
+function diktatAuswerten(array $uebung, string $eingabe): array
+{
+    $woerterTeilen = static fn (string $t): array => array_values(array_filter(explode(' ', textNormieren($t)), static fn (string $w): bool => $w !== ''));
+    $soll = $woerterTeilen((string) ($uebung['text'] ?? ''));
+    $ist = $woerterTeilen($eingabe);
+    $n = count($soll);
+    $m = count($ist);
+
+    // Ähnlichkeit je Wortpaar: 1 exakt, 0,5 Tippfehler, 0 sonst.
+    $wert = static fn (string $a, string $b): float => eingabeBewerten($a, [$b]);
+    // Dynamisches Programm über die Wortfolgen (Teilfolge mit maximaler Punktsumme).
+    $tab = array_fill(0, $n + 1, array_fill(0, $m + 1, 0.0));
+    for ($i = 1; $i <= $n; $i++) {
+        for ($j = 1; $j <= $m; $j++) {
+            $tab[$i][$j] = max($tab[$i - 1][$j], $tab[$i][$j - 1], $tab[$i - 1][$j - 1] + $wert($ist[$j - 1], $soll[$i - 1]));
+        }
+    }
+    // Rückverfolgung: welches Sollwort wurde wie getroffen?
+    $treffer = array_fill(0, $n, 0.0);
+    $i = $n;
+    $j = $m;
+    $zugeordnet = 0;
+    while ($i > 0 && $j > 0) {
+        $w = $wert($ist[$j - 1], $soll[$i - 1]);
+        if ($w > 0 && abs($tab[$i][$j] - ($tab[$i - 1][$j - 1] + $w)) < 1e-9) {
+            $treffer[$i - 1] = $w;
+            $zugeordnet++;
+            $i--;
+            $j--;
+        } elseif ($tab[$i - 1][$j] >= $tab[$i][$j - 1]) {
+            $i--;
+        } else {
+            $j--;
+        }
+    }
+    $woerter = [];
+    foreach ($soll as $k => $wort) {
+        $woerter[] = ['wort' => $wort, 'wert' => $treffer[$k]];
+    }
+    $summe = array_sum($treffer);
+
+    return [
+        'woerter' => $woerter,
+        'richtig' => count(array_filter($treffer, static fn (float $t): bool => $t >= 1)),
+        'zusaetzlich' => max(0, $m - $zugeordnet),
+        'punkte' => (int) round($summe * 2),
+        'maximal' => max(1, $n * 2),
+        'prozent' => $n > 0 ? (int) round($summe * 100 / $n) : 0,
+    ];
+}
+
+/**
  * Buchstabier-Aufgabe: ein Wort aus der Liste oder ein Rufzeichen-artiger
  * Mix. Richtung 'buchstabieren' (Wort → Codewörter) oder 'lesen'
  * (Codewörter → Wort).

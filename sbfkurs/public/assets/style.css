@@ -461,3 +461,20 @@ mark.luecke.falsch { background: #f3b3b6; text-decoration: line-through; }
     .antworten label { border-color: #999; }
     .buchstabe { border-color: #000; }
 }
+
+/* ---------------------------------------------------------- Schall und Diktat */
+.schall { margin: 0 0 0.8rem; display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.schall small { color: var(--leise); }
+.diktat-steuerung label.inline { display: inline-flex; gap: 0.4rem; align-items: center; font-size: 0.95rem; }
+.diktat-steuerung select { width: auto; }
+.diktat-stand { font-size: 0.95rem; color: var(--leise); }
+.diktat-text { margin-top: 0.8rem; }
+.diktat-text summary { cursor: pointer; font-weight: 600; }
+.diktat-woerter li.halb { background: var(--warn-hell); color: var(--warn); }
+
+/* ---------------------------------------------------------- Funkgerät: Sprechfunk */
+.dsc-kanal .ptt.sendet { background: #b8860b; border-color: #8a6508; }
+.dsc-kanal .ptt small { display: block; font-weight: 400; font-size: 0.7rem; }
+.dsc-funk { margin-top: 1rem; border-top: 1px solid var(--linie); padding-top: 0.8rem; }
+.dsc-funk p { margin: 0 0 0.4rem; }
+.dsc-funk label.inline { font-size: 0.92rem; color: var(--leise); }

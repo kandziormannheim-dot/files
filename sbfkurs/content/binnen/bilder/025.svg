@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 200" width="420" height="200" role="img" aria-labelledby="t">
+<title id="t">Zwei blaue Tafeln: weißer Wasserskiläufer; weißes Wassermotorrad mit Fahrer.</title>
+<rect width="420" height="200" fill="#ffffff"/>
+<g transform="translate(0 0) scale(1)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#0057a8"/><g fill="#ffffff"><circle cx="128" cy="50" r="12"/><path d="M120 66 l-30 34 l16 34 l-26 6 l-6 -12 l14 -6 l-18 -30 l34 -40 z"/><path d="M100 96 l38 -20 l6 10 l-40 22 z"/><path d="M40 140 q60 -10 120 0 l-4 8 q-56 -8 -112 0 z"/><path d="M46 150 h116 v6 h-116 z"/><path d="M136 60 l50 -20 l3 7 l-48 22 z"/></g></g><g transform="translate(220 0) scale(1)"><rect x="4" y="4" width="192" height="192" rx="6" fill="#0057a8"/><g fill="#ffffff"><path d="M30 130 q80 30 140 0 l-14 -24 h-112 z"/><path d="M78 106 l14 -28 h44 l-6 28 z"/><circle cx="112" cy="58" r="11"/><path d="M104 70 l-14 30 h30 l-6 -30 z"/><path d="M118 80 l34 -14 l3 6 l-32 16 z"/><path d="M26 148 q70 14 148 0" fill="none" stroke="#ffffff" stroke-width="5"/></g></g>
+</svg>

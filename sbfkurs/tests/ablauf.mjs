@@ -122,7 +122,34 @@ await p.click('button[name="einschaetzung"][value="richtig"]');
 await p.waitForURL(/\/uebung\/src\/englisch$/);
 ok((await p.locator(".hinweis").textContent()).includes("gespeichert"), "Selbsteinschätzung gespeichert");
 
-// 7. DSC: Routineanruf komplett durchspielen
+// 6b. Diktat: Textfassung als Tonspur, vollständige Mitschrift = 100 %
+await p.goto(`${B}/uebung/src/diktat`);
+await p.locator(".uebungsliste li a").first().click();
+ok((await p.locator("[data-diktat] details").count()) === 1, "Diktat: Textfassung vorhanden");
+ok((await p.locator("[data-diktat-start]").count()) === 1, "Diktat: Abspielknopf vorhanden");
+const diktatText = await p.locator("[data-diktat]").getAttribute("data-text");
+await p.fill('textarea[name="eingabe"]', diktatText);
+await p.click('main form button[type="submit"]');
+ok(/100 %/.test(await p.locator("main h2").first().textContent()), "Diktat: vollständige Mitschrift ergibt 100 %");
+ok((await p.locator(".diktat-woerter li.falsch").count()) === 0, "Diktat: kein Wort als fehlend markiert");
+
+// 6c. SBF Binnen: Bildfrage mit eigener SVG-Grafik und Schallsignal-Knopf (Frage 4 in der Reihe)
+await p.goto(`${B}/trainer/binnen/frage?modul=basis&modus=reihe`);
+for (let i = 1; i <= 4; i++) {
+  const nr = (await p.locator(".fragekopf").first().textContent().catch(() => "")) || "";
+  if ((await p.locator("figure.fragebild img").count()) > 0) {
+    ok(/kurz/i.test(await p.locator("figure.fragebild img").getAttribute("alt")), `Bildfrage mit sprechendem Alt-Text (Frage ${i}${nr ? ", " + nr.trim() : ""})`);
+    ok((await p.locator("button[data-schall]").count()) === 1, "Schallsignal-Knopf vorhanden");
+    break;
+  }
+  await p.locator('input[type="radio"]').first().check();
+  await p.click('form[data-trainer] button[type="submit"]');
+  await p.click("a[data-enter]");
+}
+const svg = await p.request.get(`${B}/bild/binnen/017.svg`);
+ok(svg.ok() && (svg.headers()["content-type"] || "").includes("svg") && (await svg.text()).includes("<title"), "eigene SVG wird mit Titel ausgeliefert");
+
+// 7. DSC: Routineanruf komplett durchspielen (PTT wird gehalten und losgelassen)
 await p.goto(`${B}/uebung/dsc?kurs=src`);
 await p.click('[data-szenario="routine-individual"]');
 await p.click('[data-taste="menu"]');
@@ -135,6 +162,7 @@ await p.click('[data-taste="ent"]');              // CH 72 vorausgewählt
 await p.click('[data-taste="ent"]');              // SEND
 await p.click('[data-taste="ptt"]');
 ok(!(await p.locator("form[data-dsc-ergebnis]").isHidden()), "DSC-Szenario abgeschlossen, Ergebnis speicherbar");
+ok((await p.locator("[data-funk-antwort]").textContent()).includes("ALBATROS"), "Funkgerät: Gegenstelle antwortet nach dem Loslassen der PTT");
 ok((await p.locator("[data-protokoll] li.ok").count()) >= 6, "alle Schritte des Szenarios erfüllt");
 await p.click("form[data-dsc-ergebnis] button");
 await p.waitForURL(/\/uebung\/dsc$/);

@@ -15,7 +15,10 @@ $buchstaben = ['A', 'B', 'C', 'D', 'E', 'F'];
 <div class="frage">
     <p class="fragetext"><?= e($frage['text']) ?></p>
     <?php if (!empty($frage['bild'])) { ?>
-    <figure class="fragebild"><img src="/bild/<?= e($kennung) ?>/<?= e(basename((string) $frage['bild'])) ?>" alt="Abbildung zur Frage"></figure>
+    <figure class="fragebild"><img src="/bild/<?= e($kennung) ?>/<?= e(basename((string) $frage['bild'])) ?>" alt="<?= e(bildAltText($konfig, $kennung, $frage)) ?>"></figure>
+    <?php } ?>
+    <?php if (!empty($frage['schall'])) { ?>
+    <p class="schall"><button type="button" class="zweit" data-schall="<?= e((string) $frage['schall']) ?>">🔊 Signal anhören</button> <small>Punkt = kurzer Ton (ca. 1 s), Strich = langer Ton (ca. 4 s)</small></p>
     <?php } ?>
     <ol class="antworten">
     <?php foreach ($antworten as $i => $antwort) {

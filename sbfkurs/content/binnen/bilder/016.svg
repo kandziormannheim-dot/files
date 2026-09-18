@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 436 124" width="436" height="124" role="img" aria-labelledby="t">
+<title id="t">Bleib-weg-Signal: ein kurzer und ein langer Ton, ständig wiederholt.</title>
+<rect width="436" height="124" fill="#ffffff"/>
+<path d="M22 30 q-12 30 0 60" fill="none" stroke="#666" stroke-width="3"/><path d="M414 30 q12 30 0 60" fill="none" stroke="#666" stroke-width="3"/><circle cx="52.0" cy="60" r="12" fill="#1a1a1a"/><rect x="84.0" y="52" width="58" height="16" rx="8" fill="#1a1a1a"/><circle cx="174.0" cy="60" r="12" fill="#1a1a1a"/><rect x="206.0" y="52" width="58" height="16" rx="8" fill="#1a1a1a"/><circle cx="296.0" cy="60" r="12" fill="#1a1a1a"/><rect x="328.0" y="52" width="58" height="16" rx="8" fill="#1a1a1a"/><text x="218" y="108" font-family="system-ui, sans-serif" font-size="12" text-anchor="middle" fill="#444">ständig wiederholt · Punkt = kurzer Ton (ca. 1 s), Strich = langer Ton (ca. 4 s)</text>
+</svg>
