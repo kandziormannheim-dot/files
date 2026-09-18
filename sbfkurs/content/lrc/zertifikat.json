@@ -4,21 +4,48 @@
   "kurz": "Allgemeines Funkbetriebszeugnis für den Seefunk auf Grenz- und Kurzwelle sowie über Satellit — gültig in allen GMDSS-Seegebieten A1 bis A4.",
   "reihenfolge": 4,
   "freigeschaltet": true,
-  "praxis": ["funkverkehr", "buchstabieren", "englisch", "dsc"],
-  "trainer": { "sicherAb": 2 },
+  "praxis": [
+    "funkverkehr",
+    "buchstabieren",
+    "englisch",
+    "diktat",
+    "dsc"
+  ],
+  "trainer": {
+    "sicherAb": 2
+  },
   "pruefung": {
-    "_zuPruefen": "Zahlen nach bestem Wissen; gegen die aktuelle Prüfungsordnung abgleichen.",
+    "_zuPruefen": "Zahlen nach bestem Wissen: 30 Fragen in 45 Minuten, bestanden ab 24 richtigen; Zusammensetzung anteilig nach den Abschnitten I–VI des Fragenkatalogs II. Die LRC-Prüfung umfasst zusätzlich den SRC-Katalog I (Kurs SRC). Gegen die Prüfungsordnung abgleichen.",
     "fragenProBogen": 30,
     "zeitMinuten": 45,
     "mindestRichtig": 24,
     "fragenMischen": true,
     "antwortenMischen": true,
     "amtlicheBoegen": "boegen.json",
-    "zusammensetzung": { "gmdss": 8, "mf-hf": 9, "satellit": 7, "notverkehr": 6 },
+    "zusammensetzung": {
+      "gmdss": 5,
+      "funkeinrichtungen": 2,
+      "dsc": 2,
+      "mf-hf": 7,
+      "betriebsverfahren": 4,
+      "inmarsat": 10
+    },
     "weitereTeile": [
-      { "id": "uebersetzung", "titel": "Übersetzung Englisch → Deutsch, Fragen Deutsch → Englisch", "simuliert": "englisch" },
-      { "id": "diktat", "titel": "Aufnahme einer englischen Notmeldung nach Diktat", "simuliert": null },
-      { "id": "praxis", "titel": "Praktische Prüfung am Gerät", "simuliert": "dsc" }
+      {
+        "id": "uebersetzung",
+        "titel": "Übersetzung Englisch → Deutsch, Fragen Deutsch → Englisch",
+        "simuliert": "englisch"
+      },
+      {
+        "id": "diktat",
+        "titel": "Aufnahme einer englischen Notmeldung nach Diktat",
+        "simuliert": "diktat"
+      },
+      {
+        "id": "praxis",
+        "titel": "Praktische Prüfung am Gerät",
+        "simuliert": "dsc"
+      }
     ]
   }
 }

@@ -1,182 +1,3956 @@
 {
-  "zertifikat": "src",
-  "quelle": { "name": "Beispielfragen, selbst verfasst", "stand": "2026-09", "amtlich": false },
-  "module": [
-    { "id": "grundlagen", "titel": "Grundlagen und Rechtliches" },
-    { "id": "verkehrsabwicklung", "titel": "Verkehrsabwicklung" },
-    { "id": "dsc-gmdss", "titel": "DSC und GMDSS" },
-    { "id": "notverkehr", "titel": "Not-, Dringlichkeits- und Sicherheitsverkehr" }
-  ],
-  "fragen": [
-    {
-      "id": "src-001",
-      "nr": 1,
-      "modul": "grundlagen",
-      "text": "Wofür steht die Abkürzung GMDSS?",
-      "antworten": [
-        "Global Maritime Distress and Safety System",
-        "General Maritime Digital Selective System",
-        "German Maritime Distress Signalling Service",
-        "Global Marine Data and Surveillance System"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "Das GMDSS ist das weltweite Seenot- und Sicherheitsfunksystem der IMO. Das SRC berechtigt zur Teilnahme daran im Seegebiet A1.",
-      "lektion": "01-gmdss",
-      "beispiel": true
+    "zertifikat": "src",
+    "quelle": {
+        "name": "Gesamtfragenkatalog SRC (Verkehrsblatt, Leseversion ELWIS)",
+        "stand": "2018-10",
+        "amtlich": true,
+        "ergaenzt": [
+            {
+                "name": "Anpassungsprüfung SRC (FVT Koblenz)",
+                "stand": "2011-10"
+            }
+        ]
     },
-    {
-      "id": "src-002",
-      "nr": 2,
-      "modul": "grundlagen",
-      "text": "Welche Dokumente müssen für den Betrieb einer UKW-Seefunkanlage auf einem Sportboot vorhanden sein?",
-      "antworten": [
-        "Ein Funkbetriebszeugnis des Bedieners und eine Frequenzzuteilung für das Boot",
-        "Nur ein Sportbootführerschein See des Schiffsführers",
-        "Nur die Bedienungsanleitung des Funkgeräts",
-        "Ein Funkbetriebszeugnis für jede Person an Bord"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "Die Person, die die Anlage bedient, braucht ein Zeugnis (z. B. SRC); das Boot braucht eine Frequenzzuteilung der Bundesnetzagentur mit Rufzeichen und MMSI. Beides ist an Bord mitzuführen.",
-      "lektion": "02-recht",
-      "beispiel": true
-    },
-    {
-      "id": "src-003",
-      "nr": 3,
-      "modul": "grundlagen",
-      "text": "Wovon hängt die Reichweite einer UKW-Seefunkverbindung in erster Linie ab?",
-      "antworten": [
-        "Von der Höhe der Antennen beider Stationen, da sich UKW quasi-optisch ausbreitet",
-        "Ausschließlich von der Sendeleistung, da UKW der Erdkrümmung folgt",
-        "Von der Tageszeit, da UKW an der Ionosphäre reflektiert wird",
-        "Von der Wassertemperatur im Fahrtgebiet"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "UKW-Wellen breiten sich näherungsweise geradlinig aus. Entscheidend ist deshalb, wie hoch die Antennen stehen; die Sendeleistung ändert die Reichweite nur wenig.",
-      "lektion": "03-ukw-anlage",
-      "beispiel": true
-    },
-    {
-      "id": "src-004",
-      "nr": 4,
-      "modul": "verkehrsabwicklung",
-      "text": "Wie ist die MMSI eines deutschen Sportbootes aufgebaut?",
-      "antworten": [
-        "Neun Ziffern, beginnend mit der Länderkennung 211",
-        "Neun Ziffern, beginnend mit zwei Nullen und der Länderkennung 211",
-        "Sechs Ziffern, frei vom Eigner wählbar",
-        "Ein Buchstabe D gefolgt von bis zu fünf Buchstaben oder Ziffern"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "Schiffs-MMSIs sind neunstellig und beginnen mit der Länderkennung (MID), für Deutschland 211. Mit zwei Nullen beginnen die MMSIs von Küstenfunkstellen; die Kombination mit D ist das Rufzeichen.",
-      "lektion": "04-verkehrsabwicklung",
-      "beispiel": true
-    },
-    {
-      "id": "src-005",
-      "nr": 5,
-      "modul": "verkehrsabwicklung",
-      "text": "Zwei Sportboote haben sich auf Kanal 16 gerufen und wollen ein Gespräch führen. Wie gehen sie richtig vor?",
-      "antworten": [
-        "Sie vereinbaren einen Schiff-Schiff-Arbeitskanal, z. B. Kanal 72, und wechseln dorthin",
-        "Sie führen das Gespräch auf Kanal 16, solange es kurz bleibt",
-        "Sie wechseln auf Kanal 70 und sprechen dort",
-        "Sie wechseln auf einen Duplexkanal einer Küstenfunkstelle"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "Kanal 16 dient nur dem Anruf und dem Notverkehr, Kanal 70 ausschließlich DSC. Auf Duplexkanälen können zwei Schiffe einander nicht hören. Bleibt ein Simplex-Arbeitskanal wie 72 oder 77.",
-      "lektion": "04-verkehrsabwicklung",
-      "beispiel": true
-    },
-    {
-      "id": "src-006",
-      "nr": 6,
-      "modul": "verkehrsabwicklung",
-      "text": "Wie wird die Kanalnummer 16 im Sprechfunk korrekt ausgesprochen?",
-      "antworten": [
-        "one six",
-        "sixteen",
-        "one-six-zero",
-        "sechzehn"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "Zahlen werden im Seefunk Ziffer für Ziffer gesprochen, damit sich z. B. sixteen und sixty nicht verwechseln lassen.",
-      "lektion": "04-verkehrsabwicklung",
-      "beispiel": true
-    },
-    {
-      "id": "src-007",
-      "nr": 7,
-      "modul": "dsc-gmdss",
-      "text": "Welche Aussage über UKW-Kanal 70 ist richtig?",
-      "antworten": [
-        "Kanal 70 ist ausschließlich dem digitalen Selektivruf (DSC) vorbehalten; Sprechfunk ist dort verboten",
-        "Kanal 70 ist der Anrufkanal für Sprechfunk zwischen Sportbooten",
-        "Kanal 70 ist ein Duplexkanal für Küstenfunkstellen",
-        "Kanal 70 wird nach dem DSC-Anruf auch für das anschließende Gespräch genutzt"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "Auf Kanal 70 laufen nur die digitalen DSC-Telegramme. Der Sprechfunk danach findet auf Kanal 16 oder einem Arbeitskanal statt.",
-      "lektion": "05-dsc",
-      "beispiel": true
-    },
-    {
-      "id": "src-008",
-      "nr": 8,
-      "modul": "dsc-gmdss",
-      "text": "Auf welcher Frequenz sendet eine EPIRB ihren Notalarm an das Satellitensystem COSPAS-SARSAT?",
-      "antworten": [
-        "406 MHz",
-        "518 kHz",
-        "156,8 MHz",
-        "9 GHz"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "Die EPIRB alarmiert über Satellit auf 406 MHz. 518 kHz ist die NAVTEX-Frequenz, 156,8 MHz ist Kanal 16 und im 9-GHz-Band antwortet der SART auf Schiffsradare.",
-      "lektion": "08-gmdss-bausteine",
-      "beispiel": true
-    },
-    {
-      "id": "src-009",
-      "nr": 9,
-      "modul": "notverkehr",
-      "text": "Wie ist ein Notruf im Sprechfunk aufgebaut?",
-      "antworten": [
-        "MAYDAY (dreimal), THIS IS, Schiffsname (dreimal), Rufzeichen und MMSI",
-        "PAN PAN (dreimal), ALL STATIONS (dreimal), THIS IS, Schiffsname",
-        "Schiffsname (dreimal), MAYDAY, Position, OVER",
-        "MAYDAY RELAY (dreimal), Schiffsname, Position, OUT"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "Der Notruf macht alle auf Kanal 16 aufmerksam: dreimal MAYDAY, dann THIS IS mit dem eigenen Namen dreimal, Rufzeichen und MMSI. Unmittelbar danach folgt die Notmeldung mit Position, Art der Not und erbetener Hilfe.",
-      "lektion": "06-notverkehr",
-      "beispiel": true
-    },
-    {
-      "id": "src-010",
-      "nr": 10,
-      "modul": "notverkehr",
-      "text": "Wer darf die Funkstille mit den Worten SEELONCE MAYDAY anordnen?",
-      "antworten": [
-        "Die Station in Not oder die Station, die den Notverkehr leitet",
-        "Jede Station, die den Notverkehr mithört",
-        "Nur die Bundesnetzagentur",
-        "Ausschließlich die Schiffe, die zur Hilfe unterwegs sind"
-      ],
-      "richtig": 0,
-      "bild": null,
-      "hinweis": "SEELONCE MAYDAY ist der Station in Not und der Leitstelle des Notverkehrs vorbehalten. Andere Stationen, die den Notverkehr gestört sehen, verwenden SEELONCE DISTRESS.",
-      "lektion": "06-notverkehr",
-      "beispiel": true
-    }
-  ]
+    "module": [
+        {
+            "id": "sar",
+            "titel": "VII. Suche und Rettung, EPIRB, SART"
+        },
+        {
+            "id": "navtex",
+            "titel": "VI. Warnnachrichten (NAVTEX)"
+        },
+        {
+            "id": "betriebsverfahren",
+            "titel": "V. Betriebsverfahren und Rangfolgen"
+        },
+        {
+            "id": "ukw",
+            "titel": "IV. UKW-Sprechfunk"
+        },
+        {
+            "id": "dsc",
+            "titel": "III. Digitaler Selektivruf (DSC)"
+        },
+        {
+            "id": "funkeinrichtungen",
+            "titel": "II. Funkeinrichtungen und Seefunkstellen"
+        },
+        {
+            "id": "gmdss",
+            "titel": "I. Mobiler Seefunkdienst und GMDSS"
+        },
+        {
+            "id": "anpassung",
+            "titel": "Anpassungsprüfung (ausländische Zeugnisse)"
+        }
+    ],
+    "fragen": [
+        {
+            "id": "src-001",
+            "nr": 1,
+            "modul": "gmdss",
+            "text": "„Mobiler Seefunkdienst“ ist mobiler Funkdienst …",
+            "antworten": [
+                "zwischen Küstenfunkstellen und Seefunkstellen bzw. zwischen Seefunkstellen untereinander",
+                "zwischen tragbaren Funkstellen an Bord eines Seefahrzeuges",
+                "ausschließlich zwischen Seefunkstellen",
+                "zwischen Funkstellen, für die keine Zuteilung (Ship Station Licence) notwendig ist"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-002",
+            "nr": 2,
+            "modul": "gmdss",
+            "text": "Welche Funktion hat das „GMDSS“ (Global Maritime Distress and Safety System)?",
+            "antworten": [
+                "Hilfe in Seenotfällen und Sicherung der Schifffahrt durch schnelle und genaue Alarmierung im Seenotfall",
+                "Koordinierung der Alarmierung von Seefunkstellen im Seenotfall",
+                "Positionsbestimmung des Havaristen durch geostationäre Satelliten",
+                "Störungsfreier Funkverkehr im Seenotfall"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-003",
+            "nr": 3,
+            "modul": "gmdss",
+            "text": "Zu welchem Zweck wurde das Weltweite Seenot- und Sicherheitsfunksystem (GMDSS) eingeführt?",
+            "antworten": [
+                "Schnelle und genaue Alarmierung in Not-, Dringlichkeits- und Sicherheitsfällen",
+                "Schnelle Alarmierung in Notfällen",
+                "Schnelle und genaue Alarmierung in Not- und Dringlichkeitsfällen",
+                "Schnelle und genaue Alarmierung in Not- und Sicherheitsfällen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-004",
+            "nr": 4,
+            "modul": "gmdss",
+            "text": "Welche Aufgaben hat die Internationale Fernmeldeunion (International Telecommunication Union [ITU])?",
+            "antworten": [
+                "Die Internationale Fernmeldeunion (ITU) legt die grundlegenden Regelungen für die internationale Telekommunikation fest",
+                "Die Internationale Fernmeldeunion (ITU) legt für alle Nationen der UN, die weltweit Seeschifffahrt betreiben, die Mindeststandards hinsichtlich der Funkausrüstung von Seeschiffen fest",
+                "Die Internationale Fernmeldeunion (ITU) führt als internationale Verkehrsbehörde weltweit die Überwachung des Funkverkehrs durch",
+                "Die Internationale Fernmeldeunion (ITU) rechnet die Gebühren von weltweiten Seefunkgesprächen ab"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-005",
+            "nr": 5,
+            "modul": "gmdss",
+            "text": "Was regelt die Vollzugsordnung für den Funkdienst (VO Funk, engl. Radio Regulations [RR])?",
+            "antworten": [
+                "Die Vollzugsordnung für den Funkdienst (RR) regelt u. a. die Zuweisung von Frequenzbereichen an die Funkdienste und die Betriebsverfahren im Seefunkdienst",
+                "Die Vollzugsordnung für den Funkdienst (RR) regelt die Ausrüstung von Seeschiffen bezüglich der Funkeinrichtung",
+                "Die Vollzugsordnung für den Funkdienst (RR) regelt den freien Funkverkehr zwischen den Seefahrt betreibenden Nationen",
+                "Die Vollzugsordnung für den Funkdienst (RR) regelt die Benutzung von Radaranlagen auf Seeschiffen auf See und in Häfen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-006",
+            "nr": 6,
+            "modul": "gmdss",
+            "text": "Welche Publikationen des Bundesamtes für Seeschifffahrt und Hydrographie (BSH) enthalten speziell für die Sportschifffahrt Informationen zum Seefunk?",
+            "antworten": [
+                "Funkdienst für die Klein- und Sportschifffahrt",
+                "Nautisches Jahrbuch",
+                "Nachrichten für Seefahrer",
+                "Mitteilungen für Seefunkstellen und Schiffsfunkstellen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-007",
+            "nr": 7,
+            "modul": "gmdss",
+            "text": "Was ist eine „Küstenfunkstelle“?",
+            "antworten": [
+                "Ortsfeste Funkstelle des mobilen Seefunkdienstes",
+                "Funkstelle an Bord eines Schiffes im Küstenbereich, über die wichtige Informationen für die Seeschifffahrt verbreitet werden",
+                "Funkstelle des Rundfunkdienstes zur Übermittlung von Wetternachrichten für die Schifffahrt",
+                "Funkstelle an Bord eines Schiffes für den Empfang von Funkgesprächen aus dem Mobilfunknetz"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-008",
+            "nr": 8,
+            "modul": "gmdss",
+            "text": "Was bedeutet „öffentlicher Funkverkehr“?",
+            "antworten": [
+                "Funkverkehr, der der Allgemeinheit zum Austausch von Nachrichten dient",
+                "Funkverkehr, der im Gegensatz zum Nichtöffentlichen Funkverkehr unverschlüsselt abgewickelt wird",
+                "Funkverkehr, der von jeder Seefunkstelle abgehört werden muss",
+                "Funkverkehr, der nicht dem Fernmeldegeheimnis und dem Abhörverbot unterliegt"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-009",
+            "nr": 9,
+            "modul": "gmdss",
+            "text": "Für die Teilnahme am öffentlichen Funkverkehr ist – im Gegensatz zur Teilnahme am Nicht-öffentlichen Funkverkehr – zusätzlich erforderlich …",
+            "antworten": [
+                "Vertrag mit einer Abrechnungsgesellschaft",
+                "Besitz eines Seefunkzeugnisses",
+                "Zulassung des Funkgeräts",
+                "Zuteilung (Ship Station Licence)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-010",
+            "nr": 10,
+            "modul": "gmdss",
+            "text": "Wodurch erfährt eine Seefunkstelle von einer Küstenfunkstelle, dass dort Nachrichten für sie vorliegen?",
+            "antworten": [
+                "Individuelle Benachrichtigung oder Abhören von Sammelanrufen",
+                "Individuelle Benachrichtigung durch die Abrechnungsgesellschaft",
+                "Individuelle Benachrichtigung mittels SMS oder E-Mail",
+                "Öffentliche Benachrichtigung mittels NAVTEX"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-011",
+            "nr": 11,
+            "modul": "gmdss",
+            "text": "Was sind die Abrechnungsgrundlagen für ein Seefunkgespräch über eine deutsche Küstenfunkstelle?",
+            "antworten": [
+                "Gesprächsdauer und Preis der Verrechnungseinheiten",
+                "Gesprächsdauer und Entfernung zur Küstenfunkstelle",
+                "Gesprächsdauer und Frequenznutzungsgebühren",
+                "Gesprächsdauer und Dringlichkeit des Gesprächs"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-012",
+            "nr": 12,
+            "modul": "gmdss",
+            "text": "Was ist eine „Sea-Area“ im GMDSS?",
+            "antworten": [
+                "Festgelegtes Seegebiet",
+                "International festgelegtes Seewarngebiet",
+                "Im NAVTEX bestimmtes Seegebiet",
+                "Weltweites Raster zum schnellen Auffinden von verunglückten Fahrzeugen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-013",
+            "nr": 13,
+            "modul": "gmdss",
+            "text": "Welche Bezeichnungen tragen die Seegebiete, in denen für Schiffe eine bestimmte Funkausrüstung international vorgeschrieben ist?",
+            "antworten": [
+                "A1, A2, A3, A4",
+                "A, B, C, D",
+                "NAVAREAS",
+                "Küstengewässer, küstennahe Seegewässer, Hohe See"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-014",
+            "nr": 14,
+            "modul": "gmdss",
+            "text": "Eine Yacht befindet sich in einem Seegebiet, das von der Sprechfunkreichweite einer UKW-Küstenfunkstelle abgedeckt wird, die ununterbrochen für DSC-Alarmierungen zur Verfügung steht. In welchem Seegebiet befindet sich das Fahrzeug?",
+            "antworten": [
+                "Seegebiet A1",
+                "Seegebiet A2",
+                "Seegebiet A3",
+                "Seegebiet A4"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-015",
+            "nr": 15,
+            "modul": "gmdss",
+            "text": "Welches sind die satellitengestützten Alarmierungssysteme im Weltweiten Seenotund Sicherheitsfunksystem (GMDSS)?",
+            "antworten": [
+                "COSPAS-SARSAT, Inmarsat",
+                "Eutelsat, Globalstar",
+                "EPIRB, AIS",
+                "DSC, COSPAS-SARSAT"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-016",
+            "nr": 16,
+            "modul": "gmdss",
+            "text": "Was wird als „MSI“ bezeichnet?",
+            "antworten": [
+                "Nachricht, die die Sicherheit der Seeschifffahrt betrifft",
+                "Rufnummer im Seefunkdienst (Maritime Mobile Service Identity)",
+                "Mittlere Signalstärke des modulierten Eingangssignals",
+                "Landeskennung einer Seefunkstelle"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-017",
+            "nr": 17,
+            "modul": "gmdss",
+            "text": "Welche Aussendung wird als „WX\" bezeichnet?",
+            "antworten": [
+                "Wetterbericht",
+                "Nautische Warnnachricht",
+                "Aussendung, die zurückgenommen wurde",
+                "Funktelexaussendung im GMDSS"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-018",
+            "nr": 18,
+            "modul": "gmdss",
+            "text": "Welche Aussendung wird als „NX\" bezeichnet?",
+            "antworten": [
+                "Nautische Warnnachricht",
+                "Wetterbericht",
+                "Aussendung, die zurückgenommen wurde",
+                "Funktelexaussendung im GMDSS"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-019",
+            "nr": 19,
+            "modul": "gmdss",
+            "text": "Was versteht man unter „AIS“?",
+            "antworten": [
+                "Automatisches Schiffsidentifizierungs- und Überwachungssystem, das statische und dynamische Schiffsdaten auf UKW überträgt",
+                "Automatische Aussendung der Kennung eines Seeschiffes jede Minute bzw. beim Loslassen der Sprechtaste",
+                "Allgemeines Informationssystem für die Seeschifffahrt",
+                "Identifizierung eines Schiffes mit Hilfe von Radarpeilungen und deren Weitergabe an die Schifffahrt zur Kollisionsverhütung"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-020",
+            "nr": 20,
+            "modul": "gmdss",
+            "text": "Was bedeutet „ETA“?",
+            "antworten": [
+                "Voraussichtliche Ankunftszeit",
+                "Voraussichtliche Abfahrtszeit",
+                "Voraussichtliche Gesamtfahrtzeit",
+                "Voraussichtliche Restfahrtzeit"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-021",
+            "nr": 21,
+            "modul": "gmdss",
+            "text": "Wonach richten sich die Zeitangaben im Seefunkdienst?",
+            "antworten": [
+                "Koordinierte Weltzeit (Universal Time Co-ordinated [UTC])",
+                "Bordzeit, berichtigt nach Sommer- oder Winterzeit",
+                "Greenwich-Zeit (Greenwich Mean Time [GMT])",
+                "Ortszeit, bezogen auf den Standort des Schiffes (Local Time [LT])"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-022",
+            "nr": 22,
+            "modul": "gmdss",
+            "text": "Welche Bedeutung hat die Zeitangabe „LT“ (Local Time)?",
+            "antworten": [
+                "Ortszeit, bezogen auf den Standort des Schiffes",
+                "Zeitzone entsprechend der geografischen Breite des Schiffsortes",
+                "Zeit, die bei Funkaussendungen in einem bestimmten Seegebiet zu verwenden ist",
+                "Zeit, die automatisch durch ein an die Funkanlage angeschlossenes GPS-Gerät übermittelt wird"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-023",
+            "nr": 23,
+            "modul": "gmdss",
+            "text": "Wie bezeichnet man ein funkärztliches Beratungsgespräch?",
+            "antworten": [
+                "Medico-Gespräch",
+                "Emergency-Gespräch",
+                "Medical-Transport-Gespräch",
+                "Erste-Hilfe-Gespräch"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "01-gmdss",
+            "beispiel": false
+        },
+        {
+            "id": "src-024",
+            "nr": 24,
+            "modul": "funkeinrichtungen",
+            "text": "Was ist eine „Seefunkstelle“?",
+            "antworten": [
+                "Funkstelle des mobilen Seefunkdienstes an Bord eines nicht dauernd verankerten Seefahrzeuges",
+                "Typgeprüfte Funkstelle, die kein ATIS-Signal aussendet",
+                "Seefunkgerät samt Antenne, das im UKW- bzw. Grenz- und Kurzwellenbereich betrieben wird",
+                "Funkstelle, die am GMDSS teilnehmen darf"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-025",
+            "nr": 25,
+            "modul": "funkeinrichtungen",
+            "text": "Welches Funkzeugnis ist auf einem mit einer Seefunkanlage ausgerüsteten Sportfahrzeug unter deutscher Flagge für den Schiffsführer vorgeschrieben?",
+            "antworten": [
+                "Ein Funkzeugnis, das zum Bedienen der eingebauten Anlage berechtigt, z. B. SRC oder LRC",
+                "Ein SRC bis zur Grenze der Hoheitsgewässer, darüber hinaus ein LRC",
+                "Keines, es genügt, wenn eine Person an Bord ist, die die Funkanlage bedienen darf",
+                "Für die Bedienung einer Grenz-/Kurzwellenanlage ist das LRC vorgeschrieben, für die Bedienung einer UKW-Anlage zusätzlich das SRC"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-026",
+            "nr": 26,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Funkanlagen darf der Inhaber eines Beschränkt Gültigen Funkbetriebszeugnisses (Short Range Certificate [SRC]) bedienen?",
+            "antworten": [
+                "UKW-Funkanlagen im Seefunkdienst auf nicht funkausrüstungspflichtigen Fahrzeugen und auf Traditionsschiffen",
+                "UKW-Funkanlagen für See- und Luftfunkstellen",
+                "UKW-Funkanlagen auf Sportbooten im Seefunkdienst und Binnenschifffahrtsfunk",
+                "UKW-Funkanlagen auf funkausrüstungspflichtigen und nicht funkausrüstungspflichtigen Seeschiffen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-027",
+            "nr": 27,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Sportboote müssen mit einer UKW-Seefunkanlage ausgerüstet sein?",
+            "antworten": [
+                "Gewerbsmäßig genutzte Sportboote mit einer Länge über alles von 12 m und mehr",
+                "Sportboote mit einer Länge über alles von 12 m und mehr",
+                "Sportboote mit einer Antriebsmaschine von 3,68 kW und mehr",
+                "Gewerbsmäßig genutzte Sportboote mit einer Antriebsmaschine von 3,68 kW und mehr"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-028",
+            "nr": 28,
+            "modul": "funkeinrichtungen",
+            "text": "Welche rechtlichen Voraussetzungen sind für den Betrieb einer Seefunkstelle auf einem Sportfahrzeug und einem Traditionsschiff zu erfüllen?",
+            "antworten": [
+                "Zuteilung (Ship Station Licence), für den Seefunkdienst zugelassene oder in Verkehr gebrachte Funkgeräte, ausreichendes Seefunkzeugnis des Fahrzeugführers",
+                "Zuteilung (Ship Station Licence), ausreichendes Seefunkzeugnis und Sportbootführerschein des Fahrzeugführers",
+                "Zuteilung (Ship Station Licence), ausreichendes Seefunkzeugnis einer Person an Bord",
+                "Zuteilung (Ship Station Licence), für den Seefunkdienst zugelassene oder in Verkehr gebrachte Funkgeräte, Sportbootführerschein"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-029",
+            "nr": 29,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Urkunde und welcher Befähigungsnachweis müssen bei der Überprüfung einer Seefunkstelle auf einem Sportfahrzeug dem Prüfbeamten auf Verlangen vorgelegt werden?",
+            "antworten": [
+                "Zuteilung (Ship Station Licence) und Seefunkzeugnis des Fahrzeugführers",
+                "Zuteilung (Ship Station Licence) und Sportbootführerschein des Fahrzeugführers",
+                "Seefunkzeugnis eines Besatzungsmitgliedes und Internationaler Bootsschein (IBS)",
+                "Seefunkzeugnis des Fahrzeugführers und Eigentumsnachweis"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-030",
+            "nr": 30,
+            "modul": "funkeinrichtungen",
+            "text": "Die Urkunde über die Zuteilung (Ship Station Licence) zum Betreiben einer Seefunkstelle wird in Deutschland ausgestellt durch …",
+            "antworten": [
+                "die Bundesnetzagentur (BNetzA), Außenstelle Hamburg",
+                "die Bundesnetzagentur (BNetzA), Außenstelle Mülheim an der Ruhr",
+                "das Bundesamt für Seeschifffahrt und Hydrographie (BSH), Rostock",
+                "das Wasserstraßen- und Schifffahrtsamt, Hamburg"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-031",
+            "nr": 31,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Urkunde für die Seefunkstelle muss auf einem Sportfahrzeug mitgeführt werden?",
+            "antworten": [
+                "Zuteilungsurkunde (Ship Station Licence) (im Original)",
+                "Zuteilungsurkunde (Ship Station Licence) (in Kopie)",
+                "Gerätezulassungsurkunde (im Original)",
+                "Gerätezulassungsurkunde (in Kopie)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-032",
+            "nr": 32,
+            "modul": "funkeinrichtungen",
+            "text": "Was und zu welchem Zweck muss ein Schiffseigner bei Änderung des Schiffsnamens in Bezug auf seine Seefunkstelle veranlassen?",
+            "antworten": [
+                "Namensänderung der Bundesnetzagentur schriftlich mitteilen zwecks Änderung seiner Zuteilungsurkunde (Ship Station Licence)",
+                "Namensänderung dem Bundesamt für Seeschifffahrt und Hydrographie schriftlich mitteilen zwecks Änderung der Gerätezulassungsurkunde)",
+                "Namensänderung dem Wasser- und Schifffahrtsamt, Hamburg schriftlich mitteilen zwecks Änderung des Kennzeichenausweises",
+                "Namensänderung der Zentralen Verwaltungsstelle schriftlich mitteilen zwecks Änderung des Kennzeichenausweises"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-033",
+            "nr": 33,
+            "modul": "funkeinrichtungen",
+            "text": "Was muss ein Schiffseigner beim Austausch der UKW-Sprechfunkanlage gegen eine UKW-GMDSS-Funkanlage veranlassen?",
+            "antworten": [
+                "Schriftliche Mitteilung über die Umrüstung an die Bundesnetzagentur",
+                "Schriftliche Mitteilung über die Umrüstung an das Bundesamt für Seeschifffahrt und Hydrographie",
+                "Schriftliche Mitteilung über die Umrüstung an das Amtsgericht",
+                "Schriftliche Mitteilung über die Umrüstung an die Zentrale Verwaltungsstelle"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-034",
+            "nr": 34,
+            "modul": "funkeinrichtungen",
+            "text": "Was ist beim Kauf eines UKW-Sprechfunkgeräts für den Seefunkdienst oder eines UKW-GMDSS-Funkgeräts zu beachten?",
+            "antworten": [
+                "Das Funkgerät muss für den Seefunkdienst zugelassen oder in Verkehr gebracht worden sein",
+                "Das Funkgerät muss funktionsfähig und TÜV-geprüft sein",
+                "Das Funkgerät muss eine NAVTEX-Schnittstelle aufweisen oder Wetterberichte empfangen können",
+                "Das Funkgerät muss von der Dienststelle Schiffssicherheit der Berufsgenossenschaft Verkehrswirtschaft Post-Logistik Telekommunikation (BG Verkehr) für Sportboote zugelassen sein"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-035",
+            "nr": 35,
+            "modul": "funkeinrichtungen",
+            "text": "Wer stellt in Deutschland Funksicherheitszeugnisse für Sportboote aus, die gewerbsmäßig genutzt werden?",
+            "antworten": [
+                "Dienststelle Schiffssicherheit der Berufsgenossenschaft Verkehrswirtschaft Post-Logistik Telekommunikation (BG Verkehr)",
+                "Bundesamt für Seeschifffahrt und Hydrographie (BSH)",
+                "Wasserstraßen- und Schifffahrtsverwaltung (WSV)",
+                "Bundesnetzagentur (BNetzA)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-036",
+            "nr": 36,
+            "modul": "funkeinrichtungen",
+            "text": "Ein Sportboot von 12 Meter Länge und mehr benötigt ein Funksicherheitszeugnis...",
+            "antworten": [
+                "bei gewerbsmäßiger Nutzung",
+                "bei Regattateilnahme",
+                "bei Auslandsfahrten und in internationalen Gewässern",
+                "in jedem Fall"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-037",
+            "nr": 37,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Sendeleistungen lassen sich bei einer fest installierten UKW-Seefunkanlage schalten?",
+            "antworten": [
+                "1 Watt oder maximal 25 Watt",
+                "25 Watt oder maximal 50 Watt",
+                "0,1 Watt oder maximal 2,5 Watt",
+                "1 Watt oder maximal 12 Watt"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-038",
+            "nr": 38,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Behörde erteilt in Deutschland sechsstellige Rufzeichen für Seefunkstellen?",
+            "antworten": [
+                "Bundesnetzagentur (BNetzA), Außenstelle Hamburg",
+                "Bundesnetzagentur (BNetzA), Außenstelle Mülheim an der Ruhr",
+                "Bundesamt für Seeschifffahrt und Hydrographie (BSH), Hamburg",
+                "Wasser- und Schifffahrtsamt (WSA), Hamburg"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-039",
+            "nr": 39,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Behörden in Deutschland sind berechtigt, die Funktionsfähigkeit von Seefunkstellen zu überprüfen?",
+            "antworten": [
+                "Bundesnetzagentur (BNetzA) und Bundesamt für Seeschifffahrt und Hydrographie (BSH)",
+                "Wasser- und Schifffahrtsdirektionen",
+                "Wasserschutzpolizeibehörden der Küstenländer",
+                "Hafenbehörden in den Seehäfen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-040",
+            "nr": 40,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Behörde teilt einer in das Seeschiffsregister eingetragenen Yacht das mindestens vierstellige Unterscheidungssignal zu?",
+            "antworten": [
+                "Seeschiffsregister des zuständigen Amtsgerichts",
+                "Wasser- und Schifffahrtsverwaltung (WSV)",
+                "Bundesnetzagentur (BNetzA)",
+                "Bundesamt für Seeschifffahrt und Hydrographie (BSH)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-041",
+            "nr": 41,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Art von Funkstelle hat z. B. das Rufzeichen „DDTW“?",
+            "antworten": [
+                "Seefunkstelle an Bord eines deutschen Schiffes, eingetragen in einem Seeschiffsregister",
+                "Küstenfunkstelle des Schiffsmeldedienstes (SMD)",
+                "Funkstelle des Nichtöffentlichen Funkdienstes",
+                "Funkstelle an Bord eines SAR-Hubschraubers"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-042",
+            "nr": 42,
+            "modul": "funkeinrichtungen",
+            "text": "Das Abhörverbot und das Fernmeldegeheimnis sind geregelt...",
+            "antworten": [
+                "im Telekommunikationsgesetz (TKG)",
+                "in der Vollzugsordnung für den Funkdienst (VO Funk)/in den Radio Regulations (RR)",
+                "in der Schiffssicherheitsverordnung (SchSV)",
+                "im Gesetz über Funkanlagen und Telekommunikationseinrichtungen (FTEG)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-043",
+            "nr": 43,
+            "modul": "funkeinrichtungen",
+            "text": "Wer ist beim Betrieb einer Seefunkstelle auf einem Sportboot zur Wahrung des Fernmeldegeheimnisses und des Abhörverbots verpflichtet?",
+            "antworten": [
+                "Alle Personen, die eine Seefunkstelle beaufsichtigen, bedienen oder Kenntnis über öffentlichen Nachrichtenaustausch erlangt haben",
+                "Alle Personen, die ständig an Bord sind",
+                "Alle Personen, die das Funkgerät bedienen können",
+                "Alle Personen, die vom Schiffsführer ausdrücklich dazu verpflichtet worden sind"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-044",
+            "nr": 44,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Nachrichten dürfen uneingeschränkt aufgenommen und verbreitet werden?",
+            "antworten": [
+                "Aussendungen, die „An alle Funkstellen“ gerichtet sind",
+                "Aussendungen, die von allgemeinem Interesse sind",
+                "Aussendungen im öffentlichen Seefunkdienst",
+                "Aussendungen im Seefunkdienst dürfen uneingeschränkt aufgenommen und verbreitet werden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-045",
+            "nr": 45,
+            "modul": "funkeinrichtungen",
+            "text": "Wenn ein Funkgerät ordnungsgemäß in Verkehr gebracht worden ist, trägt es...",
+            "antworten": [
+                "das CE-Zeichen",
+                "eine Seriennummer",
+                "das GS-Prüfzeichen",
+                "das VDE-Prüfzeichen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-046",
+            "nr": 46,
+            "modul": "funkeinrichtungen",
+            "text": "Zur Teilnahme am Binnenschifffahrtsfunk muss eine Seefunkstelle...",
+            "antworten": [
+                "mit einer umschaltbaren „Kombi-Anlage für Seefunkdienst und Binnenschifffahrtsfunk“ oder einer zusätzlichen Sprechfunkanlage für den Binnenschifffahrtsfunk ausgerüstet werden",
+                "mit einer weiteren Seefunkanlage ausgerüstet werden",
+                "nicht geändert werden",
+                "mit der MMSI auch eine ATIS-Kennung aussenden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-047",
+            "nr": 47,
+            "modul": "funkeinrichtungen",
+            "text": "Das Seefunkgerät nimmt bei Empfang einen Strom von 0,5 Ampere auf. Wie lange kann das Funkgerät im Empfangsbetrieb an einer Batterie ohne Nachladen überschlägig betrieben werden, wenn die Kapazität 60 Amperestunden beträgt?",
+            "antworten": [
+                "120 Stunden",
+                "30 Stunden",
+                "60 Stunden",
+                "90 Stunden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-048",
+            "nr": 48,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Auswirkung auf die Betriebsdauer einer Batterie hat der Sendebetrieb einer Seefunkanlage im Vergleich zum Empfangsbetrieb?",
+            "antworten": [
+                "Betriebsdauer wird verkürzt",
+                "Betriebsdauer wird halbiert",
+                "Betriebsdauer wird verlängert",
+                "Betriebsdauer bleibt gleich"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-049",
+            "nr": 49,
+            "modul": "funkeinrichtungen",
+            "text": "Wie hoch ist die mittlere Stromaufnahme einer UKW-Seefunkanlage im Empfangsbetrieb?",
+            "antworten": [
+                "Je nach Anlage zwischen 0,3 A und 1 A",
+                "Je nach Anlage zwischen 0,1 A und 0,2 A",
+                "Je nach Anlage zwischen 1 A und 2 A",
+                "Je nach Anlage zwischen 2 A und 3 A"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-050",
+            "nr": 50,
+            "modul": "funkeinrichtungen",
+            "text": "Wie hoch ist die mittlere Stromaufnahme einer UKW-Seefunkanlage im Sendebetrieb bei 25 Watt Sendeleistung?",
+            "antworten": [
+                "Zwischen 4 und 8 Ampere",
+                "Zwischen 1 und 2 Ampere",
+                "Zwischen 2 und 3 Ampere",
+                "Zwischen 10 und 12 Ampere"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-051",
+            "nr": 51,
+            "modul": "funkeinrichtungen",
+            "text": "Wozu dient am UKW-Gerät die Rauschsperre (Squelch)?",
+            "antworten": [
+                "Der Lautsprecher des Empfängers wird nur ab einem Mindest-Empfangssignalpegel aktiviert",
+                "Das Rauschen kann stufenlos auf einen angenehmen Wert eingestellt werden",
+                "Die Rauschsperre verbessert die Wiedergabe von schwachen Empfangssignalen",
+                "Der Lautsprecher des Empfängers wird nur beim Empfang von Notsignalen aktiviert"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-052",
+            "nr": 52,
+            "modul": "funkeinrichtungen",
+            "text": "Welche Eigenschaften des „GPS“ sind für eine GMDSS-Funkanlage von besonderer Bedeutung?",
+            "antworten": [
+                "Mit Hilfe von GPS kann die genaue Position des Fahrzeugs bestimmt und übermittelt werden. Ebenso kann die genaue Zeit bestimmt werden",
+                "Mit Hilfe von GPS ist ein weltweiter Funkverkehr über Satellit zwischen Schiffen untereinander bzw. mit Küstenfunkstellen möglich",
+                "Mit Hilfe von GPS besteht die Möglichkeit der Kommunikation über Inmarsat bzw. COSPAS-SARSAT",
+                "Mit Hilfe von GPS erfolgt die Kommunikation mit der Rettungsleitstelle über Satellit"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "03-ukw-anlage",
+            "beispiel": false
+        },
+        {
+            "id": "src-053",
+            "nr": 53,
+            "modul": "dsc",
+            "text": "Was bedeutet „DSC“ im mobilen Seefunkdienst?",
+            "antworten": [
+                "Digitaler Selektivruf",
+                "Funküberwachung auf zwei Funkkanälen (Dual Watch)",
+                "Gegensprechen auf zwei Frequenzen im Gegensatz zu Wechselsprechen auf einer Frequenz",
+                "Digitales System für die Telekommunikation an Bord"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-054",
+            "nr": 54,
+            "modul": "dsc",
+            "text": "Was ist ein „Digitaler Selektivruf“?",
+            "antworten": [
+                "Digitale Aussendung, die bei der gerufenen Funkstelle ein optisches und/oder akustisches Signal auslöst",
+                "Aussendung eines digitalen Anrufs auf Kanal 16",
+                "Funkaussendung an eine ausgewählte Funkstelle",
+                "Funkverkehr im GMDSS auf den dafür vorgesehenen Kanälen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-055",
+            "nr": 55,
+            "modul": "dsc",
+            "text": "Welches technische Verfahren im GMDSS ermöglicht einer Seefunkstelle die Verkehrsaufnahme in den Richtungen Schiff-Küstenfunkstelle und Schiff–Schiff?",
+            "antworten": [
+                "DSC",
+                "NAVTEX",
+                "COSPAS-SARSAT",
+                "SMS"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-056",
+            "nr": 56,
+            "modul": "dsc",
+            "text": "Welcher Unterschied besteht in der Reichweite bei analoger (Sprechfunk) und bei digitaler Übertragung (DSC) im UKW-Seefunkbereich?",
+            "antworten": [
+                "Bei digitaler Übertragung deutlich größere Reichweite im Vergleich zur analogen Übertragung",
+                "Bei digitaler Übertragung besteht kein Unterschied im Vergleich zur analogen Übertragung",
+                "Bei digitaler Übertragung vierfache Reichweite im Vergleich zur analogen Übertragung",
+                "Bei digitaler Übertragung kürzere Reichweite im Vergleich zur analogen Übertragung"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-057",
+            "nr": 57,
+            "modul": "dsc",
+            "text": "Welcher UKW-Kanal wird im Weltweiten Seenot- und Sicherheitsfunksystem (GMDSS) für die digitale Ankündigung einer Dringlichkeitsmeldung benutzt?",
+            "antworten": [
+                "Kanal 70",
+                "Kanal 16",
+                "Kanal 10",
+                "Kanal 06"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-058",
+            "nr": 58,
+            "modul": "dsc",
+            "text": "Auf welchem UKW-Kanal erfolgt die Alarmierung mittels DSC?",
+            "antworten": [
+                "Kanal 70",
+                "Kanal 16",
+                "Kanal 06",
+                "Kanal 10"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-059",
+            "nr": 59,
+            "modul": "dsc",
+            "text": "Wie wird eine mit DSC-Einrichtungen ausgerüstete Seefunkstelle gekennzeichnet?",
+            "antworten": [
+                "Schiffsname, Rufzeichen, Rufnummer des mobilen Seefunkdienstes (MMSI)",
+                "Rufnummer des mobilen Seefunkdienstes (MMSI), Schiffsname",
+                "Schiffsname, Heimathafen, Rufzeichen",
+                "Registriernummer des Schiffszertifikates, Rufzeichen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-060",
+            "nr": 60,
+            "modul": "dsc",
+            "text": "Der mit einem DSC-Gerät aufgenommene Notarlarm wird…",
+            "antworten": [
+                "automatisch gespeichert",
+                "manuell gespeichert",
+                "Gespeichert, wenn im Speicher noch genügend Platz ist",
+                "nicht gespeichert, sondern ausgedruckt."
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-061",
+            "nr": 61,
+            "modul": "dsc",
+            "text": "Was wird als „Maritime Mobile Service Identity (MMSI)“ bezeichnet?",
+            "antworten": [
+                "Rufnummer im Seefunkdienst",
+                "Maritimes Informationssystem",
+                "Landeskennung einer Seefunkstelle (z.B. 211)",
+                "Aussendung, die die Sicherheit der Schifffahrt betrifft"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-062",
+            "nr": 62,
+            "modul": "dsc",
+            "text": "Wie lauten die Maritime Identification Digits (MID) für die Bundesrepublik Deutschland?",
+            "antworten": [
+                "211 und 218",
+                "211 und 219",
+                "218 und 224",
+                "218 und 226"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-063",
+            "nr": 63,
+            "modul": "dsc",
+            "text": "Welche Urkunde enthält die eigene Seefunkstellen-Rufnummer (MMSI)?",
+            "antworten": [
+                "Zuteilungsurkunde (Ship Station Licence)",
+                "Gerätezulassungsurkunde",
+                "Internationaler Bootsschein",
+                "Schiffszertifikat"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-064",
+            "nr": 64,
+            "modul": "dsc",
+            "text": "Wie setzt sich die Seefunkstellen-Rufnummer (MMSI) zusammen?",
+            "antworten": [
+                "Neun Ziffern, wobei die ersten drei Ziffern die Seefunkkennzahl (MID) enthalten",
+                "Drei Buchstaben und sechs Ziffern",
+                "Sieben Ziffern, wobei die ersten beiden Ziffern Nullen sein müssen",
+                "Neun Ziffern, wobei die erste Ziffer eine Null ist"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-065",
+            "nr": 65,
+            "modul": "dsc",
+            "text": "Wie setzt sich die Küstenfunkstellen-Rufnummer (MMSI) zusammen?",
+            "antworten": [
+                "Neun Ziffern, die ersten beiden Ziffern Nullen, die nächsten drei Ziffern enthalten die Seefunkkennzahl (MID)",
+                "Neun Ziffern, die ersten drei Ziffern enthalten die Seefunkkennzahl (MID)",
+                "Geografischer Ortsname der Küstenfunkstelle, gefolgt von drei Ziffern, die die Seefunkkennzahl (MID) bilden",
+                "Internationale Telefon-Vorwahlnummer des Landes, in dem sich die Küstenfunkstelle befindet, gefolgt von fünf besonders festgelegten Ziffern"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-066",
+            "nr": 66,
+            "modul": "dsc",
+            "text": "Welche Art von Funkstelle des Seefunkdienstes kennzeichnet die Ziffernfolge 002111240?",
+            "antworten": [
+                "Deutsche Küstenfunkstelle",
+                "Deutsche Seefunkstelle",
+                "Deutsches SAR-Fahrzeug",
+                "Deutsche EPIRB"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-067",
+            "nr": 67,
+            "modul": "dsc",
+            "text": "Woran ist die Nationalität der Seefunkstelle in der MMSI erkennbar?",
+            "antworten": [
+                "Seefunkkennzahl (MID)",
+                "Länderkennung, bestehend aus drei Buchstaben",
+                "Letzte drei Ziffern der MMSI",
+                "Mittlere drei Ziffern der MMSI"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-068",
+            "nr": 68,
+            "modul": "dsc",
+            "text": "Durch die Verbindung mit welchem Gerät ist gewährleistet, dass bei einem DSC-Notalarm die aktuelle Position automatisch mit ausgesendet wird?",
+            "antworten": [
+                "GPS-Empfänger",
+                "NAVTEX-Empfänger",
+                "Radargerät",
+                "UKW-Wachempfänger"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "05-dsc",
+            "beispiel": false
+        },
+        {
+            "id": "src-069",
+            "nr": 69,
+            "modul": "ukw",
+            "text": "Wie wird der Frequenzbereich von 30 bis 300 MHz bezeichnet?",
+            "antworten": [
+                "Ultrakurzwelle (UKW/VHF)",
+                "Langwelle (LW/LF)",
+                "Mittelwelle (MW/MF)",
+                "Kurzwelle (KW/HF)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-070",
+            "nr": 70,
+            "modul": "ukw",
+            "text": "Welches Funkzeugnis muss der Führer eines Sportfahrzeugs oder Traditionsschiffes, das mit einer UKW-Seefunkstelle ausgerüstet ist, mindestens besitzen, um am GMDSS teilnehmen zu dürfen?",
+            "antworten": [
+                "Beschränkt Gültiges Funkbetriebszeugnis (Short Range Certificate)",
+                "Allgemeines Sprechfunkzeugnis für den Seefunkdienst",
+                "UKW-Sprechfunkzeugnis für den Binnenschifffahrtsfunk",
+                "Allgemeines Betriebszeugnis für Funker (General Operator’s Certificate)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-071",
+            "nr": 71,
+            "modul": "ukw",
+            "text": "An welchem Funkdienst darf der Inhaber eines Beschränkt Gültigen Funkbetriebszeugnisses (SRC) teilnehmen?",
+            "antworten": [
+                "Mobiler Seefunkdienst auf Ultrakurzwelle (UKW/VHF)",
+                "Mobiler Seefunkdienst auf Ultrakurzwelle (UKW/VHF) einschließlich Satellitenfunk",
+                "Mobiler Seefunkdienst auf Kurzwelle (KW/HF) und Grenzwelle (GW/MF), außer Satellitenfunk",
+                "Mobiler Seefunkdienst auf Ultrakurzwelle (UKW/VHF) einschließlich Grenzwelle/Kurzwelle"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-072",
+            "nr": 72,
+            "modul": "ukw",
+            "text": "Was kennzeichnet die Betriebsart „Duplex“?",
+            "antworten": [
+                "Gegensprechen auf zwei Frequenzen",
+                "Wechselsprechen auf einer Frequenz",
+                "Gegensprechen auf einer Frequenz",
+                "Wechselsprechen auf zwei Frequenzen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-073",
+            "nr": 73,
+            "modul": "ukw",
+            "text": "Was kennzeichnet die Betriebsart „Simplex“?",
+            "antworten": [
+                "Wechselsprechen auf einer Frequenz",
+                "Gegensprechen auf einer Frequenz",
+                "Wechselsprechen auf zwei Frequenzen",
+                "Gegensprechen auf zwei Frequenzen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-074",
+            "nr": 74,
+            "modul": "ukw",
+            "text": "Welche Betriebsart wird als „Semi-Duplex“ bezeichnet?",
+            "antworten": [
+                "Wechselsprechen auf zwei Frequenzen",
+                "Gegensprechen auf zwei Frequenzen",
+                "Gegensprechen auf einer Frequenz",
+                "Wechselsprechen auf einer Frequenz"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-075",
+            "nr": 75,
+            "modul": "ukw",
+            "text": "Welche UKW-Kanäle sind international ausschließlich für den Funkverkehr zwischen Seefunkstellen vorgesehen?",
+            "antworten": [
+                "Kanäle 06, 08, 72 und 77",
+                "Kanäle 15 und 17",
+                "Kanäle 16, 69, 70 und 82",
+                "Kanäle 16 und 18, ersatzweise 70"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-076",
+            "nr": 76,
+            "modul": "ukw",
+            "text": "Für welchen Funkverkehr dürfen die UKW-Kanäle 75 und 76 benutzt werden?",
+            "antworten": [
+                "Funkverkehr, der ausschließlich die Navigation betrifft",
+                "Funkverkehr, der ausschließlich See-Land-Verbindungen betrifft",
+                "Funkverkehr unter Behördenfahrzeugen",
+                "Funkverkehr, der ausschließlich Land-See-Verbindungen betrifft"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-077",
+            "nr": 77,
+            "modul": "ukw",
+            "text": "Atmosphärische Störungen des Funkverkehrs sind …",
+            "antworten": [
+                "im Seefunkverkehr im VHF-Bereich kein Problem",
+                "im Seefunkverkehr im VHF-Bereich ein großes Problem",
+                "gleichzeitig im VHF-Bereich und beim NAVTEX-Empfang vorhanden",
+                "im VHF-Bereich nur bei Verwendung von nicht vertikal angebrachten Antennen vorhanden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-078",
+            "nr": 78,
+            "modul": "ukw",
+            "text": "Wie breiten sich Ultrakurzwellen (UKW/VHF) aus?",
+            "antworten": [
+                "Geradlinig und quasioptisch",
+                "Abhängig von der Tageszeit",
+                "Der Erdkrümmung folgend bis weit hinter den Horizont",
+                "In der Ionosphäre reflektiert"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-079",
+            "nr": 79,
+            "modul": "ukw",
+            "text": "Wie werden die internationalen Kanäle im UKW-Seefunkbereich bezeichnet?",
+            "antworten": [
+                "Kanal 1 bis 28 und 60 bis 88",
+                "Kanal 1 bis 20 und 68 bis 88",
+                "Kanal 1 bis 28 und 60 bis 87",
+                "Kanal 1 bis 28 und 68 bis 88"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-080",
+            "nr": 80,
+            "modul": "ukw",
+            "text": "Wovon hängt die Reichweite einer UKW-Funkanlage hauptsächlich ab?",
+            "antworten": [
+                "Antennenhöhe",
+                "Bordnetzspannung",
+                "Tageszeit",
+                "Wetter"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-081",
+            "nr": 81,
+            "modul": "ukw",
+            "text": "Wie sollen UKW-Antennen ausgerichtet werden?",
+            "antworten": [
+                "Vertikal",
+                "Horizontal",
+                "Radial",
+                "Diagonal"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-082",
+            "nr": 82,
+            "modul": "ukw",
+            "text": "Wodurch kann die Abstrahlung der Sendeenergie einer UKW-Anlage auf einem Schiff wesentlich beeinträchtigt werden?",
+            "antworten": [
+                "Metallische Gegenstände in der Nähe der Antenne",
+                "Schräglage des Schiffs",
+                "Metallische Gegenstände in der Nähe des Antennenkabels",
+                "Wetter"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-083",
+            "nr": 83,
+            "modul": "ukw",
+            "text": "Was hat keinen Einfluss auf die Reichweite eines UKW-Handsprechfunkgerätes?",
+            "antworten": [
+                "Schlechtes Wetter",
+                "Niedrige Antennenhöhe",
+                "Geringer Ladezustand des Akkus",
+                "Geringe Sendeleistung"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-084",
+            "nr": 84,
+            "modul": "ukw",
+            "text": "Ist das Senden auf UKW in ausländischen Häfen gestattet?",
+            "antworten": [
+                "Abhängig von entsprechenden Vorschriften des Landes",
+                "Es ist immer gestattet",
+                "Nur am Tage, in der Nacht herrscht Funkstille",
+                "Außer in Notfällen ist es überall verboten"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "04-verkehrsabwicklung",
+            "beispiel": false
+        },
+        {
+            "id": "src-085",
+            "nr": 85,
+            "modul": "betriebsverfahren",
+            "text": "Wie ist die Rangfolge der Aussendungen im Seefunkdienst festgelegt?",
+            "antworten": [
+                "Not, Dringlichkeit, Sicherheit, Routine",
+                "Not, Sicherheit, Dringlichkeit, Routine",
+                "Routine, Sicherheit, Dringlichkeit, Not",
+                "Routine, Dringlichkeit, Sicherheit, Not"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-086",
+            "nr": 86,
+            "modul": "betriebsverfahren",
+            "text": "Welche Vorkommnisse im Seefunkdienst sollen im Schiffstagebuch dokumentiert werden?",
+            "antworten": [
+                "Der Not-, Dringlichkeits- und Sicherheitsverkehr sowie wichtige Vorkommnisse, die den Seefunkdienst betreffen",
+                "Der Not-, Dringlichkeits- und Sicherheitsverkehr sowie der Routineverkehr zwischen Seefunkstellen und Küstenfunkstellen",
+                "Der gesamte DSC-Verkehr sowie wichtige Vorkommnisse, die den Seefunkdienst betreffen",
+                "Der GMDSS-Verkehr zwischen Seefunkstellen sowie Fehlalarme und andere wichtige Vorkommnisse, die den Seefunkdienst betreffen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-087",
+            "nr": 87,
+            "modul": "betriebsverfahren",
+            "text": "Welchem Funkverkehr ist der Nachrichtenaustausch zwischen Küstenfunkstellen des Revier- und Hafenfunkdienstes und Seefunkstellen zuzuordnen?",
+            "antworten": [
+                "Nichtöffentlicher Funkverkehr",
+                "On Board Traffic",
+                "Port Radio",
+                "Öffentlicher Funkverkehr"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-088",
+            "nr": 88,
+            "modul": "betriebsverfahren",
+            "text": "Wozu dient der Revier- und Hafenfunkdienst?",
+            "antworten": [
+                "Übermittlung von Nachrichten, die ausschließlich das Führen, die Fahrt und die Sicherheit von Schiffen auf dem Revier, innerhalb oder in der Nähe von Häfen betreffen",
+                "Zuweisung von Liegeplätzen innerhalb oder in der Nähe von Häfen",
+                "Verbreitung von Wetterberichten auf dem Revier, innerhalb oder in der Nähe von Häfen",
+                "Nachrichtenaustausch innerhalb oder in der Nähe von Häfen über das öffentliche Netz"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-089",
+            "nr": 89,
+            "modul": "betriebsverfahren",
+            "text": "Welcher Funkdienst gehört neben dem Revier- und Hafenfunkdienst ebenfalls zum Sicherheitsfunkdienst innerhalb des mobilen Seefunkdienstes?",
+            "antworten": [
+                "Schiffslenkungsfunkdienst",
+                "Lotsenfunk",
+                "Schleusenfunk",
+                "Binnenschifffahrtsfunk"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-090",
+            "nr": 90,
+            "modul": "betriebsverfahren",
+            "text": "Wer bestimmt bei einer Verbindung zwischen See- und Küstenfunkstelle den für die weitere Verkehrsabwicklung zu benutzenden Arbeitskanal?",
+            "antworten": [
+                "Küstenfunkstelle",
+                "Seefunkstelle",
+                "On-Scene Co-ordinator (OSC)",
+                "Rufende Funkstelle"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-091",
+            "nr": 91,
+            "modul": "betriebsverfahren",
+            "text": "Wie ist eine Küstenfunkstelle des Revier- und Hafenfunkdienstes gekennzeichnet?",
+            "antworten": [
+                "Geografischer Name des Ortes, dem die Art des Dienstes und das Wort Radio folgen",
+                "Wort Radio, dem die Art des Dienstes und der geografische Name des Ortes folgen",
+                "Geografischer Name des Ortes, dem das Wort Radio und die Art des Dienstes folgen",
+                "Radio, dem der geografische Name des Ortes und die Art des Dienstes folgen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-092",
+            "nr": 92,
+            "modul": "betriebsverfahren",
+            "text": "Welche Funkstelle wird mit dem Rufnamen „Warnemünde Traffic“ gerufen?",
+            "antworten": [
+                "Küstenfunkstelle des Revierfunkdienstes in Warnemünde",
+                "Wasserschutzpolizei Warnemünde",
+                "Seefunkstelle der DGzRS-Station Warnemünde",
+                "Funkstelle des Hafenmeisters der Marina in Warnemünde"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-093",
+            "nr": 93,
+            "modul": "betriebsverfahren",
+            "text": "Was zeigt das Dringlichkeitszeichen an?",
+            "antworten": [
+                "Die rufende Funkstelle hat eine sehr dringende Meldung auszusenden, welche die Sicherheit einer mobilen Einheit oder einer Person betrifft",
+                "Die rufende Funkstelle hat eine Meldung auszusenden, dass ein Schiff von einer ernsten und unmittelbaren Gefahr bedroht ist und sofortige Hilfe benötigt",
+                "Die rufende Funkstelle hat eine eilige Meldung auszusenden, die eine nautische Warnnachricht zum Inhalt hat",
+                "Die rufende Funkstelle hat eine wichtige Meldung auszusenden, welche den Empfang einer Seenotfunkbake (EPIRB) bestätigt"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-094",
+            "nr": 94,
+            "modul": "betriebsverfahren",
+            "text": "Wie lautet das Dringlichkeitszeichen im Sprechfunk?",
+            "antworten": [
+                "PAN PAN",
+                "SECURITE",
+                "MAYDAY",
+                "URGENCY"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-095",
+            "nr": 95,
+            "modul": "betriebsverfahren",
+            "text": "Was wird im Sprechfunk durch das Zeichen PAN PAN angekündigt?",
+            "antworten": [
+                "Dringlichkeitsmeldung",
+                "Notmeldung",
+                "Sicherheitsmeldung",
+                "Routinemeldung"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-096",
+            "nr": 96,
+            "modul": "betriebsverfahren",
+            "text": "Wie ist im GMDSS zu verfahren, wenn eine dringende Meldung im UKW-Bereich auszusenden ist, welche die Sicherheit einer Person betrifft?",
+            "antworten": [
+                "Ankündigung per Digitalen Selektivruf (DSC) auf Kanal 70 und Aussendung der Dringlichkeitsmeldung im Sprechfunk auf Kanal 16",
+                "Ankündigung und Aussendung der Dringlichkeitsmeldung im Sprechfunk auf Kanal 16",
+                "Ankündigung im Sprechfunk auf Kanal 16 und Aussendung der Dringlichkeitsmeldung auf einem Schiff-Schiff-Kanal",
+                "Ankündigung per Digitalem Selektivruf (DSC) auf Kanal 70 und Aussendung der Dringlichkeitsmeldung auf einem Schiff-Schiff-Kanal"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-097",
+            "nr": 97,
+            "modul": "betriebsverfahren",
+            "text": "Was bedeutet im DSC-Controller die Anzeige „URGENCY“?",
+            "antworten": [
+                "Die nachfolgende Meldung ist dringend und betrifft die Sicherheit einer mobilen Einheit oder einer Person",
+                "Die nachfolgende Meldung ist eine Notmeldung und die Seefunkstelle erbittet sofortige Hilfe",
+                "Die nachfolgende Meldung ist dringend und die Seefunkstelle erbittet nautische Beratung",
+                "Die nachfolgende Meldung ist eine Wetterwarnung und betrifft die Sicherheit der Schifffahrt"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-098",
+            "nr": 98,
+            "modul": "betriebsverfahren",
+            "text": "An wen dürfen Dringlichkeitsmeldungen im Seefunkdienst grundsätzlich gerichtet werden?",
+            "antworten": [
+                "An alle Funkstellen oder an eine bestimmte Funkstelle",
+                "An alle Funkstellen im Seegebiet A1 oder an eine bestimmte Funkstelle im Seegebiet A1",
+                "An alle Küstenfunkstellen oder an alle Funkstellen im Seegebiet A1",
+                "An alle Küstenfunkstellen oder die Seenotleitung (MRCC)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-099",
+            "nr": 99,
+            "modul": "betriebsverfahren",
+            "text": "Wie ist zu verfahren, wenn eine an alle Funkstellen ausgesendete Dringlichkeitsmeldung erledigt ist?",
+            "antworten": [
+                "Dringlichkeitsmeldung muss durch eine Meldung an alle Funkstellen aufgehoben werden",
+                "Dringlichkeitsmeldung muss bei dem Fall „Mensch über Bord“ durch eine Meldung an alle Funkstellen aufgehoben werden",
+                "Dringlichkeitsmeldung muss durch eine Meldung an die nächste Küstenfunkstelle aufgehoben werden",
+                "Dringlichkeitsmeldung muss durch die Meldung SILENCE FINI aufgehoben werden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-100",
+            "nr": 100,
+            "modul": "betriebsverfahren",
+            "text": "Wie lautet das Sicherheitszeichen im Seefunkdienst?",
+            "antworten": [
+                "SECURITE",
+                "URGENCY",
+                "PAN PAN",
+                "MAYDAY"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-101",
+            "nr": 101,
+            "modul": "betriebsverfahren",
+            "text": "Welche Meldung wird mit SECURITE eingeleitet?",
+            "antworten": [
+                "Sicherheitsmeldung",
+                "Notmeldung",
+                "Dringlichkeitsmeldung",
+                "Routinemeldung"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-102",
+            "nr": 102,
+            "modul": "betriebsverfahren",
+            "text": "Welchen Inhalt kann eine Sicherheitsmeldung haben?",
+            "antworten": [
+                "Wichtige nautische Warnnachricht oder eine wichtige Wetterwarnung",
+                "Wichtige nautische Warnnachricht oder die Weiterleitung eines Notalarms",
+                "Aufhebung eines Fehlalarms oder eine wichtige Wetterwarnung",
+                "Aufhebung einer Dringlichkeitsmeldung oder ein Medico-Gespräch"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-103",
+            "nr": 103,
+            "modul": "betriebsverfahren",
+            "text": "Welche UKW-Kanäle benutzen Sportfahrzeuge für den Funkverkehr untereinander vorzugsweise in den deutschen Hoheitsgewässern?",
+            "antworten": [
+                "Kanäle 69 oder 72",
+                "Kanäle 69 oder 70",
+                "Kanäle 10 oder 13",
+                "Kanäle 06 oder 16"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-104",
+            "nr": 104,
+            "modul": "betriebsverfahren",
+            "text": "Für welche Verkehrsabwicklungen werden UKW-Handsprechfunkgeräte vorzugsweise verwendet?",
+            "antworten": [
+                "Funkverkehr an Bord, Funkverkehr Schiff–Überlebensfahrzeug",
+                "Funkverkehr Schiff–Schiff, Funkverkehr Schiff–SAR-Hubschrauber)",
+                "Funkverkehr an Bord, Funkverkehr Schiff–Hafen",
+                "Funkverkehr mit Küstenfunkstellen, Funkverkehr Schiff–Überlebensfahrzeug"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-105",
+            "nr": 105,
+            "modul": "betriebsverfahren",
+            "text": "Was ist bei Testsendungen im Sprech-Seefunkdienst zu beachten?",
+            "antworten": [
+                "Die Aussendungen dürfen 10 Sekunden nicht überschreiten, müssen mit dem Wort „Test“ und mit einer Kennung des Schiffes ausgestrahlt werden",
+                "Die Aussendungen dürfen 20 Sekunden nicht überschreiten und müssen mit einer Kennung des Schiffes ausgestrahlt werden",
+                "Die Aussendungen dürfen nur einmal nach Einbau des Gerätes ohne Antenne erfolgen und müssen mit dem Wort „Test“ gekennzeichnet werden",
+                "Die Aussendungen dürfen nur außerhalb der Hoheitsgewässer erfolgen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-106",
+            "nr": 106,
+            "modul": "betriebsverfahren",
+            "text": "Betriebsart wird für den Schiff-Schiff-Verkehr auf UKW im Sprechfunkverfahren verwendet?",
+            "antworten": [
+                "Wechselsprechen auf einer Frequenz",
+                "Gegensprechen auf einer Frequenz",
+                "Wechselsprechen auf zwei Frequenzen",
+                "Gegensprechen auf zwei Frequenzen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-107",
+            "nr": 107,
+            "modul": "betriebsverfahren",
+            "text": "Der UKW-Kanal 70 dient ausschließlich dem Zweck der Aussendung ...",
+            "antworten": [
+                "des Digitalen Selektivrufs",
+                "von Peilzeichen",
+                "von Positionsmeldungen",
+                "von Küstenfunkstellen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-108",
+            "nr": 108,
+            "modul": "betriebsverfahren",
+            "text": "Welchen Zwecken dient der UKW-Kanal 16 (156,8 MHz) im Seefunkdienst?",
+            "antworten": [
+                "Notverkehr, Dringlichkeitsmeldung, Ankündigung einer Sicherheitsmeldung, Anrufkanal",
+                "Notverkehr, Ankündigung einer Sicherheitsmeldung, Routineverkehr, Anrufkanal",
+                "Aussendung des digitalen Selektivrufs",
+                "Funkverkehr zwischen Fischereifahrzeugen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-109",
+            "nr": 109,
+            "modul": "betriebsverfahren",
+            "text": "Auf welchem UKW-Kanal muss ein Sportfahrzeug empfangsbereit sein, wenn es sich auf See befindet und mit einer GMDSS-Seefunkanlage ausgerüstet ist?",
+            "antworten": [
+                "Kanal 70",
+                "Kanal 16",
+                "Kanal 69",
+                "Kanal 72"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-110",
+            "nr": 110,
+            "modul": "betriebsverfahren",
+            "text": "Auf welchem UKW-Kanal sollte ein Sportfahrzeug in der Regel empfangsbereit sein, wenn es sich auf See befindet und nur mit einer UKW-Sprechfunkanlage ausgerüstet ist?",
+            "antworten": [
+                "Kanal 16",
+                "Kanal 70",
+                "Kanal 69",
+                "Kanal 06"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-111",
+            "nr": 111,
+            "modul": "betriebsverfahren",
+            "text": "Welcher UKW-Kanal ist vorzugsweise für den Schiff-Schiff-Verkehr und für koordinierte Such- und Rettungseinsätze (SAR) vorgesehen?",
+            "antworten": [
+                "Kanal 06",
+                "Kanal 10",
+                "Kanal 16",
+                "Kanal 72"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-112",
+            "nr": 112,
+            "modul": "betriebsverfahren",
+            "text": "Welchen Zwecken dienen der Anrufkanal und ein Arbeitskanal?",
+            "antworten": [
+                "Anrufkanal zur Verbindungsaufnahme, Arbeitskanal zur Abwicklung des Weiteren Funkverkehrs",
+                "Anrufkanal zur Verbindungsaufnahme, Arbeitskanal nur zur Abwicklung von Notfällen",
+                "Anrufkanal zur Verbindungsaufnahme, Arbeitskanal zur Abwicklung von Reiseplanungen",
+                "Anrufkanal zur Verbindungsaufnahme mit Teilnehmern an Land, Arbeitskanal zur Zuweisung des Schleusenranges"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-113",
+            "nr": 113,
+            "modul": "betriebsverfahren",
+            "text": "Auf welchem Kanal ist eine Küstenfunkstelle zu rufen, die sowohl auf dem Kanal 70 als auch auf Kanal 16 sowie auf einem veröffentlichten Arbeitskanal empfangsbereit ist?",
+            "antworten": [
+                "Kanal 70 oder Arbeitskanal",
+                "Kanal 16 oder Kanal 70",
+                "Kanal 70 oder Kanal 72",
+                "Kanal 16 oder Arbeitskanal"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-114",
+            "nr": 114,
+            "modul": "betriebsverfahren",
+            "text": "Auf welchem Kanal wird eine Küstenfunkstelle ohne DSC im Routineverkehr gerufen?",
+            "antworten": [
+                "Arbeitskanal",
+                "Kanal 16",
+                "Ankündigung auf Kanal 16, dann Wechsel zum Arbeitskanal",
+                "Kanal 70"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-115",
+            "nr": 115,
+            "modul": "betriebsverfahren",
+            "text": "Was ist vor dem Anruf auf einem Arbeitskanal zu beachten?",
+            "antworten": [
+                "Der laufende Funkverkehr darf nicht gestört werden",
+                "Die geringste Sendeleistung muss eingestellt werden",
+                "Die Küstenfunkstelle muss den Arbeitskanal freigeben",
+                "Der laufende Funkverkehr muss aufgefordert werden, den Funkverkehr zu beenden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "06-notverkehr",
+            "beispiel": false
+        },
+        {
+            "id": "src-116",
+            "nr": 116,
+            "modul": "navtex",
+            "text": "Was bedeutet „NAVTEX“?",
+            "antworten": [
+                "Nautische Warnnachrichten im Funktelexverfahren",
+                "Navigationssystem, das Vorgaben im Funktelexverfahren erhält",
+                "MW-Empfänger an Bord eines Seeschiffes zur Aufzeichnung von Wetterberichten",
+                "Satellitengestütztes Navigationssystem für den Seenotfall"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-117",
+            "nr": 117,
+            "modul": "navtex",
+            "text": "Wie heißt der Dienst, in dem Nachrichten für die Sicherheit der Seeschifffahrt (MSI) über terrestrische Frequenzen verbreitet werden?",
+            "antworten": [
+                "NAVTEX",
+                "SafetyNET",
+                "AIS",
+                "AMVER"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-118",
+            "nr": 118,
+            "modul": "navtex",
+            "text": "Welchen Dienst bieten der Deutsche Wetterdienst (DWD) und das Bundesamt für Seeschifffahrt und Hydrographie (BSH) auf den Frequenzen 518 kHz und 490 kHz gemeinsam an?",
+            "antworten": [
+                "NAVTEX",
+                "SafetyNET",
+                "TELEX",
+                "AMVER"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-119",
+            "nr": 119,
+            "modul": "navtex",
+            "text": "Bis zu welcher Entfernung vom Standort des Senders können Sicherheitsmeldungen für die Seeschifffahrt im NAVTEX-Dienst empfangen werden?",
+            "antworten": [
+                "Ca. 600 sm",
+                "Ca. 30 sm",
+                "Ca. 1000 sm",
+                "Ca. 1500 sm"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-120",
+            "nr": 120,
+            "modul": "navtex",
+            "text": "Worauf muss beim Einstellen eines NAVTEX-Empfängers geachtet werden?",
+            "antworten": [
+                "Einstellen der jeweiligen NAVTEX-Sender und Auswählen der Art der benötigten Meldungen",
+                "Auswählen der gewünschten NAVTEX-Sender und Eingeben der MMSI-Rufnummer",
+                "Eingeben der eigenen Position und Auswählen der Art der benötigten Meldungen",
+                "Auswählen der Sprache, in der die Nachricht empfangen werden soll, und Unterdrücken nicht benötigter Meldungen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-121",
+            "nr": 121,
+            "modul": "navtex",
+            "text": "Welche Informationen können bei der Programmierung eines NAVTEX-Empfängers nicht unterdrückt werden?",
+            "antworten": [
+                "Navigationswarnungen, Meteorologische Warnungen und SAR-Meldungen",
+                "Navigationswarnungen, Wettervorhersagen und SAR-Meldungen",
+                "Sat-Nav-Warnungen, Meteorologische Warnungen und Navigationswarnungen",
+                "Meteorologische Warnungen, Revierinformationen und SAR-Meldungen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-122",
+            "nr": 122,
+            "modul": "navtex",
+            "text": "In welcher Sprache werden Nachrichten für die Sicherheit der Seeschifffahrt (MSI) im NAVTEX-Dienst auf 490 kHz verbreitet?",
+            "antworten": [
+                "Landessprache der Funkstelle",
+                "Englisch",
+                "Niederländisch",
+                "Französisch"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-123",
+            "nr": 123,
+            "modul": "navtex",
+            "text": "In welchen Zeitabständen werden die regelmäßigen NAVTEX-Informationen vom deutschen NAVTEX-Sender ausgesendet?",
+            "antworten": [
+                "4 Stunden",
+                "1 Stunde",
+                "12 Stunden",
+                "24 Stunden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-124",
+            "nr": 124,
+            "modul": "navtex",
+            "text": "Was bezeichnet „NAVAREA“?",
+            "antworten": [
+                "International festgelegtes Vorhersage- und Seewarngebiet",
+                "Internationales Seegebiet, das nicht befahren werden darf",
+                "Internationales Seegebiet, das in vier Gruppen eingeteilt ist (A1 bis A4)",
+                "Internationales Seegebiet, das von Seeschiffen befahren werden darf"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-125",
+            "nr": 125,
+            "modul": "sar",
+            "text": "Was bezeichnet „SAR“?",
+            "antworten": [
+                "Suche und Rettung",
+                "Seenotfunkbake",
+                "Sanitätsdienst",
+                "Radartransponder"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-126",
+            "nr": 126,
+            "modul": "sar",
+            "text": "Welche Aufgabe hat ein „RCC“ im Seenotfall?",
+            "antworten": [
+                "Koordinierung der im Seenotfall zur Verfügung stehenden Kräfte und Abwicklung des Notverkehrs",
+                "Stationierung von Seenotrettungskreuzern rund um die Uhr",
+                "Alarmierung von SAR-Fahrzeugen im Seenotfall über Satellit",
+                "Erteilung von Ratschlägen an den Havaristen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-127",
+            "nr": 127,
+            "modul": "sar",
+            "text": "Welche Aufgabe hat ein „MRCC“ im Seenotfall?",
+            "antworten": [
+                "Koordinierung der im Seenotfall zur Verfügung stehenden Kräfte",
+                "Bereithaltung von Rettungsfahrzeugen im Seenotfall",
+                "Erarbeitung von Richtlinien für das Verhalten im Seenotfall",
+                "Erteilung von Ratschlägen an den Havaristen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-128",
+            "nr": 128,
+            "modul": "sar",
+            "text": "Was ist „On-Scene Communication“?",
+            "antworten": [
+                "Funkverkehr vor Ort im Seenotfall",
+                "Funkverkehr in Reichweite einer Küstenfunkstelle für UKW",
+                "Funkverkehr im Hafenfunk (Port Radio)",
+                "Funkverkehr von Behördenfahrzeugen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-129",
+            "nr": 129,
+            "modul": "sar",
+            "text": "Welche Aufgabe hat der „On-Scene Coordinator“ (OSC) im SAR-Fall?",
+            "antworten": [
+                "Leitung der Such- und Rettungsmaßnahmen vor Ort",
+                "Kooperation mit der nächstgelegenen Küstenfunkstelle des Revierfunkdienstes",
+                "Festlegung der DSC-Kanäle zur Verständigung der SAR-Einheiten",
+                "Verbreitung wichtiger SAR-Meldungen rund um die Uhr"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-130",
+            "nr": 130,
+            "modul": "sar",
+            "text": "Was bedeutet „Funkverkehr vor Ort“?",
+            "antworten": [
+                "Funkverkehr zwischen dem Schiff in Not und den Fahrzeugen, die Hilfe leisten sowie dem Schiff in Not und dem Fahrzeug, das die Suche und Rettung koordiniert",
+                "Funkverkehr zwischen dem Fahrzeug, das die Suche und Rettung koordiniert, und der Küstenfunkstelle",
+                "Funkverkehr zwischen der Küstenfunkstelle und dem On-Scene Coordinator",
+                "Funkverkehr zwischen dem Schiff in Not und in der Nähe befindlichen Luftfunkstellen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-131",
+            "nr": 131,
+            "modul": "sar",
+            "text": "Wer darf das Aussenden einer Notmeldung im Seefunkdienst veranlassen?",
+            "antworten": [
+                "Fahrzeugführer",
+                "Crewmitglied",
+                "Rudergänger",
+                "Rettungsleitstelle"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-132",
+            "nr": 132,
+            "modul": "sar",
+            "text": "Auf welchem UKW-Kanal müssen alle mit DSC ausgerüsteten seegehenden Schiffe im Weltweiten Seenot- und Sicherheitsfunksystem (GMDSS empfangsbereit sein?",
+            "antworten": [
+                "Kanal 70",
+                "Kanal 16",
+                "Kanal 06",
+                "Kanal 10"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-133",
+            "nr": 133,
+            "modul": "sar",
+            "text": "Wie lautet das Notzeichen im Sprechfunk?",
+            "antworten": [
+                "MAYDAY",
+                "PAN PAN",
+                "DISTRESS",
+                "SOS"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-134",
+            "nr": 134,
+            "modul": "sar",
+            "text": "Womit wird der Notverkehr im Sprechfunk eingeleitet?",
+            "antworten": [
+                "MAYDAY",
+                "Schiffsname",
+                "DISTRESS",
+                "SOS"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-135",
+            "nr": 135,
+            "modul": "sar",
+            "text": "Wann liegt ein Seenotfall vor, der das Aussenden des Notzeichens im Sprechfunk rechtfertigt?",
+            "antworten": [
+                "Wenn ein Schiff oder eine Person von einer ernsten und unmittelbaren Gefahr bedroht ist und sofortige Hilfe benötigt",
+                "Wenn ein Schiff manövrierbehindert ist und Hilfe benötigt",
+                "Wenn eine nautische Warnnachricht vorliegt, die unbedingt beachtet werden muss",
+                "Wenn ein medizinischer Notfall vorliegt, der unmittelbare funkärztliche Beratung erfordert"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-136",
+            "nr": 136,
+            "modul": "sar",
+            "text": "Welche Priorität der Alarmierung ist zu wählen, wenn sich eine Person in Lebensgefahr befindet und Hilfe benötigt?",
+            "antworten": [
+                "Notfall",
+                "Dringlichkeit",
+                "Sicherheit",
+                "Routine"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-137",
+            "nr": 137,
+            "modul": "sar",
+            "text": "Welche Frequenzen dürfen neben den Notfrequenzen für die Aussendung einer Notmeldung im Seefunkdienst benutzt werden?",
+            "antworten": [
+                "Jede andere verfügbare und geeignete Frequenz",
+                "UKW Kanal 06 (internationaler Verkehr)",
+                "Keine andere Frequenz",
+                "Nur Schiff-Schiff-Frequenzen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-138",
+            "nr": 138,
+            "modul": "sar",
+            "text": "Auf welchem UKW-Kanal findet der Notverkehr vorzugsweise statt?",
+            "antworten": [
+                "Kanal 16",
+                "Kanal 70",
+                "Kanal 69",
+                "Kanal 06"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-139",
+            "nr": 139,
+            "modul": "sar",
+            "text": "Welche Meldungen dürfen im Weltweiten Seenot- und Sicherheitsfunksystem (GMDSS) auf UKW-Kanal 16 (156,8 MHz) übermittelt werden?",
+            "antworten": [
+                "Notmeldungen, Dringlichkeitsmeldungen und die Ankündigung von Sicherheitsmeldungen",
+                "Dringlichkeitsmeldungen und Meldungen im öffentlichen Funkverkehr",
+                "Sicherheits-, Dringlichkeitsmeldungen und Nichtöffentlicher Funkverkehr",
+                "Notmeldungen und Routinemeldungen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-140",
+            "nr": 140,
+            "modul": "sar",
+            "text": "Wann und warum wird die Einleitung eines Notverkehrs wiederholt?",
+            "antworten": [
+                "Wenn die aussendende Seefunkstelle keine Antwort auf ihren DSC-Alarm oder ihre Notmeldung erhalten hat oder wenn sie es aus anderen Gründen für notwendig hält",
+                "Wenn der DSC-Notalarm nur von einer Küstenfunkstelle bestätigt worden ist",
+                "Die Einleitung des Notverkehrs darf nicht wiederholt werden, um Fehlalarme zu vermeiden",
+                "Die Einleitung des Notverkehrs wird nach 6 Minuten wiederholt, wenn keine Bestätigung erfolgt ist"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-141",
+            "nr": 141,
+            "modul": "sar",
+            "text": "An wen soll eine Seefunkstelle den Notalarm für ein anderes in Not befindliches Schiff richten?",
+            "antworten": [
+                "Grundsätzlich an die nächstgelegene Küstenfunkstelle oder sonst an alle Funkstellen",
+                "Grundsätzlich an alle Seefunkstellen in der Nähe",
+                "Grundsätzlich an das Maritime Lagezentrum beim Havariekommando",
+                "Grundsätzlich an ein Local User Terminal oder sonst an alle Seefunkstellen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-142",
+            "nr": 142,
+            "modul": "sar",
+            "text": "Welche Voraussetzung muss eine Seefunkstelle erfüllen, die den Empfang eines DSC-Notalarms auf UKW im Sprechfunkverfahren bestätigt?",
+            "antworten": [
+                "Sie muss Hilfe leisten können",
+                "Eine sichere Funkverbindung muss möglich sein",
+                "Sie muss die Seefunkstelle in Not spätestens nach einer Stunde erreichen können",
+                "Notalarme werden in jedem Fall bestätigt"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-143",
+            "nr": 143,
+            "modul": "sar",
+            "text": "Wann darf eine Seefunkstelle, wenn sie Hilfe leisten kann, den Empfang eines DSC-Notalarms auf UKW im Sprechfunkverfahren bestätigen?",
+            "antworten": [
+                "Nach Bestätigung durch eine Küstenfunkstelle oder einer angemessenen Wartefrist",
+                "Sofort nach Empfang des DSC-Notalarms",
+                "Nach einer Wartefrist von 3 Minuten",
+                "DSC-Notalarme dürfen grundsätzlich nur von Küstenfunkstellen bestätigt werden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-144",
+            "nr": 144,
+            "modul": "sar",
+            "text": "Auf welchem UKW-Kanal und in welchem Verfahren bestätigt eine Seefunkstelle den auf Kanal 70 empfangenen Notalarm?",
+            "antworten": [
+                "Kanal 16, Sprechfunkverfahren",
+                "Kanal 70, DSC",
+                "Arbeitskanal, Sprechfunkverfahren",
+                "Kanal 16, DSC"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-145",
+            "nr": 145,
+            "modul": "sar",
+            "text": "Wann wird im Seefunkdienst die Aufforderung SILENCE MAYDAY ausgesendet?",
+            "antworten": [
+                "Wenn die Funkstelle, die den Notverkehr leitet, störende Funkstellen zur Einhaltung der Funkstille auffordert",
+                "Wenn die Situation des Schiffes in Not besonders kritisch ist",
+                "Wenn die Funkstelle, die den Notverkehr leitet, die Beendigung des Notverkehrs ankündigen will",
+                "Wenn eine Funkstelle sich besondere Aufmerksamkeit für die Verbreitung einer Dringlichkeits- oder Sicherheitsmeldung erbittet"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-146",
+            "nr": 146,
+            "modul": "sar",
+            "text": "Wer fordert in einem Seenotfall eine störende Funkstelle mit den Wörtern SILENCE MAYDAY zur Einhaltung der Funkstille auf?",
+            "antworten": [
+                "Die Funkstelle, die den Notverkehr leitet",
+                "Die Funkstelle in Not oder eine Hilfe leistende Luftfunkstelle",
+                "Die Funkstelle, die die störende Funkstelle als erste empfangen hat",
+                "Die Funkstelle, die der störenden Funkstelle nächstgelegen ist"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-147",
+            "nr": 147,
+            "modul": "sar",
+            "text": "Welche Aufgaben übernimmt die Seenotleitung (Maritime Rescue Co-ordination Centre [MRCC]) nach Eingang eines Notalarms?",
+            "antworten": [
+                "Koordinierung und Information über die SAR-Maßnahmen",
+                "Leitung des Notverkehrs auf Kanal 70",
+                "Bestimmung des On-Scene Co-ordinators (OSC)",
+                "Überwachung Kanäle 16 und 70 sowie Dokumentation der SAR-Maßnahmen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-148",
+            "nr": 148,
+            "modul": "sar",
+            "text": "Auf welchen UKW-Kanälen ist Bremen Rescue Radio empfangsbereit?",
+            "antworten": [
+                "Kanal 16 (Sprechfunk), Kanal 70 (DSC)",
+                "Kanal 10 (Sprechfunk), Kanal 70 (DSC)",
+                "Kanal 16 (Sprechfunk), Kanal 10 (DSC)",
+                "Kanal 06 (Sprechfunk), Kanal 70 (DSC)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-149",
+            "nr": 149,
+            "modul": "sar",
+            "text": "Nach welchem Betriebsverfahren wird der Funkverkehr in Notfällen zwischen Seefunkstellen und SAR-Hubschraubern abgewickelt?",
+            "antworten": [
+                "Betriebsverfahren des mobilen Seefunkdienstes",
+                "Betriebsverfahren des mobilen Flugfunkdienstes",
+                "Betriebsverfahren des Navigationsfunkdienstes",
+                "Betriebsverfahren des Revierfunkdienstes"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-150",
+            "nr": 150,
+            "modul": "sar",
+            "text": "Welche Veröffentlichung enthält Angaben zu Verfahren, Abkürzungen und international entwickelte Redewendungen für Notfälle?",
+            "antworten": [
+                "Handbuch “Suche und Rettung”",
+                "Handbuch „Funkdienst für die Klein- und Sportschifffahrt“",
+                "Nachrichten für Seefahrer",
+                "Mitteilungen für Seefunkstellen und Schiffsfunkstellen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-151",
+            "nr": 151,
+            "modul": "sar",
+            "text": "In welchem Frequenzbereich kann mit SAR-Einheiten Seefunkverkehr abgewickelt werden?",
+            "antworten": [
+                "UKW-Bereich",
+                "UHF-Bereich",
+                "MW-Bereich",
+                "VLF-Bereich"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-152",
+            "nr": 152,
+            "modul": "sar",
+            "text": "Im Funkverkehr zwischen Seefunkstellen und SAR-Hubschraubern gilt das Betriebsverfahren...",
+            "antworten": [
+                "des Seefunkdienstes",
+                "des Flugfunkdienstes",
+                "der Rettungsdienste",
+                "des Binnenschifffahrtsfunks"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-153",
+            "nr": 153,
+            "modul": "sar",
+            "text": "Auf welchen UKW-Kanälen dürfen zu Sicherheitszwecken Seefunkstellen mit SAR-Hubschraubern Funkverkehr vorzugsweise abwickeln?",
+            "antworten": [
+                "Kanal 16, Kanal 06",
+                "Kanal 16, Kanal 10",
+                "Kanal 06, Kanal 10",
+                "Kanal 70, Kanal 16"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-154",
+            "nr": 154,
+            "modul": "sar",
+            "text": "Wodurch werden in der Regel bei einer Rettungsaktion mit SAR Hubschraubern die Kanäle 16 und 06 überwacht?",
+            "antworten": [
+                "Zweikanal-Überwachung (Dual Watch)",
+                "Zwei unabhängige Seefunkgeräte",
+                "Regelmäßiges manuelles Umschalten",
+                "Bedarfsweises manuelles Umschalten"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-155",
+            "nr": 155,
+            "modul": "sar",
+            "text": "Welchen UKW-Kanal soll ein Schiff in Not bis zur Ankunft eines SAR-Hubschraubers abhören?",
+            "antworten": [
+                "Kanal 16",
+                "Kanal 06",
+                "Kanal 10",
+                "Kanal 70"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-156",
+            "nr": 156,
+            "modul": "sar",
+            "text": "Wie ist zu verfahren, wenn während eines Notverkehrs auf Kanal 16 die Ankündigung einer Dringlichkeits- oder Sicherheitsmeldung „An alle Funkstellen“ vorgenommen werden soll?",
+            "antworten": [
+                "Ankündigung mittels Digitalen Selektivrufs (DSC) auf Kanal 70, Ankündigung während einer Pause im Notverkehr auf Kanal 16, Aussendung der Meldung auf einem Schiff- Schiff-Kanal",
+                "Ankündigung auf Kanal 06, Information an die Küstenfunkstelle/RCC über den Inhalt der Meldung auf einem Arbeitskanal",
+                "Ankündigung mittels Digitalen Selektivrufs (DSC) auf Kanal 70, Information „An alle Funkstellen“ über den Inhalt der Meldung auf Kanal 16",
+                "Ankündigung auf Kanal 16 während einer Pause im Notverkehr, Aussendung auf einem Schiff-Schiff-Kanal"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-157",
+            "nr": 157,
+            "modul": "sar",
+            "text": "Was ist zu tun, wenn irrtümlich von einer Seefunkstelle ein Notalarm auf Kanal 70 ausgelöst worden ist?",
+            "antworten": [
+                "a. Gerät umgehend zurücksetzen b. Wenn möglich, den Fehlalarm per DSC zurücknehmen c. Mit Meldung auf Kanal 16 „An alle Funkstellen“ den Fehlalarm zurücknehmen",
+                "a. Gerät ausschalten, um weitere Sendungen zu verhindern b. Eintragung der irrtümlichen Aussendung im Schiffstagebuch c. Zuständiges MRCC telefonisch informieren",
+                "a. Ankündigung der Rücknahme des Notalarms mit DSC b. Mit Meldung auf Kanal 16 „An alle Funkstellen“ den Fehlalarm zurücknehmen c. Schiffsführer informieren",
+                "a. Gerät umgehend zurücksetzen b. Ankündigung der Rücknahme des Notalarms mit DSC c. Mit Meldung auf Kanal 13 „An alle Funkstellen“ den Fehlalarm zurücknehmen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-158",
+            "nr": 158,
+            "modul": "sar",
+            "text": "Womit können im Notfall nach dem Verlassen des havarierten Schiffes keine Such- und Rettungsarbeiten ausgelöst bzw. erleichtert werden?",
+            "antworten": [
+                "UKW-Empfänger",
+                "Transponder für Suche und Rettung (SART)",
+                "Seenotfunkbake (EPIRB)",
+                "Handsprechfunkgeräte"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-159",
+            "nr": 159,
+            "modul": "sar",
+            "text": "Welche Komponenten des Weltweiten Seenot- und Sicherheitsfunksystems (GMDSS) werden für die Aussendung von Signalen zur Ortsbestimmung eingesetzt?",
+            "antworten": [
+                "SART, EPIRB",
+                "NAVTEX, EGC",
+                "DSC, EPIRB",
+                "NAVTEX, SART"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-160",
+            "nr": 160,
+            "modul": "sar",
+            "text": "Wo soll eine Satelliten-Seenotfunkbake (EPIRB) an Bord eines Sportbootes installiert werden?",
+            "antworten": [
+                "Im äußeren Decksbereich",
+                "In der Backskiste",
+                "In mindestens 1 m Entfernung von Metallteilen",
+                "Geschützt unter Deck"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-161",
+            "nr": 161,
+            "modul": "sar",
+            "text": "Wann darf eine Satelliten-Seenotfunkbake (EPIRB) für eine Aussendung aktiviert werden?",
+            "antworten": [
+                "Nur im Notfall",
+                "Zu Testzwecken",
+                "Im Notfall und zu Testzwecken",
+                "Beim Herannahen von Rettungsfahrzeugen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-162",
+            "nr": 162,
+            "modul": "sar",
+            "text": "Wie kann eine Satelliten-Seenotfunkbake (EPIRB) im Notfall aktiviert werden?",
+            "antworten": [
+                "Manuell oder automatisch",
+                "Nur manuell",
+                "Nur automatisch",
+                "Durch das COSPAS-SARSAT-System"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-163",
+            "nr": 163,
+            "modul": "sar",
+            "text": "Wodurch wird eine EPIRB im Seenotfall automatisch aktiviert?",
+            "antworten": [
+                "Wasserdruckauslöser",
+                "Rüttelkontakt",
+                "GPS-Signale",
+                "Radar-Signale"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-164",
+            "nr": 164,
+            "modul": "sar",
+            "text": "Welche Informationen enthält die Aussendung einer Satelliten-Seenotfunkbake (EPIRB)?",
+            "antworten": [
+                "a. Notsignal b. Identifikationsmerkmal c. Position mittels GPS, wenn vorhanden",
+                "a. Notsignal b. Schiffstyp c. Art des Notfalls",
+                "a. Position mittels GPS, wenn vorhanden b. Identifikationsmerkmal c. Zielhafen",
+                "a. Art des Notfalls b. Position mittels GPS, wenn vorhanden c. Rufzeichen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-165",
+            "nr": 165,
+            "modul": "sar",
+            "text": "Wie lange dauert es in den Seegebieten A1 bis A3, bis der Alarm einer COSPAS- SARSAT- Satelliten-Seenotfunkbake (EPIRB) bei der zuständigen Seenotleitung (MRCC) aufläuft?",
+            "antworten": [
+                "Wenige Minuten",
+                "Bis zu 30 Minuten",
+                "Bis zu 2 Stunden",
+                "Bis zu 4 Stunden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-166",
+            "nr": 166,
+            "modul": "sar",
+            "text": "Wie lange kann es unter ungünstigen Bedingungen von der Aktivierung einer COSPAS- SARSAT-Satelliten-Seenotfunkbake ohne GPS bis zum Empfang der Position im MRCC dauern?",
+            "antworten": [
+                "Bis zu 4 Stunden",
+                "Bis zu 8 Stunden",
+                "Bis zu 12 Stunden",
+                "Bis zu einem Tag"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-167",
+            "nr": 167,
+            "modul": "sar",
+            "text": "Warum dauert es unter ungünstigen Bedingungen von der Aktivierung einer COSPAS-SARSAT-Satelliten-Seenotfunkbake ohne GPS bis zum Empfang der Position im MRCC bis zu vier Stunden?",
+            "antworten": [
+                "Es müssen Überflüge der umlaufenden COSPAS-SARSAT-Satelliten (LEOSAR) abgewartet werden",
+                "Die niedrige Datenrate im Uplink ermöglicht keine hohe Übertragungsgeschwindigkeit",
+                "Hoher Seegang behindert die Funkwellenausbreitung zum geostationären COSPAS-SARSAT-Satelliten (GEOSAR)",
+                "Schlechte Wetterverhältnisse behindern die Übertragung der Daten vom COSPAS-SARSAT-Satelliten zur Bodenstation (LUT)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-168",
+            "nr": 168,
+            "modul": "sar",
+            "text": "Wie groß ist die maximale Abweichung der ermittelten von der tatsächlichen Position einer COSPAS-SARSAT-Seenotfunkbake (EPIRB) ohne GPS?",
+            "antworten": [
+                "2 sm",
+                "10 sm",
+                "100 sm",
+                "150 sm"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-169",
+            "nr": 169,
+            "modul": "sar",
+            "text": "Zu welchem Zweck benutzen Satelliten-Seenotfunkbaken (EPIRB) die Frequenzen 121,5 MHz und 406 MHz?",
+            "antworten": [
+                "121,5 MHz zur Zielfahrt (Homing), 406 MHz zur Alarmierung und Positionsbestimmung",
+                "121,5 MHz zur Zielfahrt (Homing), 406 MHz zur Kommunikation",
+                "121,5 MHz zur Identifikation, 406 MHz zur Zielfahrt (Homing)",
+                "121,5 MHz zur Kommunikation, 406 MHz zur Alarmierung und Positionsbestimmung"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-170",
+            "nr": 170,
+            "modul": "sar",
+            "text": "Welche Informationen müssen an einer Satelliten-Seenotfunkbake (EPIRB) erkennbar sein?",
+            "antworten": [
+                "a. Schiffsname/Rufzeichen/MMSI oder anderes Identifikationsmerkmal b. Seriennummer c. Haltbarkeitsdatum der Batterie d. Haltbarkeitsdatum des Wasserdruckauslösers",
+                "a. Herstellerfirma b. Haltbarkeitsdatum des Wasserdruckauslösers c. Zulassungsdatum der EPIRB d. Kurzanleitung",
+                "a. Herstellerfirma b. Schiffsname/Rufzeichen/MMSI oder anderes Identifikationsmerkmal c. Prüfdatum d. Sendefrequenz",
+                "a. Kurzanleitung b. Zulassungsdatum der EPIRB c. Schiffsname/Rufzeichen/MMSI oder anderes Identifikationsmerkmal d. Haltbarkeitsdatum der Batterie"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-171",
+            "nr": 171,
+            "modul": "sar",
+            "text": "Was ist zu tun, bevor die Satelliten-Seenotfunkbake (EPIRB) für Wartungszwecke aus ihrer Halterung entfernt werden soll?",
+            "antworten": [
+                "Sicherstellen, dass kein Fehlalarm ausgelöst wird",
+                "Sicherung lösen",
+                "MRCC informieren",
+                "Keine besonderen Vorkehrungen treffen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-172",
+            "nr": 172,
+            "modul": "sar",
+            "text": "Welche Prüfungen sind an einer Satelliten-Seenotfunkbake (EPIRB) durchzuführen?",
+            "antworten": [
+                "Haltbarkeitsdatum der Batterie, Haltbarkeitsdatum des Wasserdruckauslösers, Funktion entsprechend den Herstellerangaben",
+                "Haltbarkeitsdatum der Batterie, Haltbarkeitsdatum des Wasserdruckauslösers, Befestigung am Schiffskörper",
+                "Funktion entsprechend den Herstellerangaben, Haltbarkeitsdatum der Batterie, Festigkeit der Sicherheitsleine",
+                "Haltbarkeitsdatum des Wasserdruckauslösers, Lesbarkeit der Beschriftung, Kontakte der Batterien"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-173",
+            "nr": 173,
+            "modul": "sar",
+            "text": "Wie erscheint die Aussendung eines Transponders für Suche und Rettung (SART) auf einem Radarbildschirm?",
+            "antworten": [
+                "Als Linie von mindestens zwölf Zeichen",
+                "Die Aussendung eines Transponders ist auf dem Radarschirm nicht sichtbar",
+                "Als lange aus einem Zeichen bestehende Linie",
+                "Als Linie von mindestens drei Zeichen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-174",
+            "nr": 174,
+            "modul": "sar",
+            "text": "Welches Navigationsgerät empfängt das Signal eines aktivierten Transponders für Suche und Rettung (SART)?",
+            "antworten": [
+                "Radargerät",
+                "GPS-Empfänger",
+                "DSC-Controller",
+                "NAVTEX-Gerät"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-175",
+            "nr": 175,
+            "modul": "sar",
+            "text": "Welche Vorteile hat eine UKW-Seefunkanlage gegenüber einem Mobiltelefon in einer Notsituation?",
+            "antworten": [
+                "Allgemeine und sichere Alarmierungsmöglichkeit",
+                "Hohe und gleichbleibende Sprachqualität",
+                "Wahrung des Fernmeldegeheimnisses und des Abhörverbots",
+                "Digitale und sichere Sprachübertragung"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-176",
+            "nr": 176,
+            "modul": "sar",
+            "text": "Welchen Vorteil hat eine UKW-Seefunkanlage gegenüber einem Mobiltelefon, wenn in einer Notsituation andere Fahrzeuge in Sicht sind und um Hilfe gebeten werden sollen?",
+            "antworten": [
+                "Erreichbarkeit aller in Funkreichweite befindlichen Seefunkstellen",
+                "Erreichbarkeit aller Seefunkstellen im Seegebiet A1",
+                "Erreichbarkeit aller Rettungsfahrzeuge in Küstennähe",
+                "Erreichbarkeit aller Seefunkstellen in den Seegebieten A1 und A2"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-177",
+            "nr": 177,
+            "modul": "sar",
+            "text": "Warum ist ein Mobiltelefon gegenüber einer UKW-Seefunkanlage keine Alternative, wenn in einer Notsituation die Such- und Rettungsmaßnahmen anderen Fahrzeugen bekannt gemacht werden müssen?",
+            "antworten": [
+                "Telefongespräche können von weiteren Fahrzeugen nicht mitgehört werden, wichtige Informationen zur Hilfeleistung und Rettung sind nicht für alle Beteiligten verfügbar",
+                "Telefongespräche können von weiteren Fahrzeugen nicht bestätigt werden, der Seenotleitung (MRCC) fehlen daher wichtige Informationen",
+                "Telefongespräche können von Küstenfunkstellen nicht bestätigt werden, wichtige Informationen fehlen daher für die Koordination vor Ort",
+                "Telefongespräche können vom On-Scene-Coordinator (OSC) nicht mitgehört werden, wichtige Informationen sind nur bei der Seenotleitung (MRCC) vorhanden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-178",
+            "nr": 178,
+            "modul": "sar",
+            "text": "Mit welcher Meldung werden die Funkstellen davon unterrichtet, dass der Notverkehr beendet ist?",
+            "antworten": [
+                "Meldung, die mit SILENCE FINI abschließt",
+                "Meldung, die mit SILENCE MAYDAY abschließt",
+                "Meldung, die mit OVER AND OUT abschließt",
+                "Meldung, die mit MASTER abschließt"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-179",
+            "nr": 179,
+            "modul": "sar",
+            "text": "Welche Funktion hat ein Transponder für Suche und Rettung (Search and Rescue Transponder [SART])?",
+            "antworten": [
+                "Aussendung von Ortungsfunksignalen, die im Seenotfall das Auffinden des verunglückten Fahrzeuges mittels Radar erleichtern sollen",
+                "Automatische Aussendung der Notposition über UKW an Küsten- bzw. Schiffsfunkstellen",
+                "Automatische Übermittlung der Position des in Not befindlichen Fahrzeuges über die COSPAS-SARSAT-Satelliten",
+                "Reflexion von Radarstrahlen und Erzeugung eines deutlichen Echos auf Radarbildschirmen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-180",
+            "nr": 180,
+            "modul": "sar",
+            "text": "Welche Funktion hat eine Satelliten-Seenotfunkbake (Emergency Position-Indicating Radiobeacon [EPIRB])?",
+            "antworten": [
+                "Alarmierung und Kennzeichnung der Notposition",
+                "Kommunikation im VHF-Band zwischen Überlebensfahrzeug und SAR- Fahrzeugen bzw. dem MRCC",
+                "Aussendung einer Notmeldung auf den Notfrequenzen der Luftfahrt (121,5 MHz bzw. 243 MHz), die von den Luftfahrzeugen bestätigt wird",
+                "Ermöglichen der Ortung mittels Radar und Erleichterung des Auffindens des Havaristen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "08-gmdss-bausteine",
+            "beispiel": false
+        },
+        {
+            "id": "src-501",
+            "nr": 501,
+            "modul": "anpassung",
+            "text": "Welche Publikationen des Bundesamtes für Seeschifffahrt und Hydrographie (BSH) enthalten speziell für die Sportschifffahrt Informationen zum Seefunk?",
+            "antworten": [
+                "Jachtfunkdienst „Nord- und Ostsee“",
+                "Nautisches Jahrbuch",
+                "Nachrichten für Seefahrer",
+                "Mitteilungen für Seefunkstellen und Schiffsfunkstellen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-502",
+            "nr": 502,
+            "modul": "anpassung",
+            "text": "Was bedeutet „öffentlicher Funkverkehr“?",
+            "antworten": [
+                "Funkverkehr, der der Allgemeinheit zum Austausch von Nachrichten dient",
+                "Funkverkehr, der im Gegensatz zum Nichtöffentlichen Funkverkehr unverschlüsselt",
+                "abgewickelt wird Funkverkehr, der von jeder Seefunkstelle abgehört werden muss",
+                "Funkverkehr, der nicht dem Fernmeldegeheimnis und dem Abhörverbot unterliegt"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-503",
+            "nr": 503,
+            "modul": "anpassung",
+            "text": "Für die Teilnahme am öffentlichen Funkverkehr ist – im Gegensatz zur Teilnahme am Nichtöffentlichen Funkverkehr – zusätzlich erforderlich …",
+            "antworten": [
+                "Vertrag mit einer Abrechnungsgesellschaft",
+                "Besitz eines Seefunkzeugnisses",
+                "Zulassung des Funkgeräts",
+                "Besitz einer Frequenzzuteilungsurkunde"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-504",
+            "nr": 504,
+            "modul": "anpassung",
+            "text": "Was sind die Abrechnungsgrundlagen für ein Seefunkgespräch über eine deutsche Küstenfunkstelle?",
+            "antworten": [
+                "Gesprächsdauer und Preis der Verrechnungseinheiten",
+                "Gesprächsdauer und Entfernung zur Küstenfunkstelle",
+                "Gesprächsdauer und Frequenznutzungsgebühren",
+                "Gesprächsdauer und Dringlichkeit des Gesprächs"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-505",
+            "nr": 505,
+            "modul": "anpassung",
+            "text": "Was bezeichnet „NAVAREA“?",
+            "antworten": [
+                "International festgelegtes Vorhersage- und Seewarngebiet",
+                "Internationales Seegebiet, das nicht befahren werden darf",
+                "Internationales Seegebiet, das in vier Gruppen eingeteilt ist (A1 bis A4)",
+                "Internationales Seegebiet, das von Seeschiffen befahren werden darf"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-506",
+            "nr": 506,
+            "modul": "anpassung",
+            "text": "Welche Aussendung wird als „WX\" bezeichnet?",
+            "antworten": [
+                "Wetterbericht",
+                "Nautische Warnnachricht",
+                "Aussendung, die zurückgenommen wurde",
+                "Funktelexaussendung im GMDSS"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-507",
+            "nr": 507,
+            "modul": "anpassung",
+            "text": "Welche Aussendung wird als „NX\" bezeichnet?",
+            "antworten": [
+                "Nautische Warnnachricht",
+                "Wetterbericht",
+                "Aussendung, die zurückgenommen wurde",
+                "Funktelexaussendung im GMDSS"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-508",
+            "nr": 508,
+            "modul": "anpassung",
+            "text": "Was versteht man unter „AIS“?",
+            "antworten": [
+                "Automatisches Schiffsidentifizierungs- und Überwachungssystem, das statische und dynamische Schiffsdaten auf UKW überträgt",
+                "Automatische Aussendung der Kennung eines Seeschiffes jede Minute bzw. beim Loslassen der Sprechtaste",
+                "Allgemeines Informationssystem für die Seeschifffahrt",
+                "Identifizierung eines Schiffes mit Hilfe von Radarpeilungen und deren Weitergabe an die Schifffahrt zur Kollisionsverhütung"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-509",
+            "nr": 509,
+            "modul": "anpassung",
+            "text": "Was bedeutet „ETA“?",
+            "antworten": [
+                "Voraussichtliche Ankunftszeit",
+                "Voraussichtliche Abfahrtszeit",
+                "Voraussichtliche Gesamtfahrtzeit",
+                "Voraussichtliche Restfahrtzeit"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-510",
+            "nr": 510,
+            "modul": "anpassung",
+            "text": "Welche Bedeutung hat die Zeitangabe „LT“ (Local Time)?",
+            "antworten": [
+                "Ortszeit, bezogen auf den Standort des Schiffes",
+                "Zeitzone entsprechend der geografischen Breite des Schiffsortes",
+                "Zeit, die bei Funkaussendungen in einem bestimmten Seegebiet zu verwenden ist",
+                "Zeit, die automatisch durch ein an die Funkanlage angeschlossenes GPS-Gerät übermittelt wird"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-511",
+            "nr": 511,
+            "modul": "anpassung",
+            "text": "Welche Funkanlagen darf der Inhaber eines Beschränkt Gültigen Funkbetriebszeugnisses (Short Range Certificate [SRC]) bedienen?",
+            "antworten": [
+                "UKW-Funkanlagen im Seefunkdienst auf nicht funkausrüstungspflichtigen Fahrzeugen und",
+                "auf Traditionsschiffen UKW-Funkanlagen für See- und Luftfunkstellen",
+                "UKW-Funkanlagen auf Sportbooten im Seefunkdienst und Binnenschifffahrtsfunk",
+                "UKW-Funkanlagen auf funkausrüstungspflichtigen und nicht funkausrüstungspflichtigen Seeschiffen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-512",
+            "nr": 512,
+            "modul": "anpassung",
+            "text": "Welches Funkzeugnis muss der Führer eines Sportfahrzeugs oder Traditionsschiffes, das mit einer UKW-Seefunkstelle ausgerüstet ist, mindestens besitzen, um am GMDSS teilnehmen zu dürfen?",
+            "antworten": [
+                "Beschränkt Gültiges Funkbetriebszeugnis (Short Range Certificate)",
+                "Allgemeines Sprechfunkzeugnis für den Seefunkdienst",
+                "UKW-Sprechfunkzeugnis für den Binnenschifffahrtsfunk",
+                "Allgemeines Betriebszeugnis für Funker (General Operator’s Certificate)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-513",
+            "nr": 513,
+            "modul": "anpassung",
+            "text": "An welchem Funkdienst darf der Inhaber eines Beschränkt Gültigen Funkbetriebszeugnisses (SRC) teilnehmen?",
+            "antworten": [
+                "Mobiler Seefunkdienst auf Ultrakurzwelle (UKW/VHF)",
+                "Mobiler Seefunkdienst auf Ultrakurzwelle (UKW/VHF) einschließlich Satellitenfunk",
+                "Mobiler Seefunkdienst auf Kurzwelle (KW/HF) und Grenzwelle (GW/MF), außer Satellitenfunk",
+                "Mobiler Seefunkdienst auf Ultrakurzwelle (UKW/VHF) einschließlich Grenzwelle/Kurzwelle"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-514",
+            "nr": 514,
+            "modul": "anpassung",
+            "text": "Welches Funkzeugnis ist auf einem mit einer Seefunkanlage ausgerüsteten Sportfahrzeug unter deutscher Flagge für den Schiffsführer vorgeschrieben?",
+            "antworten": [
+                "Ein Funkzeugnis, das zum Bedienen der eingebauten Anlage berechtigt, z. B. SRC oder LRC",
+                "Ein SRC bis zur Grenze der Hoheitsgewässer, darüber hinaus ein LRC",
+                "Keines, es genügt, wenn eine Person an Bord ist, die die Funkanlage bedienen darf",
+                "Für die Bedienung einer Grenz-/Kurzwellenanlage ist das LRC vorgeschrieben, für die Bedienung einer UKW-Anlage zusätzlich das SRC"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-515",
+            "nr": 515,
+            "modul": "anpassung",
+            "text": "Welche Aufgabe hat ein „MRCC“ im Seenotfall?",
+            "antworten": [
+                "Koordinierung der im Seenotfall zur Verfügung stehenden Kräfte",
+                "Bereithaltung von Rettungsfahrzeugen im Seenotfall",
+                "Erarbeitung von Richtlinien für das Verhalten im Seenotfall",
+                "Erteilung von Ratschlägen an den Havaristen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-516",
+            "nr": 516,
+            "modul": "anpassung",
+            "text": "Was ist eine „Sea-Area“ im GMDSS?",
+            "antworten": [
+                "Festgelegtes Seegebiet",
+                "International festgelegtes Seewarngebiet",
+                "Im NAVTEX bestimmtes Seegebiet",
+                "Weltweites Raster zum schnellen Auffinden von verunglückten Fahrzeugen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-517",
+            "nr": 517,
+            "modul": "anpassung",
+            "text": "Das Abhörverbot und das Fernmeldegeheimnis sind geregelt ...",
+            "antworten": [
+                "im Telekommunikationsgesetz (TKG)",
+                "in der Vollzugsordnung für den Funkdienst (VO Funk)/in den Radio Regulations (RR)",
+                "in der Schiffssicherheitsverordnung (SchSV)",
+                "im Gesetz über Funkanlagen und Telekommunikationseinrichtungen (FTEG)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-518",
+            "nr": 518,
+            "modul": "anpassung",
+            "text": "Wer ist beim Betrieb einer Seefunkstelle auf einem Sportboot zur Wahrung des Fernmeldegeheimnisses und des Abhörverbots verpflichtet?",
+            "antworten": [
+                "Alle Personen, die eine Seefunkstelle beaufsichtigen, bedienen oder Kenntnis über",
+                "öffentlichen Nachrichtenaustausch erlangt haben Alle Personen, die ständig an Bord sind",
+                "Alle Personen, die das Funkgerät bedienen können",
+                "Alle Personen, die vom Schiffsführer ausdrücklich dazu verpflichtet worden sind"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-519",
+            "nr": 519,
+            "modul": "anpassung",
+            "text": "Welche Behörde erteilt in Deutschland sechsstellige Rufzeichen für Seefunkstellen?",
+            "antworten": [
+                "Bundesnetzagentur (BNetzA), Außenstelle Hamburg",
+                "Bundesnetzagentur (BNetzA), Außenstelle Mülheim an der Ruhr",
+                "Bundesamt für Seeschifffahrt und Hydrographie (BSH), Hamburg",
+                "Wasser- und Schifffahrtsamt (WSA), Hamburg"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-520",
+            "nr": 520,
+            "modul": "anpassung",
+            "text": "Welche Behörden in Deutschland sind berechtigt, die Funktionsfähigkeit von Seefunkstellen zu überprüfen?",
+            "antworten": [
+                "Bundesnetzagentur (BNetzA) und Bundesamt für Seeschifffahrt und Hydrographie (BSH)",
+                "Wasser- und Schifffahrtsdirektionen",
+                "Wasserschutzpolizeibehörden der Küstenländer",
+                "Hafenbehörden in den Seehäfen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-521",
+            "nr": 521,
+            "modul": "anpassung",
+            "text": "Welche Behörde teilt einer in das Seeschiffsregister eintragungsfähigen Yacht das mindestens vierstellige Unterscheidungssignal zu?",
+            "antworten": [
+                "Seeschiffsregister des zuständigen Amtsgerichts",
+                "Wasser- und Schifffahrtsverwaltung (WSV)",
+                "Bundesnetzagentur (BNetzA)",
+                "Bundesamt für Seeschifffahrt und Hydrographie (BSH)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-522",
+            "nr": 522,
+            "modul": "anpassung",
+            "text": "Welche Art von Funkstelle hat z. B. das Rufzeichen „DDTW“?",
+            "antworten": [
+                "Seefunkstelle an Bord eines deutschen Schiffes, eingetragen in einem Seeschiffsregister",
+                "Küstenfunkstelle des Schiffsmeldedienstes (SMD)",
+                "Funkstelle des Nichtöffentlichen Funkdienstes",
+                "Funkstelle an Bord eines SAR-Hubschraubers"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-523",
+            "nr": 523,
+            "modul": "anpassung",
+            "text": "Welche Sportboote müssen mit einer UKW-Seefunkanlage ausgerüstet sein?",
+            "antworten": [
+                "Gewerbsmäßig genutzte Sportboote mit einer Länge über alles von 12 m und mehr",
+                "Sportboote mit einer Länge über alles von 12 m und mehr",
+                "Sportboote mit einer Antriebsmaschine von 3,68 kW und mehr",
+                "Gewerbsmäßig genutzte Sportboote mit einer Antriebsmaschine von 3,68 kW und mehr"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-524",
+            "nr": 524,
+            "modul": "anpassung",
+            "text": "Die Urkunde über die Frequenzzuteilung zum Betreiben einer Seefunkstelle wird in Deutschland ausgestellt durch …",
+            "antworten": [
+                "die Bundesnetzagentur (BNetzA), Außenstelle Hamburg",
+                "die Bundesnetzagentur (BNetzA), Außenstelle Mülheim an der Ruhr",
+                "das Bundesamt für Seeschifffahrt und Hydrographie (BSH), Rostock",
+                "das Wasser- und Schifffahrtsamt, Hamburg"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-525",
+            "nr": 525,
+            "modul": "anpassung",
+            "text": "Was und zu welchem Zweck muss ein Schiffseigner bei Änderung des Schiffsnamens in Bezug auf seine Seefunkstelle veranlassen?",
+            "antworten": [
+                "Namensänderung der Bundesnetzagentur schriftlich mitteilen zwecks Änderung seiner",
+                "Frequenzzuteilungsurkunde Namensänderung dem Bundesamt für Seeschifffahrt und Hydrographie schriftlich mitteilen zwecks Änderung der Gerätezulassungsurkunde",
+                "Namensänderung dem Wasser- und Schifffahrtsamt, Hamburg schriftlich mitteilen zwecks Änderung des Kennzeichenausweises",
+                "Namensänderung der Zentralen Verwaltungsstelle schriftlich mitteilen zwecks Änderung des Kennzeichenausweises"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-526",
+            "nr": 526,
+            "modul": "anpassung",
+            "text": "Was muss ein Schiffseigner beim Austausch der UKW-Sprechfunkanlage gegen eine UKW- GMDSS-Funkanlage veranlassen?",
+            "antworten": [
+                "Schriftliche Mitteilung über die Umrüstung an die Bundesnetzagentur",
+                "Schriftliche Mitteilung über die Umrüstung an das Bundesamt für Seeschifffahrt und Hydrographie",
+                "Schriftliche Mitteilung über die Umrüstung an das Amtsgericht",
+                "Schriftliche Mitteilung über die Umrüstung an die Zentrale Verwaltungsstelle"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-527",
+            "nr": 527,
+            "modul": "anpassung",
+            "text": "Zur Teilnahme am Binnenschifffahrtsfunk muss eine Seefunkstelle ...",
+            "antworten": [
+                "mit einer umschaltbaren „Kombi—Anlage für Seefunkdienst und Binnenschifffahrtsfunk“ oder einer zusätzlichen Sprechfunkanlage für den Binnenschifffahrtsfunk ausgerüstet werden",
+                "mit einer weiteren Seefunkanlage ausgerüstet werden",
+                "nicht geändert werden",
+                "mit der MMSI auch eine ATIS-Kennung aussenden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-528",
+            "nr": 528,
+            "modul": "anpassung",
+            "text": "Wer stellt in Deutschland Funksicherheitszeugnisse für Sportboote aus, die gewerbsmäßig genutzt werden?",
+            "antworten": [
+                "See-Berufsgenossenschaft (See-BG)",
+                "Bundesamt für Seeschifffahrt und Hydrographie (BSH)",
+                "Wasser- und Schifffahrtsverwaltung (WSV)",
+                "Bundesnetzagentur (BNetzA)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-529",
+            "nr": 529,
+            "modul": "anpassung",
+            "text": "Ein Sportboot von 12 Meter Länge und mehr benötigt ein Funksicherheitszeugnis ...",
+            "antworten": [
+                "bei gewerbsmäßiger Nutzung",
+                "bei Regattateilnahme",
+                "bei Auslandsfahrten und in internationalen Gewässern",
+                "in jedem Fall"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-530",
+            "nr": 530,
+            "modul": "anpassung",
+            "text": "Wenn ein Funkgerät ordnungsgemäß in Verkehr gebracht worden ist, trägt es ...",
+            "antworten": [
+                "das CE-Zeichen",
+                "eine Seriennummer",
+                "das GS-Prüfzeichen",
+                "das VDE-Prüfzeichen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-531",
+            "nr": 531,
+            "modul": "anpassung",
+            "text": "Welche Veröffentlichung enthält die international entwickelten Redewendungen für Notfälle?",
+            "antworten": [
+                "Handbuch für Suche und Rettung",
+                "Jachtfunkdienst",
+                "Nachrichten für Seefahrer",
+                "Mitteilungen für Seefunkstellen und Schiffsfunkstellen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-532",
+            "nr": 532,
+            "modul": "anpassung",
+            "text": "Auf welchen UKW-Kanälen ist Bremen Rescue Radio empfangsbereit?",
+            "antworten": [
+                "Kanal 16 (Sprechfunk), Kanal 70 (DSC)",
+                "Kanal 10 (Sprechfunk), Kanal 70 (DSC)",
+                "Kanal 16 (Sprechfunk), Kanal 10 (DSC)",
+                "Kanal 06 (Sprechfunk), Kanal 70 (DSC)"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-533",
+            "nr": 533,
+            "modul": "anpassung",
+            "text": "Nach welchem Betriebsverfahren wird der Funkverkehr in Notfällen zwischen Seefunkstellen und SAR-Hubschraubern abgewickelt?",
+            "antworten": [
+                "Betriebsverfahren des mobilen Seefunkdienstes",
+                "Betriebsverfahren des mobilen Flugfunkdienstes",
+                "Betriebsverfahren des Navigationsfunkdienstes",
+                "Betriebsverfahren des Revierfunkdienstes"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-534",
+            "nr": 534,
+            "modul": "anpassung",
+            "text": "Was ist „On-Scene Communication“?",
+            "antworten": [
+                "Funkverkehr vor Ort im Seenotfall",
+                "Funkverkehr in Reichweite einer Küstenfunkstelle für UKW",
+                "Funkverkehr im Hafenfunk (Port Radio)",
+                "Funkverkehr von Behördenfahrzeugen"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-535",
+            "nr": 535,
+            "modul": "anpassung",
+            "text": "Welchen Dienst bieten der Deutsche Wetterdienst (DWD) und das Bundesamt für Seeschifffahrt und Hydrographie (BSH) auf den Frequenzen 518 kHz und 490 kHz gemeinsam an?",
+            "antworten": [
+                "NAVTEX",
+                "SafetyNET",
+                "TELEX",
+                "AMVER"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-536",
+            "nr": 536,
+            "modul": "anpassung",
+            "text": "In welchen Zeitabständen werden die regelmäßigen NAVTEX-Informationen vom deutschen NAVTEX-Sender ausgesendet?",
+            "antworten": [
+                "4 Stunden",
+                "1 Stunde",
+                "12 Stunden",
+                "24 Stunden"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        },
+        {
+            "id": "src-537",
+            "nr": 537,
+            "modul": "anpassung",
+            "text": "Wie bezeichnet man ein funkärztliches Beratungsgespräch?",
+            "antworten": [
+                "Medico-Gespräch",
+                "Emergency-Gespräch",
+                "Medical-Transport-Gespräch",
+                "Erste-Hilfe-Gespräch"
+            ],
+            "richtig": 0,
+            "bild": null,
+            "schall": null,
+            "hinweis": "",
+            "lektion": "10-pruefung",
+            "beispiel": false
+        }
+    ]
 }
