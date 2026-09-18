@@ -21,6 +21,9 @@ pruefeGleich(['src', 'ubi', 'fkn', 'lrc', 'see', 'binnen'], array_keys(zertifika
 $src = fragenLaden($konfig, 'src');
 pruefeGleich(217, count($src['fragen']), 'SRC: 180 Katalogfragen + 37 Anpassungsfragen');
 pruefe(!$src['beispielhaft'], 'SRC: amtlich, keine Beispielfragen mehr');
+pruefe(str_contains($src['quelle']['freigabe'], 'FVT/ABVT Koblenz'), 'SRC: Freigabe der Fachstelle festgehalten');
+pruefe(str_contains(fragenLaden($konfig, 'lrc')['quelle']['freigabe'], 'FVT/ABVT Koblenz'), 'LRC: Freigabe der Fachstelle festgehalten');
+pruefeGleich('', fragenLaden($konfig, 'see')['quelle']['freigabe'], 'Ohne Freigabe bleibt das Feld leer');
 pruefeGleich(56, count(array_filter($src['fragen'], static fn (array $f): bool => $f['modul'] === 'sar')), 'SRC: Abschnitt VII (SAR) hat 56 Fragen');
 pruefeGleich(76, count(fragenLaden($konfig, 'lrc')['fragen']), 'LRC: 76 Fragen');
 $binnen = fragenLaden($konfig, 'binnen');

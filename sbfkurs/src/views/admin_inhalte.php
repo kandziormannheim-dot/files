@@ -17,6 +17,7 @@
         <li><strong><?= (int) $s['uebungen'] ?></strong> Übungen</li>
     </ul>
     <p><small>Quelle: <?= e($s['quelle']['name']) ?><?= $s['quelle']['stand'] !== '' ? ', Stand ' . e($s['quelle']['stand']) : '' ?> — <?= !empty($s['quelle']['amtlich']) ? 'amtlich' : 'nicht amtlich' ?>.</small></p>
+    <?php if (!empty($s['quelle']['freigabe'])) { ?><p><small>Freigabe: <?= e($s['quelle']['freigabe']) ?></small></p><?php } ?>
     <?php if ($s['befund']['fehler'] !== []) { ?>
     <p class="fehler">Fehler</p>
     <ul><?php foreach ($s['befund']['fehler'] as $f) { ?><li><?= e($f) ?></li><?php } ?></ul>
