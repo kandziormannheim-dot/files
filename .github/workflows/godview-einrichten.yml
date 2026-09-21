@@ -1,0 +1,726 @@
+# God's Eye View (github.com/bilawalsidhu/gods-eye-view) auf dem Plesk-Server
+# einrichten und aktualisieren — vom GitHub-Runner aus, nach dem Muster der
+# Schwester-Workflows (Schlüssel-Pinning, CLI-Gateway, SSH über frisch
+# gesetztes Systembenutzer-Passwort). Läuft gefahrlos mehrfach: Subdomain und
+# Verzeichnisse entstehen nur, wenn sie fehlen; Quelltext, gebaute Dateien und
+# Schlüssel werden ersetzt; der Dienst wird neu gestartet.
+#
+# Anders als Womo und SBF-Kurs ist God's Eye View keine PHP-Anwendung, sondern
+# ein Node-Programm: die Oberfläche ist gebautes JavaScript, die Datenkanäle
+# unter /api/ laufen in einem Node-Prozess, der die Schlüssel für OpenSky,
+# Overpass, TomTom, FIRMS, AISStream und OpenAI hält und nie an den Browser
+# gibt. Daraus folgt die Aufteilung auf dem Server:
+#
+#   godview-app/public/    ← Webroot der Subdomain: gebaute Dateien + .htaccess
+#   godview-app/dienst.sh  ← startet/stoppt den Node-Prozess (ohne root)
+#   godview-app/dienst.conf← Port, Hostname, Node-Pfad (keine Geheimnisse)
+#   godview-app/.htpasswd  ← Zugangsschutz, oberhalb des Webroots
+#   godview-quelle/        ← Quelltext, node_modules, dist, .env (Modus 600)
+#   godview-node/          ← eigenes Node, falls der Server keins ≥ 24.14 hat
+#
+# Der Webserver liefert die gebauten Dateien direkt aus und reicht nur /api/
+# an 127.0.0.1:<Port> weiter (.htaccess, mod_proxy). Der Node-Dienst lauscht
+# ausschließlich auf 127.0.0.1 und akzeptiert als Host-Kopf nur die Subdomain.
+#
+# Wach bleibt der Dienst über zwei Cron-Einträge des Systembenutzers
+# (alle fünf Minuten nachsehen, plus @reboot) — systemd steht uns als
+# Domainbenutzer nicht zur Verfügung.
+#
+# Was Geld kosten kann: die Anwendung läuft ohne jeden Schlüssel (Esri-Bilder,
+# Flüge, Satelliten, Erdbeben, Kameras, Radio). Erst hinterlegte Schlüssel
+# machen sie teuer — und eine öffentlich erreichbare Instanz verteilt genau
+# diese Schlüssel an jeden Besucher. Deshalb ist der Zugangsschutz (HTTP-Basis-
+# Anmeldung) voreingestellt an, und deshalb gehören Budgetgrenzen zu den
+# Anbietern. Einzelheiten in docs/godview/README.md.
+#
+# Voraussetzung: der DNS-Eintrag der Subdomain (Workflow "DNS-Eintrag setzen",
+# Name "godview"). Fehlt er, läuft alles bis auf Let's Encrypt trotzdem durch.
+
+name: God View einrichten
+
+on:
+  workflow_dispatch:
+    inputs:
+      plesk_passwort:
+        description: "Plesk-Admin-Passwort (leer = Repository-Secret PLESK_PASSWORT verwenden)"
+        required: false
+        default: ""
+        type: string
+      zugang_passwort:
+        description: "Passwort für die Basis-Anmeldung vor der Oberfläche (leer = Repository-Secret GODVIEW_ZUGANG_PASSWORT verwenden; '-' = kein Schutz, Instanz offen im Netz)"
+        required: false
+        default: ""
+        type: string
+      zugang_benutzer:
+        description: "Benutzername für die Basis-Anmeldung"
+        required: false
+        default: godview
+        type: string
+      version:
+        description: "Stand von God's Eye View: Zweig, Git-Tag oder Commit. Muss die Datenkanäle im Vorschau-Server mitbringen — der Tag v0.1.1 tut das noch nicht, der Probelauf weist ihn ab."
+        required: true
+        default: main
+        type: string
+      port:
+        description: "Port des Node-Dienstes auf 127.0.0.1"
+        required: true
+        default: "4180"
+        type: string
+      subdomain:
+        description: "Vollständige Subdomain"
+        required: true
+        default: godview.kandzior.de
+        type: string
+      domain:
+        description: "Elterndomain in Plesk"
+        required: true
+        default: kandzior.de
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  einrichten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PLESK: https://95.216.18.216:8443
+      DOMAIN: ${{ inputs.domain }}
+      SUB: ${{ inputs.subdomain }}
+      VERSION: ${{ inputs.version }}
+      PORT: ${{ inputs.port }}
+      # Node für den Fall, dass der Server keines in passender Version hat.
+      NODE_VERSION: "24.21.0"
+      UPSTREAM: https://github.com/bilawalsidhu/gods-eye-view.git
+    steps:
+      - name: Passwörter auflösen und maskieren
+        id: geheim
+        # Eingabe geht vor; ohne Eingabe zählen die Repository-Secrets.
+        # Eingaben werden aus dem Ereignis-JSON maskiert — ein Schritt-env
+        # stünde sonst im Protokollkopf, bevor die Maske greift; Secrets
+        # maskiert GitHub von selbst.
+        env:
+          PLESK_PASSWORT: ${{ secrets.PLESK_PASSWORT }}
+          GODVIEW_ZUGANG_PASSWORT: ${{ secrets.GODVIEW_ZUGANG_PASSWORT }}
+        run: |
+          set -euo pipefail
+          EINGABE=$(jq -r '.inputs.plesk_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          [ -n "$EINGABE" ] || [ -n "$PLESK_PASSWORT" ] \
+            || { echo "::error::Kein Plesk-Passwort: weder als Eingabe übergeben noch als Repository-Secret PLESK_PASSWORT hinterlegt (Settings → Secrets and variables → Actions)."; exit 1; }
+
+          EINGABE=$(jq -r '.inputs.zugang_passwort // ""' "$GITHUB_EVENT_PATH")
+          # Das "-" ist ein Schalter, kein Geheimnis — es zu maskieren würde
+          # jeden Bindestrich im Protokoll schwärzen.
+          { [ -z "$EINGABE" ] || [ "$EINGABE" = "-" ]; } || echo "::add-mask::$EINGABE"
+          if [ "$EINGABE" = "-" ]; then
+            # Ausdrücklich offen: dann ist die Instanz für jeden erreichbar,
+            # der die Adresse kennt — samt aller hinterlegten Schlüssel.
+            echo "schutz=nein" >> "$GITHUB_OUTPUT"
+            echo "passwort=" >> "$GITHUB_OUTPUT"
+            echo "::warning::Zugangsschutz abgeschaltet ('-') — die Instanz und ihre Datenkanäle sind dann öffentlich. Ohne hinterlegte Schlüssel kostet das nichts, mit Schlüsseln zahlst du für fremde Anfragen."
+          else
+            PASS=${EINGABE:-$GODVIEW_ZUGANG_PASSWORT}
+            # Bewusst kein selbst erzeugtes Passwort: es müsste irgendwo
+            # sichtbar werden (Protokoll oder Zusammenfassung), und genau das
+            # soll ein Zugangspasswort nicht. Also ausdrücklich verlangen.
+            [ -n "$PASS" ] \
+              || { echo "::error::Kein Zugangspasswort: als Eingabe übergeben, als Repository-Secret GODVIEW_ZUGANG_PASSWORT hinterlegen — oder mit '-' ausdrücklich auf den Schutz verzichten."; exit 1; }
+            [ "${#PASS}" -ge 10 ] \
+              || { echo "::error::Das Zugangspasswort braucht mindestens 10 Zeichen — es steht allein vor einer Instanz, die Schlüssel und Kontingente vermittelt."; exit 1; }
+            echo "schutz=ja" >> "$GITHUB_OUTPUT"
+            echo "passwort=$PASS" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Quellcode holen
+        uses: actions/checkout@v4
+
+      - name: Node wie von der Anwendung verlangt (24.x)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: God's Eye View holen
+        id: upstream
+        run: |
+          set -euo pipefail
+          git clone --quiet --depth 1 --branch "$VERSION" "$UPSTREAM" gev 2>/dev/null \
+            || { echo "Kein Tag/Zweig »$VERSION« — als Commit versuchen."; \
+                 git clone --quiet "$UPSTREAM" gev && git -C gev checkout --quiet "$VERSION"; }
+          COMMIT=$(git -C gev rev-parse HEAD)
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+          echo "Stand: $VERSION ($COMMIT, $(git -C gev log -1 --format=%ci))"
+          jq -r '"Verlangt: Node \(.engines.node), Version \(.version)"' gev/package.json
+
+      - name: Bauen — sonst kein Deploy
+        # Der Build ist zugleich die Prüfung: ein Stand, der hier nicht
+        # durchläuft, wird gar nicht erst übertragen. Die beiden
+        # browserseitigen Schlüssel werden dabei fest in die Dateien gebacken
+        # (so ist die Anwendung gebaut) — ändern sie sich, braucht es einen
+        # neuen Lauf. Beschränke sie beim Anbieter, sie stehen im Quelltext
+        # der Seite.
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "1"
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          CESIUM_ION_TOKEN: ${{ secrets.CESIUM_ION_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd gev
+          npm ci --no-audit --no-fund
+          npm run build
+          [ -s dist/index.html ] || { echo "::error::Der Build hat kein dist/index.html erzeugt."; exit 1; }
+          # Startskript dieses Repositorys danebenlegen; ob es trägt, zeigt
+          # der Probelauf im nächsten Schritt.
+          cp ../godview/godview-start.mjs .
+          echo "dist: $(du -sh dist | cut -f1), Quelltext: $(du -sh --exclude=node_modules --exclude=.git --exclude=docs . | cut -f1)"
+          for schluessel in GOOGLE_MAPS_API_KEY CESIUM_ION_TOKEN; do
+            eval "wert=\${$schluessel:-}"
+            [ -n "$wert" ] && echo "$schluessel: eingebacken" || echo "$schluessel: nicht gesetzt (Esri-Bilder und keyless Gelände bleiben)"
+          done
+
+      - name: Probelauf auf dem Runner — sonst kein Deploy
+        # Gebaut heißt noch nicht lauffähig: God's Eye View hängt seine
+        # Datenkanäle als Vite-Erweiterungen ein, und ältere Stände tun das
+        # nur für den Entwicklungs-Server (`vite dev`), nicht für den
+        # Vorschau-Server, mit dem die Instanz hier läuft. Ein solcher Stand
+        # würde auf dem Server eine hübsche, aber blinde Oberfläche ergeben:
+        # /api/… käme als HTML der Startseite zurück. Deshalb hier einmal
+        # starten und nachsehen, bevor der Server angefasst wird.
+        run: |
+          set -euo pipefail
+          cd gev
+          GODVIEW_PORT=4179 GODVIEW_HOSTNAMEN="$SUB" node godview-start.mjs > /tmp/probe.log 2>&1 &
+          PROBE=$!
+          trap 'kill $PROBE 2>/dev/null || true' EXIT
+          for versuch in $(seq 1 20); do
+            curl -sf -o /dev/null -m 5 -H "Host: $SUB" http://127.0.0.1:4179/ && break
+            sleep 2
+          done
+          cat /tmp/probe.log
+
+          echo "== Oberfläche =="
+          CODE=$(curl -s -o /tmp/probe-index.html -m 20 -w '%{http_code}' -H "Host: $SUB" http://127.0.0.1:4179/)
+          { [ "$CODE" = "200" ] && grep -qi "God's Eye View" /tmp/probe-index.html; } \
+            || { echo "::error::Der Probelauf liefert unter / keine Oberfläche (HTTP $CODE)."; cat /tmp/probe.log; exit 1; }
+          echo "HTTP 200, Titel stimmt."
+
+          echo "== Datenkanäle =="
+          # /api/gbfs ohne Parameter beantwortet die Erweiterung selbst und
+          # ohne fremde Gegenstelle — ideal als Lebenszeichen der Kette.
+          TYP=$(curl -s -o /tmp/probe-api.txt -m 20 -w '%{content_type}' -H "Host: $SUB" http://127.0.0.1:4179/api/gbfs)
+          echo "/api/gbfs -> $TYP: $(head -c 120 /tmp/probe-api.txt | tr -d '\n')"
+          case "$TYP" in
+            application/json*) echo "Die Datenkanäle sind eingehängt." ;;
+            *) echo "::error::Dieser Stand (»$VERSION«) bedient /api/ im Vorschau-Server nicht — es kommt $TYP statt JSON zurück. Bekannt vom Tag v0.1.1; nimm »main« oder einen neueren Commit."; exit 1 ;;
+          esac
+
+          echo "== Fremde Hostnamen müssen abgewiesen werden =="
+          FREMD=$(curl -s -o /dev/null -m 20 -w '%{http_code}' -H 'Host: beliebig.example.com' http://127.0.0.1:4179/)
+          [ "$FREMD" = "403" ] \
+            || { echo "::error::Ein fremder Host-Kopf bekommt HTTP $FREMD statt 403 — der Rebinding-Schutz greift nicht."; exit 1; }
+          echo "Fremder Host-Kopf: HTTP 403, wie gewollt."
+
+      - name: Plesk erreichen und Schlüssel festnageln
+        id: pin
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}
+          PIN=$(openssl s_client -connect "$HOST" -servername plesk </dev/null 2>/dev/null \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary | base64)
+          echo "pin=sha256//$PIN" >> "$GITHUB_OUTPUT"
+          echo "Schlüssel-Fingerabdruck: sha256//$PIN"
+          CODE=$(curl -sk --pinnedpubkey "sha256//$PIN" -o /tmp/server.json -w '%{http_code}' \
+            -u "admin:$PW" "$PLESK/api/v2/server")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Plesk-API antwortet mit HTTP $CODE — Zugangsdaten oder Erreichbarkeit prüfen."
+            cat /tmp/server.json || true
+            exit 1
+          fi
+          jq -r '"Plesk \(.platform // "?") \(.version // "?")"' /tmp/server.json
+
+      - name: Zugang für diesen Lauf vorbereiten (SSH)
+        id: ssh
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          # Wie in den Schwester-Workflows: Systembenutzer ermitteln,
+          # Passwort je Lauf frisch setzen.
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          INFO=$(api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--info","'"$DOMAIN"'"]}' "$PLESK/api/v2/cli/site/call")
+          SYSUSER=$(echo "$INFO" | jq -r '.stdout' | sed -n 's/^FTP Login:[[:space:]]*//p' | head -1)
+          [ -n "$SYSUSER" ] || { echo "::error::Systembenutzer nicht ermittelbar."; exit 1; }
+          echo "Systembenutzer: $SYSUSER"
+          SSH_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$SSH_PASS"
+          OK=""
+          for util in site subscription; do
+            ANTWORT=$(api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update",$d,"-passwd",$p]}')" \
+              "$PLESK/api/v2/cli/$util/call")
+            echo "[$util] $(echo "$ANTWORT" | jq -c '{code, stdout: (.stdout // "")[:200], stderr: (.stderr // "")[:300]}')"
+            if echo "$ANTWORT" | jq -e '.code == 0' >/dev/null; then OK=ja; break; fi
+          done
+          [ "$OK" = ja ] \
+            || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
+          echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
+          echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
+
+      - name: Subdomain anlegen (physisch, Webroot godview-app/public)
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          zeig() { jq -c '{code, stdout: (.stdout // "")[:300], stderr: (.stderr // "")[:300]}' <<<"$1"; }
+          gut() { echo "$1" | jq -e '.code == 0' >/dev/null; }
+
+          NAME=${SUB%%.*}
+          if gut "$(cli site --info "$SUB")"; then
+            echo "== $SUB existiert schon — Webroot ggf. nachziehen =="
+            A=$(cli subdomain --update "$NAME" -domain "$DOMAIN" -www-root godview-app/public)
+            zeig "$A"
+            gut "$A" || echo "::warning::Webroot ließ sich nicht aktualisieren — falls er nicht auf godview-app/public zeigt, in Plesk prüfen."
+          else
+            echo "== $SUB anlegen =="
+            # Versuchskette wegen der CLI-Dialekte (gelernt im
+            # Subdomain-Workflow): erst mit verschachteltem Webroot, sonst
+            # anlegen und den Webroot nachträglich setzen.
+            A=$(cli subdomain --create "$NAME" -domain "$DOMAIN" -www-root godview-app/public)
+            zeig "$A"
+            if ! gut "$A"; then
+              A=$(cli subdomain --create "$NAME" -domain "$DOMAIN" -www-root "$NAME")
+              zeig "$A"
+              gut "$A" || { echo "::error::Subdomain ließ sich nicht anlegen."; exit 1; }
+              A=$(cli subdomain --update "$NAME" -domain "$DOMAIN" -www-root godview-app/public)
+              zeig "$A"
+              gut "$A" || { echo "::error::Webroot ließ sich nicht auf godview-app/public setzen."; exit 1; }
+            fi
+          fi
+          echo "== Kontrolle =="
+          cli site --info "$SUB" | jq -r '.stdout // .stderr // empty' | sed -n '1,20p'
+
+      - name: Node auf dem Server sicherstellen
+        id: node
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q sshpass >/dev/null
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          AUSGABE=$(timeout 600 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" \
+            "NODE_VERSION=$NODE_VERSION bash -s" <<'SKRIPT'
+          set -u
+          # God's Eye View verlangt Node >= 24.14 (<25) oder 26.x. Erst
+          # nachsehen, was der Server mitbringt — eigenes Node vom letzten
+          # Lauf, dann das des Systempfads, dann die von Plesk mitgelieferten.
+          # Bleibt nichts übrig, holen wir uns eines ins Heimatverzeichnis;
+          # dafür braucht es kein root.
+          passt() {
+            v=$("$1" -v 2>/dev/null | sed 's/^v//') || return 1
+            [ -n "$v" ] || return 1
+            gross=${v%%.*}; rest=${v#*.}; klein=${rest%%.*}
+            case "$gross" in
+              24) [ "$klein" -ge 14 ] 2>/dev/null && return 0 ;;
+              26) return 0 ;;
+            esac
+            return 1
+          }
+          for kandidat in "$HOME/godview-node/bin/node" $(command -v node 2>/dev/null) /opt/plesk/node/*/bin/node; do
+            [ -x "$kandidat" ] || continue
+            if passt "$kandidat"; then
+              echo "Gefunden: $kandidat ($("$kandidat" -v))"
+              echo "NODE=$kandidat"
+              exit 0
+            fi
+            echo "Übersprungen: $kandidat ($("$kandidat" -v 2>/dev/null || echo 'nicht aufrufbar'))"
+          done
+          echo "Kein passendes Node auf dem Server — v$NODE_VERSION ins Heimatverzeichnis holen."
+          PAKET="node-v$NODE_VERSION-linux-x64.tar.gz"
+          rm -rf "$HOME/godview-node.tmp"
+          mkdir -p "$HOME/godview-node.tmp" && cd "$HOME/godview-node.tmp" || exit 1
+          curl -fsSLO "https://nodejs.org/dist/v$NODE_VERSION/$PAKET" || { echo "Download fehlgeschlagen."; exit 1; }
+          curl -fsSLO "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt" || { echo "Prüfsummen nicht erreichbar."; exit 1; }
+          grep " $PAKET\$" SHASUMS256.txt | sha256sum -c - || { echo "Prüfsumme stimmt nicht — Abbruch."; exit 1; }
+          rm -rf "$HOME/godview-node"
+          mkdir -p "$HOME/godview-node"
+          tar -xzf "$PAKET" -C "$HOME/godview-node" --strip-components=1 || exit 1
+          cd "$HOME" && rm -rf "$HOME/godview-node.tmp"
+          NEU="$HOME/godview-node/bin/node"
+          passt "$NEU" || { echo "Das geholte Node meldet sich nicht wie erwartet."; exit 1; }
+          echo "Geholt: $NEU ($("$NEU" -v))"
+          echo "NODE=$NEU"
+          SKRIPT
+          )
+          echo "$AUSGABE"
+          PFAD=$(echo "$AUSGABE" | sed -n 's/^NODE=//p' | tail -1)
+          [ -n "$PFAD" ] || { echo "::error::Auf dem Server steht kein Node ≥ 24.14 bereit und es ließ sich keines holen (siehe Ausgabe oben)."; exit 1; }
+          echo "node=$PFAD" >> "$GITHUB_OUTPUT"
+
+      - name: Dienst anhalten und Dateien übertragen
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+          NODE_PFAD: ${{ steps.node.outputs.node }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          ssh_() { timeout "${1:-120}" sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" "${@:2}"; }
+
+          echo "== Zielstruktur anlegen, laufenden Dienst anhalten =="
+          ssh_ 120 'mkdir -p godview-app/public godview-quelle && chmod 700 godview-quelle \
+            && { [ -x godview-app/dienst.sh ] && godview-app/dienst.sh stop || echo "(noch kein Dienst)"; } \
+            && ls -la godview-app'
+
+          echo "== Quelltext übertragen (ohne .git, node_modules und die 68 MB Medien aus docs/) =="
+          timeout 900 sshpass -p "$SSH_PASS" rsync -az --delete --itemize-changes \
+            --exclude='.git/' --exclude='node_modules/' --exclude='docs/' --exclude='.github/' \
+            --exclude='.env' \
+            -e "ssh $SSHOPTS" gev/ "$SSH_USER@$HOST:godview-quelle/" | tail -15
+
+          echo "== Gebaute Dateien in den Webroot (.htaccess bleibt stehen) =="
+          timeout 900 sshpass -p "$SSH_PASS" rsync -az --delete --itemize-changes \
+            --exclude='.htaccess' \
+            -e "ssh $SSHOPTS" gev/dist/ "$SSH_USER@$HOST:godview-app/public/" | tail -15
+
+          echo "== Dienstskript und seine Konfiguration =="
+          timeout 120 sshpass -p "$SSH_PASS" scp $SSHOPTS godview/dienst.sh "$SSH_USER@$HOST:godview-app/dienst.sh"
+          HOME_DIR=$(ssh_ 60 'pwd')
+          echo "Heimatverzeichnis: $HOME_DIR"
+          cat > "$RUNNER_TEMP/dienst.conf" <<KONF
+          # Vom Workflow "God View einrichten" geschrieben — keine Geheimnisse,
+          # die stehen in godview-quelle/.env (Modus 600).
+          PORT=$PORT
+          HOST=127.0.0.1
+          HOSTNAMEN=$SUB
+          NODE=$NODE_PFAD
+          QUELLE=$HOME_DIR/godview-quelle
+          KONF
+          timeout 120 sshpass -p "$SSH_PASS" scp $SSHOPTS "$RUNNER_TEMP/dienst.conf" "$SSH_USER@$HOST:godview-app/dienst.conf"
+          ssh_ 60 'chmod 700 godview-app/dienst.sh && cat godview-app/dienst.conf'
+
+      - name: Schlüssel hinterlegen (.env, nur für den Besitzer lesbar)
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          GOOGLE_MAPS_SERVER_API_KEY: ${{ secrets.GOOGLE_MAPS_SERVER_API_KEY }}
+          CESIUM_ION_TOKEN: ${{ secrets.CESIUM_ION_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AISSTREAM_API_KEY: ${{ secrets.AISSTREAM_API_KEY }}
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+          TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+          LL2_API_TOKEN: ${{ secrets.LL2_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          # In der laufenden Instanz gibt es das Einstellungsfeld der Anwendung
+          # (POWER UP → Provider Settings) nicht: es antwortet nur auf Anfragen
+          # von localhost und ist im Vorschau-Server ohnehin nicht eingehängt.
+          # Schlüssel kommen deshalb ausschließlich von hier — aus den
+          # Repository-Secrets in diese Datei.
+          DATEI="$RUNNER_TEMP/godview.env"
+          {
+            echo "# Schlüssel für God's Eye View — geschrieben vom Workflow \"God View einrichten\"."
+            echo "# Jeder Lauf schreibt die Datei neu; von Hand Eingetragenes geht dabei verloren."
+            echo "# Hinterlegt wird nur, was als Repository-Secret gesetzt ist."
+            echo
+          } > "$DATEI"
+          gesetzt=0
+          for name in GOOGLE_MAPS_API_KEY GOOGLE_MAPS_SERVER_API_KEY CESIUM_ION_TOKEN \
+                      OPENAI_API_KEY AISSTREAM_API_KEY FIRMS_MAP_KEY TOMTOM_API_KEY \
+                      OPENSKY_CLIENT_ID OPENSKY_CLIENT_SECRET LL2_API_TOKEN; do
+            eval "wert=\${$name:-}"
+            if [ -n "$wert" ]; then
+              printf '%s=%s\n' "$name" "$wert" >> "$DATEI"
+              echo "$name: hinterlegt"
+              gesetzt=$((gesetzt + 1))
+            else
+              echo "$name: nicht gesetzt"
+            fi
+          done
+          {
+            echo
+            echo "# Bremsen für die kostenpflichtigen Kanäle (Anfragen pro Minute)."
+            echo "# Achtung: hinter dem Reverse-Proxy kommen alle Anfragen von"
+            echo "# 127.0.0.1 — die Bremse wirkt damit für die Instanz insgesamt,"
+            echo "# nicht je Besucher. Sie ersetzt keine Budgetgrenze beim Anbieter."
+            echo "GEV_RATELIMIT_OPENAI_PER_MIN=20"
+            echo "GEV_RATELIMIT_GOOGLE_PER_MIN=60"
+          } >> "$DATEI"
+          echo "Schlüssel insgesamt hinterlegt: $gesetzt"
+          # umask vor dem Schreiben: die Datei ist nie für andere lesbar.
+          timeout 120 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" \
+            'umask 077 && cat > godview-quelle/.env && chmod 600 godview-quelle/.env && ls -l godview-quelle/.env' < "$DATEI"
+          rm -f "$DATEI"
+
+      - name: Abhängigkeiten auf dem Server installieren
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+          NODE_PFAD: ${{ steps.node.outputs.node }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          # Gebaut wurde auf dem Runner; hier geht es nur um die Pakete, die
+          # der Vorschau-Server zur Laufzeit braucht (Vite und die Bibliotheken
+          # der Datenkanäle). Das Chromium von Puppeteer bleibt draußen — es
+          # wird nur für die Prüfskripte des Projekts gebraucht.
+          timeout 900 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" \
+            "NODE_PFAD=$NODE_PFAD bash -s" <<'SKRIPT'
+          set -eu
+          export PATH="$(dirname "$NODE_PFAD"):$PATH"
+          export PUPPETEER_SKIP_DOWNLOAD=1
+          cd "$HOME/godview-quelle"
+          node -v && npm -v
+          # Vollständig, nicht --omit=optional: Rollup liefert seine
+          # Plattform-Binärdatei (@rollup/rollup-linux-x64-gnu) als optionale
+          # Abhängigkeit aus, und ohne sie startet Vite nicht.
+          if ! npm ci --no-audit --no-fund > /tmp/godview-npm.log 2>&1; then
+            echo "npm ci gescheitert:"
+            tail -30 /tmp/godview-npm.log
+            exit 1
+          fi
+          tail -3 /tmp/godview-npm.log
+          rm -f /tmp/godview-npm.log
+          du -sh node_modules
+          SKRIPT
+
+      - name: Zugangsschutz und Weiterleitung einrichten (.htaccess)
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+          SCHUTZ: ${{ steps.geheim.outputs.schutz }}
+          ZUGANG_BENUTZER: ${{ inputs.zugang_benutzer }}
+          ZUGANG_PASSWORT: ${{ steps.geheim.outputs.passwort }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          HOME_DIR=$(timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" 'pwd')
+          if [ "$SCHUTZ" = ja ]; then
+            # apr1-Hash: das ist das Format, das Apache überall versteht.
+            HASH=$(openssl passwd -apr1 "$ZUGANG_PASSWORT")
+            printf '%s:%s\n' "$ZUGANG_BENUTZER" "$HASH" > "$RUNNER_TEMP/htpasswd"
+            timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" \
+              'cat > godview-app/.htpasswd && chmod 644 godview-app/.htpasswd' < "$RUNNER_TEMP/htpasswd"
+            rm -f "$RUNNER_TEMP/htpasswd"
+            # 644, nicht enger: die Datei liest der Webserver-Prozess, nicht
+            # der Systembenutzer der Domain. Drin steht nur der apr1-Hash, und
+            # sie liegt oberhalb des Webroots.
+            export BLOCK
+            BLOCK=$(printf '%s\n' \
+              '# Basis-Anmeldung vor der Oberfläche — die Instanz vermittelt' \
+              '# Schlüssel und Kontingente und gehört nicht offen ins Netz.' \
+              'AuthType Basic' \
+              "AuthName \"God's Eye View\"" \
+              "AuthUserFile $HOME_DIR/godview-app/.htpasswd" \
+              'Require valid-user')
+          else
+            export BLOCK='# Kein Zugangsschutz — beim Lauf ausdrücklich mit "-" abgewählt.'
+          fi
+          # Vorlage füllen: Port und Schutzblock einsetzen.
+          python3 - "$PORT" <<'PY' > "$RUNNER_TEMP/htaccess"
+          import os, sys
+          vorlage = open('godview/htaccess-vorlage', encoding='utf-8').read()
+          sys.stdout.write(vorlage.replace('__PORT__', sys.argv[1]).replace('__SCHUTZ__', os.environ['BLOCK']))
+          PY
+          head -5 "$RUNNER_TEMP/htaccess"
+          timeout 60 sshpass -p "$SSH_PASS" scp $SSHOPTS "$RUNNER_TEMP/htaccess" "$SSH_USER@$HOST:godview-app/public/.htaccess"
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" \
+            'chmod 644 godview-app/public/.htaccess && ls -la godview-app/public/.htaccess godview-app/.htpasswd 2>/dev/null; true'
+
+      - name: Dienst starten und Aufpasser eintragen
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          timeout 300 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" 'bash -s' <<'SKRIPT'
+          set -u
+          AUF="$HOME/godview-app/dienst.sh"
+          "$AUF" neustart || { echo "Start fehlgeschlagen:"; tail -30 "$HOME/godview-app/dienst.log" 2>/dev/null; exit 1; }
+          # Cron hält ihn wach: alle fünf Minuten nachsehen, dazu nach einem
+          # Neustart des Servers. "start" ist folgenlos, wenn er schon läuft.
+          TMP=$(mktemp)
+          crontab -l 2>/dev/null | grep -v 'godview-app/dienst.sh' > "$TMP" || true
+          printf '*/5 * * * * %s start >/dev/null 2>&1\n@reboot %s start >/dev/null 2>&1\n' "$AUF" "$AUF" >> "$TMP"
+          if crontab "$TMP"; then
+            echo "Cron-Einträge gesetzt:"
+            crontab -l | grep godview || true
+          else
+            echo "WARNUNG: crontab ließ sich nicht schreiben — der Dienst läuft, überlebt aber keinen Neustart des Servers."
+          fi
+          rm -f "$TMP"
+          "$AUF" status
+          SKRIPT
+
+      - name: Zertifikat für HTTPS versuchen (Let's Encrypt)
+        continue-on-error: true
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          echo "== Öffentliche Auflösung (Diagnose) =="
+          echo "A $SUB: $(dig +short "$SUB" A | tr '\n' ' ')"
+          A=$(cli extension --exec letsencrypt cli.php -d "$SUB")
+          echo "$A" | jq -r '"code=\(.code)\n--- stdout ---\n\((.stdout // "")[:800])\n--- stderr ---\n\((.stderr // "")[:1500])"'
+          if echo "$A" | jq -e '.code == 0' >/dev/null; then
+            exit 0
+          fi
+          echo "::warning::Let's Encrypt für $SUB scheiterte — meist fehlt nur der DNS-Eintrag (Workflow »DNS-Eintrag setzen«, Name »godview«). Danach diesen Workflow erneut laufen lassen."
+          # Ohne zugewiesenes Zertifikat bedient nginx die Subdomain über HTTPS
+          # gar nicht (gelernt beim SBF-Kurs): übergangsweise ein vorhandenes
+          # Zertifikat zuweisen, Let's Encrypt ersetzt es beim nächsten Lauf.
+          gut() { echo "$1" | jq -e '.code == 0' >/dev/null; }
+          ZUGEWIESEN=""
+          for name in "Lets Encrypt $DOMAIN" "default certificate"; do
+            A=$(cli site --update "$SUB" -certificate-name "$name")
+            if gut "$A"; then ZUGEWIESEN=$name; break; fi
+            echo "»$name«: $(echo "$A" | jq -r '(.stderr // .stdout // "")[:200]')"
+          done
+          [ -n "$ZUGEWIESEN" ] \
+            && echo "Übergangszertifikat »$ZUGEWIESEN« zugewiesen — Browser warnen, bis Let's Encrypt klappt." \
+            || echo "::warning::Kein Übergangszertifikat zuweisbar — HTTPS bleibt bis zum Let's-Encrypt-Zertifikat unbedient."
+
+      - name: Selbsttest
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+          SCHUTZ: ${{ steps.geheim.outputs.schutz }}
+          ZUGANG_BENUTZER: ${{ inputs.zugang_benutzer }}
+          ZUGANG_PASSWORT: ${{ steps.geheim.outputs.passwort }}
+        run: |
+          set -euo pipefail
+          IP=${PLESK#https://}; IP=${IP%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          ssh_() { timeout 120 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$IP" "$@"; }
+          diagnose() {
+            echo "== Diagnose: Dienst, Protokolle, Webserver =="
+            ssh_ 'godview-app/dienst.sh status; echo "--- dienst.log ---"; tail -20 godview-app/dienst.log 2>/dev/null; \
+                  echo "--- Fehlerprotokolle des vHosts ---"; tail -20 logs/*error*log* 2>/dev/null | tail -40' || true
+          }
+          # Anmeldung nur setzen, wenn es einen Schutz gibt.
+          if [ "$SCHUTZ" = ja ]; then AUTH=(-u "$ZUGANG_BENUTZER:$ZUGANG_PASSWORT"); else AUTH=(); fi
+
+          echo "== 1. Der Dienst antwortet auf dem Server selbst =="
+          INNEN=$(ssh_ "curl -s -o /dev/null -m 15 -w '%{http_code}' -H 'Host: $SUB' http://127.0.0.1:$PORT/")
+          echo "127.0.0.1:$PORT/ -> HTTP $INNEN"
+          [ "$INNEN" = "200" ] \
+            || { echo "::error::Der Node-Dienst antwortet auf dem Server nicht (HTTP $INNEN). Ohne ihn bleiben alle Datenkanäle stumm."; diagnose; exit 1; }
+
+          echo "== 2. Die Oberfläche kommt öffentlich an =="
+          # Plesk schreibt die vHost-Konfiguration sofort, Apache und nginx
+          # laden sie aber verzögert nach — deshalb geduldig nachfragen
+          # (gelernt beim SBF-Kurs).
+          CODE=""
+          for versuch in $(seq 1 18); do
+            CODE=$(curl -sk -o /tmp/start.html -m 20 -w '%{http_code}' "${AUTH[@]}" --resolve "$SUB:443:$IP" "https://$SUB/" || true)
+            [ "$CODE" = "200" ] && break
+            echo "Versuch $versuch: HTTP $CODE"
+            sleep 10
+          done
+          [ "$CODE" = "200" ] \
+            || { echo "::error::https://$SUB/ antwortet mit HTTP $CODE statt 200 — kommt die Plesk-Startseite oder 404, fehlt der Subdomain noch Zertifikat oder nachgeladene Konfiguration."; diagnose; exit 1; }
+          grep -qi "God's Eye View" /tmp/start.html \
+            || { echo "::error::Unter https://$SUB/ liegt etwas anderes als die Anwendung."; head -20 /tmp/start.html; exit 1; }
+          echo "Startseite: HTTP 200, Titel stimmt."
+
+          echo "== 3. Der Zugangsschutz greift =="
+          if [ "$SCHUTZ" = ja ]; then
+            OHNE=$(curl -sk -o /dev/null -m 20 -w '%{http_code}' --resolve "$SUB:443:$IP" "https://$SUB/api/gbfs" || true)
+            [ "$OHNE" = "401" ] \
+              || { echo "::error::/api/gbfs antwortet ohne Anmeldung mit HTTP $OHNE statt 401 — der Schutz greift nicht, die Datenkanäle stehen offen."; diagnose; exit 1; }
+            echo "Ohne Anmeldung: HTTP 401, wie gewollt."
+          else
+            echo "(Kein Schutz eingerichtet — übersprungen.)"
+          fi
+
+          echo "== 4. Die Datenkanäle gehen an den Dienst durch =="
+          # Wie im Probelauf: /api/gbfs beantwortet der Dienst selbst. Was
+          # zählt, ist die Art der Antwort — JSON kommt vom Dienst, HTML
+          # heißt, die Weiterleitung greift nicht und der Webserver hat die
+          # Oberfläche zurückgegeben.
+          API=$(curl -sk -o /tmp/api.txt -m 45 -w '%{http_code} %{content_type}' "${AUTH[@]}" --resolve "$SUB:443:$IP" \
+            "https://$SUB/api/gbfs" || true)
+          echo "/api/gbfs -> $API: $(head -c 120 /tmp/api.txt | tr -d '\n')"
+          case "$API" in
+            *application/json*)
+              echo "Weitergeleitet — die Antwort kommt vom Node-Dienst." ;;
+            *)
+              echo "::error::Unter /api/ kommt keine Antwort des Dienstes zurück, sondern »$API«. Dann greift die Weiterleitung an 127.0.0.1:$PORT nicht — meist fehlt mod_proxy/mod_proxy_http, ohne die die Regel [P] in der .htaccess scheitert (Apache antwortet dann mit 500) oder die Anfrage endet im Webroot (HTML/404). docs/godview/README.md, Abschnitt »Wenn /api/ nicht durchgeht«, beschreibt den nginx-Weg von Hand."
+              diagnose
+              exit 1 ;;
+          esac
+
+          echo "== 5. Die Schlüsseldatei ist nicht erreichbar =="
+          for pfad in /.env /../godview-quelle/.env /.htpasswd; do
+            C=$(curl -sk -o /dev/null -m 15 -w '%{http_code}' "${AUTH[@]}" --resolve "$SUB:443:$IP" "https://$SUB$pfad" || true)
+            echo "$pfad -> HTTP $C"
+            [ "$C" != "200" ] || { echo "::error::$pfad ist über den Webserver lesbar."; exit 1; }
+          done
+
+          echo "== 6. Die großen Bausteine liegen im Webroot =="
+          for datei in /cesium/Cesium.js /index.html; do
+            C=$(curl -sk -o /dev/null -m 30 -w '%{http_code}' "${AUTH[@]}" --resolve "$SUB:443:$IP" "https://$SUB$datei" || true)
+            [ "$C" = "200" ] || { echo "::error::$datei wird nicht ausgeliefert (HTTP $C)."; exit 1; }
+            echo "$datei -> HTTP 200"
+          done
+
+      - name: Zusammenfassung
+        if: always()
+        env:
+          SCHUTZ: ${{ steps.geheim.outputs.schutz }}
+          ZUGANG_BENUTZER: ${{ inputs.zugang_benutzer }}
+          ZUGANG_PASSWORT: ${{ steps.geheim.outputs.passwort }}
+          COMMIT: ${{ steps.upstream.outputs.commit }}
+          NODE_PFAD: ${{ steps.node.outputs.node }}
+        run: |
+          {
+            echo "## God's Eye View auf $SUB"
+            echo
+            echo "- Adresse: https://$SUB"
+            echo "- Stand: \`$VERSION\` (\`${COMMIT:0:12}\`), Node auf dem Server: \`${NODE_PFAD:-?}\`"
+            echo "- Dienst: \`godview-app/dienst.sh status\` auf dem Server; Port $PORT, nur 127.0.0.1"
+            if [ "$SCHUTZ" = ja ]; then
+              echo "- Anmeldung: Benutzer \`$ZUGANG_BENUTZER\`, Passwort wie beim Lauf übergeben (bzw. aus \`GODVIEW_ZUGANG_PASSWORT\`)."
+            else
+              echo "- Anmeldung: **keine** — die Instanz ist offen erreichbar."
+            fi
+            echo "- Schlüssel: kommen aus den Repository-Secrets; das Einstellungsfeld der Anwendung ist auf dem Server abgeschaltet (docs/godview/README.md)."
+            echo "- Aktualisieren: diesen Workflow erneut laufen lassen, gern mit anderer Version."
+          } >> "$GITHUB_STEP_SUMMARY"

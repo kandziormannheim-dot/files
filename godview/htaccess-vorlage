@@ -1,0 +1,43 @@
+# Webroot der God's-Eye-View-Subdomain.
+#
+# Geschrieben vom Workflow "God View einrichten" (.github/workflows/
+# godview-einrichten.yml); Änderungen von Hand überlebt der nächste Lauf
+# nicht. __PORT__ und der Zugangsschutz werden dabei eingesetzt.
+#
+# Aufgabenteilung: die gebauten Dateien (index.html, assets/, cesium/,
+# models/) liegen hier und werden vom Webserver direkt ausgeliefert. Alles
+# unter /api/ ist dagegen der serverseitige Datenteil der Anwendung — die
+# Proxys, die OpenSky, Celestrak, Overpass, TomTom, FIRMS, AISStream und
+# OpenAI ansprechen und dabei die Schlüssel auf dem Server behalten. Die
+# gehen an den Node-Dienst auf 127.0.0.1:__PORT__ (godview-app/dienst.sh).
+
+__SCHUTZ__
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Datenkanäle an den Node-Dienst weiterreichen. [P] braucht mod_proxy
+  # und mod_proxy_http; fehlen sie, antwortet Apache mit 500 und der
+  # Selbsttest des Workflows sagt genau das (docs/godview/README.md nennt
+  # dann den nginx-Weg von Hand).
+  RewriteRule ^api(/.*)?$ http://127.0.0.1:__PORT__/api$1 [P,QSA,L]
+
+  # Tiefe Links (Freigabe-URLs der Anwendung) auf die Oberfläche zurückführen,
+  # aber nur, wenn wirklich keine Datei dahintersteht.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Die Oberfläche gehört in kein fremdes Frame.
+  Header always set X-Frame-Options "DENY"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Punktdateien bleiben unsichtbar — hier liegt zwar keine, aber der Webroot
+# wird bei jedem Lauf neu befüllt.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
