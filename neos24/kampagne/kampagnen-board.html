@@ -1,0 +1,430 @@
+<title>Ein Label. Ganz Europa.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ---- NEOS CI-Tokens: Platzhalter, synchron halten mit ci-tokens.css ---- */
+:root {
+  --neos-primary:#0E2A47; --neos-accent:#FF6A13; --neos-paper:#F4F6F8;
+  --neos-ink:#0B1A2B; --neos-muted:#5B6B7C; --neos-label:#FFFFFF;
+  --neos-font-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --neos-font-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --neos-font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+
+  /* Board-Chrome (theme-aware) */
+  --bg:#EEF1F4; --surface:#FFFFFF; --text:#0B1A2B; --text-2:#51606F;
+  --line:#D5DCE3; --chip-bg:#FFF1E8; --chip-text:#A43E00;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg:#0A1522; --surface:#122236; --text:#E7EDF3; --text-2:#9AABBD;
+    --line:#24374D; --chip-bg:#3A2112; --chip-text:#FFB27F;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:#0A1522; --surface:#122236; --text:#E7EDF3; --text-2:#9AABBD;
+  --line:#24374D; --chip-bg:#3A2112; --chip-text:#FFB27F;
+}
+
+* { box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font:15px/1.55 var(--neos-font-body); padding-inline:16px; padding-block:0 64px; }
+.wrap { max-width:1180px; margin:0 auto; }
+h1,h2,h3 { font-family:var(--neos-font-display); text-wrap:balance; margin:0; }
+p { margin:0; }
+.eyebrow { font:500 11px/1 var(--neos-font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--text-2); }
+
+/* Header */
+header.top { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:16px; padding-block:40px 28px; border-bottom:1px solid var(--line); }
+header.top h1 { font-size:clamp(34px,6vw,64px); font-weight:850; font-stretch:78%; line-height:.95; letter-spacing:-.01em; margin-top:10px; }
+header.top h1 span { color:var(--neos-accent); }
+.meta { display:flex; flex-direction:column; gap:8px; align-items:flex-start; font-size:13px; color:var(--text-2); }
+.chip { display:inline-flex; gap:6px; align-items:center; font:600 11px/1 var(--neos-font-mono); letter-spacing:.06em; text-transform:uppercase; padding:6px 9px; border-radius:4px; background:var(--chip-bg); color:var(--chip-text); }
+
+section { padding-block:40px 0; }
+section > h2 { font-size:26px; font-weight:800; font-stretch:85%; margin:6px 0 20px; }
+
+/* Idee */
+.idea { display:grid; grid-template-columns:1.1fr 1fr; gap:32px; }
+.idea p.lead { font-size:18px; max-width:60ch; }
+.house { display:grid; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:6px; overflow:hidden; font-size:14px; }
+.house div { background:var(--surface); padding:12px 14px; display:grid; grid-template-columns:110px 1fr; gap:12px; }
+.house b { font:600 11px/1.6 var(--neos-font-mono); text-transform:uppercase; letter-spacing:.08em; color:var(--text-2); }
+.house .roof { background:var(--neos-primary); color:#fff; }
+.house .roof b { color:#9FB6CC; }
+.house .cta { background:var(--neos-accent); color:#1A0A00; }
+.house .cta b { color:#5A2200; }
+
+/* ---------- Label-Motiv (CI-Welt, themenunabhängig) ---------- */
+.label { background:var(--neos-label); color:var(--neos-ink); border:2px solid var(--neos-ink); font-family:var(--neos-font-mono); display:flex; flex-direction:column; }
+.label .row { display:flex; border-bottom:2px solid var(--neos-ink); }
+.label .row > * { padding:8px 10px; }
+.label .row > * + * { border-left:2px solid var(--neos-ink); }
+.label .logo { font:900 22px/1 var(--neos-font-display); font-stretch:110%; letter-spacing:.04em; color:var(--neos-primary); display:flex; align-items:center; gap:6px; }
+.label .logo i { width:10px; height:10px; background:var(--neos-accent); display:inline-block; }
+.label .route { margin-left:auto; font-weight:600; font-size:12px; display:flex; align-items:center; }
+.label .f { font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--neos-muted); display:block; }
+.label .v { font-size:12px; font-weight:600; }
+.label .head { padding:14px 12px; font-family:var(--neos-font-display); font-weight:850; font-stretch:75%; line-height:.92; color:var(--neos-primary); letter-spacing:-.01em; }
+.label .head em { font-style:normal; color:var(--neos-accent); display:block; }
+.label .bar { height:54px; margin:10px 12px 4px; display:flex; }
+.label .bar span { background:var(--neos-ink); height:100%; }
+.label .code { font-size:10px; letter-spacing:.3em; text-align:center; padding-bottom:10px; }
+.label .foot { background:var(--neos-primary); color:#fff; padding:10px 12px; font-size:12px; display:flex; justify-content:space-between; gap:10px; align-items:center; margin-top:auto; }
+.label .foot b { color:var(--neos-accent); }
+.qr { width:46px; height:46px; flex:none; background:
+  conic-gradient(from 90deg at 30% 30%, #fff 25%, transparent 0) 0 0/10px 10px,
+  linear-gradient(45deg, #fff 25%, transparent 25% 75%, #fff 75%) 0 0/8px 8px, var(--neos-ink); border:4px solid #fff; }
+
+/* Motiv-Raster */
+.motifs { display:grid; grid-template-columns:repeat(12,1fr); gap:24px; align-items:start; }
+.motif { display:flex; flex-direction:column; gap:10px; min-width:0; }
+.motif figcaption { display:flex; justify-content:space-between; gap:10px; align-items:baseline; font-size:13px; color:var(--text-2); }
+.motif figcaption strong { color:var(--text); font-weight:600; }
+figure { margin:0; }
+.span-4 { grid-column:span 4; } .span-5 { grid-column:span 5; } .span-7 { grid-column:span 7; } .span-8 { grid-column:span 8; } .span-3 { grid-column:span 3; }
+
+/* LinkedIn-Post-Rahmen */
+.li { background:var(--surface); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.li .who { display:flex; gap:10px; align-items:center; padding:12px; font-size:13px; }
+.li .who .av { width:36px; height:36px; background:var(--neos-primary); color:#fff; font:900 11px/36px var(--neos-font-display); text-align:center; border-radius:4px; flex:none; }
+.li .who small { display:block; color:var(--text-2); font-size:11px; }
+.li .txt { padding:0 12px 12px; font-size:13px; }
+.li .art { aspect-ratio:1/1; background:var(--neos-accent); padding:22px; display:flex; align-items:center; justify-content:center; }
+.li .art .label { width:100%; max-width:320px; transform:rotate(-3deg); box-shadow:0 10px 0 rgba(11,26,43,.18); }
+.li .art .label .head { font-size:40px; }
+.li .ctaRow { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; border-top:1px solid var(--line); font-size:13px; }
+.li .ctaRow b { display:block; }
+.li .btn { border:1px solid var(--text); border-radius:999px; padding:5px 14px; font-weight:600; font-size:13px; white-space:nowrap; }
+
+/* Landingpage-Hero */
+.lp { border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--neos-paper); color:var(--neos-ink); }
+.lp .chrome { display:flex; gap:6px; align-items:center; padding:8px 10px; background:var(--surface); border-bottom:1px solid var(--line); font:12px var(--neos-font-mono); color:var(--text-2); }
+.lp .chrome i { width:9px; height:9px; border-radius:50%; background:var(--line); }
+.lp .chrome span { margin-left:8px; background:var(--bg); padding:3px 10px; border-radius:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lp nav { display:flex; justify-content:space-between; align-items:center; padding:14px 22px; font-size:13px; }
+.lp nav .logo { font:900 20px/1 var(--neos-font-display); font-stretch:110%; letter-spacing:.04em; color:var(--neos-primary); display:flex; gap:6px; align-items:center; }
+.lp nav .logo i { width:9px; height:9px; background:var(--neos-accent); }
+.lp nav .links { display:flex; gap:18px; color:var(--neos-muted); }
+.lp .hero { display:grid; grid-template-columns:1.2fr 1fr; gap:24px; padding:22px 22px 30px; align-items:center; }
+.lp .hero h3 { font-size:clamp(34px,5vw,58px); font-weight:900; font-stretch:72%; line-height:.9; color:var(--neos-primary); }
+.lp .hero h3 em { font-style:normal; color:var(--neos-accent); }
+.lp .hero p { margin-top:14px; font-size:15px; max-width:44ch; color:#2A3B4D; }
+.lp .go { display:inline-block; margin-top:18px; background:var(--neos-accent); color:#1A0A00; font-weight:600; padding:12px 18px; border-radius:4px; }
+.lp .go + small { display:block; margin-top:8px; font-size:12px; color:var(--neos-muted); }
+.lp .hero .label { transform:rotate(2deg); }
+.lp .hero .label .head { font-size:30px; }
+.lp .steps { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #D9E0E7; }
+.lp .steps div { padding:14px 22px; font-size:13px; }
+.lp .steps div + div { border-left:1px solid #D9E0E7; }
+.lp .steps b { font:600 11px/1 var(--neos-font-mono); color:var(--neos-accent); display:block; margin-bottom:6px; letter-spacing:.08em; }
+
+/* Mailing */
+.mail { display:grid; grid-template-columns:1fr; gap:14px; }
+.card { aspect-ratio:148/105; min-width:0; overflow-wrap:break-word; padding:18px; display:flex; flex-direction:column; justify-content:space-between; border-radius:3px; box-shadow:0 1px 0 var(--line), 0 8px 20px rgba(11,26,43,.12); }
+.card.front { background:var(--neos-primary); color:#fff; }
+.card.front h3 { font-size:clamp(24px,3.4vw,36px); font-weight:850; font-stretch:75%; line-height:.95; }
+.card.front h3 em { font-style:normal; color:var(--neos-accent); display:block; }
+.card.back { background:var(--neos-label); color:var(--neos-ink); font-size:13px; line-height:1.45; }
+.card.back .qrrow { display:flex; justify-content:space-between; align-items:flex-end; gap:8px; font:600 11px var(--neos-font-mono); }
+.card .tiny { font:500 9px/1 var(--neos-font-mono); letter-spacing:.14em; text-transform:uppercase; opacity:.7; }
+.tape { margin-top:14px; background:var(--neos-accent); color:#1A0A00; font:600 11px/1 var(--neos-font-mono); padding:9px 12px; border-radius:3px; display:flex; justify-content:space-between; gap:8px; background-image:repeating-linear-gradient(90deg, rgba(26,10,0,.55) 0 1px, transparent 1px 12px); background-size:100% 6px; background-repeat:no-repeat; background-position:bottom; }
+
+/* Rollup & Plakat */
+.rollup { aspect-ratio:85/210; background:var(--neos-primary); padding:18px 14px; display:flex; flex-direction:column; gap:14px; border-radius:3px; }
+.rollup .label .head { font-size:36px; }
+.rollup ul { list-style:none; margin:0; padding:0; color:#fff; font:600 12px/1.8 var(--neos-font-mono); }
+.rollup ul li::before { content:"■ "; color:var(--neos-accent); }
+.rollup .ask { margin-top:auto; color:#fff; font:800 17px/1.1 var(--neos-font-display); font-stretch:80%; }
+.rollup .ask span { color:var(--neos-accent); }
+.poster { aspect-ratio:594/841; background:var(--neos-accent); padding:20px; display:flex; flex-direction:column; justify-content:space-between; border-radius:3px; }
+.poster .label .head { font-size:44px; }
+.poster .label { transform:rotate(-2deg); }
+.poster .pfoot { display:flex; justify-content:space-between; align-items:flex-end; gap:10px; color:#1A0A00; font:600 13px/1.3 var(--neos-font-mono); }
+
+/* Zeitplan */
+.timeline { overflow-x:auto; }
+.tl { min-width:720px; display:grid; grid-template-columns:repeat(6,1fr); border:1px solid var(--line); border-radius:6px; overflow:hidden; background:var(--surface); }
+.tl .m { padding:8px 10px; font:600 11px var(--neos-font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-2); border-bottom:1px solid var(--line); }
+.tl .m + .m { border-left:1px solid var(--line); }
+.tl .w { padding:12px; font-size:13px; border-left:1px solid var(--line); }
+.tl .w:first-of-type { border-left:0; }
+.tl .w b { display:block; font-family:var(--neos-font-display); font-weight:800; font-size:15px; font-stretch:88%; margin-bottom:4px; }
+.tl .w.on { box-shadow:inset 0 3px 0 var(--neos-accent); }
+.tl .w.off { color:var(--text-2); background:repeating-linear-gradient(135deg, transparent 0 8px, var(--line) 8px 9px); }
+
+/* Kanäle + Budget */
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+td, th { text-align:left; padding:9px 0; border-bottom:1px solid var(--line); vertical-align:top; }
+th { font:600 11px var(--neos-font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--text-2); }
+td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; padding-left:12px; }
+tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.kpi { border-top:3px solid var(--neos-accent); padding-top:10px; }
+.kpi b { font:850 34px/1 var(--neos-font-display); font-stretch:80%; display:block; font-variant-numeric:tabular-nums; }
+.kpi span { font-size:13px; color:var(--text-2); }
+.todo { background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:18px 20px; }
+.todo ol { margin:8px 0 0; padding-left:20px; display:grid; gap:6px; }
+.note { font-size:12px; color:var(--text-2); margin-top:10px; }
+
+@media (max-width: 900px) {
+  .idea, .grid2 { grid-template-columns:1fr; }
+  .span-4,.span-5,.span-7,.span-8,.span-3 { grid-column:span 12; }
+  .lp .hero { grid-template-columns:1fr; }
+  .rollup { max-width:300px; } .poster { max-width:420px; }
+}
+@media (max-width: 520px) {
+  .mail { grid-template-columns:1fr; }
+  .lp nav .links { display:none; }
+  .lp .steps { grid-template-columns:1fr; }
+  .lp .steps div + div { border-left:0; border-top:1px solid #D9E0E7; }
+  .house div { grid-template-columns:1fr; gap:2px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">NEOS Logistics · B2B-Kampagne #1 · Okt 2026 – März 2027</p>
+      <h1>Ein Label.<br><span>Ganz Europa.</span></h1>
+    </div>
+    <div class="meta">
+      <span class="chip">CI-Werte: Platzhalter</span>
+      <span>Farben, Schrift und Logo sind Platzhalter, bis die offiziellen Neos-CI-Werte vorliegen.<br>Austausch an einer Stelle: <code>ci-tokens.css</code></span>
+    </div>
+  </header>
+
+  <section>
+    <p class="eyebrow">Die Idee</p>
+    <h2>Das Versandlabel ist das Motiv</h2>
+    <div class="idea">
+      <div style="display:grid;gap:14px;">
+        <p class="lead">Jeder Versender kennt das Paketlabel, und wer ins Ausland liefert, hat zu viele davon: pro Land ein Carrier, ein Portal, eine Rechnung. NEOS bündelt über 100 lokale Last-Mile-Zusteller in Europa hinter einem Vertrag.</p>
+        <p>Alle Motive sehen deshalb aus wie ein Paketaufkleber. Absender, Empfänger, Routing-Code, Barcode. Nur steht als Ziel <strong>ganz Europa</strong> darauf. Das Motiv funktioniert auf LinkedIn im Feed, als echtes Label auf dem Mailing-Karton und als Standwand auf der Messe.</p>
+        <p>Jeder Kanal führt zu einem Angebot: dem <strong>kostenlosen Versandkosten-Check</strong>. Der Kunde schickt seine letzten 100 Auslandssendungen, NEOS rechnet sie in 48 Stunden nach.</p>
+      </div>
+      <div class="house" role="table" aria-label="Message House">
+        <div class="roof"><b>Dach</b><span>Ein Label. Ganz Europa.</span></div>
+        <div><b>Kosten</b><span>Lokale Zustelltarife statt Auslandsaufschlag. Bis zu 55 % günstiger.*</span></div>
+        <div><b>Qualität</b><span>Zustellung durch den Carrier, den die Empfänger im Zielland kennen.</span></div>
+        <div><b>Einfachheit</b><span>Ein Vertrag, ein Ansprechpartner, ein Tracking, eine Rechnung.</span></div>
+        <div><b>Beweis</b><span>100+ Last-Mile-Partner · Sitz Mannheim*</span></div>
+        <div class="cta"><b>Angebot</b><span>Kostenloser Versandkosten-Check, Ergebnis in 48 h</span></div>
+      </div>
+    </div>
+    <p class="note">* Angaben aus dem öffentlichen Auftritt von neos24.com. Vor dem Einsatz in Werbung intern belegen.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Zielgruppe</p>
+    <h2>Wen wir erreichen wollen</h2>
+    <div class="grid2">
+      <table>
+        <thead><tr><th>Segment</th><th>Profil</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Onlinehändler</strong><br><span style="color:var(--text-2);font-size:13px;">Primär</span></td><td>DACH, 300–20.000 Pakete/Monat, ≥ 15 % ins EU-Ausland. Mode, Sport, Beauty, Ersatzteile, Tierbedarf.</td></tr>
+          <tr><td><strong>Fulfiller &amp; 3PL</strong><br><span style="color:var(--text-2);font-size:13px;">Multiplikator</span></td><td>Versenden für viele Shops und wollen keine eigene EU-Last-Mile aufbauen.</td></tr>
+          <tr><td><strong>Mittelstand Rhein-Neckar</strong><br><span style="color:var(--text-2);font-size:13px;">Heimvorteil</span></td><td>Hersteller und Großhändler mit Ersatzteil- und Musterversand ins Ausland.</td></tr>
+        </tbody>
+      </table>
+      <div style="display:grid;gap:14px;align-content:start;">
+        <p class="eyebrow">Buying Center</p>
+        <p><strong>Geschäftsführung</strong> achtet auf Kosten. <strong>Operations/Logistik</strong> auf Zustellquote und Aufwand. <strong>E-Commerce-Leitung</strong> auf Checkout und Retouren.</p>
+        <p style="font-size:18px;font-family:var(--neos-font-display);font-weight:700;font-stretch:88%;line-height:1.25;">„Ich will nicht wissen, welcher Zusteller in Portugal gut ist. Ich will, dass das Paket ankommt und die Rechnung stimmt."</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Motive</p>
+    <h2>Online und offline, ein Look</h2>
+    <div class="motifs">
+
+      <figure class="motif span-5">
+        <div class="li">
+          <div class="who"><div class="av">NEOS</div><div><strong>NEOS Logistics</strong><small>Gesponsert</small></div></div>
+          <p class="txt">5 Länder, 5 Carrier, 5 Portale, 5 Rechnungen. Oder: NEOS. Über 100 lokale Zusteller in Europa, ein Ansprechpartner in Mannheim.</p>
+          <div class="art">
+            <div class="label" data-label>
+              <div class="row"><div class="logo"><i></i>NEOS</div><div class="route">MA&nbsp;→&nbsp;EU</div></div>
+              <div class="row"><div style="flex:1"><span class="f">Absender</span><span class="v">Ihr Shop</span></div><div style="flex:1"><span class="f">Empfänger</span><span class="v">Ganz Europa</span></div></div>
+              <div class="head">Ein Label.<em>Ganz Europa.</em></div>
+              <div class="bar"></div>
+              <div class="code">NEOS 0100 EU LOCAL</div>
+            </div>
+          </div>
+          <div class="ctaRow"><div><b>Ein Vertrag für 100+ Zusteller</b><span style="color:var(--text-2);font-size:12px;">neos24.com</span></div><span class="btn">Mehr erfahren</span></div>
+        </div>
+        <figcaption><strong>LinkedIn Sponsored Content</strong><span>1080 × 1080</span></figcaption>
+      </figure>
+
+      <figure class="motif span-7">
+        <div class="lp">
+          <div class="chrome"><i></i><i></i><i></i><span>neos24.com/versandkosten-check</span></div>
+          <nav><div class="logo"><i></i>NEOS</div><div class="links"><span>Leistungen</span><span>Länder</span><span>Kontakt</span></div></nav>
+          <div class="hero">
+            <div>
+              <h3>Ein Label.<br><em>Ganz Europa.</em></h3>
+              <p>Lokale Zustellung in jedem Zielland, über einen Vertrag mit NEOS. Wir rechnen Ihre letzten 100 Auslandssendungen kostenlos nach.</p>
+              <span class="go">Versandkosten-Check starten</span>
+              <small>Ergebnis in 48 Stunden · ohne Vertragsbindung</small>
+            </div>
+            <div class="label" data-label>
+              <div class="row"><div class="logo"><i></i>NEOS</div><div class="route">CHECK</div></div>
+              <div class="row"><div style="flex:1"><span class="f">Sendungen</span><span class="v">100</span></div><div style="flex:1"><span class="f">Ergebnis</span><span class="v">48 h</span></div></div>
+              <div class="head">Was sparen<em>Sie?</em></div>
+              <div class="bar"></div>
+              <div class="code">CSV · XLSX · SHOP-EXPORT</div>
+            </div>
+          </div>
+          <div class="steps">
+            <div><b>SCHRITT 1</b>Sendungsdaten hochladen</div>
+            <div><b>SCHRITT 2</b>Wir vergleichen jede Sendung</div>
+            <div><b>SCHRITT 3</b>Ersparnis und Angebot in 48 h</div>
+          </div>
+        </div>
+        <figcaption><strong>Landingpage, Hero</strong><span>Ziel aller Kanäle</span></figcaption>
+      </figure>
+
+      <figure class="motif span-5">
+        <div class="mail">
+          <div class="card front">
+            <span class="tiny">Vorderseite</span>
+            <h3>Dieses Paket hatte ein Label.<em>Ihre Auslandspakete brauchen auch nur eins.</em></h3>
+          </div>
+          <div class="card back">
+            <span class="tiny">Rückseite</span>
+            <p>NEOS stellt über 100+ lokale Zusteller in ganz Europa zu, mit einem Vertrag, einem Tracking und einem Ansprechpartner in Mannheim. Wir rechnen Ihre letzten 100 Auslandssendungen kostenlos nach.</p>
+            <div class="qrrow"><span>neos24.com/check<br>[Name · Telefon]</span><span class="qr" aria-hidden="true"></span></div>
+          </div>
+        </div>
+        <div class="tape"><span>BEIGABE: MASSBAND</span><span>GURTMASS = L + 2B + 2H</span></div>
+        <figcaption><strong>Dimensional Mailing</strong><span>Karton an 150 Top-Accounts, Karte A6</span></figcaption>
+      </figure>
+
+      <figure class="motif span-3">
+        <div class="rollup">
+          <div class="label" data-label>
+            <div class="row"><div class="logo"><i></i>NEOS</div><div class="route">EU</div></div>
+            <div class="head">Ein Label.<em>Ganz Europa.</em></div>
+            <div class="bar"></div>
+            <div class="code">MANNHEIM → EUROPA</div>
+          </div>
+          <ul><li>100+ Last-Mile-Zusteller</li><li>Ein Vertrag</li><li>Ein Tracking</li><li>Ein Ansprechpartner</li></ul>
+          <p class="ask">Nennen Sie uns Ihre <span>3 wichtigsten Zielländer.</span></p>
+        </div>
+        <figcaption><strong>Messe-Rollup</strong><span>85 × 210 cm</span></figcaption>
+      </figure>
+
+      <figure class="motif span-4">
+        <div class="poster">
+          <div class="label" data-label>
+            <div class="row"><div class="logo"><i></i>NEOS</div><div class="route">MA&nbsp;→&nbsp;EU</div></div>
+            <div class="row"><div style="flex:1"><span class="f">Service</span><span class="v">Local Last Mile</span></div><div style="flex:1"><span class="f">Partner</span><span class="v">100+</span></div></div>
+            <div class="head">Ein Label.<em>Ganz Europa.</em></div>
+            <div class="bar"></div>
+            <div class="code">NEOS24.COM/CHECK</div>
+          </div>
+          <div class="pfoot"><span>Kostenloser<br>Versandkosten-Check<br>neos24.com/check</span><span class="qr" aria-hidden="true"></span></div>
+        </div>
+        <figcaption><strong>Plakat / Standwand</strong><span>A1</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Zeitplan</p>
+    <h2>Drei Wellen um die Peak Season</h2>
+    <div class="timeline">
+      <div class="tl">
+        <div class="m">Okt</div><div class="m">Nov</div><div class="m">Dez</div><div class="m">Jan</div><div class="m">Feb</div><div class="m">März</div>
+        <div class="w on" style="grid-column:span 2;"><b>Welle 1 · Peak-Check</b>Setup in den ersten 2 Wochen. LinkedIn und Google live, Zustellatlas, Outbound Runde 1, Mailing an 75 Accounts.</div>
+        <div class="w off"><b>Pause</b>Kein Outbound im Weihnachtsgeschäft. Nur Retargeting und Content.</div>
+        <div class="w on" style="grid-column:span 2;"><b>Welle 2 · Erst rechnen, dann verlängern</b>Carrier-Konditionen werden neu verhandelt. Budget-Schwerpunkt, Mailing an 75 Accounts, Frühstück Rhein-Neckar.</div>
+        <div class="w on"><b>Welle 3 · Messe</b>LogiMAT (Termin prüfen), erste Kundenfälle in allen Kanälen.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="grid2">
+      <div>
+        <p class="eyebrow">Kanäle</p>
+        <h2>Wo die Kampagne läuft</h2>
+        <table>
+          <thead><tr><th>Online</th><th>Offline</th></tr></thead>
+          <tbody>
+            <tr><td>Landingpage mit Check-Upload</td><td>Dimensional Mailing „Das Paket"</td></tr>
+            <tr><td>LinkedIn Ads + Lead Gen Forms</td><td>Messe LogiMAT, Rollup, Standwand</td></tr>
+            <tr><td>Google Ads Search + Retargeting</td><td>E-Commerce-Events (Besuch)</td></tr>
+            <tr><td>Europa-Zustellatlas (PDF)</td><td>Frühstück Rhein-Neckar in Mannheim</td></tr>
+            <tr><td>Länderseiten via AIVA</td><td>Plakat, Karten, Paketbeileger</td></tr>
+            <tr><td>E-Mail-Nurture, 5 Mails</td><td>Fachpresse-Gastbeitrag</td></tr>
+            <tr><td>Outbound-Sequenz, 300 Accounts</td><td>Partner: Shop-Agenturen, Fulfiller</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <p class="eyebrow">Budget</p>
+        <h2>42.000 € netto über 24 Wochen</h2>
+        <table>
+          <thead><tr><th>Posten</th><th class="n">€</th></tr></thead>
+          <tbody>
+            <tr><td>LinkedIn Ads</td><td class="n">12.000</td></tr>
+            <tr><td>Messe</td><td class="n">9.000</td></tr>
+            <tr><td>Google Ads</td><td class="n">6.000</td></tr>
+            <tr><td>Landingpage, Tracking, Atlas</td><td class="n">4.000</td></tr>
+            <tr><td>Dimensional Mailing (150)</td><td class="n">3.000</td></tr>
+            <tr><td>Events</td><td class="n">3.000</td></tr>
+            <tr><td>Print</td><td class="n">1.000</td></tr>
+            <tr><td>Reserve</td><td class="n">4.000</td></tr>
+            <tr class="sum"><td>Gesamt</td><td class="n">42.000</td></tr>
+          </tbody>
+        </table>
+        <p class="note">Schlanke Variante rund 18.000 €: kein Messestand, weniger Media. Landingpage und Check bleiben.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">Ziele bis 31.03.2027</p>
+    <h2>Woran wir die Kampagne messen</h2>
+    <div class="kpis">
+      <div class="kpi"><b>250</b><span>qualifizierte Leads (&gt; 300 Auslandspakete/Monat)</span></div>
+      <div class="kpi"><b>80</b><span>durchgeführte Versandkosten-Checks</span></div>
+      <div class="kpi"><b>20</b><span>neue B2B-Kunden mit erster Sendung</span></div>
+      <div class="kpi"><b>≤ 2.000 €</b><span>Kosten pro Neukunde</span></div>
+    </div>
+    <p class="note">Planannahmen aus Branchenwerten. Nach Welle 1 mit den echten Conversion-Raten neu kalibrieren. Jeder Offline-Kanal bekommt einen eigenen QR-Code mit UTM, sonst lässt er sich nicht bewerten.</p>
+  </section>
+
+  <section>
+    <div class="todo">
+      <p class="eyebrow">Vor der Freigabe</p>
+      <ol>
+        <li>Offizielle Neos-CI-Werte und Logo-SVG in <code>ci-tokens.css</code> eintragen.</li>
+        <li>Belege für „100+ Partner" und „bis zu 55 %" beschaffen, sonst Claims anpassen.</li>
+        <li>Operations sagt „Check in 48 Stunden" verbindlich zu.</li>
+        <li>Budgetvariante entscheiden: 42.000 € oder 18.000 €.</li>
+        <li>Zielliste mit 300 Accounts aufbauen.</li>
+      </ol>
+    </div>
+  </section>
+</div>
+
+<script>
+// Deterministischer Barcode für alle Label-Motive
+(function () {
+  var widths = [3,1,2,1,1,3,2,1,1,2,3,1,2,2,1,1,3,1,2,1,1,2,1,3,1,1,2,3,1,2,1,1,2,1,3,2,1,1,2,1,3,1,2,1,1,2];
+  document.querySelectorAll('[data-label] .bar').forEach(function (bar) {
+    widths.forEach(function (w, i) {
+      var s = document.createElement('span');
+      s.style.flex = w + ' 0 0';
+      if (i % 2) s.style.background = 'transparent';
+      bar.appendChild(s);
+    });
+  });
+})();
+</script>
