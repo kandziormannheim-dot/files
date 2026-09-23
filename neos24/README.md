@@ -11,6 +11,7 @@ Ausgangsmaterial: `neos24handover.zip` (AIVA-Anleitung, `setup-neos24.sh`,
 | [`HANDOVER-REVIEW.md`](HANDOVER-REVIEW.md) | Prüfergebnis des Handovers — 2 Bugs, 1 Konzept-Missverständnis, 10 bestätigte Punkte |
 | [`SEO-RANK1-CHECKLIST.md`](SEO-RANK1-CHECKLIST.md) | Die vollständige Ranking-Checkliste, nach Hebelwirkung sortiert |
 | [`patches/`](patches/) | Zwei getestete Fixes für das AIVA-Bundle + Testskript |
+| [`kampagne/`](kampagne/) | B2B-Kampagne #1 „Ein Label. Ganz Europa.": Plan, Motive, Texte |
 | [`tools/indexability-audit.py`](tools/indexability-audit.py) | Live-Check gegen `noindex` & Co. Läuft überall, nur Python 3 |
 
 ---

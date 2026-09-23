@@ -1,0 +1,20 @@
+/*
+ * NEOS CI-Tokens — EINZIGE Stelle für Farben und Schriften der Kampagne.
+ *
+ * ACHTUNG: PLATZHALTER. Die offiziellen Neos-CI-Werte lagen bei Erstellung
+ * nicht vor (neos24.com aus der Arbeitsumgebung nicht erreichbar, kein
+ * Brand-Manual im Repo). Offizielle Hex-Werte und Hausschrift hier eintragen,
+ * das Kampagnen-Board übernimmt sie automatisch (gleiche Variablennamen).
+ */
+:root {
+  --neos-primary:   #0E2A47; /* Hauptfarbe (Platzhalter: Tiefblau)      */
+  --neos-accent:    #FF6A13; /* Signalfarbe (Platzhalter: Signalorange) */
+  --neos-paper:     #F4F6F8; /* Hintergrund hell                        */
+  --neos-ink:       #0B1A2B; /* Text                                    */
+  --neos-muted:     #5B6B7C; /* Sekundärtext                            */
+  --neos-label:     #FFFFFF; /* Label-Fläche                            */
+
+  --neos-font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --neos-font-body:    "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --neos-font-mono:    "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
