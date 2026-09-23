@@ -2,13 +2,13 @@
 
 Erste integrierte Kampagne (online + offline) für neos24.com.
 Ziel: **mehr B2B-Kunden** für den europäischen Cross-Border-Paketversand.
-Laufzeit: **Oktober 2026 – März 2027** (3 Wellen, 24 Wochen).
+Laufzeit: **Oktober 2026 – März 2027** (3 Wellen, 24 Wochen) · Budget: **1.000 € netto**.
 Stand: 2026-09-23 · Verantwortlich: Marketing
 
 | Datei | Inhalt |
 |---|---|
 | `README.md` | Dieser Plan: Ziel, Zielgruppe, Idee, Kanäle, Zeitplan, Budget, KPIs |
-| [`kampagnen-board.html`](kampagnen-board.html) | Alle Motive: LinkedIn-Ads, Landingpage-Hero, Mailing, Messe-Rollup, Plakat |
+| [`kampagnen-board.html`](kampagnen-board.html) | Alle Motive: LinkedIn-Post, Landingpage-Hero, Mailing, Plakat, Paket-Sticker |
 | [`texte.md`](texte.md) | Copy-Deck: Anzeigentexte, E-Mail-Sequenz, Telefonleitfaden, Mailing-Text |
 | [`ci-tokens.css`](ci-tokens.css) | CI-Farben und Schriften an **einer** Stelle — hier das Neos-CI eintragen |
 
@@ -27,8 +27,8 @@ Stand: 2026-09-23 · Verantwortlich: Marketing
    Werbung). „Bis zu 55 %" braucht mindestens einen dokumentierten Kundenfall.
 3. **Lead-Angebot operativ absichern.** Der „Versandkosten-Check in 48 h" (s. u.)
    ist das Herz der Kampagne. Vertrieb/Ops müssen die 48 h zusagen können.
-4. **Messetermine** unten sind Planungsstand; Daten und Standpreise vor
-   Buchung prüfen.
+4. **Messe- und Eventtermine** unten sind Planungsstand; Daten vor
+   der Planung prüfen.
 
 ---
 
@@ -50,16 +50,22 @@ Stand: 2026-09-23 · Verantwortlich: Marketing
 
 ## 2. Ziele (SMART, bis 31.03.2027)
 
+**Budget: 1.000 € netto für die gesamte Laufzeit.** Das Geld reicht für einen
+kleinen Google-Test, ein Mailing an 25 Wunschkunden, Druck und ein Frühstück.
+Den Rest trägt Arbeitszeit: etwa **8–10 Stunden pro Woche** für Marketing und
+Vertrieb zusammen. Ohne diese Zeit funktioniert die Kampagne nicht.
+
 | Ziel | Zielwert |
 |---|---|
-| Qualifizierte Leads (MQL: Firma, Versandvolumen > 300 Pakete/Monat ins Ausland) | **250** |
-| Versandkosten-Checks durchgeführt (SQL) | **80** |
-| Neue B2B-Kunden mit erster Sendung | **20** |
-| Pipeline-Wert (monatliches Versandvolumen der SQLs) | ≥ 60.000 Pakete/Monat |
-| Kosten pro Neukunde (CAC) | ≤ 2.000 € |
+| Qualifizierte Leads (MQL: Firma, Versandvolumen > 300 Pakete/Monat ins Ausland) | **60** |
+| Versandkosten-Checks durchgeführt (SQL) | **25** |
+| Neue B2B-Kunden mit erster Sendung | **5** |
+| Kosten pro Neukunde (nur Geld, ohne Arbeitszeit) | ≤ 200 € |
 
-Die Zielwerte sind Planannahmen aus Benchmarks, keine Erfahrungswerte von NEOS.
-Nach Welle 1 (Woche 8) werden sie mit echten Conversion-Raten neu kalibriert.
+Die Zielwerte sind Planannahmen, keine Erfahrungswerte von NEOS. Nach Welle 1
+(Woche 8) werden sie mit den echten Zahlen neu kalibriert. Die meisten Leads
+kommen bei diesem Budget aus der direkten Ansprache, nicht aus Anzeigen.
+
 
 ## 3. Zielgruppe (ICP)
 
@@ -126,84 +132,91 @@ Volumen.
 
 ## 6. Kanäle
 
+Grundregel bei 1.000 €: **Geld nur dort, wo Kaufabsicht schon da ist oder
+ein Kontakt garantiert ankommt.** Reichweite kaufen (LinkedIn Ads, Messestand,
+Fachpresse-Anzeigen) fällt weg. LinkedIn Ads lohnen sich mit diesem Budget
+nicht: Bei üblichen B2B-Klickpreisen blieben nur wenige hundert Klicks.
+
 ### Online
 
-| Kanal | Maßnahme | Rolle |
+| Kanal | Maßnahme | Kosten |
 |---|---|---|
-| **Landingpage** `neos24.com/versandkosten-check` | Hero „Ein Label. Ganz Europa.", 3 Säulen, Länderliste, Upload-Formular, Kundenstimme | Conversion-Ziel aller Kanäle |
-| **LinkedIn Ads** | Sponsored Content (Single Image + Dokument-Anzeige „Europa-Zustellatlas"), Zielgruppe: Jobtitel Ops/Logistik/E-Com/GF, Branchen Retail/E-Commerce, DACH, Firmengröße 11–500 | Hauptkanal Reichweite + Leads |
-| **LinkedIn Lead Gen Forms** | Formular direkt in der Anzeige für den Check (Upload folgt per Mail) | niedrige Hürde |
-| **Google Ads Search** | Keywords: „Paketversand Ausland günstig", „Versand EU Onlineshop", „Last Mile Europa", „DHL Alternative Ausland", „Versanddienstleister Europa B2B" | Nachfrage abgreifen |
-| **Retargeting** (LinkedIn + Google Display) | Besucher der Landingpage ohne Upload, 30 Tage | Rückholung |
-| **Content / SEO** | 1 Pillar-Artikel pro Welle + Länderseiten „Paketversand nach Frankreich/Italien/Spanien/Polen/Österreich" — produziert über AIVA (siehe `../README.md`) | organischer Nachschub, zahlt auf Strang B ein |
-| **Europa-Zustellatlas (PDF)** | 12 Seiten: welches Land, welcher Carrier ist Marktführer, typische Laufzeiten, Zollbesonderheiten (CH/NO/UK) | Lead-Magnet für Content-Leser, Dokument-Anzeige |
-| **E-Mail-Nurture** | 5 Mails über 21 Tage nach Download/Formular, s. `texte.md` | SQL-Konversion |
-| **Outbound (Vertrieb)** | 300 Accounts Zielliste, LinkedIn-Kontakt + Mail + Anruf, Sequenz in `texte.md` | Top-Accounts aktiv angehen |
-| **Partner** | Shop-Agenturen (Shopify/Shopware) und Fulfiller: Empfehlungsprovision | Multiplikatoren |
+| **Landingpage** `neos24.com/versandkosten-check` | Hero „Ein Label. Ganz Europa.", 3 Schritte, Upload-Formular, FAQ. Im bestehenden CMS selbst gebaut | 0 € |
+| **Google Ads Search** | Nur Exact/Phrase Match auf Kaufabsicht: „Paketversand Ausland Onlineshop", „Versanddienstleister Europa", „Last Mile Europa", „DHL Alternative Ausland". Region DACH, Mo–Fr 7–19 Uhr, Tageslimit | 350 € |
+| **LinkedIn organisch** | Unternehmensseite + Profile von Geschäftsführung und Vertrieb. 2 Posts/Woche im Label-Look (Motive als Bild), Themen: ein Land pro Woche, Zahlen aus Checks (anonymisiert), Blick ins Lager | 0 € |
+| **Direkte Ansprache** | 100 Accounts Zielliste (kostenlose LinkedIn-Suche, Shop-Verzeichnisse, Händlerbund-Listen), Sequenz aus LinkedIn + Mail + Anruf, s. `texte.md` | 0 € |
+| **Europa-Zustellatlas (PDF)** | 12 Seiten, selbst in einem kostenlosen Layout-Tool gesetzt; Lead-Magnet für LinkedIn-Posts und die Landingpage | 0 € |
+| **E-Mail-Nurture** | 5 Mails über 21 Tage, mit vorhandenem Mail-Tool oder manuell aus dem CRM | 0 € |
+| **Content / SEO** | Länderseiten „Paketversand nach Frankreich/Italien/…" über AIVA (siehe `../README.md`) | 0 € |
+| **Einträge** | Google-Unternehmensprofil, Branchenverzeichnisse, Partnerseiten von Shopsystemen (wo kostenlos) | 0 € |
+| **Partner** | 5–10 Shop-Agenturen und Fulfiller aus der Region ansprechen: Empfehlungsprovision nur bei Abschluss | 0 € fix |
 
 ### Offline
 
-| Maßnahme | Detail | Rolle |
+| Maßnahme | Detail | Kosten |
 |---|---|---|
-| **Dimensional Mailing „Das Paket"** | Kleiner Karton an 150 Top-Accounts (GF/Ops), außen echtes NEOS-Versandlabel adressiert an den Empfänger, innen: Karte „Dieses Paket hatte ein Label. Ihre Auslandspakete brauchen auch nur eins." + QR zum Check + ein kleines Nützliches (Paketmesser / Maßband mit Gurtmaß-Skala). Vertrieb ruft 3–5 Tage nach Zustellung an. | Türöffner Outbound, hohe Erinnerung |
-| **Messe: LogiMAT Stuttgart** (März 2027, Termin prüfen) | Kleiner Stand oder Co-Aussteller; Rollup + Standwand im Label-Look, am Stand Live-Check am Tablet („Nennen Sie uns Ihre 3 wichtigsten Zielländer") | Welle 3, Abschluss |
-| **E-Commerce-Events** (Auswahl: K5 Konferenz, Internet World Expo, lokale Shopware/Shopify-Meetups; Termine prüfen) | Besuch statt Stand, Termine vorab über LinkedIn vereinbaren, Karte + Sticker | kosteneffizient ins Buying Center |
-| **Heimspiel Rhein-Neckar** | Frühstück „Versand ins Ausland" für 15–20 Versender aus der Region, am NEOS-Standort Mannheim bzw. in Kooperation mit IHK Rhein-Neckar / Wirtschaftsförderung; 2 Kurzvorträge + Lagerführung/Demo | Vertrauen, Referenzen aus der Region |
-| **Print: Plakat/Standwand** | Motiv „Ein Label. Ganz Europa." im A1/A0 für Messe und Veranstaltungen | Wiedererkennung |
-| **Paketbeileger & Visitenkarte** | Rückseite im Label-Look mit QR zum Check | jeder Kontakt führt zum Angebot |
-| **Fachpresse** | Gastbeitrag/Interview in Logistik- oder E-Commerce-Fachmedien (z. B. LOGISTIK HEUTE, t3n, Location Insider) zum Thema „Last Mile im Ausland" | Glaubwürdigkeit |
+| **Mailing „Das Paket"** | 25 Kartons an die wichtigsten Wunschkunden (GF/Ops). Versand über das eigene Netz. Innen Karte + Maßband mit Gurtmaß-Formel, danach Anruf nach 3–5 Tagen | 300 € |
+| **Frühstück Rhein-Neckar** | 12–15 Versender aus der Region im eigenen Büro/Lager in Mannheim, 90 Minuten, 2 Kurzvorträge + Führung. Einladung über LinkedIn, IHK-Veranstaltungskalender, Partner | 150 € |
+| **Print** | Visitenkarten-Rückseite und A6-Karten im Label-Look mit QR, Label-Sticker für eigene Pakete, 1 Plakat A1 fürs Büro/Events | 150 € |
+| **Messen & Events als Besucher** | LogiMAT (März 2027, Termin prüfen) und E-Commerce-Meetups besuchen, Termine vorher über LinkedIn vereinbaren. Freitickets über Aussteller-Gutscheine nutzen | 0 € (Reise aus Reserve oder Vertriebsbudget) |
+| **Eigene Pakete** | Jedes NEOS-Paket bekommt einen Kampagnen-Sticker mit QR zum Check | im Print enthalten |
+| **Fachpresse** | Gastbeitrag statt Anzeige: Thema „Last Mile im Ausland" an Logistik- und E-Commerce-Redaktionen anbieten | 0 € |
 
 ## 7. Zeitplan
 
 ```
-Woche  1–2   (Okt)      Setup: CI einsetzen, Landingpage, Tracking (GA4, LinkedIn Insight Tag,
-                        CRM-Felder), Zielliste 300 Accounts, Mailing produzieren
+Woche  1–2   (Okt)      Setup: CI einsetzen, Landingpage im CMS, Tracking (GA4, Search Console,
+                        Google Ads Conversion), Zielliste 100 Accounts, Atlas-PDF
 Welle 1      (Okt–Nov)  „Peak-Check": Wie gut kommen Ihre Auslandspakete durchs Weihnachtsgeschäft?
-Woche  3–10             LinkedIn + Google live, Atlas-PDF, Outbound Runde 1, Mailing Batch 1 (75)
-Pause        (Dez)      Kein Outbound in der Peak Season (Kunden haben keine Zeit), Ads nur Retargeting,
-                        Content läuft weiter
-Welle 2      (Jan–Feb)  „Neues Jahr, neue Konditionen": Carrier-Verträge werden neu verhandelt
-Woche 13–20             Budget-Schwerpunkt, Mailing Batch 2 (75), Rhein-Neckar-Frühstück, Outbound Runde 2
-Welle 3      (März)     Messe (LogiMAT), Referenzkunden aus Welle 1/2 als Case in allen Kanälen,
-Woche 21–24             Abschlussfokus auf offene SQLs
-Woche 25                Auswertung, Entscheidung über Kampagne #2
+Woche  3–10             Google Ads Test mit 100 €, LinkedIn-Posts starten, Ansprache Runde 1 (50 Accounts)
+Pause        (Dez)      Keine Kaltakquise im Weihnachtsgeschäft, Google Ads aus, Posts laufen weiter
+Welle 2      (Jan–Feb)  „Erst rechnen, dann verlängern": Zusteller-Verträge werden neu verhandelt
+Woche 13–20             Google Ads 250 € auf die Keywords, die in Welle 1 Leads brachten,
+                        Mailing an 25 Accounts, Frühstück Rhein-Neckar, Ansprache Runde 2 (50 Accounts)
+Welle 3      (März)     LogiMAT als Besucher, erste Kundenfälle als LinkedIn-Posts
+Woche 21–24             Abschlussfokus auf offene Checks
+Woche 25                Auswertung, Entscheidung über Kampagne #2 und Budget
 ```
 
-## 8. Budget (Vorschlag, netto)
+## 8. Budget (netto)
 
 | Posten | Betrag |
 |---|---|
-| LinkedIn Ads (inkl. Lead Gen, Retargeting) | 12.000 € |
-| Google Ads Search + Display-Retargeting | 6.000 € |
-| Landingpage, Tracking, Atlas-PDF (Gestaltung/Umsetzung) | 4.000 € |
-| Dimensional Mailing 150 Stk. (Karton, Beigabe, Druck, Porto) | 3.000 € |
-| Messe (Co-Aussteller/kleiner Stand, Material, Reise) | 9.000 € |
-| Events Rhein-Neckar + E-Commerce-Events (Tickets, Catering, Reise) | 3.000 € |
-| Print (Rollup, Plakate, Karten, Sticker) | 1.000 € |
-| Reserve (10 %) | 4.000 € |
-| **Gesamt** | **42.000 €** |
+| Google Ads Search (100 € Test in Welle 1, 250 € in Welle 2) | 350 € |
+| Mailing „Das Paket": 25 Kartons, Maßband, Karte (Versand über eigenes Netz) | 300 € |
+| Print: Karten, Sticker, 1 Plakat | 150 € |
+| Frühstück Rhein-Neckar (Catering) | 150 € |
+| Reserve | 50 € |
+| **Gesamt** | **1.000 €** |
 
-**Schlanke Variante (~18.000 €):** ohne Messestand (nur Besuch), LinkedIn 7.000 €,
-Google 3.000 €, Mailing 100 Stk. Der Versandkosten-Check und die Landingpage
-bleiben in jeder Variante, sie sind die Kampagne.
+**Was 0 € kostet, aber Zeit:** Landingpage, Atlas-PDF, LinkedIn-Posts,
+Zielliste und Ansprache, E-Mails, Gastbeitrag. Geschätzt 8–10 Stunden pro
+Woche, verteilt auf Marketing und Vertrieb.
+
+**Wann mehr Geld sinnvoll wird:** Wenn Welle 1 zeigt, dass ein Check im Schnitt
+zu einem Kunden mit bekanntem Monatsvolumen führt, lässt sich der Wert eines
+Kunden beziffern. Erst dann lohnt sich mehr Budget, zuerst für Google Ads und
+Mailing, weil beide hier schon getestet sind.
 
 ## 9. Messung
 
 | Stufe | KPI | Tool |
 |---|---|---|
-| Reichweite | Impressionen, CTR (LinkedIn Ziel ≥ 0,6 %), Zielgruppen-Frequenz | LinkedIn Campaign Manager |
+| Reichweite | Impressionen der LinkedIn-Posts, Profilaufrufe | LinkedIn (kostenlos) |
 | Interesse | Landingpage-Besucher, Atlas-Downloads | GA4 |
-| Lead (MQL) | Formular/Lead-Gen-Form mit Volumen > 300 Pakete/Monat | CRM |
+| Lead (MQL) | Formular mit Volumen > 300 Pakete/Monat | CRM |
 | SQL | Versandkosten-Check durchgeführt | CRM |
 | Kunde | erste Sendung über NEOS | Plattform |
-| Effizienz | CAC, Kosten pro SQL, Dauer Lead → erste Sendung | CRM + Buchhaltung |
+| Effizienz | Kosten pro Kunde, Stunden pro Kunde, Dauer Lead → erste Sendung | CRM |
 
 - **UTM-Pflicht** für jeden Link, auch QR-Codes offline
-  (`utm_source=mailing|messe|plakat|linkedin|google`, `utm_campaign=ein-label-2026`).
-- Jeder Offline-Kanal bekommt einen **eigenen QR-Code**, sonst lässt sich
-  Offline nicht bewerten.
-- **Wöchentliches 15-Minuten-Review** Marketing + Vertrieb: Leads, SQLs,
-  Einwände aus Gesprächen → Anzeigentexte anpassen.
+  (`utm_source=mailing|plakat|sticker|linkedin|google|fruehstueck`, `utm_campaign=ein-label-2026`).
+- Jeder Offline-Kanal bekommt einen **eigenen QR-Code**.
+- **Stunden mitschreiben**: Bei diesem Budget ist Zeit die eigentliche
+  Investition. Nur so lässt sich später sagen, welcher Kanal sich lohnt.
+- **Wöchentliches 15-Minuten-Review** Marketing + Vertrieb.
+- **Google Ads nach 100 €:** Keywords ohne Formular-Abschluss pausieren.
+
 
 ## 10. Vertrieb & Übergabe
 
@@ -220,6 +233,6 @@ bleiben in jeder Variante, sie sind die Kampagne.
 1. CI-Werte + Logo-SVG in `ci-tokens.css` bzw. Board eintragen
 2. Belege für „100+ Partner" und „bis zu 55 %" beschaffen, sonst Claims anpassen
 3. Ops-Zusage für „Check in 48 h"
-4. Budgetvariante entscheiden (42 k / 18 k)
-5. Zielliste 300 Accounts aufbauen (Vertrieb + Marketing)
-6. Landingpage bauen lassen — Aufbau steht im Kampagnen-Board
+4. Wer übernimmt die 8–10 Stunden pro Woche? Namen festlegen
+5. Zielliste 100 Accounts aufbauen
+6. Landingpage im CMS anlegen, Google-Ads-Konto mit Conversion-Tracking

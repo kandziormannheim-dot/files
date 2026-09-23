@@ -5,28 +5,32 @@ Links immer mit UTM: `?utm_source=<kanal>&utm_medium=<format>&utm_campaign=ein-l
 
 ---
 
-## 1. LinkedIn Sponsored Content
+## 1. LinkedIn-Posts (organisch, 2 pro Woche)
+
+Posten über die Profile von Geschäftsführung und Vertrieb, geteilt von der
+Unternehmensseite. Bild: das jeweilige Label-Motiv. Link zum Check in den
+ersten Kommentar, nicht in den Post (mehr Reichweite).
 
 **Motiv A — Kosten (Welle 1 + 2)**
 - Intro: *Sie zahlen für Frankreich Auslandstarif. Ihr Empfänger bekommt sein Paket von einem Zusteller, den er nicht kennt. Das geht besser: NEOS stellt über lokale Zusteller im Zielland zu, zu lokalen Preisen. Ein Vertrag, ein Label, ein Tracking.*
 - Headline: **Bis zu 55 % weniger für Ihre Auslandspakete.***
-- CTA-Button: Mehr erfahren → Landingpage
+- Aufforderung: Link zum Check im ersten Kommentar
 
 **Motiv B — Einfachheit**
 - Intro: *5 Länder, 5 Carrier, 5 Portale, 5 Rechnungen. Oder: NEOS. Wir binden über 100 Last-Mile-Zusteller in Europa an und Sie sprechen mit genau einem Ansprechpartner in Mannheim.*
 - Headline: **Ein Label. Ganz Europa.**
-- CTA: Angebot anfordern
+- Aufforderung: „Schreiben Sie mir Ihre 3 wichtigsten Zielländer."
 
-**Motiv C — Check (Lead Gen Form)**
+**Motiv C — Check**
 - Intro: *Schicken Sie uns Ihre letzten 100 Auslandssendungen. Wir rechnen jede einzelne nach und zeigen Ihnen in 48 Stunden, was Sie mit lokaler Zustellung sparen. Kostenlos, ohne Vertragsbindung.*
 - Headline: **Kostenloser Versandkosten-Check**
-- Formularfelder: Name, Firma, Jobtitel, geschäftliche E-Mail, Pakete/Monat ins Ausland (Auswahl: <300 / 300–1.000 / 1.000–5.000 / >5.000), wichtigste Zielländer
+- Formularfelder auf der Landingpage: Name, Firma, Jobtitel, geschäftliche E-Mail, Pakete/Monat ins Ausland (Auswahl: <300 / 300–1.000 / 1.000–5.000 / >5.000), wichtigste Zielländer
 
 **Motiv D — Welle 2 (Januar)**
 - Intro: *Neues Jahr, neue Carrier-Konditionen. Bevor Sie verlängern: Lassen Sie uns Ihre Auslandssendungen einmal gegenrechnen.*
 - Headline: **Erst rechnen, dann verlängern.**
 
-**Dokument-Anzeige — Europa-Zustellatlas**
+**Karussell-Post (PDF) — Europa-Zustellatlas, Auszug**
 - Intro: *Welcher Zusteller ist in Italien die Nummer 1? Wie lange braucht ein Paket nach Polen? Was gilt für die Schweiz? 12 Seiten, alle Länder, kein Blabla.*
 - Headline: **Der Europa-Zustellatlas für Onlinehändler**
 
@@ -80,13 +84,13 @@ Negative Keywords (Start): privat, einzelnes paket, paket verschicken privat, br
 > [Name], NEOS Logistics, Mannheim
 > [Telefon]
 
-## 5. Outbound-Sequenz (Top-300-Accounts)
+## 5. Direkte Ansprache (Zielliste 100 Accounts)
 
 | Tag | Kanal | Inhalt |
 |---|---|---|
 | 1 | LinkedIn | Vernetzung ohne Pitch, Bezug auf Shop/Zielländer |
 | 3 | E-Mail | „Ihr Shop liefert nach [Land] — kurze Frage zur Zustellung dort" |
-| 5 | Mailing | Paket kommt an (nur Top-150) |
+| 5 | Mailing | Paket kommt an (nur die 25 wichtigsten Accounts) |
 | 8 | Telefon | Leitfaden unten |
 | 12 | E-Mail | Check-Angebot, 3 Sätze |
 | 20 | LinkedIn | Atlas-Seite zu ihrem wichtigsten Zielland |
@@ -115,7 +119,9 @@ Negative Keywords (Start): privat, einzelnes paket, paket verschicken privat, br
 > Rückseite: *Ihre Auslandspakete brauchen auch nur eins. NEOS stellt über 100+ lokale Zusteller in ganz Europa zu — mit einem Vertrag, einem Tracking, einem Ansprechpartner in Mannheim. Wir rechnen Ihre letzten 100 Auslandssendungen kostenlos nach.* [QR] neos24.com/check · [Name, Telefon des Vertriebs]
 > Beigabe: Maßband mit aufgedruckter Gurtmaß-Formel „L + 2B + 2H"
 
-**Messe-Rollup:** Ein Label. Ganz Europa. / 100+ Last-Mile-Zusteller · Ein Vertrag · Ein Tracking / Fragen Sie uns nach Ihren 3 wichtigsten Zielländern.
+**Paket-Sticker (auf jedes NEOS-Paket):** Ein Label. Ganz Europa. / [QR] neos24.com/check
+
+**Visitenkarten-Rückseite:** Ein Label. Ganz Europa. / Kostenloser Versandkosten-Check: neos24.com/check [QR]
 
 **Plakat:** Ein Label. Ganz Europa. / Versandkosten-Check: neos24.com/check [QR]
 

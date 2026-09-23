@@ -132,12 +132,11 @@ figure { margin:0; }
 .tape { margin-top:14px; background:var(--neos-accent); color:#1A0A00; font:600 11px/1 var(--neos-font-mono); padding:9px 12px; border-radius:3px; display:flex; justify-content:space-between; gap:8px; background-image:repeating-linear-gradient(90deg, rgba(26,10,0,.55) 0 1px, transparent 1px 12px); background-size:100% 6px; background-repeat:no-repeat; background-position:bottom; }
 
 /* Rollup & Plakat */
-.rollup { aspect-ratio:85/210; background:var(--neos-primary); padding:18px 14px; display:flex; flex-direction:column; gap:14px; border-radius:3px; }
-.rollup .label .head { font-size:36px; }
-.rollup ul { list-style:none; margin:0; padding:0; color:#fff; font:600 12px/1.8 var(--neos-font-mono); }
-.rollup ul li::before { content:"■ "; color:var(--neos-accent); }
-.rollup .ask { margin-top:auto; color:#fff; font:800 17px/1.1 var(--neos-font-display); font-stretch:80%; }
-.rollup .ask span { color:var(--neos-accent); }
+.parcel { aspect-ratio:3/4; border-radius:3px; display:flex; align-items:center; justify-content:center; padding:18px;
+  background:linear-gradient(90deg, transparent 42%, rgba(255,255,255,.28) 42% 58%, transparent 58%), #C49A63; }
+.parcel .sticker { width:100%; max-width:230px; transform:rotate(-4deg); box-shadow:0 6px 0 rgba(60,35,10,.25); }
+.parcel .sticker .head { font-size:30px; }
+.parcel .qr { width:38px; height:38px; }
 .poster { aspect-ratio:594/841; background:var(--neos-accent); padding:20px; display:flex; flex-direction:column; justify-content:space-between; border-radius:3px; }
 .poster .label .head { font-size:44px; }
 .poster .label { transform:rotate(-2deg); }
@@ -173,7 +172,7 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
   .idea, .grid2 { grid-template-columns:1fr; }
   .span-4,.span-5,.span-7,.span-8,.span-3 { grid-column:span 12; }
   .lp .hero { grid-template-columns:1fr; }
-  .rollup { max-width:300px; } .poster { max-width:420px; }
+  .parcel { max-width:300px; } .poster { max-width:420px; }
 }
 @media (max-width: 520px) {
   .mail { grid-template-columns:1fr; }
@@ -187,7 +186,7 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
 <div class="wrap">
   <header class="top">
     <div>
-      <p class="eyebrow">NEOS Logistics · B2B-Kampagne #1 · Okt 2026 – März 2027</p>
+      <p class="eyebrow">NEOS Logistics · B2B-Kampagne #1 · Okt 2026 – März 2027 · Budget 1.000 €</p>
       <h1>Ein Label.<br><span>Ganz Europa.</span></h1>
     </div>
     <div class="meta">
@@ -202,7 +201,7 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
     <div class="idea">
       <div style="display:grid;gap:14px;">
         <p class="lead">Jeder Versender kennt das Paketlabel, und wer ins Ausland liefert, hat zu viele davon: pro Land ein Carrier, ein Portal, eine Rechnung. NEOS bündelt über 100 lokale Last-Mile-Zusteller in Europa hinter einem Vertrag.</p>
-        <p>Alle Motive sehen deshalb aus wie ein Paketaufkleber. Absender, Empfänger, Routing-Code, Barcode. Nur steht als Ziel <strong>ganz Europa</strong> darauf. Das Motiv funktioniert auf LinkedIn im Feed, als echtes Label auf dem Mailing-Karton und als Standwand auf der Messe.</p>
+        <p>Alle Motive sehen deshalb aus wie ein Paketaufkleber. Absender, Empfänger, Routing-Code, Barcode. Nur steht als Ziel <strong>ganz Europa</strong> darauf. Das Motiv funktioniert auf LinkedIn im Feed, als echtes Label auf dem Mailing-Karton und als Sticker auf jedem Paket, das NEOS ohnehin verschickt. Das kostet fast nichts.</p>
         <p>Jeder Kanal führt zu einem Angebot: dem <strong>kostenlosen Versandkosten-Check</strong>. Der Kunde schickt seine letzten 100 Auslandssendungen, NEOS rechnet sie in 48 Stunden nach.</p>
       </div>
       <div class="house" role="table" aria-label="Message House">
@@ -244,7 +243,7 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
 
       <figure class="motif span-5">
         <div class="li">
-          <div class="who"><div class="av">NEOS</div><div><strong>NEOS Logistics</strong><small>Gesponsert</small></div></div>
+          <div class="who"><div class="av">NEOS</div><div><strong>NEOS Logistics</strong><small>Beitrag der Geschäftsführung</small></div></div>
           <p class="txt">5 Länder, 5 Carrier, 5 Portale, 5 Rechnungen. Oder: NEOS. Über 100 lokale Zusteller in Europa, ein Ansprechpartner in Mannheim.</p>
           <div class="art">
             <div class="label" data-label>
@@ -255,9 +254,9 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
               <div class="code">NEOS 0100 EU LOCAL</div>
             </div>
           </div>
-          <div class="ctaRow"><div><b>Ein Vertrag für 100+ Zusteller</b><span style="color:var(--text-2);font-size:12px;">neos24.com</span></div><span class="btn">Mehr erfahren</span></div>
+          <div class="ctaRow"><div><b>Ein Vertrag für 100+ Zusteller</b><span style="color:var(--text-2);font-size:12px;">neos24.com</span></div><span class="btn">Link im Kommentar</span></div>
         </div>
-        <figcaption><strong>LinkedIn Sponsored Content</strong><span>1080 × 1080</span></figcaption>
+        <figcaption><strong>LinkedIn-Post, organisch</strong><span>1080 × 1080, 2 pro Woche</span></figcaption>
       </figure>
 
       <figure class="motif span-7">
@@ -301,21 +300,18 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
           </div>
         </div>
         <div class="tape"><span>BEIGABE: MASSBAND</span><span>GURTMASS = L + 2B + 2H</span></div>
-        <figcaption><strong>Dimensional Mailing</strong><span>Karton an 150 Top-Accounts, Karte A6</span></figcaption>
+        <figcaption><strong>Dimensional Mailing</strong><span>25 Kartons an Wunschkunden, Karte A6</span></figcaption>
       </figure>
 
       <figure class="motif span-3">
-        <div class="rollup">
-          <div class="label" data-label>
+        <div class="parcel">
+          <div class="label sticker" data-label>
             <div class="row"><div class="logo"><i></i>NEOS</div><div class="route">EU</div></div>
             <div class="head">Ein Label.<em>Ganz Europa.</em></div>
-            <div class="bar"></div>
-            <div class="code">MANNHEIM → EUROPA</div>
+            <div class="row" style="border-bottom:0;border-top:2px solid var(--neos-ink);"><div style="flex:1"><span class="f">Versandkosten-Check</span><span class="v">neos24.com/check</span></div><div style="display:flex;align-items:center;"><span class="qr" aria-hidden="true"></span></div></div>
           </div>
-          <ul><li>100+ Last-Mile-Zusteller</li><li>Ein Vertrag</li><li>Ein Tracking</li><li>Ein Ansprechpartner</li></ul>
-          <p class="ask">Nennen Sie uns Ihre <span>3 wichtigsten Zielländer.</span></p>
         </div>
-        <figcaption><strong>Messe-Rollup</strong><span>85 × 210 cm</span></figcaption>
+        <figcaption><strong>Paket-Sticker</strong><span>10 × 10 cm, auf jedes NEOS-Paket</span></figcaption>
       </figure>
 
       <figure class="motif span-4">
@@ -340,10 +336,10 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
     <div class="timeline">
       <div class="tl">
         <div class="m">Okt</div><div class="m">Nov</div><div class="m">Dez</div><div class="m">Jan</div><div class="m">Feb</div><div class="m">März</div>
-        <div class="w on" style="grid-column:span 2;"><b>Welle 1 · Peak-Check</b>Setup in den ersten 2 Wochen. LinkedIn und Google live, Zustellatlas, Outbound Runde 1, Mailing an 75 Accounts.</div>
-        <div class="w off"><b>Pause</b>Kein Outbound im Weihnachtsgeschäft. Nur Retargeting und Content.</div>
-        <div class="w on" style="grid-column:span 2;"><b>Welle 2 · Erst rechnen, dann verlängern</b>Carrier-Konditionen werden neu verhandelt. Budget-Schwerpunkt, Mailing an 75 Accounts, Frühstück Rhein-Neckar.</div>
-        <div class="w on"><b>Welle 3 · Messe</b>LogiMAT (Termin prüfen), erste Kundenfälle in allen Kanälen.</div>
+        <div class="w on" style="grid-column:span 2;"><b>Welle 1 · Peak-Check</b>Setup in den ersten 2 Wochen. LinkedIn-Posts starten, Google-Test mit 100 €, Zustellatlas, Ansprache von 50 Accounts.</div>
+        <div class="w off"><b>Pause</b>Keine Kaltakquise im Weihnachtsgeschäft, Google aus. Posts laufen weiter.</div>
+        <div class="w on" style="grid-column:span 2;"><b>Welle 2 · Erst rechnen, dann verlängern</b>Zusteller-Verträge werden neu verhandelt. Google 250 €, Mailing an 25 Accounts, Frühstück Rhein-Neckar, Ansprache von 50 Accounts.</div>
+        <div class="w on"><b>Welle 3 · Messe</b>LogiMAT als Besucher (Termin prüfen), erste Kundenfälle als Posts.</div>
       </div>
     </div>
   </section>
@@ -357,33 +353,30 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
           <thead><tr><th>Online</th><th>Offline</th></tr></thead>
           <tbody>
             <tr><td>Landingpage mit Check-Upload</td><td>Dimensional Mailing „Das Paket"</td></tr>
-            <tr><td>LinkedIn Ads + Lead Gen Forms</td><td>Messe LogiMAT, Rollup, Standwand</td></tr>
-            <tr><td>Google Ads Search + Retargeting</td><td>E-Commerce-Events (Besuch)</td></tr>
+            <tr><td>LinkedIn-Posts, organisch</td><td>LogiMAT als Besucher</td></tr>
+            <tr><td>Google Ads Search, kleiner Test</td><td>E-Commerce-Meetups</td></tr>
             <tr><td>Europa-Zustellatlas (PDF)</td><td>Frühstück Rhein-Neckar in Mannheim</td></tr>
-            <tr><td>Länderseiten via AIVA</td><td>Plakat, Karten, Paketbeileger</td></tr>
+            <tr><td>Länderseiten via AIVA</td><td>Sticker auf jedem Paket, Karten, Plakat</td></tr>
             <tr><td>E-Mail-Nurture, 5 Mails</td><td>Fachpresse-Gastbeitrag</td></tr>
-            <tr><td>Outbound-Sequenz, 300 Accounts</td><td>Partner: Shop-Agenturen, Fulfiller</td></tr>
+            <tr><td>Direkte Ansprache, 100 Accounts</td><td>Partner: Shop-Agenturen, Fulfiller</td></tr>
           </tbody>
         </table>
       </div>
       <div>
         <p class="eyebrow">Budget</p>
-        <h2>42.000 € netto über 24 Wochen</h2>
+        <h2>1.000 € netto über 24 Wochen</h2>
         <table>
           <thead><tr><th>Posten</th><th class="n">€</th></tr></thead>
           <tbody>
-            <tr><td>LinkedIn Ads</td><td class="n">12.000</td></tr>
-            <tr><td>Messe</td><td class="n">9.000</td></tr>
-            <tr><td>Google Ads</td><td class="n">6.000</td></tr>
-            <tr><td>Landingpage, Tracking, Atlas</td><td class="n">4.000</td></tr>
-            <tr><td>Dimensional Mailing (150)</td><td class="n">3.000</td></tr>
-            <tr><td>Events</td><td class="n">3.000</td></tr>
-            <tr><td>Print</td><td class="n">1.000</td></tr>
-            <tr><td>Reserve</td><td class="n">4.000</td></tr>
-            <tr class="sum"><td>Gesamt</td><td class="n">42.000</td></tr>
+            <tr><td>Google Ads Search (100 € Test, 250 € Welle 2)</td><td class="n">350</td></tr>
+            <tr><td>Mailing „Das Paket" (25 Kartons)</td><td class="n">300</td></tr>
+            <tr><td>Print: Karten, Sticker, Plakat</td><td class="n">150</td></tr>
+            <tr><td>Frühstück Rhein-Neckar</td><td class="n">150</td></tr>
+            <tr><td>Reserve</td><td class="n">50</td></tr>
+            <tr class="sum"><td>Gesamt</td><td class="n">1.000</td></tr>
           </tbody>
         </table>
-        <p class="note">Schlanke Variante rund 18.000 €: kein Messestand, weniger Media. Landingpage und Check bleiben.</p>
+        <p class="note">0 €, aber Zeit: Landingpage, Atlas, Posts, Ansprache, E-Mails. Rechnen Sie mit 8–10 Stunden pro Woche für Marketing und Vertrieb zusammen. LinkedIn Ads und Messestand lohnen sich bei diesem Budget nicht.</p>
       </div>
     </div>
   </section>
@@ -392,12 +385,12 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
     <p class="eyebrow">Ziele bis 31.03.2027</p>
     <h2>Woran wir die Kampagne messen</h2>
     <div class="kpis">
-      <div class="kpi"><b>250</b><span>qualifizierte Leads (&gt; 300 Auslandspakete/Monat)</span></div>
-      <div class="kpi"><b>80</b><span>durchgeführte Versandkosten-Checks</span></div>
-      <div class="kpi"><b>20</b><span>neue B2B-Kunden mit erster Sendung</span></div>
-      <div class="kpi"><b>≤ 2.000 €</b><span>Kosten pro Neukunde</span></div>
+      <div class="kpi"><b>60</b><span>qualifizierte Leads (&gt; 300 Auslandspakete/Monat)</span></div>
+      <div class="kpi"><b>25</b><span>durchgeführte Versandkosten-Checks</span></div>
+      <div class="kpi"><b>5</b><span>neue B2B-Kunden mit erster Sendung</span></div>
+      <div class="kpi"><b>≤ 200 €</b><span>Geld pro Neukunde, ohne Arbeitszeit</span></div>
     </div>
-    <p class="note">Planannahmen aus Branchenwerten. Nach Welle 1 mit den echten Conversion-Raten neu kalibrieren. Jeder Offline-Kanal bekommt einen eigenen QR-Code mit UTM, sonst lässt er sich nicht bewerten.</p>
+    <p class="note">Planannahmen, keine Erfahrungswerte von NEOS. Die meisten Leads kommen bei diesem Budget aus der direkten Ansprache. Nach Welle 1 mit den echten Conversion-Raten neu kalibrieren. Jeder Offline-Kanal bekommt einen eigenen QR-Code mit UTM, sonst lässt er sich nicht bewerten.</p>
   </section>
 
   <section>
@@ -407,8 +400,8 @@ tr.sum td { font-weight:600; border-bottom:2px solid var(--text); }
         <li>Offizielle Neos-CI-Werte und Logo-SVG in <code>ci-tokens.css</code> eintragen.</li>
         <li>Belege für „100+ Partner" und „bis zu 55 %" beschaffen, sonst Claims anpassen.</li>
         <li>Operations sagt „Check in 48 Stunden" verbindlich zu.</li>
-        <li>Budgetvariante entscheiden: 42.000 € oder 18.000 €.</li>
-        <li>Zielliste mit 300 Accounts aufbauen.</li>
+        <li>Festlegen, wer die 8–10 Stunden pro Woche übernimmt.</li>
+        <li>Zielliste mit 100 Accounts aufbauen.</li>
       </ol>
     </div>
   </section>
