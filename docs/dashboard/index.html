@@ -1,0 +1,489 @@
+<title>Kandzior Leitstand</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --sunk:#e8ecee; --line:#d5dcdf;
+  --ink:#16222a; --muted:#56656e; --faint:#7d8a92;
+  --accent:#0b6e79; --accent-soft:#d8eef0;
+  --ok:#2d7a3e; --ok-soft:#dcefdf; --warn:#9a6200; --warn-soft:#f7ead0; --bad:#b0302a; --bad-soft:#f6dcda;
+  --bar:#0b6e79; --bar-2:#7fb7bd;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0f1519; --surface:#172026; --sunk:#1e2a31; --line:#2b3a42;
+  --ink:#e4ecef; --muted:#9fb0b8; --faint:#768891;
+  --accent:#4fc0cc; --accent-soft:#16363b;
+  --ok:#6cc47e; --ok-soft:#183322; --warn:#e3ad4f; --warn-soft:#3a2d12; --bad:#ef7d75; --bad-soft:#3d1c1a;
+  --bar:#4fc0cc; --bar-2:#2c6f76;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1519; --surface:#172026; --sunk:#1e2a31; --line:#2b3a42;
+  --ink:#e4ecef; --muted:#9fb0b8; --faint:#768891;
+  --accent:#4fc0cc; --accent-soft:#16363b;
+  --ok:#6cc47e; --ok-soft:#183322; --warn:#e3ad4f; --warn-soft:#3a2d12; --bad:#ef7d75; --bad-soft:#3d1c1a;
+  --bar:#4fc0cc; --bar-2:#2c6f76;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);margin:0}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+code,.mono{font-family:var(--mono);font-size:.86em}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:12px;display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center}
+.brand{font:700 18px/1 var(--cond);letter-spacing:.02em;display:flex;align-items:center;gap:10px}
+.brand small{font:500 11px var(--mono);color:var(--muted);letter-spacing:.04em}
+nav.tabs{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+nav.tabs a{font:500 13px var(--cond);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:5px 9px;border-radius:4px}
+nav.tabs a:hover{background:var(--sunk);color:var(--ink)}
+.search{position:relative}
+.search input{font:14px var(--sans);width:220px;max-width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+
+h1{font:600 30px/1.15 var(--cond);margin:28px 0 4px;text-wrap:balance}
+.lede{color:var(--muted);margin:0 0 22px;max-width:70ch}
+section{margin-top:40px;scroll-margin-top:90px}
+h2{font:600 13px var(--cond);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--ink);display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+h2 span{letter-spacing:.02em;text-transform:none;font:400 12px var(--mono);color:var(--faint)}
+h3{font:600 17px/1.25 var(--cond);margin:0 0 6px}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.kpi{background:var(--surface);padding:14px 16px}
+.kpi b{display:block;font:600 30px/1.1 var(--cond);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12.5px;color:var(--muted)}
+
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px}
+.card p{margin:0 0 10px;color:var(--muted);font-size:14px}
+.card .links{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;margin-top:8px}
+.card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:6px}
+
+.pill{display:inline-block;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:99px;white-space:nowrap;border:1px solid transparent}
+.p-ok{background:var(--ok-soft);color:var(--ok)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-bad{background:var(--bad-soft);color:var(--bad)}
+.p-info{background:var(--accent-soft);color:var(--accent)}
+.p-off{background:var(--sunk);color:var(--muted)}
+
+.tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font:600 11.5px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--sunk);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12.5px}
+td .sub{display:block;color:var(--faint);font-size:12px}
+
+dl.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:0;font-size:13.5px}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;overflow-wrap:anywhere}
+
+.copy{font:500 11px var(--mono);border:1px solid var(--line);background:var(--sunk);color:var(--muted);border-radius:4px;padding:2px 6px;cursor:pointer;margin-left:6px}
+.copy:hover{color:var(--ink)}
+
+.bars{display:grid;gap:9px}
+.bar-row{display:grid;grid-template-columns:92px 1fr 44px;gap:10px;align-items:center;font-size:13px}
+.bar-row .lbl{font:600 13px var(--cond)}
+.bar-track{height:14px;background:var(--sunk);border-radius:3px;overflow:hidden;display:flex}
+.bar-fill{height:100%;background:var(--bar)}
+.bar-fill.sample{background:var(--bar-2)}
+.bar-row .n{text-align:right;font:500 12.5px var(--mono);font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+ul.todo{list-style:none;margin:0;padding:0}
+ul.todo li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:start;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+ul.todo li:last-child{border-bottom:0}
+ul.todo input{margin-top:4px;accent-color:var(--accent)}
+ul.todo li.done .t{text-decoration:line-through;color:var(--faint)}
+ul.todo .t small{display:block;color:var(--faint);font-size:12px}
+
+pre.cmd{background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:10px 12px;overflow-x:auto;font:12.5px/1.6 var(--mono);margin:6px 0 0;color:var(--ink)}
+.note{font-size:12.5px;color:var(--faint);margin-top:10px}
+.hide{display:none!important}
+footer{margin-top:48px;font-size:12.5px;color:var(--faint);border-top:1px solid var(--line);padding-top:14px}
+
+@media (max-width:640px){
+  h1{font-size:25px}
+  .search input{width:100%}
+  .search{flex-basis:100%}
+  .bar-row{grid-template-columns:70px 1fr 38px}
+}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">KANDZIOR · LEITSTAND <small>kandzior.de</small></div>
+    <nav class="tabs" aria-label="Bereiche">
+      <a href="#server">Server</a>
+      <a href="#domains">Domains</a>
+      <a href="#workflows">Workflows</a>
+      <a href="#sbfkurs">SBF-Kurs</a>
+      <a href="#projekte">Projekte</a>
+      <a href="#offen">Offen</a>
+      <a href="#github">GitHub</a>
+      <a href="#affiliate">Affiliate</a>
+    </nav>
+    <div class="search"><input id="q" type="search" placeholder="Filtern: z. B. womo, 8443, SMTP" aria-label="Dashboard filtern"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Alles auf einen Blick</h1>
+  <p class="lede">Server, Domains, Workflows, Kurse und offene Punkte aus dem Repo <code>kandziormannheim-dot/files</code>. Stand: 23.09.2026. Geheime Werte stehen hier nicht, nur die Namen der Secrets.</p>
+
+  <div class="kpis">
+    <div class="kpi"><b>6</b><span>Domains &amp; Subdomains</span></div>
+    <div class="kpi"><b>12</b><span>GitHub-Workflows</span></div>
+    <div class="kpi"><b>6</b><span>Kurse im SBF-Kurs</span></div>
+    <div class="kpi"><b>625</b><span>Prüfungsfragen</span></div>
+    <div class="kpi"><b>55</b><span>Lektionen</span></div>
+    <div class="kpi"><b>4</b><span>offene Pull Requests</span></div>
+  </div>
+
+  <!-- SERVER -->
+  <section id="server">
+    <h2>Server &amp; Infrastruktur <span>Hetzner · Plesk</span></h2>
+    <div class="grid g2">
+      <div class="card" data-s>
+        <div class="card-head"><h3>Hauptserver (Plesk)</h3><span class="pill p-info">Hetzner Online</span></div>
+        <dl class="kv">
+          <dt>IPv4</dt><dd><code>95.216.18.216</code><button class="copy" data-c="95.216.18.216">kopieren</button></dd>
+          <dt>IPv6</dt><dd><code>2a01:4f9:2a:130b::2</code><button class="copy" data-c="2a01:4f9:2a:130b::2">kopieren</button></dd>
+          <dt>Plesk</dt><dd><a href="https://95.216.18.216:8443" target="_blank" rel="noopener">https://95.216.18.216:8443</a></dd>
+          <dt>Apache intern</dt><dd><code>7080</code> http · <code>7081</code> https</dd>
+          <dt>Mail lokal</dt><dd><code>127.0.0.1:25</code>, ohne TLS/Login</dd>
+          <dt>DNS</dt><dd>Hetzner DNS, Zone <code>kandzior.de</code></dd>
+          <dt>Vertrag</dt><dd>Hetzner Online GmbH, AV-Vertrag vorhanden</dd>
+        </dl>
+      </div>
+      <div class="card" data-s>
+        <div class="card-head"><h3>Verzeichnisse im Plesk-Home</h3><span class="pill p-off">/var/www/vhosts/kandzior.de</span></div>
+        <dl class="kv">
+          <dt>Website</dt><dd><code>httpdocs/</code></dd>
+          <dt>Kontakt</dt><dd><code>kontakt-config.php</code>, <code>spool/</code></dd>
+          <dt>Womo</dt><dd><code>womo-app/</code>, <code>womo-config.php</code>, <code>womo-daten/</code></dd>
+          <dt>SBF-Kurs</dt><dd><code>sbfkurs-app/</code>, <code>sbfkurs-config.php</code>, <code>sbfkurs-daten/</code></dd>
+          <dt>God View</dt><dd><code>godview-app/</code>, <code>godview-quelle/</code>, <code>godview-node/</code></dd>
+        </dl>
+        <p class="note">Konfiguration und Daten liegen bewusst außerhalb des Webroots.</p>
+      </div>
+      <div class="card" data-s>
+        <h3>E-Mail-Adressen</h3>
+        <dl class="kv">
+          <dt>Hauptpostfach</dt><dd><code>mail@kandzior.de</code> (Empfänger aller Formulare)</dd>
+          <dt>Weiterleitung</dt><dd><code>nadja.claw@kandzior.de</code></dd>
+          <dt>Absender Website</dt><dd><code>website@kandzior.de</code></dd>
+          <dt>Absender Womo</dt><dd><code>womo@kandzior.de</code></dd>
+          <dt>Selbsttest</dt><dd><code>test@kandzior.de</code></dd>
+        </dl>
+      </div>
+      <div class="card" data-s>
+        <h3>Repository-Secrets &amp; Variablen</h3>
+        <p>Nur Namen. Setzen unter <a href="https://github.com/kandziormannheim-dot/files/settings/secrets/actions" target="_blank" rel="noopener">Settings → Secrets and variables → Actions</a>.</p>
+        <dl class="kv">
+          <dt>Plesk &amp; DNS</dt><dd><code>PLESK_PASSWORT</code>, <code>DNS_TOKEN</code></dd>
+          <dt>Admin-Zugänge</dt><dd><code>SBFKURS_ADMIN_PASSWORT</code>, <code>WOMO_ADMIN_PASSWORT</code>, <code>GODVIEW_ZUGANG_PASSWORT</code></dd>
+          <dt>Hetzner-Deploy</dt><dd><code>HETZNER_SSH_KEY</code>, <code>HETZNER_KNOWN_HOSTS</code>; Variablen <code>HETZNER_HOST</code>, <code>HETZNER_USER</code>, <code>HETZNER_PATH</code></dd>
+          <dt>God View</dt><dd><code>CESIUM_ION_TOKEN</code>, <code>GOOGLE_MAPS_API_KEY</code>, <code>GOOGLE_MAPS_SERVER_API_KEY</code>, <code>OPENAI_API_KEY</code>, <code>AISSTREAM_API_KEY</code>, <code>FIRMS_MAP_KEY</code>, <code>TOMTOM_API_KEY</code>, <code>OPENSKY_CLIENT_ID</code>, <code>OPENSKY_CLIENT_SECRET</code>, <code>LL2_API_TOKEN</code></dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- DOMAINS -->
+  <section id="domains">
+    <h2>Domains &amp; Dienste <span>6 Hosts</span></h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Adresse</th><th>Was läuft dort</th><th>Webroot / Technik</th><th>Prüfen</th><th>Stand laut Repo</th></tr></thead>
+        <tbody>
+          <tr data-s><td><a href="https://kandzior.de" target="_blank" rel="noopener">kandzior.de</a><span class="sub">www.kandzior.de</span></td><td>Persönliche Website, DE/EN, Kontaktformular</td><td><code>httpdocs/</code><span class="sub">Astro 5, statisch + <code>/api/kontakt.php</code></span></td><td><a href="https://kandzior.de/api/kontakt.php" target="_blank" rel="noopener">/api/kontakt.php</a></td><td><span class="pill p-warn">Deploy nur manuell</span></td></tr>
+          <tr data-s><td><a href="https://events.kandzior.de" target="_blank" rel="noopener">events.kandzior.de</a></td><td>Weiterleitung zu Ticketverkauf</td><td>Plesk-Redirect → <a href="https://buytickets.at/mkevents1" target="_blank" rel="noopener">buytickets.at/mkevents1</a></td><td>–</td><td><span class="pill p-ok">Workflow vorhanden</span></td></tr>
+          <tr data-s><td><a href="https://sbfkurs.kandzior.de" target="_blank" rel="noopener">sbfkurs.kandzior.de</a></td><td>Online-Kurs SRC, UBI, FKN, LRC, SBF See, SBF Binnen</td><td><code>sbfkurs-app/public</code><span class="sub">PHP 8.2, SQLite</span></td><td><a href="https://sbfkurs.kandzior.de/status" target="_blank" rel="noopener">/status</a> · <a href="https://sbfkurs.kandzior.de/login" target="_blank" rel="noopener">/login</a></td><td><span class="pill p-warn">Impressum-Platzhalter</span></td></tr>
+          <tr data-s><td><a href="https://womo.kandzior.de" target="_blank" rel="noopener">womo.kandzior.de</a></td><td>Wohnmobil-Schadenakte: Übergabe, Rücknahme, Schadensmeldung, QR</td><td><code>womo-app/public</code><span class="sub">PHP 8.2, SQLite, FPDF</span></td><td><a href="https://womo.kandzior.de/status" target="_blank" rel="noopener">/status</a> · <a href="https://womo.kandzior.de/qr" target="_blank" rel="noopener">/qr</a></td><td><span class="pill p-ok">Workflow vorhanden</span></td></tr>
+          <tr data-s><td><a href="https://godview.kandzior.de" target="_blank" rel="noopener">godview.kandzior.de</a></td><td>God's Eye View: 3D-Globus mit Flügen, Schiffen, Satelliten, Bränden</td><td><code>godview-app/</code><span class="sub">Node 24, Vite preview auf <code>127.0.0.1:4180</code>, Basic Auth <code>godview</code></span></td><td><a href="https://godview.kandzior.de/api/gbfs" target="_blank" rel="noopener">/api/gbfs</a> (401 ohne Login)</td><td><span class="pill p-ok">Workflow vorhanden</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">„Workflow vorhanden“ heißt: Die Einrichtung ist im Repo automatisiert. Ob der Dienst gerade erreichbar ist, zeigt der jeweilige Prüf-Link.</p>
+  </section>
+
+  <!-- WORKFLOWS -->
+  <section id="workflows">
+    <h2>GitHub-Workflows <span>11 manuell · 1 automatisch</span></h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Workflow</th><th>Auslöser</th><th>Wichtigste Eingaben (Standard)</th><th>Macht</th></tr></thead>
+        <tbody id="wf"></tbody>
+      </table>
+    </div>
+    <p class="note">Alle Läufe: <a href="https://github.com/kandziormannheim-dot/files/actions" target="_blank" rel="noopener">github.com/kandziormannheim-dot/files/actions</a></p>
+  </section>
+
+  <!-- SBF -->
+  <section id="sbfkurs">
+    <h2>SBF-Kurs <span>sbfkurs.kandzior.de</span></h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Fragen je Kurs</h3>
+        <div class="bars" id="bars"></div>
+        <div class="legend"><span><i style="background:var(--bar)"></i>amtlicher Katalog</span><span><i style="background:var(--bar-2)"></i>eigene Musterfragen</span></div>
+      </div>
+      <div class="card" data-s>
+        <h3>Betrieb</h3>
+        <dl class="kv">
+          <dt>Basis-URL</dt><dd><a href="https://sbfkurs.kandzior.de" target="_blank" rel="noopener">https://sbfkurs.kandzior.de</a></dd>
+          <dt>Admin</dt><dd><code>mail@kandzior.de</code></dd>
+          <dt>Anmeldung</dt><dd>nur mit Einladungscode</dd>
+          <dt>Sicherheit</dt><dd>10 Anfragen/h, Sperre nach 10 Fehlversuchen für 15 min, Sitzung 8 h</dd>
+          <dt>Status</dt><dd><code>{"ok":true,"dienst":"sbfkurs","bereit":true}</code></dd>
+          <dt>Freigabe</dt><dd>SRC/LRC-Kataloge: FVT/ABVT Koblenz, 18.09.2026</dd>
+          <dt>Quellen</dt><dd><a href="https://www.elwis.de/DE/Sportschifffahrt/Sportbootfuehrerscheine/Fragenkatalog-Binnen/Basisfragen/Basisfragen-node.html" target="_blank" rel="noopener">ELWIS Fragenkataloge</a></dd>
+        </dl>
+        <pre class="cmd">php sbfkurs/tests/lauf.php
+php sbfkurs/werkzeuge/katalog-pruefen.php</pre>
+      </div>
+    </div>
+    <div class="tbl-wrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th>Kurs</th><th class="num">Lektionen</th><th class="num">Minuten</th><th class="num">Fragen</th><th>Quelle</th><th>Prüfung</th><th>Übungen</th></tr></thead>
+        <tbody id="kurse"></tbody>
+      </table>
+    </div>
+    <p class="note">Dazu: DSC-Simulator mit 8 Szenarien (Kanäle 06–77, Schiff „SEEADLER“), Buchstabiertafel mit 32 Übungswörtern, 73 selbst gezeichnete Grafiken für SBF Binnen. Alle Prüfungsregeln sind noch als „zu prüfen“ markiert.</p>
+  </section>
+
+  <!-- PROJEKTE -->
+  <section id="projekte">
+    <h2>Weitere Projekte <span>Website · Womo · God View · neos24 · Obsidian</span></h2>
+    <div class="grid g3">
+      <div class="card" data-s>
+        <div class="card-head"><h3>Website kandzior.de</h3><span class="pill p-warn">Livegang offen</span></div>
+        <p>„Logistik, Risiko und Politik aus Mannheim“. Astro 5, DE/EN, Neon-Hero, Kontaktformular (5 Anfragen/h, Honeypot).</p>
+        <dl class="kv">
+          <dt>Kennzahlen</dt><dd>15+ Jahre · 300+ Kunden · 1.000+ Netzwerkpartner</dd>
+          <dt>Seiten</dt><dd>/, /en/, Impressum, Datenschutz, 404, Styleguide</dd>
+        </dl>
+        <div class="links">
+          <a href="https://linkedin.com/in/martin-kandzior" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://x.com/martinkandzior" target="_blank" rel="noopener">X</a>
+          <a href="https://facebook.com/martin.kandzior" target="_blank" rel="noopener">Facebook</a>
+          <a href="https://www.tickettailor.com/all-tickets/mkevents1/" target="_blank" rel="noopener">Ticket Tailor</a>
+        </div>
+        <pre class="cmd">cd site && npm run dev   # :4321
+npm run build</pre>
+      </div>
+      <div class="card" data-s>
+        <div class="card-head"><h3>Womo-Schadenakte</h3><span class="pill p-ok">eingerichtet</span></div>
+        <p>Übergabe- und Rücknahmeprotokolle mit Unterschrift und PDF per Mail, Mieter-Link, QR-Code im Fahrzeug, private Schadenakte.</p>
+        <dl class="kv">
+          <dt>Routen</dt><dd><code>/login</code>, <code>/m/&lt;token&gt;</code>, <code>/qr</code>, <code>/status</code></dd>
+          <dt>Mieter-Link</dt><dd>1 Tag vor bis 7 Tage nach Miete</dd>
+          <dt>Fotos</dt><dd>bis 6 je Meldung, 15 MB je Datei</dd>
+          <dt>Aufbewahrung</dt><dd>3 Jahre</dd>
+        </dl>
+      </div>
+      <div class="card" data-s>
+        <div class="card-head"><h3>God's Eye View</h3><span class="pill p-info">Fremdsoftware, MIT</span></div>
+        <p>Live-3D-Globus. Läuft hinter Basic Auth, Watchdog per Cron alle 5 min, Node 24.21.0 auf dem Server.</p>
+        <dl class="kv">
+          <dt>Kosten</dt><dd>Google Maps und OpenAI nach Verbrauch, Rest kostenlos</dd>
+          <dt>Version</dt><dd><code>main</code> (Tag v0.1.1 hat keine API-Routen)</dd>
+        </dl>
+        <div class="links">
+          <a href="https://github.com/bilawalsidhu/gods-eye-view" target="_blank" rel="noopener">Upstream-Repo</a>
+        </div>
+      </div>
+      <div class="card" data-s>
+        <div class="card-head"><h3>neos24 Relaunch &amp; SEO</h3><span class="pill p-warn">blockiert</span></div>
+        <p>Review des AIVA-v3-Handovers. Erst Relaunch (3–8 Wochen), dann AIVA (2–5 Seiten/Tag zum Start). Zwei Patches für F1 und F2 liegen bereit.</p>
+        <div class="links"><a href="https://neos24.com/" target="_blank" rel="noopener">neos24.com</a></div>
+        <pre class="cmd">python3 neos24/tools/indexability-audit.py https://neos24.com/</pre>
+      </div>
+      <div class="card" data-s>
+        <div class="card-head"><h3>Obsidian-Vault</h3><span class="pill p-ok">Sync alle 15 min</span></div>
+        <p>Vault <code>C:\Obsidian\MartinKandzior</code> mit PowerShell-Sync und -Sicherung, Snapshots 30 Tage.</p>
+        <div class="links"><a href="https://github.com/kandziormannheim-dot/obsidian-vault" target="_blank" rel="noopener">obsidian-vault (privat)</a></div>
+      </div>
+      <div class="card" data-s>
+        <div class="card-head"><h3>Kontakt</h3><span class="pill p-off">öffentlich im Impressum</span></div>
+        <dl class="kv">
+          <dt>Telefon</dt><dd><code>+49 176 10 20 20 30</code><button class="copy" data-c="+4917610202030">kopieren</button></dd>
+          <dt>Adresse</dt><dd>Mainzer Landstraße 10, 60325 Frankfurt am Main</dd>
+          <dt>Mail</dt><dd><code>mail@kandzior.de</code><button class="copy" data-c="mail@kandzior.de">kopieren</button></dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- OFFEN -->
+  <section id="offen">
+    <h2>Offene Punkte <span id="todo-count"></span></h2>
+    <div class="card">
+      <ul class="todo" id="todos"></ul>
+      <p class="note">Abhaken merkt sich nur dein Browser.</p>
+    </div>
+  </section>
+
+  <!-- GITHUB -->
+  <section id="github">
+    <h2>GitHub <span>kandziormannheim-dot/files</span></h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>PR</th><th>Titel</th><th>Stand</th><th>Zuletzt</th></tr></thead>
+        <tbody>
+          <tr data-s><td class="num"><a href="https://github.com/kandziormannheim-dot/files/pull/38" target="_blank" rel="noopener">#38</a></td><td>neos24: Startseite nach dem Rebranding 2026 (DE/EN)</td><td><span class="pill p-warn">offen</span></td><td class="num">14.09.2026</td></tr>
+          <tr data-s><td class="num"><a href="https://github.com/kandziormannheim-dot/files/pull/37" target="_blank" rel="noopener">#37</a></td><td>Sendungsabrechnung: lexoffice-Rechnungsentwürfe aus ODS-Export</td><td><span class="pill p-warn">offen</span></td><td class="num">07.09.2026</td></tr>
+          <tr data-s><td class="num"><a href="https://github.com/kandziormannheim-dot/files/pull/39" target="_blank" rel="noopener">#39</a></td><td>Sprint 1: Plan und Token-Extraktion für unfall.sv-rettinger.de</td><td><span class="pill p-warn">offen</span></td><td class="num">05.09.2026</td></tr>
+          <tr data-s><td class="num"><a href="https://github.com/kandziormannheim-dot/files/pull/36" target="_blank" rel="noopener">#36</a></td><td>Obsidian-Vault: Abgleich auf dem Server, damit OpenClaw mitliest</td><td><span class="pill p-warn">offen</span></td><td class="num">30.08.2026</td></tr>
+          <tr data-s><td class="num"><a href="https://github.com/kandziormannheim-dot/files/pull/49" target="_blank" rel="noopener">#49</a></td><td>God's Eye View einrichten: Workflow, Dienst und Anleitung</td><td><span class="pill p-ok">übernommen</span></td><td class="num">21.09.2026</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="links card" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px">
+      <a href="https://github.com/kandziormannheim-dot/files" target="_blank" rel="noopener">Repository</a>
+      <a href="https://github.com/kandziormannheim-dot/files/pulls" target="_blank" rel="noopener">Pull Requests</a>
+      <a href="https://github.com/kandziormannheim-dot/files/issues" target="_blank" rel="noopener">Issues (0 offen)</a>
+      <a href="https://github.com/kandziormannheim-dot/files/actions" target="_blank" rel="noopener">Actions</a>
+      <a href="https://github.com/kandziormannheim-dot/files/settings/secrets/actions" target="_blank" rel="noopener">Secrets</a>
+    </div>
+  </section>
+
+  <!-- AFFILIATE -->
+  <section id="affiliate">
+    <h2>Affiliate-Automation <span>Vorlage · nicht mit kandzior.de verbunden</span></h2>
+    <div class="grid g2">
+      <div class="card" data-s>
+        <div class="card-head"><h3>Nischen</h3><span class="pill p-off">nur Platzhalter-Zugänge</span></div>
+        <div class="tbl-wrap" style="border:0">
+          <table>
+            <thead><tr><th>Nische</th><th>Domain</th><th>Programme</th></tr></thead>
+            <tbody>
+              <tr><td>KI-Tools</td><td><code>ai-tools-guide.com</code></td><td>Jasper 30 %, Copy.ai 25 %, HeyGen 25 %, Midjourney, Firefly</td></tr>
+              <tr><td>Freelancer</td><td><code>freelancer-tools.com</code></td><td>ClickUp 30 %, Zapier 30 %, Monday 25 %, Asana, FreshBooks</td></tr>
+              <tr><td>Gaming</td><td><code>gaming-gear-reviews.com</code></td><td>SteelSeries, Corsair, Razer, Logitech, Amazon 1–10 %</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" data-s>
+        <h3>Docker-Dienste</h3>
+        <dl class="kv">
+          <dt>n8n</dt><dd><code>:5678</code> · 6 Zeitpläne (06:00 Publisher, alle 4 h Social, 02:00 Backup …)</dd>
+          <dt>PostgreSQL</dt><dd><code>:5432</code> · 15 Tabellen, 3 Views</dd>
+          <dt>pgAdmin</dt><dd><code>:5050</code></dd>
+          <dt>Redis</dt><dd><code>:6379</code></dd>
+          <dt>WordPress</dt><dd><code>:8001</code> KI · <code>:8002</code> Freelancer · <code>:8003</code> Gaming</dd>
+          <dt>nginx</dt><dd><code>:80</code>, <code>:443</code></dd>
+        </dl>
+        <p class="note">Achtung: Die WordPress-Container zeigen auf PostgreSQL, WordPress braucht aber MySQL. pgAdmin hat ein fest eingetragenes Passwort.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>Erstellt aus dem Repo <code>kandziormannheim-dot/files</code>, Stand 23.09.2026. Quelle der Seite: <code>docs/dashboard/index.html</code>.</footer>
+</main>
+
+<script>
+(function(){
+  var GH='https://github.com/kandziormannheim-dot/files/actions/workflows/';
+  var wf=[
+    ['deploy-hetzner.yml','Deploy nach Hetzner','manuell','dry_run (aus)','Baut die Astro-Site und überträgt sie per rsync --delete'],
+    ['deploy-plesk.yml','Deploy über Plesk','manuell','modus: erkunden / trockenlauf / deploy, domain kandzior.de','Baut die Site, schiebt dist/ nach httpdocs/, prüft / und Kontakt-Endpunkt'],
+    ['dns-eintrag.yml','DNS-Eintrag setzen','manuell','name events, ipv4 95.216.18.216','Legt A/AAAA-Einträge in der Hetzner-Zone an oder aktualisiert sie'],
+    ['subdomain-einrichten.yml','Subdomain einrichten','manuell','events.kandzior.de → buytickets.at/mkevents1','Subdomain mit Weiterleitung und Let\u2019s Encrypt'],
+    ['mail-einrichten.yml','Mail und Formular einrichten','manuell','postfach mail@, weiterleitung nadja.claw@','Postfach, Weiterleitung, kontakt-config.php, Selbsttest'],
+    ['postfach-anlegen.yml','Postfach anlegen','manuell','postfach, mail_passwort','Legt ein Postfach an oder setzt das Passwort neu'],
+    ['womo-einrichten.yml','Womo einrichten','manuell','womo.kandzior.de, empfaenger mail@','Subdomain, App-Upload, Konfiguration, Zertifikat, Selbsttest'],
+    ['womo-diagnose.yml','Womo-Diagnose','manuell','testempfaenger','Prüft Mailversand und Serverzustand'],
+    ['sbfkurs-einrichten.yml','SBF-Kurs einrichten','manuell','sbfkurs.kandzior.de, einladungscode','Tests, Subdomain, Upload, Konfiguration, Zertifikat, Selbsttest'],
+    ['sbfkurs-diagnose.yml','SBF-Kurs-Diagnose','manuell','vergleich womo.kandzior.de','Prüft nginx/Apache/vHost, optional Reparaturschritt'],
+    ['sbfkurs-tests.yml','SBF-Kurs Tests','push / PR','–','PHP-Lint, Testsuite und Katalogprüfung bei Änderungen in sbfkurs/'],
+    ['godview-einrichten.yml','God View einrichten','manuell','version main, port 4180','Baut God\u2019s Eye View, Proxy, Basic Auth, Watchdog, Selbsttest']
+  ];
+  var tb=document.getElementById('wf');
+  wf.forEach(function(w){
+    var auto=w[2]!=='manuell';
+    var tr=document.createElement('tr');tr.setAttribute('data-s','');
+    tr.innerHTML='<td><a href="'+GH+w[0]+'" target="_blank" rel="noopener">'+w[1]+'</a><span class="sub mono">'+w[0]+'</span></td>'+
+      '<td><span class="pill '+(auto?'p-ok':'p-off')+'">'+w[2]+'</span></td><td>'+w[3]+'</td><td>'+w[4]+'</td>';
+    tb.appendChild(tr);
+  });
+
+  var kurse=[
+    ['SRC',10,190,217,true,'ELWIS 10/2018 + Anpassung 2011','24 Fragen · 30 min · ab 18','Diktat, Englisch, Funkverkehr, Buchstabieren, DSC'],
+    ['LRC',10,205,76,true,'Katalog II 02/2024','30 · 45 min · ab 24','Diktat, Englisch, Funkverkehr'],
+    ['UBI',8,145,10,false,'eigene Musterfragen','22 · 30 min · ab 17','Diktat, Funkverkehr'],
+    ['FKN',8,125,10,false,'eigene Musterfragen','30 · 30 min · ab 24','–'],
+    ['SBF See',10,235,12,false,'eigene Musterfragen','30 · 60 min · ab 23','Buchstabieren'],
+    ['SBF Binnen',9,195,300,true,'ELWIS 08/2023, 73 Bildfragen','30 · 60 min · ab 23','–']
+  ];
+  var max=300, bars=document.getElementById('bars'), kt=document.getElementById('kurse');
+  kurse.slice().sort(function(a,b){return b[3]-a[3]}).forEach(function(k){
+    var r=document.createElement('div');r.className='bar-row';
+    r.innerHTML='<span class="lbl">'+k[0]+'</span><span class="bar-track"><span class="bar-fill'+(k[4]?'':' sample')+'" style="width:'+(k[3]/max*100)+'%"></span></span><span class="n">'+k[3]+'</span>';
+    bars.appendChild(r);
+  });
+  kurse.forEach(function(k){
+    var tr=document.createElement('tr');tr.setAttribute('data-s','');
+    tr.innerHTML='<td><b>'+k[0]+'</b></td><td class="num">'+k[1]+'</td><td class="num">'+k[2]+'</td><td class="num">'+k[3]+'</td><td>'+
+      '<span class="pill '+(k[4]?'p-ok':'p-warn')+'">'+(k[4]?'amtlich':'Muster')+'</span> '+k[5]+'</td><td>'+k[6]+'</td><td>'+k[7]+'</td>';
+    kt.appendChild(tr);
+  });
+
+  var todos=[
+    ['hetzner-push','Website: automatischen Deploy aktivieren','Erst PHP-FPM, SMTP-Konfiguration und curl-Selbsttest auf dem Server','Website','p-warn'],
+    ['site-live','Website: Domain und DNS vor dem Livegang prüfen','astro.config.mjs setzt site: https://kandzior.de','Website','p-warn'],
+    ['w3','Website: SociableKIT und AV-Vertrag in die Datenschutzerklärung (W-3)','','Website','p-bad'],
+    ['s3','Website: Beitragstexte und Links vom Kunden (S-3)','','Website','p-off'],
+    ['legal','Website: Rechtstexte anwaltlich prüfen, DE/EN-Texte freigeben','Auch: Frankfurt oder Mannheim einheitlich','Website','p-warn'],
+    ['logo','Website: Logo als SVG, 2–3 LinkedIn-Beiträge einbetten','','Website','p-off'],
+    ['events','Website: events.json für das erste Event einschalten','','Website','p-off'],
+    ['social-review','Website: Quartalsprüfung der Social-Links','fällig November 2026','Website','p-off'],
+    ['p4','SBF-Kurs: PLATZHALTER in Impressum und Datenschutz ersetzen (P4)','Vor dem Livegang','SBF-Kurs','p-bad'],
+    ['p3','SBF-Kurs: amtliche Kataloge für See, UBI und FKN importieren (P3)','Dazu boegen.json anlegen','SBF-Kurs','p-warn'],
+    ['regeln','SBF-Kurs: Prüfungsregeln mit der Verordnung abgleichen, _zuPruefen entfernen','','SBF-Kurs','p-warn'],
+    ['godview-keys','God View: Google-Maps- und Cesium-Schlüssel auf godview.kandzior.de beschränken','Die Schlüssel stecken im Browser-Build','God View','p-bad'],
+    ['neos24','neos24: Geschäftsfragen klären (Produkt, Zielgruppe, CMS, Sprachen)','','neos24','p-off'],
+    ['prs','GitHub: 4 offene Pull Requests entscheiden','#36, #37, #38, #39','GitHub','p-warn']
+  ];
+  var store={};
+  try{store=JSON.parse(localStorage.getItem('leitstand-todos')||'{}')}catch(e){}
+  var ul=document.getElementById('todos'), cnt=document.getElementById('todo-count');
+  function count(){var n=todos.filter(function(t){return !store[t[0]]}).length;cnt.textContent=n+' von '+todos.length+' offen';}
+  todos.forEach(function(t){
+    var li=document.createElement('li');li.setAttribute('data-s','');if(store[t[0]])li.className='done';
+    var id='todo-'+t[0];
+    li.innerHTML='<input type="checkbox" id="'+id+'"'+(store[t[0]]?' checked':'')+'><label class="t" for="'+id+'">'+t[1]+(t[2]?'<small>'+t[2]+'</small>':'')+'</label><span class="pill '+t[4]+'">'+t[3]+'</span>';
+    li.querySelector('input').addEventListener('change',function(e){
+      store[t[0]]=e.target.checked;li.classList.toggle('done',e.target.checked);count();
+      try{localStorage.setItem('leitstand-todos',JSON.stringify(store))}catch(err){}
+    });
+    ul.appendChild(li);
+  });
+  count();
+
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('.copy');if(!b)return;
+    var v=b.getAttribute('data-c');
+    var done=function(){b.textContent='kopiert';setTimeout(function(){b.textContent='kopieren'},1500)};
+    try{navigator.clipboard.writeText(v).then(done,function(){b.textContent=v})}catch(err){b.textContent=v}
+  });
+
+  var q=document.getElementById('q');
+  q.addEventListener('input',function(){
+    var s=q.value.trim().toLowerCase();
+    document.querySelectorAll('[data-s]').forEach(function(el){
+      el.classList.toggle('hide',!!s && el.textContent.toLowerCase().indexOf(s)<0);
+    });
+  });
+})();
+</script>
