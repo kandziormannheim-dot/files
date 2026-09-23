@@ -150,6 +150,21 @@ footer{margin-top:48px;font-size:12.5px;color:var(--faint);border-top:1px solid 
 .tile .links{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;margin-top:auto}
 .src-err{font-size:12px;color:var(--warn);background:var(--warn-soft);border-radius:4px;padding:5px 8px}
 .empty{font-size:13px;color:var(--faint)}
+/* Lage */
+.wm-top{display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr);gap:18px;align-items:start;margin:4px 0 10px}
+@media (max-width:520px){.wm-top{grid-template-columns:1fr}}
+.fg{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.fg .lbl{font:600 11.5px var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fg b{font:600 40px/1 var(--cond);font-variant-numeric:tabular-nums}
+.fg small{font:500 11.5px var(--mono);color:var(--faint)}
+.fg-bar{position:relative;width:100%;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--bad),var(--warn) 45%,var(--ok));margin-top:6px}
+.fg-bar i{position:absolute;top:-4px;width:3px;height:16px;background:var(--ink);border-radius:2px;transform:translateX(-50%)}
+.fg-scale{width:100%;display:flex;justify-content:space-between;font:500 10.5px var(--mono);color:var(--faint)}
+table.quotes{width:100%;font-size:13.5px}
+table.quotes td{padding:5px 0;border-bottom:1px solid var(--line)}
+table.quotes td.num{text-align:right}
+.up{color:var(--ok)}.down{color:var(--bad)}
+.sub-h{font:600 12px var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:6px 0 4px}
 @media (max-width:640px){
   h1{font-size:25px}
   .search input{width:100%}
@@ -194,6 +209,26 @@ footer{margin-top:48px;font-size:12.5px;color:var(--faint);border-top:1px solid 
         <div class="agenda" id="agenda"><p class="empty">Noch keine Termine geladen.</p></div>
       </div>
       <div class="tiles" id="tiles"></div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card" id="wm-card">
+        <div class="card-head"><h3>Weltlage · World Monitor</h3><span class="pill p-off" id="wm-stand">–</span></div>
+        <div id="wm-err"></div>
+        <div class="wm-top">
+          <div class="fg"><span class="lbl">Angst &amp; Gier</span><b id="fg-score">–</b><span id="fg-label" class="pill p-off">–</span><small id="fg-prev"></small>
+            <div class="fg-bar"><i id="fg-mark" style="left:50%"></i></div><div class="fg-scale"><span>0 Angst</span><span>100 Gier</span></div></div>
+          <table class="quotes"><tbody id="wm-quotes"><tr><td class="empty">Noch keine Kurse geladen.</td></tr></tbody></table>
+        </div>
+        <h4 class="sub-h">Schifffahrts-Engpässe · 7 Tage</h4>
+        <div class="tbl-wrap" style="border:0"><table><thead><tr><th>Engpass</th><th>Risiko</th><th class="num">Vorfälle</th><th class="num">Verkehr ggü. Vorwoche</th></tr></thead><tbody id="wm-cp"><tr><td colspan="4" class="empty">Noch nicht geladen.</td></tr></tbody></table></div>
+        <div class="links" style="margin-top:8px"><a href="https://www.worldmonitor.app/dashboard" target="_blank" rel="noopener">World Monitor öffnen</a><a href="https://godview.kandzior.de" target="_blank" rel="noopener">God View</a></div>
+      </div>
+      <div class="card" id="svc-card">
+        <div class="card-head"><h3>Dienste-Status</h3><span class="pill p-off" id="svc-stand">–</span></div>
+        <div id="svc-err"></div>
+        <div class="tbl-wrap" style="border:0"><table><thead><tr><th>Dienst</th><th>Status</th><th class="num">Antwort</th><th class="num">Zeit</th></tr></thead><tbody id="svc-body"><tr><td colspan="4" class="empty">Noch keine Prüfung gespeichert.</td></tr></tbody></table></div>
+        <p class="note">Ein geplanter Claude-Lauf prüft die Adressen stündlich und speichert das Ergebnis hier.</p>
+      </div>
     </div>
   </section>
 
@@ -709,9 +744,6 @@ npm run build</pre>
         errs.map(function(e){return '<div class="src-err">'+esc(e)+'</div>'}).join('')+
         '<div class="links">'+a.links.map(function(l){return '<a href="'+esc(l[1])+'" target="_blank" rel="noopener">'+esc(l[0])+'</a>'}).join('')+'</div></div>';
     });
-    html+='<div class="tile" data-s style="grid-column:1/-1"><div class="tile-h"><h3><i style="background:var(--bad)"></i>World Monitor</h3><span class="pill p-off">nur Link</span></div>'+
-      '<p class="empty" style="margin:0">Lage weltweit: Konflikte, Märkte, Instabilitätsindex (CII) für 31 Länder. Ein Live-Wert braucht den API-Zugang von World Monitor.</p>'+
-      '<div class="links"><a href="https://www.worldmonitor.app/dashboard" target="_blank" rel="noopener">Dashboard öffnen</a><a href="https://godview.kandzior.de" target="_blank" rel="noopener">God View</a></div></div>';
     host.innerHTML=html;
     var q=document.getElementById('q');if(q&&q.value)q.dispatchEvent(new Event('input'));
   }
@@ -763,5 +795,109 @@ npm run build</pre>
     if(!mcpRef)return;
     var p=mcpRef.invalidate();(p&&p.catch?p:Promise.resolve()).catch(function(){}).then(function(){connect(mcpRef)});
   });
+})();
+</script>
+
+<script>
+(function(){
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function pad(n){return (n<10?'0':'')+n}
+  function stampText(d){if(!d||isNaN(d))return '–';var t=pad(d.getHours())+':'+pad(d.getMinutes());var today=new Date().toDateString()===d.toDateString();return (today?'heute ':pad(d.getDate())+'.'+pad(d.getMonth()+1)+'. ')+t}
+  function num(v,dig){return typeof v==='number'?v.toLocaleString('de-DE',{minimumFractionDigits:dig,maximumFractionDigits:dig}):'–'}
+
+  // ---------- World Monitor ----------
+  var WM='World Monitor';
+  var MARKET_Q="{at: cached_at, st: stale, fg: data.\"fear-greed\".composite, q: [data.\"commodities-bootstrap\".quotes, data.crypto.quotes, data.\"stocks-bootstrap\".quotes][] | [?contains(['BZ=F','GC=F','EURUSD=X','^VIX','BTC','^GSPC'], symbol)].{s: symbol, p: price, c: change}}";
+  var CP=[['suez','Suezkanal'],['hormuz_strait','Straße von Hormus'],['bab_el_mandeb','Bab al-Mandab'],['panama','Panamakanal'],['malacca_strait','Straße von Malakka'],['cape_of_good_hope','Kap der Guten Hoffnung'],['gibraltar','Gibraltar'],['dover_strait','Ärmelkanal (Dover)']];
+  var CP_Q='{at: cached_at, st: stale, cp: data."transit-summaries".summaries.{'+CP.map(function(c){return c[0]+': '+c[0]+'.{r: riskLevel, i: incidentCount7d, w: wowChangePct, d: disruptionPct}'}).join(', ')+'}}';
+  var QL={'BZ=F':['Brent','USD/bbl',2],'GC=F':['Gold','USD/oz',0],'EURUSD=X':['EUR/USD','',4],'^VIX':['VIX','Volatilität',2],'BTC':['Bitcoin','USD',0],'^GSPC':['S&P 500','Punkte',0]};
+  var ORDER=['BZ=F','GC=F','EURUSD=X','^GSPC','^VIX','BTC'];
+  var RISK={critical:['p-bad','kritisch'],high:['p-bad','hoch'],elevated:['p-warn','erhöht'],medium:['p-warn','mittel'],moderate:['p-warn','mittel'],low:['p-ok','gering'],'':['p-ok','normal']};
+  var FGL={'Extreme Fear':'extreme Angst','Fear':'Angst','Neutral':'neutral','Greed':'Gier','Extreme Greed':'extreme Gier'};
+  var wm={market:null,cp:null,err:{}};
+
+  function proj(r){var p=r&&r.payload;if(p&&typeof p==='object'&&'projection' in p)p=p.projection;if(typeof p==='string'){try{p=JSON.parse(p)}catch(e){}}return p&&typeof p==='object'?p:null}
+  function wmErr(e){
+    var c=e&&e.code;
+    if(c==='server_not_connected'||c==='server_not_found')return 'World Monitor ist noch nicht verbunden. In claude.ai unter Einstellungen → Konnektoren einen eigenen Konnektor mit der Adresse https://worldmonitor.app/mcp und dem Namen „World Monitor“ anlegen und mit einem kostenlosen World-Monitor-Konto anmelden.';
+    if(c==='needs_reauth')return 'World-Monitor-Anmeldung abgelaufen. In claude.ai unter Einstellungen → Konnektoren neu verbinden.';
+    if(c==='not_in_manifest')return 'World Monitor ist für diese Seite nicht freigegeben.';
+    if(c==='selection_required')return 'World Monitor ist doppelt verbunden. Bitte im Hinweis von Claude einen auswählen.';
+    if(c==='server_unavailable')return 'World Monitor antwortet gerade nicht. Die letzten Werte bleiben stehen.';
+    if(c==='tool_error')return 'World Monitor meldet: '+(e.message||'Fehler')+' (bei einem kostenlosen Konto ist evtl. das Tageskontingent aufgebraucht).';
+    return 'World Monitor: Abruf fehlgeschlagen ('+(c||'unbekannt')+').';
+  }
+  function renderWM(){
+    var errs=Object.keys(wm.err).map(function(k){return wm.err[k]}).filter(function(v,i,a){return a.indexOf(v)===i});
+    document.getElementById('wm-err').innerHTML=errs.map(function(t){return '<div class="src-err" style="margin-bottom:8px">'+esc(t)+'</div>'}).join('');
+    var m=wm.market;
+    if(m){
+      var fg=m.fg||{}, sc=typeof fg.score==='number'?fg.score:null;
+      document.getElementById('fg-score').textContent=sc==null?'–':Math.round(sc);
+      var lab=document.getElementById('fg-label');lab.textContent=FGL[fg.label]||fg.label||'–';
+      lab.className='pill '+(sc==null?'p-off':sc<40?'p-bad':sc<60?'p-warn':'p-ok');
+      document.getElementById('fg-prev').textContent=typeof fg.previous==='number'?'Vortag '+Math.round(fg.previous):'';
+      if(sc!=null)document.getElementById('fg-mark').style.left=Math.max(0,Math.min(100,sc))+'%';
+      var qs=(m.q||[]).slice().sort(function(a,b){return ORDER.indexOf(a.s)-ORDER.indexOf(b.s)});
+      document.getElementById('wm-quotes').innerHTML=qs.length?qs.map(function(q){
+        var l=QL[q.s]||[q.s,'',2], ch=typeof q.c==='number'?q.c:null;
+        return '<tr><td>'+esc(l[0])+(l[1]?' <small style="color:var(--faint)">'+esc(l[1])+'</small>':'')+'</td><td class="num">'+num(q.p,l[2])+'</td><td class="num '+(ch==null?'':ch>=0?'up':'down')+'">'+(ch==null?'–':(ch>=0?'+':'')+num(ch,2)+' %')+'</td></tr>';
+      }).join(''):'<tr><td class="empty">Keine Kurse in der Antwort.</td></tr>';
+    }
+    var c=wm.cp;
+    if(c&&c.cp){
+      document.getElementById('wm-cp').innerHTML=CP.map(function(x){
+        var v=c.cp[x[0]];if(!v)return '';
+        var r=RISK[(v.r||'').toLowerCase()]||['p-warn',v.r];
+        var w=typeof v.w==='number'?v.w:null;
+        return '<tr><td>'+esc(x[1])+'</td><td><span class="pill '+r[0]+'">'+esc(r[1])+'</span></td><td class="num">'+(v.i==null?'–':v.i)+'</td><td class="num '+(w==null?'':w>=0?'up':'down')+'">'+(w==null?'–':(w>=0?'+':'')+num(w,1)+' %')+'</td></tr>';
+      }).join('');
+    }
+    var at=[m&&m.at,c&&c.at].filter(Boolean).map(function(s){return new Date(s)}).sort(function(a,b){return b-a})[0];
+    var st=document.getElementById('wm-stand');
+    if(at){st.textContent='Daten '+stampText(at)+((m&&m.st)||(c&&c.st)?' · teils veraltet':'');st.className='pill '+((m&&m.st)||(c&&c.st)?'p-warn':'p-info')}
+  }
+  function watchWM(mcp){
+    var opts={cache:{staleTime:300000,gcTime:86400000},refetchInterval:3600000};
+    mcp.watchTool(WM,'get_market_data',{jmespath:MARKET_Q},function(ev){
+      if(ev.type==='data'){delete wm.err.m;var p=proj(ev.result);if(p&&p._jmespath_error)wm.err.m='World Monitor: Abfrage passt nicht mehr zum Datenformat.';else if(p)wm.market=p}
+      else{wm.err.m=wmErr(ev.error);if({needs_reauth:1,server_not_connected:1,not_in_manifest:1,blocked_by_policy:1}[ev.error&&ev.error.code])wm.market=null}
+      renderWM();
+    },opts);
+    mcp.watchTool(WM,'get_chokepoint_status',{jmespath:CP_Q},function(ev){
+      if(ev.type==='data'){delete wm.err.c;var p=proj(ev.result);if(p&&p._jmespath_error)wm.err.c='World Monitor: Abfrage passt nicht mehr zum Datenformat.';else if(p)wm.cp=p}
+      else{wm.err.c=wmErr(ev.error);if({needs_reauth:1,server_not_connected:1,not_in_manifest:1,blocked_by_policy:1}[ev.error&&ev.error.code])wm.cp=null}
+      renderWM();
+    },opts);
+  }
+
+  // ---------- Dienste-Status (aus der Datenbank der Seite) ----------
+  function renderSvc(doc,err){
+    var body=document.getElementById('svc-body'), st=document.getElementById('svc-stand'), e=document.getElementById('svc-err');
+    e.innerHTML=err?'<div class="src-err" style="margin-bottom:8px">'+esc(err)+'</div>':'';
+    if(!doc)return;
+    var list=Array.isArray(doc.dienste)?doc.dienste:[];
+    var at=doc.geprueft?new Date(doc.geprueft):null, old=at&&(Date.now()-at>3*3600e3);
+    var bad=list.filter(function(s){return s.status!=='ok'&&s.status!=='offen'}).length;
+    st.textContent=at?'geprüft '+stampText(at)+(old?' · veraltet':''):'noch keine Prüfung';
+    st.className='pill '+(!at?'p-off':old?'p-warn':bad?'p-bad':'p-ok');
+    if(doc.hinweis)e.innerHTML+='<div class="src-err" style="margin-bottom:8px">'+esc(doc.hinweis)+'</div>';
+    if(!list.length){body.innerHTML='<tr><td colspan="4" class="empty">Noch keine Prüfung gespeichert.</td></tr>';return}
+    var P={ok:['p-ok','erreichbar'],fehler:['p-bad','Fehler'],langsam:['p-warn','langsam'],offen:['p-off','nicht geprüft']};
+    body.innerHTML=list.map(function(s){
+      var p=P[s.status]||['p-warn',s.status||'?'];
+      return '<tr><td><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.name)+'</a>'+(s.info?'<span class="sub">'+esc(s.info)+'</span>':'')+'</td><td><span class="pill '+p[0]+'">'+esc(p[1])+'</span></td><td class="num">'+(s.code||'–')+'</td><td class="num">'+(typeof s.ms==='number'?s.ms+' ms':'–')+'</td></tr>';
+    }).join('');
+  }
+
+  try{
+    if(window.claude&&window.claude.use){
+      window.claude.use('mcp').then(function(mcp){if(mcp)watchWM(mcp);else{wm.err.x='Weltlage erscheint nur im Claude-Viewer.';renderWM()}},function(){});
+      window.claude.use('db').then(function(db){
+        if(!db){renderSvc(null,'Dienste-Status erscheint nur im Claude-Viewer.');return}
+        db.doc('status/dienste').onSnapshot(function(s){renderSvc(s.exists?s.data():{},null)},function(e){renderSvc(null,'Status konnte nicht gelesen werden ('+(e&&e.code||'Fehler')+').')});
+      },function(){});
+    }
+  }catch(e){}
 })();
 </script>
