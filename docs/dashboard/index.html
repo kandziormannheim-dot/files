@@ -109,6 +109,47 @@ pre.cmd{background:var(--sunk);border:1px solid var(--line);border-radius:6px;pa
 .hide{display:none!important}
 footer{margin-top:48px;font-size:12.5px;color:var(--faint);border-top:1px solid var(--line);padding-top:14px}
 
+/* Cockpit */
+.today{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:baseline;margin:0 0 16px}
+.today .d{font:600 22px/1.2 var(--cond)}
+.today .m{font:500 12.5px var(--mono);color:var(--muted)}
+.live{font:500 11.5px var(--mono);color:var(--faint);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.live .dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.live.on .dot{background:var(--ok)}
+.btn{font:500 12px var(--mono);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:5px;padding:4px 9px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.cockpit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.cockpit{grid-template-columns:1fr}}
+.agenda{max-height:560px;overflow-y:auto;margin:0 -18px -16px;padding:0 18px 12px}
+.day{padding-top:10px}
+.day h4{font:600 12px var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 4px;position:sticky;top:0;background:var(--surface);padding:4px 0}
+.day.is-today h4{color:var(--accent)}
+.ev{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.ev .tm{font:500 12.5px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums;padding-top:1px}
+.ev a{color:var(--ink);text-decoration:none}
+.ev a:hover{color:var(--accent);text-decoration:underline}
+.ev .meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.ev.imp .ttl::before{content:"● ";color:var(--bad)}
+.chip{font:500 10.5px/1 var(--mono);padding:3px 6px;border-radius:3px;background:var(--sunk);color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tile-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tile-h h3{margin:0;display:flex;align-items:center;gap:8px}
+.tile-h h3 i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.nums{display:flex;gap:18px}
+.nums div b{display:block;font:600 24px/1 var(--cond);font-variant-numeric:tabular-nums}
+.nums div span{font-size:11.5px;color:var(--muted)}
+.tile .next{font-size:13.5px;border-top:1px solid var(--line);padding-top:8px}
+.tile .next small{display:block;color:var(--faint);font:500 11.5px var(--mono)}
+.tile ul{list-style:none;margin:0;padding:0;font-size:13px;display:grid;gap:4px}
+.tile li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile li a{color:var(--ink);text-decoration:none}
+.tile li a:hover{color:var(--accent)}
+.tile li.unread a{font-weight:600}
+.tile li small{color:var(--faint);font-family:var(--mono);margin-right:6px}
+.tile .links{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;margin-top:auto}
+.src-err{font-size:12px;color:var(--warn);background:var(--warn-soft);border-radius:4px;padding:5px 8px}
+.empty{font-size:13px;color:var(--faint)}
 @media (max-width:640px){
   h1{font-size:25px}
   .search input{width:100%}
@@ -122,6 +163,7 @@ footer{margin-top:48px;font-size:12.5px;color:var(--faint);border-top:1px solid 
   <div class="top-in">
     <div class="brand">KANDZIOR · LEITSTAND <small>kandzior.de</small></div>
     <nav class="tabs" aria-label="Bereiche">
+      <a href="#cockpit">Cockpit</a>
       <a href="#server">Server</a>
       <a href="#domains">Domains</a>
       <a href="#workflows">Workflows</a>
@@ -137,8 +179,25 @@ footer{margin-top:48px;font-size:12.5px;color:var(--faint);border-top:1px solid 
 
 <main class="wrap">
   <h1>Alles auf einen Blick</h1>
-  <p class="lede">Server, Domains, Workflows, Kurse und offene Punkte aus dem Repo <code>kandziormannheim-dot/files</code>. Stand: 23.09.2026. Geheime Werte stehen hier nicht, nur die Namen der Secrets.</p>
+  <p class="lede">Termine, Post und Bereiche live aus Google und Outlook. Darunter Server, Domains, Workflows, Kurse und offene Punkte aus dem Repo <code>kandziormannheim-dot/files</code>. Geheime Werte stehen hier nicht.</p>
 
+  <section id="cockpit" style="margin-top:8px">
+    <div class="today">
+      <span class="d" id="t-date">–</span>
+      <span class="m" id="t-kw"></span>
+      <span class="live" id="live"><span class="dot"></span><span id="live-t">Live-Daten werden geladen …</span><button class="btn" id="reload" type="button">Aktualisieren</button></span>
+    </div>
+    <div class="cockpit">
+      <div class="card">
+        <div class="card-head"><h3>Termine · 14 Tage</h3><span class="pill p-info" id="ev-count">–</span></div>
+        <div id="src-cal"></div>
+        <div class="agenda" id="agenda"><p class="empty">Noch keine Termine geladen.</p></div>
+      </div>
+      <div class="tiles" id="tiles"></div>
+    </div>
+  </section>
+
+  <h2 style="margin-top:40px">Repo in Zahlen <span>kandziormannheim-dot/files</span></h2>
   <div class="kpis">
     <div class="kpi"><b>6</b><span>Domains &amp; Subdomains</span></div>
     <div class="kpi"><b>12</b><span>GitHub-Workflows</span></div>
@@ -484,6 +543,225 @@ npm run build</pre>
     document.querySelectorAll('[data-s]').forEach(function(el){
       el.classList.toggle('hide',!!s && el.textContent.toLowerCase().indexOf(s)<0);
     });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var TZ='Europe/Berlin', DAYS=14;
+  var WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function pad(n){return (n<10?'0':'')+n}
+  function isoWeek(d){var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));var day=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-day);var y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-y)/864e5+1)/7)}
+  function dayKey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+  function fmtDay(d){return WD[d.getDay()]+', '+pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'}
+  function fmtTime(d){return pad(d.getHours())+':'+pad(d.getMinutes())}
+  function fmtShort(d){var now=new Date();return dayKey(d)===dayKey(now)?fmtTime(d):pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'}
+
+  var now=new Date();
+  document.getElementById('t-date').textContent=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'][now.getDay()]+', '+now.toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('t-kw').textContent='KW '+isoWeek(now);
+
+  var start=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var end=new Date(start.getTime()+DAYS*864e5);
+  function isoLocal(d){var o=-d.getTimezoneOffset();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T00:00:00'+(o>=0?'+':'-')+pad(Math.floor(Math.abs(o)/60))+':'+pad(Math.abs(o)%60)}
+
+  // Google-Kalender (IDs aus deinem Konto)
+  var GCALS=[
+    {id:'kandziormannheim@gmail.com',label:'Geschäftlich',tag:null},
+    {id:'family00887622327710471228@group.calendar.google.com',label:'Familie',tag:'privat'},
+    {id:'12ae0c78ca4b084614ccc687cbe07feaa32abc5f6d4955966f6179e332157764@group.calendar.google.com',label:'Mein Kalender',tag:'privat'},
+    {id:'aee210805e7c1e46237badf123f057cd6cf491609f56e1811d07b4c5aeac945b@group.calendar.google.com',label:'Womo Carla',tag:'womo'}
+  ];
+
+  // Bereiche: Farbe, Erkennung von Terminen, Mail-Abfragen, Links
+  var AREAS=[
+    {key:'cdu',name:'CDU',color:'#1f2b3a',re:/\bCDU\b/,
+      mail:[{s:'gmail',q:'CDU newer_than:30d'},{s:'outlook',q:'CDU'}],
+      links:[['Gmail: CDU','https://mail.google.com/mail/u/0/#search/CDU']]},
+    {key:'mit',name:'MIT',color:'#0a6aa6',re:/\bMIT\b|Mittelstand/,
+      mail:[{s:'gmail',q:'(Mittelstandsunion OR "MIT Mannheim" OR "MIT Nordbaden" OR Mittelstands- OR MIT-Vorstand) newer_than:30d'},{s:'outlook',q:'Mittelstandsunion'}],
+      links:[['Gmail: MIT','https://mail.google.com/mail/u/0/#search/Mittelstandsunion']]},
+    {key:'neos',name:'Neos',color:'#0b6e79',re:/neos/i,
+      mail:[{s:'outlook-inbox'}],
+      links:[['Outlook','https://outlook.office.com/mail/'],['neos24.com','https://neos24.com/']]},
+    {key:'ups',name:'UPS',color:'#8a5a14',re:/\bUPS/,cat:'UPS',
+      mail:[{s:'outlook',q:'UPS'}],
+      links:[['Sendung verfolgen','https://www.ups.com/track?loc=de_DE']]},
+    {key:'privat',name:'Privat',color:'#7a3f8f',re:null,cat:'PRIVATLEBEN',
+      mail:[{s:'gmail',q:'in:inbox is:unread',count:true}],
+      links:[['Gmail','https://mail.google.com/mail/u/0/#inbox'],['Google Kalender','https://calendar.google.com/']]},
+    {key:'womo',name:'Womo Carla',color:'#4b7a2d',re:/womo|wohnmobil|carla/i,
+      mail:[{s:'gmail',q:'(Wohnmobil OR Womo) newer_than:30d'}],
+      links:[['Schadenakte','https://womo.kandzior.de/login'],['QR-Seite','https://womo.kandzior.de/qr']]}
+  ];
+
+  var state={cal:{},mail:{},err:{},stamp:0,conn:0};
+  var areaByKey={};AREAS.forEach(function(a){areaByKey[a.key]=a});
+
+  function tagEvent(ev){
+    var tags=[];
+    AREAS.forEach(function(a){
+      if(ev.baseTag===a.key || (a.cat && ev.cats.indexOf(a.cat)>=0) || (a.re && a.re.test(ev.title))) tags.push(a.key);
+    });
+    ev.tags=tags;return ev;
+  }
+
+  // Ergebnis-Texte einsammeln: manche Konnektoren liefern ein Objekt, andere je Eintrag einen Block
+  function items(result){
+    var out=[];
+    (result&&result.content||[]).forEach(function(b){
+      if(b.type!=='text')return;
+      try{var v=JSON.parse(b.text);Array.isArray(v)?out.push.apply(out,v):out.push(v)}catch(e){}
+    });
+    if(!out.length&&result&&result.payload&&typeof result.payload==='object')out.push(result.payload);
+    return out;
+  }
+
+  function normGoogle(result,cal){
+    var p=result&&result.payload||{}, list=p.events||[];
+    return list.filter(function(e){return e.status!=='cancelled'}).map(function(e){
+      var s=e.start||{}, allDay=!s.dateTime;
+      var d=allDay?new Date(s.date+'T00:00:00'):new Date(s.dateTime);
+      return tagEvent({title:e.summary||'(ohne Titel)',start:d,allDay:allDay,where:e.location||'',link:e.htmlLink||'',src:cal.label,baseTag:cal.tag,cats:[],imp:false});
+    });
+  }
+  function msDate(o){if(!o||!o.dateTime)return null;var s=o.dateTime.replace(/(\.\d{3})\d+/,'$1');return new Date(/^utc$/i.test(o.timeZone||'')&&!/Z|[+-]\d\d:\d\d$/.test(s)?s+'Z':s)}
+  function normOutlook(result){
+    return items(result).filter(function(e){return e&&e.subject!==undefined&&!e.isCancelled}).map(function(e){
+      var cats=e.categories||[];
+      return tagEvent({title:e.subject||'(ohne Titel)',start:msDate(e.start)||new Date(),allDay:!!e.isAllDay,where:e.location||'',link:e.webLink||'',src:'Outlook',baseTag:null,cats:cats,imp:cats.indexOf('Wichtig')>=0||e.importance==='high'});
+    });
+  }
+  function normGmail(result){
+    var p=result&&result.payload||{};
+    var threads=(p.threads||[]).map(function(t){
+      var ms=t.messages||[], first=ms[0]||{}, last=ms[ms.length-1]||first;
+      var unread=ms.some(function(m){return (m.labelIds||[]).indexOf('UNREAD')>=0});
+      return {subject:first.subject||'(ohne Betreff)',from:last.sender||'',date:new Date(last.date||first.date||0),unread:unread,link:t.viewUrl||''};
+    });
+    return {list:threads,estimate:parseInt(p.resultCountEstimate,10)||threads.length};
+  }
+  function normOutlookMail(result){
+    var list=items(result).filter(function(m){return m&&m.subject!==undefined}).map(function(m){
+      return {subject:m.subject||'(ohne Betreff)',from:/@/.test(m.sender||'')?m.sender:'',date:new Date(m.receivedDateTime||0),unread:m.isRead===false,link:m.webLink||''};
+    });
+    return {list:list,estimate:list.length};
+  }
+
+  var ERR={
+    needs_reauth:function(s){return s+': Verbindung abgelaufen. In claude.ai unter Einstellungen → Konnektoren neu verbinden.'},
+    server_not_connected:function(s){return s+' ist nicht verbunden. In claude.ai unter Einstellungen → Konnektoren hinzufügen.'},
+    selection_required:function(s){return s+' ist doppelt verbunden. Bitte im Hinweis von Claude eines auswählen.'},
+    not_in_manifest:function(s){return s+' ist für diese Seite nicht freigegeben.'},
+    blocked_by_policy:function(s){return s+' ist durch eine Richtlinie gesperrt.'},
+    server_unavailable:function(s){return s+' antwortet gerade nicht. Später erneut versuchen.'},
+    tool_error:function(s,e){return s+' meldet einen Fehler: '+(e.message||'')}
+  };
+  function errText(server,e){var f=ERR[e&&e.code];return f?f(server,e):server+': Abruf fehlgeschlagen ('+(e&&e.code||'unbekannt')+').'}
+  var DENY={needs_reauth:1,server_not_connected:1,blocked_by_policy:1,approval_required:1,not_in_manifest:1,selection_required:1};
+
+  // Rendering
+  function allEvents(){
+    var out=[];Object.keys(state.cal).forEach(function(k){out.push.apply(out,state.cal[k])});
+    return out.filter(function(e){return e.start>=start&&e.start<end}).sort(function(a,b){return a.start-b.start});
+  }
+  function renderAgenda(){
+    var evs=allEvents(), box=document.getElementById('agenda');
+    document.getElementById('ev-count').textContent=evs.length+' Termine';
+    var errs=Object.keys(state.err).filter(function(k){return k.indexOf('cal:')===0}).map(function(k){return '<div class="src-err">'+esc(state.err[k])+'</div>'});
+    document.getElementById('src-cal').innerHTML=errs.join('');
+    if(!evs.length){box.innerHTML='<p class="empty">'+(Object.keys(state.cal).length?'Keine Termine in den nächsten 14 Tagen.':'Noch keine Termine geladen.')+'</p>';return}
+    var byDay={},order=[];
+    evs.forEach(function(e){var k=dayKey(e.start);if(!byDay[k]){byDay[k]=[];order.push(k)}byDay[k].push(e)});
+    var today=dayKey(new Date());
+    box.innerHTML=order.map(function(k){
+      var d=byDay[k][0].start;
+      return '<div class="day'+(k===today?' is-today':'')+'"><h4>'+(k===today?'Heute · ':'')+fmtDay(d)+'</h4>'+byDay[k].map(function(e){
+        var chips=e.tags.map(function(t){return '<span class="chip" style="color:'+areaByKey[t].color+'">'+esc(areaByKey[t].name)+'</span>'}).join('');
+        chips+='<span class="chip">'+esc(e.src)+'</span>';
+        if(e.where)chips+='<span class="chip">'+esc(e.where.split(/[,(]/)[0].slice(0,40))+'</span>';
+        var t=e.link?'<a href="'+esc(e.link)+'" target="_blank" rel="noopener">'+esc(e.title)+'</a>':esc(e.title);
+        return '<div class="ev'+(e.imp?' imp':'')+'"><span class="tm">'+(e.allDay?'ganzt.':fmtTime(e.start))+'</span><div><div class="ttl">'+t+'</div><div class="meta">'+chips+'</div></div></div>';
+      }).join('')+'</div>';
+    }).join('');
+  }
+  function renderTiles(){
+    var evs=allEvents(), host=document.getElementById('tiles'), html='';
+    AREAS.forEach(function(a){
+      var mine=evs.filter(function(e){return e.tags.indexOf(a.key)>=0 && e.start>=new Date(Date.now()-3600e3)});
+      var mails=[],unread=0,est=0,errs=[];
+      a.mail.forEach(function(m,i){
+        var id='mail:'+a.key+':'+i, r=state.mail[id];
+        if(state.err[id])errs.push(state.err[id]);
+        if(!r)return;
+        mails.push.apply(mails,r.list);
+        unread+=r.list.filter(function(x){return x.unread}).length;
+        if(m.count)est=r.estimate;
+      });
+      mails.sort(function(x,y){return y.date-x.date});
+      var next=mine[0], calOk=Object.keys(state.cal).length>0, mailOk=a.mail.some(function(m,i){return state.mail['mail:'+a.key+':'+i]});
+      html+='<div class="tile" data-s><div class="tile-h"><h3><i style="background:'+a.color+'"></i>'+esc(a.name)+'</h3>'+(unread?'<span class="pill p-warn">'+unread+' ungelesen</span>':'')+'</div>'+
+        '<div class="nums"><div><b>'+(calOk?mine.length:'–')+'</b><span>Termine 14 T.</span></div><div><b>'+(!mailOk?'–':a.mail.some(function(m){return m.count})?est:mails.length)+'</b><span>'+(a.mail.some(function(m){return m.count})?'ungelesen Gmail':'Mails 30 T.')+'</span></div></div>'+
+        (next?'<div class="next"><small>Nächster Termin · '+fmtDay(next.start)+(next.allDay?'':' '+fmtTime(next.start))+'</small>'+esc(next.title)+'</div>':'<div class="next empty">'+(calOk?'Kein Termin in 14 Tagen':'Termine noch nicht geladen')+'</div>')+
+        (mails.length?'<ul>'+mails.slice(0,3).map(function(x){return '<li class="'+(x.unread?'unread':'')+'"><small>'+fmtShort(x.date)+'</small>'+(x.link?'<a href="'+esc(x.link)+'" target="_blank" rel="noopener" title="'+esc(x.subject)+'">'+esc(x.subject)+'</a>':esc(x.subject))+'</li>'}).join('')+'</ul>':'')+
+        errs.map(function(e){return '<div class="src-err">'+esc(e)+'</div>'}).join('')+
+        '<div class="links">'+a.links.map(function(l){return '<a href="'+esc(l[1])+'" target="_blank" rel="noopener">'+esc(l[0])+'</a>'}).join('')+'</div></div>';
+    });
+    html+='<div class="tile" data-s style="grid-column:1/-1"><div class="tile-h"><h3><i style="background:var(--bad)"></i>World Monitor</h3><span class="pill p-off">nur Link</span></div>'+
+      '<p class="empty" style="margin:0">Lage weltweit: Konflikte, Märkte, Instabilitätsindex (CII) für 31 Länder. Ein Live-Wert braucht den API-Zugang von World Monitor.</p>'+
+      '<div class="links"><a href="https://www.worldmonitor.app/dashboard" target="_blank" rel="noopener">Dashboard öffnen</a><a href="https://godview.kandzior.de" target="_blank" rel="noopener">God View</a></div></div>';
+    host.innerHTML=html;
+    var q=document.getElementById('q');if(q&&q.value)q.dispatchEvent(new Event('input'));
+  }
+  function renderLive(){
+    var el=document.getElementById('live'), t=document.getElementById('live-t');
+    if(state.conn<0){el.classList.remove('on');t.textContent='Live-Daten nur im Claude-Viewer mit verbundenen Konnektoren.';return}
+    if(state.stamp){el.classList.add('on');var d=new Date(state.stamp);t.textContent='Live · Stand '+fmtTime(d)+' Uhr';}
+  }
+  var raf=0;function render(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;renderAgenda();renderTiles();renderLive()})}
+  render();
+
+  // Live-Anbindung
+  var subs=[];
+  function stamp(r){var s=r&&r.cache&&r.cache.storedAt||Date.now();if(s>state.stamp)state.stamp=s}
+  function watch(mcp,server,tool,input,id,onData){
+    subs.push(mcp.watchTool(server,tool,input,function(ev){
+      if(ev.type==='data'){delete state.err[id];stamp(ev.result);try{onData(ev.result)}catch(e){}}
+      else{state.err[id]=errText(server,ev.error);if(DENY[ev.error&&ev.error.code])onData(null)}
+      render();
+    },{cache:{staleTime:60000,gcTime:86400000},refetchInterval:600000}));
+  }
+  function connect(mcp){
+    subs.forEach(function(u){try{u()}catch(e){}});subs=[];
+    GCALS.forEach(function(c){
+      watch(mcp,'Google Calendar','list_events',{calendarId:c.id,startTime:isoLocal(start),endTime:isoLocal(end),orderBy:'startTime',pageSize:100,timeZone:TZ},'cal:g:'+c.id,
+        function(r){if(r)state.cal['g:'+c.id]=normGoogle(r,c);else delete state.cal['g:'+c.id]});
+    });
+    watch(mcp,'Microsoft 365','outlook_calendar_search',{query:'*',afterDateTime:dayKey(start),beforeDateTime:dayKey(end),order:'oldest',limit:25},'cal:outlook',
+      function(r){if(r)state.cal.outlook=normOutlook(r);else delete state.cal.outlook});
+    AREAS.forEach(function(a){
+      a.mail.forEach(function(m,i){
+        var id='mail:'+a.key+':'+i;
+        var set=function(v){if(v)state.mail[id]=v;else delete state.mail[id]};
+        if(m.s==='gmail')watch(mcp,'Gmail','search_threads',{query:m.q,pageSize:10},id,function(r){set(r&&normGmail(r))});
+        else if(m.s==='outlook')watch(mcp,'Microsoft 365','outlook_email_search',{query:m.q,afterDateTime:'30 days ago',limit:10},id,function(r){set(r&&normOutlookMail(r))});
+        else if(m.s==='outlook-inbox')watch(mcp,'Microsoft 365','outlook_email_search',{folderName:'Inbox',order:'newest',limit:25},id,function(r){set(r&&normOutlookMail(r))});
+      });
+    });
+  }
+  var mcpRef=null;
+  try{
+    window.claude&&window.claude.use&&window.claude.use('mcp').then(function(mcp){
+      if(!mcp){state.conn=-1;render();return}
+      mcpRef=mcp;state.conn=1;connect(mcp);
+    },function(){state.conn=-1;render()});
+    if(!(window.claude&&window.claude.use)){state.conn=-1;render()}
+  }catch(e){state.conn=-1;render()}
+  document.getElementById('reload').addEventListener('click',function(){
+    if(!mcpRef)return;
+    var p=mcpRef.invalidate();(p&&p.catch?p:Promise.resolve()).catch(function(){}).then(function(){connect(mcpRef)});
   });
 })();
 </script>
