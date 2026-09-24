@@ -33,6 +33,8 @@ function konfigLaden(): array
         'adminEmail' => '',
         'adminPasswortHash' => '',
         'einladungscode' => '',
+        // Name auf den Teilnahmebestätigungen; leer = Vorgabe der Kursseite.
+        'aussteller' => '',
         'daten' => '',
         'salz' => '',
         'erlaubteHerkunft' => [],
@@ -243,7 +245,8 @@ function apiBearbeiten(PDO $db, array $konfig, string $aktion, string $methode, 
 
     switch ($aktion) {
         case 'ich':
-            $antwort = ['angemeldet' => $benutzer !== null, 'csrf' => $sitzung['csrf'], 'registrierung' => true];
+            $antwort = ['angemeldet' => $benutzer !== null, 'csrf' => $sitzung['csrf'], 'registrierung' => true,
+                'aussteller' => (string) $konfig['aussteller']];
             if ($benutzer !== null) {
                 $antwort['benutzer'] = benutzerOeffentlich($benutzer);
                 $a = $db->prepare('SELECT stand_json, aktualisiert_am FROM lernstand WHERE benutzer_id = ?');

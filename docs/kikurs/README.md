@@ -102,6 +102,19 @@ laufen. Der Data-Table-Knoten braucht eine neuere n8n-Version. Fehlt er,
 ersetzt man ihn durch Google Sheets oder Excel. Als Modell ist Anthropic
 eingetragen, jedes andere Chat-Model-Knoten-Paar funktioniert genauso.
 
+## Teilnahmebestätigung (PDF)
+
+Wer alle Module eines Kurses abgeschlossen hat (Lektionen abgehakt, jedes
+Quiz ab 70 %), kann auf der Seite „Teilnahmebestätigung“ ein PDF
+herunterladen: A4 quer, mit Name, Kurs, Inhalt, Umfang, Abschlussdatum,
+Nachweisnummer und **Martin Kandzior** als Aussteller (Kursleitung KI-ckoff).
+Das PDF entsteht im Browser. Die Seite wird auf eine Leinwand gezeichnet und
+als PDF 1.4 mit Titel und Autor verpackt, ohne Bibliothek und ohne Server.
+Den Namen der ausstellenden Person setzt der Workflow über die Eingabe
+`aussteller` in `kikurs-config.php`. Ohne Server gilt die Vorgabe in `kurs.js`.
+Die Nachweisnummer ergibt sich aus Kurs, Name und Abschlussdatum und bleibt
+darum bei jedem erneuten Herunterladen gleich.
+
 ## Mehrere Teilnehmende
 
 Die Kursseite ist statisch, dazu kommt eine kleine PHP-Schnittstelle
@@ -119,7 +132,8 @@ Die Kursseite ist statisch, dazu kommt eine kleine PHP-Schnittstelle
 - Ohne Server (Datei direkt geöffnet, statische Vorschau) läuft der Kurs wie
   bisher mit Lernstand nur im Browser.
 
-Tests: `php kikurs/tests/lauf.php` (Schnittstelle, Kursdaten, Filme, Vorlagen),
+Tests: `php kikurs/tests/lauf.php` (Schnittstelle, Kursdaten, Filme, Vorlagen)
+und `node kikurs/tests/ablauf.mjs` (Browser: ganzer Einstieg bis zum PDF),
 in CI über `.github/workflows/kikurs-tests.yml`.
 
 ## Livegang auf ki-ckoff.kandzior.de

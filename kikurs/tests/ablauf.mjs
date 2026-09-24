@@ -24,7 +24,7 @@ const kurs = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'kikurs-ablauf-'));
 const hash = (await import('node:child_process')).execFileSync('php', ['-r', 'echo password_hash("leitung-geheim-1", PASSWORD_DEFAULT);']).toString();
 fs.writeFileSync(path.join(tmp, 'konfig.php'), `<?php return ['adminEmail' => 'leitung@example.org', 'adminPasswortHash' => '${hash}',
-  'einladungscode' => 'KICKOFF26', 'daten' => '${tmp}/daten', 'salz' => 'x', 'limit' => ['anfragen' => 100, 'fenster' => 3600]];`);
+  'einladungscode' => 'KICKOFF26', 'aussteller' => 'Martin Kandzior', 'daten' => '${tmp}/daten', 'salz' => 'x', 'limit' => ['anfragen' => 100, 'fenster' => 3600]];`);
 const PORT = 8000 + Math.floor(Math.random() * 900);
 const server = spawn('php', ['-S', `127.0.0.1:${PORT}`, '-t', path.join(kurs, 'public')], { env: { ...process.env, KIKURS_KONFIG: path.join(tmp, 'konfig.php') }, stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 800));
@@ -71,6 +71,27 @@ try {
   await p.waitForFunction(() => document.querySelector('#sync')?.dataset.status === 'ok', null, { timeout: 8000 });
   pruefe(true, 'Lernstand an den Server übertragen');
 
+  // Ganzen Einstieg abschließen und die Teilnahmebestätigung als PDF holen.
+  const einstieg = await p.evaluate(() => window.EINSTIEG.module.map((m) => ({ id: m.id, lektionen: m.lektionen.map((l) => l.id), quiz: m.quiz.map((q) => q.richtig) })));
+  for (const m of einstieg) {
+    await p.evaluate((h) => { location.hash = h; }, m.id);
+    await p.waitForSelector(`[data-lektion="${m.lektionen[0]}"]`, { state: 'attached' });
+    for (const id of m.lektionen) {
+      await p.evaluate((x) => { document.querySelector(`details[data-id="${x}"]`).open = true; }, id);
+      await p.click(`[data-lektion="${id}"]`);
+    }
+    for (let n = 0; n < m.quiz.length; n++) await p.click(`.quiz .frage[data-n="${n}"] .antwort[data-k="${m.quiz[n]}"]`);
+  }
+  await p.evaluate(() => { location.hash = 'einstieg-zertifikat'; });
+  await p.waitForSelector('[data-aktion="zertifikat-pdf"]:not([disabled])');
+  pruefe((await p.textContent('.zertifikat')).includes('Martin Kandzior'), 'Bestätigung nennt den Aussteller aus der Konfiguration');
+  const [download] = await Promise.all([p.waitForEvent('download'), p.click('[data-aktion="zertifikat-pdf"]')]);
+  const pdfPfad = path.join(tmp, 'bestaetigung.pdf');
+  await download.saveAs(pdfPfad);
+  const pdf = fs.readFileSync(pdfPfad);
+  pruefe(pdf.subarray(0, 5).toString() === '%PDF-' && pdf.length > 50000 && download.suggestedFilename().includes('Einstieg'), `PDF heruntergeladen (${download.suggestedFilename()}, ${Math.round(pdf.length / 1024)} KB)`);
+  console.log('PDF:', pdfPfad);
+
   // Neuer Browser ohne lokale Daten: Stand muss vom Server kommen.
   const ctx2 = await browser.newContext();
   const p2 = await neueSeite(ctx2);
@@ -99,7 +120,7 @@ try {
   await p3.click('a[href="#teilnehmende"]');
   await p3.waitForSelector('.tn-tabelle');
   const zeile = await p3.textContent('.tn-tabelle');
-  pruefe(zeile.includes('Anna Beispiel') && zeile.includes('1/10') && zeile.includes('0/7'), 'Kursleitung sieht Anna: Werkstatt 1/10, Einstieg 0/7');
+  pruefe(zeile.includes('Anna Beispiel') && zeile.includes('1/10') && zeile.includes('7/7'), 'Kursleitung sieht Anna: Werkstatt 1/10, Einstieg 7/7');
   await p3.fill('#einladung-bemerkung', 'Team Blau');
   await p3.click('#einladung-form button');
   await p3.waitForFunction(() => document.body.textContent.includes('Team Blau'));

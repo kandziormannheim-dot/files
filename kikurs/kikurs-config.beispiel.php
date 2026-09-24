@@ -12,6 +12,8 @@ return [
     'adminPasswortHash' => '',
     // Gemeinsamer Code für die Selbstregistrierung; '' = nur Einmalcodes.
     'einladungscode' => '',
+    // Name der ausstellenden Person auf den Teilnahmebestätigungen (PDF).
+    'aussteller' => 'Martin Kandzior',
     'daten' => '/pfad/zu/kikurs-daten',
     'salz' => 'zufaellig-und-lang',
 ];

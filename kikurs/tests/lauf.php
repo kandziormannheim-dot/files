@@ -25,6 +25,7 @@ $konfig = array_replace_recursive(konfigLaden(), [
     'adminEmail' => 'leitung@example.org',
     'adminPasswortHash' => password_hash('leitung-geheim-1', PASSWORD_DEFAULT),
     'einladungscode' => 'KICKOFF26',
+    'aussteller' => 'Martin Kandzior',
     'daten' => $verz,
     'salz' => 'test',
     'limit' => ['anfragen' => 5, 'fenster' => 3600],
@@ -49,6 +50,7 @@ function anfrage(string $aktion, string $methode = 'GET', array $eingabe = [], ?
 // --- Grundlagen
 [$s, $a] = anfrage('ich');
 pruefe($s === 200 && $a['angemeldet'] === false && strlen($a['csrf']) === 32, 'ich: ohne Anmeldung, mit CSRF-Wert');
+pruefe($a['aussteller'] === 'Martin Kandzior', 'ich: liefert den Aussteller aus der Konfiguration');
 $leer = [];
 [$s] = anfrage('stand', 'POST', ['stand' => []], $leer);
 pruefe($s === 401, 'stand ohne Anmeldung: 401');

@@ -47,6 +47,11 @@ on:
         required: false
         default: ""
         type: string
+      aussteller:
+        description: "Name der ausstellenden Person auf den Teilnahmebestätigungen (PDF)"
+        required: true
+        default: Martin Kandzior
+        type: string
       subdomain:
         description: "Vollständige Subdomain"
         required: true
@@ -229,6 +234,7 @@ jobs:
           ADMIN_EMAIL: ${{ inputs.admin_email }}
           ADMIN_PASS: ${{ inputs.admin_passwort || secrets.KIKURS_ADMIN_PASSWORT }}
           CODE_EINGABE: ${{ inputs.einladungscode }}
+          AUSSTELLER: ${{ inputs.aussteller }}
         run: |
           set -euo pipefail
           HOST=${PLESK#https://}; HOST=${HOST%:8443}
@@ -247,6 +253,9 @@ jobs:
             CODE=$(openssl rand -base64 12 | tr -dc 'A-HJ-NP-Z2-9' | head -c 10)
           fi
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          # Einfache Anführungszeichen für den PHP-String maskieren.
+          AUSSTELLER_PHP=${AUSSTELLER//\\/\\\\}
+          AUSSTELLER_PHP=${AUSSTELLER_PHP//\'/\\\'}
           cat > /tmp/kikurs-config.php <<KONF
           <?php
 
@@ -261,6 +270,7 @@ jobs:
               'adminEmail' => '$ADMIN_EMAIL',
               'adminPasswortHash' => '$HASH',
               'einladungscode' => '$CODE',
+              'aussteller' => '$AUSSTELLER_PHP',
               'daten' => '$HOME_DIR/kikurs-daten',
               'salz' => '$SALZ',
           ];

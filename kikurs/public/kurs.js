@@ -16,7 +16,9 @@
   // W die Werkstatt (sie bringt Prompts, Vorlagen und Werkzeuge mit).
   const W = window.KURS, G = window.GRAFIKEN;
   const KURSE = [window.EINSTIEG, W].filter(Boolean);
-  const PLATTFORM = { titel: "KI-ckoff", untertitel: "Dein Weg in die KI-Welt" };
+  // Aussteller der Teilnahmebestätigung; auf dem Server überschreibt ihn
+  // 'aussteller' aus kikurs-config.php (kommt mit api.php?aktion=ich).
+  const PLATTFORM = { titel: "KI-ckoff", untertitel: "Dein Weg in die KI-Welt", aussteller: "Martin Kandzior", ausstellerRolle: "Kursleitung KI-ckoff" };
   let K = KURSE[0];
   const kursVon = (m) => KURSE.find((k) => k.module.includes(m)) || K;
   const SPEICHER = "ki-werkstatt-v1";
@@ -25,7 +27,7 @@
   const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
   /* ---------- Zustand ---------- */
-  const leer = () => ({ fertig: {}, quiz: {}, selbst: {}, baukasten: {}, rechner: {}, canvas: {}, name: "" });
+  const leer = () => ({ fertig: {}, quiz: {}, selbst: {}, baukasten: {}, rechner: {}, canvas: {}, abschluss: {}, name: "" });
   let Z = leer();
   let SERVER = null;          // Antwort von api.php?aktion=ich, null = ohne Server
   let speicherSchluessel = SPEICHER;
@@ -37,7 +39,7 @@
   // beim Speichern stillschweigend verlieren. Darum hier normalisieren.
   const zustandSetzen = (daten) => {
     Z = Object.assign(leer(), daten && typeof daten === "object" && !Array.isArray(daten) ? daten : {});
-    for (const k of ["fertig", "quiz", "selbst", "baukasten", "rechner", "canvas"]) {
+    for (const k of ["fertig", "quiz", "selbst", "baukasten", "rechner", "canvas", "abschluss"]) {
       if (!Z[k] || typeof Z[k] !== "object" || Array.isArray(Z[k])) Z[k] = {};
     }
     if (typeof Z.name !== "string") Z.name = "";
@@ -505,23 +507,149 @@
     <input type="search" id="glossar-suche" placeholder="Begriff suchen, z. B. Token" aria-label="Glossar durchsuchen">
     <dl class="glossar" id="glossar-liste">${glossar().map(([b, d]) => `<div data-such="${esc((b + " " + d).toLowerCase())}"><dt>${esc(b)}</dt><dd>${esc(d)}</dd></div>`).join("")}</dl></div>`;
 
-  seiten.zertifikat = () => {
+  /* ---------- Teilnahmebestätigung ---------- */
+  const aussteller = () => ({
+    name: (SERVER && SERVER.aussteller) || PLATTFORM.aussteller,
+    rolle: PLATTFORM.ausstellerRolle,
+  });
+  const datumText = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
+  // Nachweisnummer: aus Kurs, Name und Abschlussdatum abgeleitet, damit sie
+  // bei jedem erneuten Herunterladen gleich bleibt.
+  const nachweisNr = (kurs, name, datum) => {
+    let h = 2166136261;
+    for (const c of kurs.id + "|" + name.trim().toLowerCase() + "|" + datum) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; }
+    const z = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = ""; for (let i = 0; i < 8; i++) { code += z[h % 32]; h = Math.floor(h / 32) ^ (i * 2654435761 >>> 0); h >>>= 0; }
+    return `KC-${kurs.kurzname.slice(0, 3).toUpperCase()}-${datum.slice(0, 4)}-${code}`;
+  };
+  function zertifikatDaten() {
     const f = fortschritt(), alle = f.module === K.module.length;
+    if (alle && !Z.abschluss[K.id]) { Z.abschluss[K.id] = new Date().toISOString().slice(0, 10); sichern(); }
+    const datum = Z.abschluss[K.id] || new Date().toISOString().slice(0, 10);
+    const name = (Z.name || "").trim();
+    return { alle, datum, name, nr: nachweisNr(K, name || "?", datum), a: aussteller() };
+  }
+
+  seiten.zertifikat = () => {
+    const d = zertifikatDaten();
     const offen = K.module.filter((m) => modulStatus(m) !== "fertig");
-    const heute = new Date().toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
     return `<div class="spalte">
       <div class="modul-kopf"><span class="eyebrow">Abschluss · ${esc(K.titel)}</span><h1>Teilnahmebestätigung</h1>
-        <p>${alle ? "Glückwunsch, alle Module sind abgeschlossen. Mach einen Screenshot als Nachweis für die KI-Kompetenz nach Artikel 4 EU AI Act." : `Das Zertifikat schaltet sich frei, wenn alle Module fertig sind (Lektionen abgehakt, Quiz ab ${Math.round(K.bestehen * 100)} %). Noch offen: ${offen.map((m) => `<a href="#${m.id}">Modul ${m.nr}</a>`).join(", ")}.`}</p></div>
-      <div class="feld"><label for="z-name">Name auf dem Zertifikat</label><input type="text" id="z-name" value="${esc(Z.name)}" placeholder="Vor- und Nachname"></div>
-      <div class="zertifikat ${alle ? "" : "gesperrt"}">
+        <p>${d.alle ? "Glückwunsch, alle Module sind abgeschlossen. Lade deine Bestätigung als PDF herunter, zum Beispiel als Nachweis der KI-Kompetenz nach Artikel 4 EU AI Act." : `Die Bestätigung schaltet sich frei, wenn alle Module fertig sind (Lektionen abgehakt, Quiz ab ${Math.round(K.bestehen * 100)} %). Noch offen: ${offen.map((m) => `<a href="#${m.id}">Modul ${m.nr}</a>`).join(", ")}.`}</p></div>
+      <div class="feld"><label for="z-name">Name auf der Bestätigung</label><input type="text" id="z-name" value="${esc(Z.name)}" placeholder="Vor- und Nachname"></div>
+      <div class="zertifikat ${d.alle ? "" : "gesperrt"}">
         ${G.marke()}<span class="eyebrow">${esc(PLATTFORM.titel)} · ${esc(K.titel)} · Selbstlernkurs</span>
         <h2>${esc(K.untertitel)}</h2>
         <p style="margin:0">Hiermit wird bestätigt, dass</p>
-        <div class="name" id="z-anzeige">${esc(Z.name || "Dein Name")}</div>
+        <div class="name" id="z-anzeige">${esc(d.name || "Dein Name")}</div>
         <p style="margin:0;max-width:52ch">${esc(K.zertifikatText)} Umfang ca. ${zahl(stundenGesamt())} Stunden.</p>
-        <p class="eyebrow" style="margin:0">${alle ? heute : "noch nicht freigeschaltet"}</p>
-      </div></div>`;
+        <div class="z-fuss"><span><b>${esc(d.a.name)}</b><br><small>${esc(d.a.rolle)}</small></span>
+          <span><b>${d.alle ? datumText(d.datum) : "noch nicht freigeschaltet"}</b><br><small>Nachweis-Nr. ${d.alle ? d.nr : "–"}</small></span></div>
+      </div>
+      <div class="chips"><button class="knopf" data-aktion="zertifikat-pdf" ${d.alle ? "" : "disabled"}>Als PDF herunterladen</button></div>
+      <p class="formular-meldung" id="z-meldung" role="status"></p>
+    </div>`;
   };
+
+  /* Bestätigung auf eine Leinwand zeichnen (A4 quer) und als PDF verpacken. */
+  async function zertifikatPdf() {
+    const d = zertifikatDaten();
+    if (!d.alle) return;
+    if (!d.name) { $("#z-meldung").textContent = "Bitte trag zuerst deinen Namen ein."; $("#z-name").focus(); return; }
+    if (document.fonts) await document.fonts.ready;
+    const B = 3508, H = 2480; // A4 quer bei 300 dpi
+    const c = document.createElement("canvas"); c.width = B; c.height = H;
+    const g = c.getContext("2d");
+    const farbe = { tinte: "#14222a", tinte2: "#4a5b62", akzent: "#0d6e66", hell: "#d4ebe7", notiz: "#f4d35e", linie: "#c9d3cf" };
+    const schrift = (gewicht, px, familie) => `${gewicht} ${px}px ${familie}, "Segoe UI", Arial, sans-serif`;
+    const TITEL = '"Bricolage Grotesque"', TEXT = '"IBM Plex Sans"', MONO = '"IBM Plex Mono"';
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, B, H);
+    g.strokeStyle = farbe.akzent; g.lineWidth = 14; g.strokeRect(110, 110, B - 220, H - 220);
+    g.lineWidth = 4; g.strokeRect(150, 150, B - 300, H - 300);
+    // Marke
+    const mx = B / 2 - 90, my = 290;
+    const rund = (x, y, w, h, r, f) => { g.beginPath(); g.roundRect(x, y, w, h, r); g.fillStyle = f; g.fill(); };
+    rund(mx, my, 180, 180, 40, farbe.akzent);
+    rund(mx + 36, my + 40, 46, 46, 10, farbe.notiz); rund(mx + 98, my + 40, 46, 46, 10, "#fff"); rund(mx + 36, my + 100, 46, 46, 10, "#fff");
+    g.strokeStyle = "#fff"; g.lineWidth = 13; g.lineCap = "round"; g.lineJoin = "round";
+    g.beginPath(); g.moveTo(mx + 102, my + 124); g.lineTo(mx + 118, my + 140); g.lineTo(mx + 148, my + 104); g.stroke();
+    const mitte = (text, y, font, f, abstand = 0) => { g.font = font; g.fillStyle = f; g.textAlign = "center"; if (g.letterSpacing !== undefined) g.letterSpacing = abstand + "px"; g.fillText(text, B / 2, y); if (g.letterSpacing !== undefined) g.letterSpacing = "0px"; };
+    mitte(`${PLATTFORM.titel} · ${K.titel} · Selbstlernkurs`.toUpperCase(), 600, schrift(600, 46, MONO), farbe.tinte2, 8);
+    mitte("Teilnahmebestätigung", 790, schrift(700, 150, TITEL), farbe.tinte);
+    mitte(K.untertitel, 900, schrift(600, 70, TITEL), farbe.akzent);
+    mitte("Hiermit wird bestätigt, dass", 1060, schrift(400, 56, TEXT), farbe.tinte2);
+    let namePx = 130; g.font = schrift(700, namePx, TITEL);
+    while (g.measureText(d.name).width > B - 900 && namePx > 70) { namePx -= 6; g.font = schrift(700, namePx, TITEL); }
+    mitte(d.name, 1230, schrift(700, namePx, TITEL), farbe.tinte);
+    g.strokeStyle = farbe.linie; g.lineWidth = 4; g.beginPath(); g.moveTo(B / 2 - 900, 1280); g.lineTo(B / 2 + 900, 1280); g.stroke();
+    // Fließtext umbrechen
+    g.font = schrift(400, 52, TEXT);
+    const woerter = `${K.zertifikatText} Umfang ca. ${zahl(stundenGesamt())} Stunden.`.split(" ");
+    const zeilen = []; let zeile = "";
+    for (const w of woerter) { const t = zeile ? zeile + " " + w : w; if (g.measureText(t).width > 2300) { zeilen.push(zeile); zeile = w; } else zeile = t; }
+    if (zeile) zeilen.push(zeile);
+    zeilen.forEach((z, i) => mitte(z, 1400 + i * 76, schrift(400, 52, TEXT), farbe.tinte));
+    // Fuß: Datum und Aussteller
+    const fussY = H - 470;
+    const block = (x, oben, unten, klein) => {
+      g.textAlign = "center"; g.strokeStyle = farbe.tinte2; g.lineWidth = 3; g.beginPath(); g.moveTo(x - 500, fussY); g.lineTo(x + 500, fussY); g.stroke();
+      g.font = schrift(700, 56, TITEL); g.fillStyle = farbe.tinte; g.fillText(oben, x, fussY - 30);
+      g.font = schrift(400, 44, TEXT); g.fillStyle = farbe.tinte2; g.fillText(unten, x, fussY + 70);
+      if (klein) { g.font = schrift(500, 36, MONO); g.fillText(klein, x, fussY + 130); }
+    };
+    block(B / 2 - 850, datumText(d.datum), "Datum des Abschlusses", "Nachweis-Nr. " + d.nr);
+    block(B / 2 + 850, d.a.name, "Aussteller · " + d.a.rolle, "");
+    mitte("Selbstlernkurs mit Lektionen, Übungen und bestandenen Wissenschecks in allen Modulen.", H - 230, schrift(400, 38, TEXT), farbe.tinte2);
+
+    const jpeg = new Uint8Array(await (await new Promise((r) => c.toBlob(r, "image/jpeg", 0.92))).arrayBuffer());
+    const pdf = pdfAusJpeg(jpeg, B, H, `Teilnahmebestätigung ${K.titel} – ${d.name}`, d.a.name);
+    const datei = `Teilnahmebestaetigung-${K.kurzname}-${d.name.replace(/[^A-Za-zÄÖÜäöüß0-9]+/g, "-")}.pdf`;
+    const url = URL.createObjectURL(new Blob([pdf], { type: "application/pdf" }));
+    const a = document.createElement("a"); a.href = url; a.download = datei; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    $("#z-meldung").dataset.gut = "ja";
+    $("#z-meldung").textContent = `PDF erstellt: ${datei}. Falls kein Download startet, erlaubt diese Ansicht keine Downloads. Öffne den Kurs dann direkt im Browser.`;
+  }
+
+  /* Minimales PDF (1.4) mit einer Seite A4 quer, die das JPEG ganzseitig zeigt. */
+  function pdfAusJpeg(jpeg, bPx, hPx, titel, autor) {
+    const enc = new TextEncoder();
+    const utf16 = (t) => "<FEFF" + [...t].map((ch) => { const cp = ch.codePointAt(0);
+      const u = cp > 0xffff ? [0xd800 + ((cp - 0x10000) >> 10), 0xdc00 + ((cp - 0x10000) & 0x3ff)] : [cp];
+      return u.map((x) => x.toString(16).padStart(4, "0").toUpperCase()).join(""); }).join("") + ">";
+    const B = 841.89, H = 595.28;
+    const inhalt = `q ${B} 0 0 ${H} 0 0 cm /Bild Do Q`;
+    const jetzt = new Date(), p2 = (n) => String(n).padStart(2, "0");
+    const zeit = `D:${jetzt.getUTCFullYear()}${p2(jetzt.getUTCMonth() + 1)}${p2(jetzt.getUTCDate())}${p2(jetzt.getUTCHours())}${p2(jetzt.getUTCMinutes())}00Z`;
+    const objekte = [
+      "<< /Type /Catalog /Pages 2 0 R >>",
+      "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${B} ${H}] /Resources << /XObject << /Bild 5 0 R >> >> /Contents 4 0 R >>`,
+      `<< /Length ${inhalt.length} >>\nstream\n${inhalt}\nendstream`,
+      null, // Bild, binär
+      `<< /Title ${utf16(titel)} /Author ${utf16(autor)} /Creator ${utf16(PLATTFORM.titel)} /CreationDate (${zeit}) >>`,
+    ];
+    const teile = [enc.encode("%PDF-1.4\n%âãÏÓ\n")];
+    const versatz = [];
+    let laenge = teile[0].length;
+    objekte.forEach((o, i) => {
+      versatz.push(laenge);
+      let stueck;
+      if (o === null) {
+        const kopf = enc.encode(`${i + 1} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${bPx} /Height ${hPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
+        const fuss = enc.encode("\nendstream\nendobj\n");
+        stueck = new Uint8Array(kopf.length + jpeg.length + fuss.length);
+        stueck.set(kopf); stueck.set(jpeg, kopf.length); stueck.set(fuss, kopf.length + jpeg.length);
+      } else stueck = enc.encode(`${i + 1} 0 obj\n${o}\nendobj\n`);
+      teile.push(stueck); laenge += stueck.length;
+    });
+    const xref = `xref\n0 ${objekte.length + 1}\n0000000000 65535 f \n` + versatz.map((v) => String(v).padStart(10, "0") + " 00000 n \n").join("") +
+      `trailer\n<< /Size ${objekte.length + 1} /Root 1 0 R /Info 6 0 R >>\nstartxref\n${laenge}\n%%EOF\n`;
+    teile.push(enc.encode(xref));
+    const gesamt = new Uint8Array(teile.reduce((a, t) => a + t.length, 0));
+    let pos = 0; teile.forEach((t) => { gesamt.set(t, pos); pos += t.length; });
+    return gesamt;
+  }
 
   seiten.vorlagen = () => `<div class="spalte">
     <div class="modul-kopf"><span class="eyebrow">Werkzeug · Module 4 bis 6</span><h1>n8n-Vorlagen</h1>
@@ -801,6 +929,7 @@
       });
       sichern(); baukastenText(); return;
     }
+    if (t.dataset.aktion === "zertifikat-pdf") { zertifikatPdf().catch((e) => { $("#z-meldung").textContent = "PDF ließ sich nicht erzeugen: " + e.message; }); return; }
     if (t.dataset.aktion === "canvas-kopieren") { kopieren($("#canvas-text").textContent, t); return; }
   });
 
@@ -810,7 +939,7 @@
     else if (t.closest("#baukasten")) { Z.baukasten[t.name] = t.value; sichern(); baukastenText(); }
     else if (t.closest("#rechner")) { Z.rechner[t.name] = t.value; sichern(); rechnerAuswerten(); }
     else if (t.closest("#canvas")) { Z.canvas[t.name] = t.value; sichern(); canvasAuswerten(); }
-    else if (t.id === "z-name") { Z.name = t.value; sichern(); $("#z-anzeige").textContent = t.value || "Dein Name"; }
+    else if (t.id === "z-name") { Z.name = t.value; sichern(); $("#z-anzeige").textContent = t.value || "Dein Name"; $("#z-meldung").textContent = ""; }
     else if (t.id === "glossar-suche") {
       const s = t.value.trim().toLowerCase();
       document.querySelectorAll("#glossar-liste > div").forEach((d) => { d.hidden = !!s && !d.dataset.such.includes(s); });

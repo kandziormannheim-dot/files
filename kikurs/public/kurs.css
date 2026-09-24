@@ -427,3 +427,6 @@ body.filmbild .fb-titel .eyebrow { font-size: 16px; }
 .kurskarte p { margin: 0; color: var(--tinte-2); font-size: .95rem; }
 .kurskarte .kk-fuss { display: grid; gap: 6px; margin-top: 6px; }
 .kurskarte small { color: var(--tinte-2); }
+.zertifikat .z-fuss { display: flex; justify-content: space-around; gap: 24px; flex-wrap: wrap; width: 100%; margin-top: 8px; font-size: .95rem; }
+.zertifikat .z-fuss > span { border-top: 1px solid var(--linie); padding-top: 8px; min-width: 200px; }
+.zertifikat .z-fuss small { color: var(--tinte-2); }
