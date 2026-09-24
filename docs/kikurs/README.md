@@ -132,9 +132,9 @@ Die Kursseite ist statisch, dazu kommt eine kleine PHP-Schnittstelle
 - Ohne Server (Datei direkt geöffnet, statische Vorschau) läuft der Kurs wie
   bisher mit Lernstand nur im Browser.
 
-Tests: `php kikurs/tests/lauf.php` (Schnittstelle, Kursdaten, Filme, Vorlagen)
-und `node kikurs/tests/ablauf.mjs` (Browser: ganzer Einstieg bis zum PDF),
-in CI über `.github/workflows/kikurs-tests.yml`.
+Tests: `php kikurs/tests/lauf.php` (Schnittstelle, Kursdaten, Filme, Vorlagen),
+auch in CI über `.github/workflows/kikurs-tests.yml`. Dazu kommt lokal
+`node kikurs/tests/ablauf.mjs` (Browser mit PHP-Server: ganzer Einstieg bis zum PDF).
 
 ## Livegang auf ki-ckoff.kandzior.de
 
