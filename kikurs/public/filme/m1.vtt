@@ -1,0 +1,17 @@
+WEBVTT
+
+1
+00:00:07.080 --> 00:00:16.506
+Du schreibst einen Satz. Das Sprachmodell zerlegt ihn zuerst in Tokens, also in Wörter und Wortstücke.
+
+2
+00:00:16.705 --> 00:00:27.569
+Für jedes denkbare nächste Token berechnet es eine Wahrscheinlichkeit. Hier liegt ‚blockiert‘ vorn, weil der Satz nach einem typischen Daily klingt.
+
+3
+00:00:27.769 --> 00:00:38.054
+Ein Token wird gezogen und angehängt. Dann beginnt die Rechnung von vorn, Token für Token, bis die Antwort fertig ist.
+
+4
+00:00:38.249 --> 00:00:48.232
+Merke: Die KI schlägt nichts nach. Sie erzeugt die plausibelste Fortsetzung. Deshalb ist guter Kontext so wichtig.

@@ -1,0 +1,36 @@
+# Tests der KI-Werkstatt bei jedem Push, der kikurs/ berührt: PHP-Syntax,
+# Schnittstelle (Konten, Einladungen, Lernstand, Admin) und die Kursdaten
+# (Grafiken, Filme, Quizfragen, n8n-Vorlagen). Die Filme selbst werden nicht
+# hier erzeugt, sondern lokal mit kikurs/werkzeuge/filme-rendern.mjs.
+
+name: KI-Werkstatt Tests
+
+on:
+  push:
+    paths: ['kikurs/**', '.github/workflows/kikurs-tests.yml']
+  pull_request:
+    paths: ['kikurs/**', '.github/workflows/kikurs-tests.yml']
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PHP 8.2 wie auf dem Plesk-Server
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_sqlite, mbstring
+          coverage: none
+
+      - name: Syntax
+        run: |
+          set -e
+          find kikurs -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          for f in kikurs/public/*.js; do node --check "$f"; done
+          echo "PHP- und JS-Dateien syntaktisch in Ordnung."
+
+      - name: Schnittstelle und Kursdaten
+        run: php kikurs/tests/lauf.php

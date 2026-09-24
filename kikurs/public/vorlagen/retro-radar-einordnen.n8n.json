@@ -1,0 +1,274 @@
+{
+  "name": "KI-Werkstatt · Retro-Radar: einordnen",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Retro-Radar: einordnen (Modul 5)\n1. Im **Chat Model** euer Modell-Credential wählen (jedes Chat-Model-Knoten-Paar geht, z. B. OpenAI oder Gemini statt Anthropic).\n2. Unter **Data Tables** eine Tabelle *retro_feedback* mit den Spalten sprint, thema, stimmung, kernaussage, sicher, original anlegen und in **Speichern** auswählen.\n3. Empfänger in **Zur Prüfung an dich** eintragen.\n4. Mit 20 Test-Einträgen die Trefferquote messen.",
+        "width": 460,
+        "height": 300,
+        "color": 6
+      },
+      "id": "dcb25e6e-aa40-5a24-bbc9-322842022aba",
+      "name": "Anleitung",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -340
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Retro-Feedback (anonym)",
+        "formDescription": "Bitte keine Namen nennen. Die Antworten werden vor der Retro ausgewertet.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Sprint",
+              "placeholder": "z. B. 14",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Was lief gut?",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Was hat gebremst?",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Idee für den nächsten Sprint",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "487cef81-59ba-59ff-ac40-8b3a2285d8fc",
+      "name": "Formular: Retro-Feedback",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "c45b4cea-b0c6-511a-8cc6-08e635691d89"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Du ordnest anonymes Retrospektiven-Feedback eines Scrum-Teams ein.\nThemen: Zusammenarbeit, Prozess, Technik, Stakeholder, Arbeitslast, Sonstiges.\nstimmung: -1 negativ, 0 neutral, 1 positiv.\nkernaussage: höchstens 12 Wörter, neutral formuliert, ohne Namen.\nsicher: false, wenn das Feedback mehrdeutig ist.\n\nFeedback:\nGut: {{ $json['Was lief gut?'] }}\nGebremst: {{ $json['Was hat gebremst?'] }}\nIdee: {{ $json['Idee für den nächsten Sprint'] }}",
+        "hasOutputParser": true
+      },
+      "id": "b691654d-08bf-51ea-9492-a7817062bdf5",
+      "name": "KI: einordnen",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5",
+          "cachedResultName": "Claude Sonnet 5"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "1ac51739-90f5-5040-a42b-4893ccf80ada",
+      "name": "Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        200,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"thema\": \"Prozess\",\n  \"stimmung\": -1,\n  \"kernaussage\": \"Reviews dauern zu lange\",\n  \"sicher\": true\n}"
+      },
+      "id": "ee96a5ee-97d9-5127-8fb9-98a0589f0e6f",
+      "name": "JSON-Format",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        380,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "sprint": "={{ $('Formular: Retro-Feedback').item.json.Sprint }}",
+            "thema": "={{ $json.output.thema }}",
+            "stimmung": "={{ $json.output.stimmung }}",
+            "kernaussage": "={{ $json.output.kernaussage }}",
+            "sicher": "={{ $json.output.sicher }}",
+            "original": "={{ JSON.stringify($('Formular: Retro-Feedback').item.json) }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "baedca34-5ed3-53f1-a50b-7c4e40b1a0a1",
+      "name": "Speichern",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        620,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bd4be1fd-758a-5d61-b489-ba1e8c028fd6",
+              "leftValue": "={{ $('KI: einordnen').item.json.output.sicher }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "308548e5-9e1f-5714-8d3f-eeed91e4907f",
+      "name": "Unsicher?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        860,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "ki-werkstatt@example.org",
+        "toEmail": "du@example.org",
+        "subject": "Retro-Radar: bitte kurz prüfen",
+        "emailFormat": "text",
+        "text": "=Die KI war sich bei diesem Feedback unsicher:\n\n{{ JSON.stringify($('Formular: Retro-Feedback').item.json, null, 2) }}\n\nVorschlag: {{ $('KI: einordnen').item.json.output.thema }} – {{ $('KI: einordnen').item.json.output.kernaussage }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "5c82df37-adb0-5700-8cad-8739dd378de7",
+      "name": "Zur Prüfung an dich",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        -100
+      ]
+    }
+  ],
+  "connections": {
+    "Formular: Retro-Feedback": {
+      "main": [
+        [
+          {
+            "node": "KI: einordnen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KI: einordnen": {
+      "main": [
+        [
+          {
+            "node": "Speichern",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Speichern": {
+      "main": [
+        [
+          {
+            "node": "Unsicher?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unsicher?": {
+      "main": [
+        [
+          {
+            "node": "Zur Prüfung an dich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "KI: einordnen",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON-Format": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "KI: einordnen",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

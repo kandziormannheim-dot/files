@@ -1,0 +1,384 @@
+# KI-ckoff (kikurs/: KI-Einstieg und KI-Werkstatt) als ki-ckoff.kandzior.de auf dem Plesk-Server
+# einrichten und deployen — nach dem Muster von "SBF-Kurs einrichten"
+# (Schlüssel-Pinning, CLI-Gateway, SSH über frisch gesetztes
+# Systembenutzer-Passwort). Läuft gefahrlos mehrfach: Subdomain und
+# Verzeichnisse werden nur angelegt, wenn sie fehlen; Kursdateien werden
+# aktualisiert; die Konfiguration wird mit dem übergebenen Admin-Passwort und
+# frischem Salz neu geschrieben. Die Datenbank (kikurs-daten/) mit Konten und
+# Lernständen bleibt unangetastet.
+#
+# Vor dem Übertragen laufen Syntaxprüfung und Tests — mit kaputten Inhalten
+# wird nichts deployt.
+#
+# Ablauf auf dem Server (Heimat des Systembenutzers von kandzior.de):
+#
+#   kikurs-app/public/    ← Webroot der Subdomain (Kursseite, Filme, api.php)
+#   kikurs-app/src/       ← Server-Logik der Schnittstelle, nicht ausgeliefert
+#   kikurs-config.php     ← Konfiguration, oberhalb jedes Webroots
+#   kikurs-daten/         ← SQLite, Sitzungen, Spool
+#
+# Voraussetzung: der DNS-Eintrag der Subdomain (Workflow "DNS-Eintrag
+# setzen", Name "ki-ckoff"). Fehlt er noch, läuft alles bis auf Let's Encrypt
+# trotzdem durch — der Zertifikatsschritt warnt dann und lässt sich nach dem
+# DNS-Eintrag einfach wiederholen.
+
+name: KI-ckoff einrichten
+
+on:
+  workflow_dispatch:
+    inputs:
+      plesk_passwort:
+        description: "Plesk-Admin-Passwort (leer = Repository-Secret PLESK_PASSWORT verwenden)"
+        required: false
+        default: ""
+        type: string
+      admin_email:
+        description: "E-Mail des Kursleitungs-Kontos"
+        required: true
+        default: mail@kandzior.de
+        type: string
+      admin_passwort:
+        description: "Passwort der Kursleitung (leer = Repository-Secret KIKURS_ADMIN_PASSWORT; nur der Hash landet auf dem Server)"
+        required: false
+        default: ""
+        type: string
+      einladungscode:
+        description: "Einladungscode für die Selbstregistrierung (leer = erzeugen und in der Zusammenfassung zeigen; '-' = keine Selbstregistrierung)"
+        required: false
+        default: ""
+        type: string
+      aussteller:
+        description: "Name der ausstellenden Person auf den Teilnahmebestätigungen (PDF)"
+        required: true
+        default: Martin Kandzior
+        type: string
+      subdomain:
+        description: "Vollständige Subdomain"
+        required: true
+        default: ki-ckoff.kandzior.de
+        type: string
+      domain:
+        description: "Elterndomain in Plesk"
+        required: true
+        default: kandzior.de
+        type: string
+
+concurrency:
+  group: deploy-plesk
+  cancel-in-progress: false
+
+jobs:
+  einrichten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLESK: https://95.216.18.216:8443
+      DOMAIN: ${{ inputs.domain }}
+      SUB: ${{ inputs.subdomain }}
+    steps:
+      - name: Passwörter auflösen und maskieren
+        # Eingabe geht vor; ohne Eingabe zählen die Repository-Secrets.
+        # Eingaben werden aus dem Ereignis-JSON maskiert — ein Schritt-env
+        # stünde sonst im Protokollkopf, bevor die Maske greift; Secrets
+        # maskiert GitHub von selbst.
+        env:
+          PLESK_PASSWORT: ${{ secrets.PLESK_PASSWORT }}
+          KIKURS_ADMIN_PASSWORT: ${{ secrets.KIKURS_ADMIN_PASSWORT }}
+        run: |
+          EINGABE=$(jq -r '.inputs.plesk_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          [ -n "$EINGABE" ] || [ -n "$PLESK_PASSWORT" ] \
+            || { echo "::error::Kein Plesk-Passwort: weder als Eingabe übergeben noch als Repository-Secret PLESK_PASSWORT hinterlegt (Settings → Secrets and variables → Actions)."; exit 1; }
+          EINGABE=$(jq -r '.inputs.admin_passwort // ""' "$GITHUB_EVENT_PATH")
+          [ -z "$EINGABE" ] || echo "::add-mask::$EINGABE"
+          KURS_PW=${EINGABE:-$KIKURS_ADMIN_PASSWORT}
+          [ -n "$KURS_PW" ] \
+            || { echo "::error::Kein Admin-Passwort für den Kurs: weder als Eingabe übergeben noch als Repository-Secret KIKURS_ADMIN_PASSWORT hinterlegt."; exit 1; }
+          [ "${#KURS_PW}" -ge 10 ] \
+            || { echo "::error::Das Admin-Passwort braucht mindestens 10 Zeichen — die Anwendung verlangt das auch von allen anderen Konten."; exit 1; }
+
+      - name: Quellcode holen
+        uses: actions/checkout@v4
+
+      - name: PHP 8.2 wie auf dem Server
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_sqlite, mbstring
+          coverage: none
+
+      - name: Tests und Inhaltsprüfung — sonst kein Deploy
+        run: |
+          set -e
+          find kikurs -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          php kikurs/tests/lauf.php
+
+      - name: Plesk erreichen und Schlüssel festnageln
+        id: pin
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}
+          PIN=$(openssl s_client -connect "$HOST" -servername plesk </dev/null 2>/dev/null \
+            | openssl x509 -pubkey -noout \
+            | openssl pkey -pubin -outform der \
+            | openssl dgst -sha256 -binary | base64)
+          echo "pin=sha256//$PIN" >> "$GITHUB_OUTPUT"
+          echo "Schlüssel-Fingerabdruck: sha256//$PIN"
+          CODE=$(curl -sk --pinnedpubkey "sha256//$PIN" -o /tmp/server.json -w '%{http_code}' \
+            -u "admin:$PW" "$PLESK/api/v2/server")
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Plesk-API antwortet mit HTTP $CODE — Zugangsdaten oder Erreichbarkeit prüfen."
+            cat /tmp/server.json || true
+            exit 1
+          fi
+          jq -r '"Plesk \(.platform // "?") \(.version // "?")"' /tmp/server.json
+
+      - name: Zugang für diesen Lauf vorbereiten (SSH)
+        id: ssh
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          # Wie im Deploy-Workflow: Systembenutzer ermitteln, Passwort je
+          # Lauf frisch setzen.
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          INFO=$(api -X POST -H 'Content-Type: application/json' \
+            -d '{"params":["--info","'"$DOMAIN"'"]}' "$PLESK/api/v2/cli/site/call")
+          SYSUSER=$(echo "$INFO" | jq -r '.stdout' | sed -n 's/^FTP Login:[[:space:]]*//p' | head -1)
+          [ -n "$SYSUSER" ] || { echo "::error::Systembenutzer nicht ermittelbar."; exit 1; }
+          echo "Systembenutzer: $SYSUSER"
+          SSH_PASS="$(openssl rand -base64 24 | tr -d '/+=' | head -c 20)aZ9!_"
+          echo "::add-mask::$SSH_PASS"
+          OK=""
+          for util in site subscription; do
+            ANTWORT=$(api -X POST -H 'Content-Type: application/json' \
+              -d "$(jq -n --arg d "$DOMAIN" --arg p "$SSH_PASS" '{params:["--update",$d,"-passwd",$p]}')" \
+              "$PLESK/api/v2/cli/$util/call")
+            echo "[$util] $(echo "$ANTWORT" | jq -c '{code, stdout: (.stdout // "")[:200], stderr: (.stderr // "")[:300]}')"
+            if echo "$ANTWORT" | jq -e '.code == 0' >/dev/null; then OK=ja; break; fi
+          done
+          [ "$OK" = ja ] \
+            || { echo "::error::Passwort des Systembenutzers ließ sich nicht setzen."; exit 1; }
+          echo "user=$SYSUSER" >> "$GITHUB_OUTPUT"
+          echo "pass=$SSH_PASS" >> "$GITHUB_OUTPUT"
+
+      - name: Subdomain anlegen (physisch, Webroot kikurs-app/public)
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          zeig() { jq -c '{code, stdout: (.stdout // "")[:300], stderr: (.stderr // "")[:300]}' <<<"$1"; }
+          gut() { echo "$1" | jq -e '.code == 0' >/dev/null; }
+
+          NAME=${SUB%%.*}
+          if gut "$(cli site --info "$SUB")"; then
+            echo "== $SUB existiert schon — Webroot ggf. nachziehen =="
+            A=$(cli subdomain --update "$NAME" -domain "$DOMAIN" -www-root kikurs-app/public)
+            zeig "$A"
+            gut "$A" || echo "::warning::Webroot ließ sich nicht aktualisieren — falls er nicht auf kikurs-app/public zeigt, in Plesk prüfen."
+          else
+            echo "== $SUB anlegen =="
+            # Versuchskette wegen der CLI-Dialekte (gelernt im
+            # Subdomain-Workflow): erst mit verschachteltem Webroot, sonst
+            # anlegen und den Webroot nachträglich setzen.
+            A=$(cli subdomain --create "$NAME" -domain "$DOMAIN" -www-root kikurs-app/public)
+            zeig "$A"
+            if ! gut "$A"; then
+              A=$(cli subdomain --create "$NAME" -domain "$DOMAIN" -www-root "$NAME")
+              zeig "$A"
+              gut "$A" || { echo "::error::Subdomain ließ sich nicht anlegen."; exit 1; }
+              A=$(cli subdomain --update "$NAME" -domain "$DOMAIN" -www-root kikurs-app/public)
+              zeig "$A"
+              gut "$A" || { echo "::error::Webroot ließ sich nicht auf kikurs-app/public setzen — die App darf nicht mit src/ im Webroot laufen."; exit 1; }
+            fi
+          fi
+
+          echo "== Kontrolle =="
+          cli site --info "$SUB" | jq -r '.stdout // .stderr // empty' | sed -n '1,20p'
+
+      - name: App-Dateien übertragen (rsync über SSH)
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q sshpass >/dev/null
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          echo "== Zielstruktur anlegen =="
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" \
+            'mkdir -p kikurs-app/public kikurs-app/src kikurs-daten && chmod 700 kikurs-daten && ls -la kikurs-app'
+          echo "== public/ und src/ übertragen =="
+          for teil in public src; do
+            timeout 300 sshpass -p "$SSH_PASS" rsync -az --delete --itemize-changes \
+              -e "ssh $SSHOPTS" "kikurs/$teil/" "$SSH_USER@$HOST:kikurs-app/$teil/" | tail -20
+          done
+
+      - name: Konfiguration schreiben
+        id: konf
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+          ADMIN_EMAIL: ${{ inputs.admin_email }}
+          ADMIN_PASS: ${{ inputs.admin_passwort || secrets.KIKURS_ADMIN_PASSWORT }}
+          CODE_EINGABE: ${{ inputs.einladungscode }}
+          AUSSTELLER: ${{ inputs.aussteller }}
+        run: |
+          set -euo pipefail
+          HOST=${PLESK#https://}; HOST=${HOST%:8443}
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=15"
+          HOME_DIR=$(timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" 'pwd')
+          echo "Heimatverzeichnis: $HOME_DIR"
+          HASH=$(php -r 'echo password_hash($argv[1], PASSWORD_DEFAULT);' "$ADMIN_PASS")
+          SALZ=$(openssl rand -hex 32)
+          # Einladungscode: Eingabe, sonst frisch erzeugt, '-' schaltet die
+          # Selbstregistrierung ab (dann legt der Admin Konten/Einmalcodes an).
+          if [ "$CODE_EINGABE" = "-" ]; then
+            CODE=""
+          elif [ -n "$CODE_EINGABE" ]; then
+            CODE="$CODE_EINGABE"
+          else
+            CODE=$(openssl rand -base64 12 | tr -dc 'A-HJ-NP-Z2-9' | head -c 10)
+          fi
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          # Einfache Anführungszeichen für den PHP-String maskieren.
+          AUSSTELLER_PHP=${AUSSTELLER//\\/\\\\}
+          AUSSTELLER_PHP=${AUSSTELLER_PHP//\'/\\\'}
+          cat > /tmp/kikurs-config.php <<KONF
+          <?php
+
+          /**
+           * Konfiguration von KI-ckoff — liegt bewusst OBERHALB der Webroots.
+           * Angelegt vom Workflow "KI-ckoff einrichten"; ein erneuter Lauf
+           * überschreibt die Datei (neues Admin-Passwort, frisches Salz), lässt
+           * kikurs-daten/ aber unangetastet.
+           */
+          return [
+              'titel' => 'KI-Werkstatt',
+              'adminEmail' => '$ADMIN_EMAIL',
+              'adminPasswortHash' => '$HASH',
+              'einladungscode' => '$CODE',
+              'aussteller' => '$AUSSTELLER_PHP',
+              'daten' => '$HOME_DIR/kikurs-daten',
+              'salz' => '$SALZ',
+          ];
+          KONF
+          timeout 60 sshpass -p "$SSH_PASS" scp $SSHOPTS /tmp/kikurs-config.php "$SSH_USER@$HOST:kikurs-config.php"
+          timeout 60 sshpass -p "$SSH_PASS" ssh $SSHOPTS "$SSH_USER@$HOST" \
+            'chmod 600 kikurs-config.php && ls -la kikurs-config.php kikurs-daten'
+
+      - name: Zertifikat für HTTPS versuchen (Let's Encrypt)
+        continue-on-error: true
+        env:
+          PW: ${{ inputs.plesk_passwort || secrets.PLESK_PASSWORT }}
+          PIN: ${{ steps.pin.outputs.pin }}
+        run: |
+          set -euo pipefail
+          api() { curl -sk --pinnedpubkey "$PIN" -u "admin:$PW" "$@"; }
+          cli() {
+            local cmd=$1; shift
+            local params
+            params=$(printf '%s\n' "$@" | jq -R . | jq -s .)
+            api -X POST -H 'Content-Type: application/json' \
+              -d "{\"params\":$params}" "$PLESK/api/v2/cli/$cmd/call"
+          }
+          echo "== Öffentliche Auflösung (Diagnose) =="
+          echo "A $SUB: $(dig +short "$SUB" A | tr '\n' ' ')"
+          A=$(cli extension --exec letsencrypt cli.php -d "$SUB")
+          echo "$A" | jq -r '"code=\(.code)\n--- stdout ---\n\((.stdout // "")[:800])\n--- stderr ---\n\((.stderr // "")[:1500])"'
+          if echo "$A" | jq -e '.code == 0' >/dev/null; then
+            exit 0
+          fi
+          echo "::warning::Let's Encrypt für $SUB scheiterte — meist fehlt nur der DNS-Eintrag (Workflow »DNS-Eintrag setzen«, Name »ki-ckoff«). Danach diesen Workflow erneut laufen lassen."
+
+          # Ohne zugewiesenes Zertifikat bedient nginx die Subdomain über HTTPS
+          # gar nicht: Anfragen landen beim Standard-vHost (Plesk-Startseite
+          # bzw. 404), obwohl PHP, Webroot und .htaccess stimmen — so gesehen
+          # bei der Ersteinrichtung (Diagnose-Workflow). Übergangsweise ein
+          # vorhandenes Zertifikat zuweisen; Let's Encrypt ersetzt es beim
+          # nächsten Lauf, sobald der DNS-Eintrag steht.
+          echo "== Rückfall: vorhandenes Zertifikat zuweisen, damit HTTPS bedient wird =="
+          gut() { echo "$1" | jq -e '.code == 0' >/dev/null; }
+          echo "-- Zertifikate im Abo von $DOMAIN --"
+          cli certificate --list -domain "$DOMAIN" | jq -r '.stdout // .stderr // empty' | sed -n '1,15p'
+          echo "-- Zertifikate im Server-Pool --"
+          cli certificate --list -admin | jq -r '.stdout // .stderr // empty' | sed -n '1,15p'
+          ZUGEWIESEN=""
+          for name in "Lets Encrypt $DOMAIN" "default certificate"; do
+            A=$(cli site --update "$SUB" -certificate-name "$name")
+            if gut "$A"; then ZUGEWIESEN=$name; break; fi
+            echo "»$name«: $(echo "$A" | jq -r '(.stderr // .stdout // "")[:200]')"
+          done
+          if [ -n "$ZUGEWIESEN" ]; then
+            echo "Übergangszertifikat »$ZUGEWIESEN« zugewiesen — Browser warnen, bis Let's Encrypt klappt."
+          else
+            echo "::warning::Kein Übergangszertifikat zuweisbar — HTTPS bleibt bis zum Let's-Encrypt-Zertifikat unbedient."
+          fi
+          echo "-- Kontrolle --"
+          cli site --info "$SUB" | jq -r '.stdout // ""' | grep -E '^Certificate:' || true
+
+      - name: Selbsttest
+        env:
+          SSH_USER: ${{ steps.ssh.outputs.user }}
+          SSH_PASS: ${{ steps.ssh.outputs.pass }}
+          CODE: ${{ steps.konf.outputs.code }}
+        run: |
+          set -euo pipefail
+          IP=${PLESK#https://}; IP=${IP%:8443}
+          holen() { curl -sk --resolve "$SUB:443:$IP" "$@"; }
+          diagnose() {
+            echo "== Diagnose: PHP-Zeilen aus den vHost-Protokollen =="
+            timeout 60 sshpass -p "$SSH_PASS" ssh \
+              -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 \
+              "$SSH_USER@$IP" \
+              'grep -h -i "php" logs/*error*log* 2>/dev/null | tail -5; ls logs/ 2>/dev/null | head' \
+              || echo "(Protokolle nicht erreichbar)"
+          }
+          echo "== api.php?aktion=status: bereit muss true sein =="
+          # Plesk lädt die vHost-Konfiguration verzögert nach — bis zu drei
+          # Minuten geduldig nachfragen (gelernt beim SBF-Kurs).
+          ANTWORT=""
+          for versuch in $(seq 1 18); do
+            ANTWORT=$(holen "https://$SUB/api.php?aktion=status" || true)
+            if echo "$ANTWORT" | jq -e '.ok == true and .dienst == "kikurs" and .bereit == true' >/dev/null 2>&1; then
+              echo "$ANTWORT (Versuch $versuch)"
+              break
+            fi
+            echo "Versuch $versuch: noch nicht die App — $(echo "$ANTWORT" | tr -d '\n' | head -c 80)"
+            sleep 10
+          done
+          echo "$ANTWORT" | jq -e '.ok == true and .dienst == "kikurs" and .bereit == true' >/dev/null 2>&1 \
+            || { echo "::error::Die Schnittstelle meldet sich nicht bereit — kommt PHP-Quelltext statt JSON, fehlt die PHP-Anbindung; kommt die Plesk-Startseite oder ein 404, fehlt das Zertifikat oder die vHost-Konfiguration."; diagnose; exit 1; }
+          echo "== ohne Anmeldung: ich liefert angemeldet=false =="
+          holen "https://$SUB/api.php?aktion=ich" | jq -e '.angemeldet == false' >/dev/null \
+            || { echo "::error::api.php?aktion=ich antwortet unerwartet."; diagnose; exit 1; }
+          echo "== Kursseite, Skripte, ein Film und eine Vorlage =="
+          for datei in / /kurs.css /kurs.js /einstieg.js /inhalte.js /grafiken.js /filme/e2.mp4 /filme/m1.mp4 /filme/m1.vtt /vorlagen/impediment-melder.n8n.json; do
+            CODE_HTTP=$(holen -o /dev/null -w '%{http_code}' "https://$SUB$datei")
+            [ "$CODE_HTTP" = "200" ] || { echo "::error::$datei wird nicht ausgeliefert (HTTP $CODE_HTTP)."; exit 1; }
+          done
+          holen "https://$SUB/" | grep -q 'kurs.js' || { echo "::error::Startseite ist nicht die Kursseite."; exit 1; }
+          echo "== src/ darf nicht öffentlich sein =="
+          CODE_HTTP=$(holen -o /dev/null -w '%{http_code}' "https://$SUB/../src/api.php")
+          [ "$CODE_HTTP" != "200" ] || { echo "::error::src/ ist über das Webroot erreichbar."; exit 1; }
+          echo
+          {
+            echo "## KI-ckoff eingerichtet"
+            echo
+            echo "- Adresse: https://$SUB"
+            echo "- Kursleitung: ${{ inputs.admin_email }} (Passwort aus dem Lauf) — unter »Teilnehmende« alle Lernstände"
+            if [ -n "$CODE" ]; then echo "- Einladungscode für Teilnehmende: \`$CODE\`"; else echo "- Kein gemeinsamer Code — Einmalcodes erzeugt die Kursleitung unter »Teilnehmende«."; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Eingerichtet: https://$SUB steht."

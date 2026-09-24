@@ -1,0 +1,25 @@
+WEBVTT
+
+1
+00:00:06.520 --> 00:00:15.678
+Alles beginnt mit einem Auslöser. Hier: Jemand schickt ein Formular ab. Ab jetzt läuft alles ohne dich.
+
+2
+00:00:15.878 --> 00:00:23.459
+Der nächste Schritt bereitet die Daten auf, zum Beispiel Datum ergänzen oder Text säubern.
+
+3
+00:00:23.659 --> 00:00:32.956
+Der KI-Schritt ordnet ein oder fasst zusammen. Er liefert feste Felder zurück, zum Beispiel eine Kategorie.
+
+4
+00:00:33.139 --> 00:00:40.229
+Die Weiche prüft eine Bedingung. Je nach Kategorie geht es in eine andere Richtung.
+
+5
+00:00:40.419 --> 00:00:46.863
+Bei einem Bug entsteht ein Ticket, bei einer Idee eine Nachricht ans Team.
+
+6
+00:00:47.059 --> 00:00:54.729
+Ist die KI unsicher, geht der Fall an einen Menschen. So bleibt die Qualität hoch.

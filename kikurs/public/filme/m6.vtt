@@ -1,0 +1,29 @@
+WEBVTT
+
+1
+00:00:06.917 --> 00:00:13.314
+Der Agent bekommt ein Ziel, zum Beispiel: Bereite das Sprint Review vor.
+
+2
+00:00:13.514 --> 00:00:20.942
+Er macht einen Plan: Tickets holen, gruppieren, Texte schreiben, Seite anlegen.
+
+3
+00:00:21.142 --> 00:00:27.549
+Er nutzt ein Werkzeug, etwa die Jira-Suche, und bekommt Daten zurück.
+
+4
+00:00:27.742 --> 00:00:35.631
+Die Werkzeuge sind über Konnektoren angebunden, oft über den offenen Standard MCP.
+
+5
+00:00:35.822 --> 00:00:41.735
+Er schaut sich das Ergebnis an und entscheidet über den nächsten Schritt.
+
+6
+00:00:41.935 --> 00:00:48.227
+Ist das Ziel erreicht, hört er auf. Sonst beginnt die Schleife erneut.
+
+7
+00:00:48.415 --> 00:00:57.616
+Leitplanken halten den Agenten sicher: wenig Rechte, Freigabe vor dem Senden, jedes Protokoll nachvollziehbar.
