@@ -80,6 +80,9 @@ try {
   await p2.fill('#f-pw', 'sehr-geheim-1');
   await p2.click('#login-form button[type="submit"]');
   await p2.waitForSelector('.konto-zeile strong');
+  pruefe((await p2.$$('.kurskarte')).length === 2, 'nach der Anmeldung: Portal mit zwei Kursen');
+  await p2.evaluate(() => { location.hash = 'm1'; });
+  await p2.waitForSelector('a.nav-link[href="#m1"]');
   const status = await p2.getAttribute('a.nav-link[href="#m1"]', 'data-status');
   pruefe(status === 'fertig', 'auf einem anderen Gerät ist Modul 1 fertig (Stand vom Server)');
   pruefe((await p2.$('a[href="#teilnehmende"]')) === null, 'Teilnehmerin sieht keine Kursleitungsseite');
@@ -96,14 +99,14 @@ try {
   await p3.click('a[href="#teilnehmende"]');
   await p3.waitForSelector('.tn-tabelle');
   const zeile = await p3.textContent('.tn-tabelle');
-  pruefe(zeile.includes('Anna Beispiel') && zeile.includes('1/10 Module'), 'Kursleitung sieht Anna mit 1/10 Modulen');
+  pruefe(zeile.includes('Anna Beispiel') && zeile.includes('1/10') && zeile.includes('0/7'), 'Kursleitung sieht Anna: Werkstatt 1/10, Einstieg 0/7');
   await p3.fill('#einladung-bemerkung', 'Team Blau');
   await p3.click('#einladung-form button');
   await p3.waitForFunction(() => document.body.textContent.includes('Team Blau'));
   pruefe(true, 'Einmalcode erzeugt und gelistet');
   await p3.screenshot({ path: path.join(tmp, 'teilnehmende.png'), fullPage: true });
 
-  for (const r of ['start', 'plan', 'm0', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'baukasten', 'prompts', 'vorlagen', 'rechner', 'canvas', 'glossar', 'zertifikat', 'konto']) {
+  for (const r of ['start', 'einstieg', 'einstieg-plan', 'einstieg-zertifikat', 'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'werkstatt', 'werkstatt-plan', 'plan', 'm0', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'baukasten', 'prompts', 'vorlagen', 'rechner', 'canvas', 'glossar', 'zertifikat', 'konto']) {
     await p3.evaluate((h) => { location.hash = h; }, r);
     await p3.waitForTimeout(80);
   }

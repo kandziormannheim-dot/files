@@ -1,7 +1,7 @@
 <?php
 
 /**
- * KI-Werkstatt (ki-ckoff) — Server für den Mehrbenutzerbetrieb.
+ * KI-ckoff (KI-Einstieg und KI-Werkstatt) — Server für den Mehrbenutzerbetrieb.
  *
  * Die Kursseite selbst ist statisch (public/index.html + JS). Dieser Teil
  * liefert nur eine kleine JSON-Schnittstelle unter /api.php?aktion=…:
@@ -29,7 +29,7 @@ function konfigLaden(): array
     $konfig = is_file($pfad) ? require $pfad : null;
 
     $standard = [
-        'titel' => 'KI-Werkstatt',
+        'titel' => 'KI-ckoff',
         'adminEmail' => '',
         'adminPasswortHash' => '',
         'einladungscode' => '',

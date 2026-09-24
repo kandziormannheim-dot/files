@@ -61,8 +61,10 @@ const vttZeit = (s) => {
 
 // Moduldaten aus inhalte.js lesen (ohne Browser).
 globalThis.window = {};
+await import(pathToFileURL(path.join(oeffentlich, 'einstieg.js')).href);
 await import(pathToFileURL(path.join(oeffentlich, 'inhalte.js')).href);
-const K = globalThis.window.KURS;
+const KURSE = [globalThis.window.EINSTIEG, globalThis.window.KURS];
+const K = { module: KURSE.flatMap((k) => k.module.map((m) => Object.assign(m, { kursTitel: k.titel }))) };
 const titelSzene = (m) => `Modul ${m.nr}: ${m.titel}. ${m.film.titel.replace(/^Erklärfilm:\s*/, '')}.`;
 
 // --drehbuch: nur das Drehbuch für eigene Sprachaufnahmen schreiben.
@@ -73,7 +75,7 @@ if (process.argv.includes('--drehbuch')) {
     '`kikurs/aufnahmen/<Datei>` ablegen und die Filme neu erzeugen. Szenen ohne Aufnahme',
     'behalten die Computerstimme.', ''];
   for (const m of K.module.filter((x) => x.film)) {
-    zeilen.push(`## Modul ${m.nr}: ${m.film.titel.replace(/^Erklärfilm:\s*/, '')}`, '', '| Datei | Text |', '|---|---|');
+    zeilen.push(`## ${m.kursTitel}, Modul ${m.nr}: ${m.film.titel.replace(/^Erklärfilm:\s*/, '')}`, '', '| Datei | Text |', '|---|---|');
     [titelSzene(m)].concat(m.film.szenen.map((s) => s.text)).forEach((t, n) => zeilen.push(`| \`${m.id}-${n}.wav\` | ${t.replace(/\|/g, '\\|')} |`));
     zeilen.push('');
   }

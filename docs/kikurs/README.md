@@ -1,19 +1,45 @@
-# KI-Werkstatt (ki-ckoff) — Selbstlernkurs „Vom Chatbot zur eigenen KI-Lösung“
+# KI-ckoff — zwei Selbstlernkurse: KI-Einstieg und KI-Werkstatt
 
-Der Kurs unter [`kikurs/`](../../kikurs/) richtet sich an Menschen, die KI bisher
-nur im Chat (ChatGPT, Claude, Copilot) nutzen. Danach sollen sie selbst
-KI-Lösungen bauen und andere Teams bei der Einführung begleiten können.
-Zugeschnitten ist er auf Teilnehmende mit VWL-, Scrum-Master- und
-Agile-Coach-Hintergrund: „Brücken“-Kästen schließen neue Konzepte an VWL
-(Wahrscheinlichkeit, Grenznutzen, Opportunitätskosten, Stichproben) und an
-agile Praxis (Inspect & Adapt, Value Stream Map, Experimente) an.
+Unter [`kikurs/`](../../kikurs/) liegt die Lernplattform **KI-ckoff**
+(ki-ckoff.kandzior.de) mit zwei Kursen. Beide nutzen dieselben Konten, dieselbe
+Kursleitungsansicht und dieselben Werkzeuge:
+
+1. **KI-Einstieg** („Was ist KI, und was kann ich damit machen?“) ist für
+   alle, die neu in der KI-Welt sind. Sieben Module, etwa 4,5 Stunden: Begriffe und
+   Geschichte der KI, was ein LLM ist und wie es antwortet, acht
+   Einsatzfelder mit Beispielen aus allen Arbeitsbereichen, gute Fragen
+   stellen, Datenampel, Prüfen und Deepfakes, nächste Schritte.
+2. **KI-Werkstatt** („Vom Chatbot zur eigenen KI-Lösung“) ist für alle, die
+   KI schon im Chat nutzen und jetzt selbst Lösungen bauen und andere Teams
+   begleiten wollen. Zugeschnitten auf Teilnehmende mit VWL-, Scrum-Master-
+   und Agile-Coach-Hintergrund: „Brücken“-Kästen schließen neue Konzepte an
+   VWL (Wahrscheinlichkeit, Grenznutzen, Opportunitätskosten, Stichproben)
+   und an agile Praxis (Inspect & Adapt, Value Stream Map, Experimente) an.
 
 Rahmen, auf den die Inhalte abgestimmt sind: Alle großen Modelle sind
-verfügbar, Automatisierung läuft über **n8n auf einem eigenen Server**, der
-Kurs ist zum **Selbstlernen**, per **du**, ohne Programmieren, für **mehrere
-Teilnehmende** mit zentralem Lernstand. Adresse: **ki-ckoff.kandzior.de**.
+verfügbar, Automatisierung läuft über **n8n auf einem eigenen Server**, die
+Kurse sind zum **Selbstlernen**, per **du**, ohne Programmieren, für
+**mehrere Teilnehmende** mit zentralem Lernstand.
 
-## Aufbau
+Die Startseite ist ein Portal mit beiden Kursen und einer Empfehlung, welcher
+passt. Adressen: `#einstieg`, `#werkstatt`, Module `#e0` bis `#e6` und `#m0` bis `#m9`.
+
+## KI-Einstieg
+
+| Modul | Thema | Dauer | Teil |
+|---|---|---|---|
+| 0 | Willkommen: warum KI jetzt überall ist, drei Mythen, erste Unterhaltung | 0,5 h | 1 |
+| 1 | Was ist KI? Regeln oder Beispiele, die KI-Zwiebel, KI im Alltag | 0,75 h | 1 |
+| 2 | Was ist ein LLM? Training, Wort-für-Wort-Vorhersage, Grenzen, multimodal | 0,75 h | 1 |
+| 3 | Was kann man damit machen? Acht Einsatzfelder, Beispiele je Bereich, KI als Lernpartner | 1 h | 2 |
+| 4 | Richtig fragen: vier Zutaten, im Gespräch verbessern, Vorlagen | 0,75 h | 2 |
+| 5 | Sicher nutzen: Datenampel, prüfen, Deepfakes erkennen | 0,5 h | 2 |
+| 6 | Wie geht es weiter? Stufen bis zum Agenten, persönlicher Vorsatz | 0,25 h | 2 |
+
+Inhalte in `kikurs/public/einstieg.js`, gleicher Aufbau wie `inhalte.js`.
+IDs beginnen mit `e`, damit beide Kurse sich einen Lernstand teilen können.
+
+## KI-Werkstatt
 
 | Modul | Thema | Dauer | Woche |
 |---|---|---|---|
@@ -36,12 +62,12 @@ Automatisierungs-Rechner, Use-Case-Canvas, Glossar, Teilnahmebestätigung.
 
 ## Erklärfilme (Deutsch, selbst erzeugt)
 
-Zu jedem Modul gibt es einen Film als MP4 mit Untertiteln (`public/filme/`):
+Zu jedem der 17 Module beider Kurse gibt es einen Film als MP4 mit Untertiteln (`public/filme/`):
 Die Grafik des Moduls wird Szene für Szene hervorgehoben, eine deutsche
 Stimme spricht den Text, die Untertitel stehen im Bild und als WebVTT-Spur.
 Darunter bleibt die interaktive Fassung, die der Browser selbst vorliest.
 
-Die Filme entstehen aus den Szenen in `public/inhalte.js`:
+Die Filme entstehen aus den Szenen in `public/einstieg.js` und `public/inhalte.js`:
 
 ```sh
 sudo apt install ffmpeg espeak-ng mbrola mbrola-de6   # einmalig
@@ -87,7 +113,7 @@ Die Kursseite ist statisch, dazu kommt eine kleine PHP-Schnittstelle
 - **Lernstand:** Häkchen, Quizergebnisse, Canvas und Rechner werden je Konto
   gespeichert und beim Anmelden auf jedem Gerät geladen. Zusätzlich bleibt eine
   Kopie im Browser.
-- **Kursleitung** (Seite „Teilnehmende“): Fortschritt aller Konten, Module
+- **Kursleitung** (Seite „Teilnehmende“): Fortschritt aller Konten je Kurs, Module
   abgeschlossen, zuletzt aktiv, Passwort zurücksetzen (Einmal-Passwort,
   Wechsel erzwungen), sperren, löschen, Einmalcodes.
 - Ohne Server (Datei direkt geöffnet, statische Vorschau) läuft der Kurs wie
@@ -99,7 +125,7 @@ in CI über `.github/workflows/kikurs-tests.yml`.
 ## Livegang auf ki-ckoff.kandzior.de
 
 1. Actions → **„DNS-Eintrag setzen“**, Name `ki-ckoff`.
-2. Actions → **„KI-Werkstatt einrichten“**
+2. Actions → **„KI-ckoff einrichten“**
    ([`ki-ckoff-einrichten.yml`](../../.github/workflows/ki-ckoff-einrichten.yml)):
    Plesk-Passwort (oder Secret `PLESK_PASSWORT`), E-Mail der Kursleitung,
    Passwort der Kursleitung (oder Secret `KIKURS_ADMIN_PASSWORT`), optional
@@ -117,7 +143,10 @@ PHP 8.2+ mit `pdo_sqlite`.
 
 ## Inhalte pflegen
 
-Alles Inhaltliche steht in `kikurs/public/inhalte.js`. Je Modul: `ziele`,
+Alles Inhaltliche steht in `kikurs/public/einstieg.js` (Einstieg) und
+`kikurs/public/inhalte.js` (Werkstatt, dazu Prompts, Vorlagen, Glossar).
+Kursweite Angaben (`titel`, `kurzname`, `lead`, `heldGrafik`, `einheit`,
+`planTitel`, `zertifikatText` …) stehen oben in jeder Datei. Je Modul: `ziele`,
 `lektionen` (HTML-Text; `<figure class="grafik" data-grafik="name">` setzt eine
 Grafik aus `grafiken.js` ein), `film` (`grafik` + `szenen` mit `schritt` und
 `text`), `videos`, `uebung`, `quiz` (`richtig` ist der Index der richtigen

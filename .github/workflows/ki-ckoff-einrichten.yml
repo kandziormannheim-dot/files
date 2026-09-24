@@ -1,4 +1,4 @@
-# Die KI-Werkstatt (kikurs/) als ki-ckoff.kandzior.de auf dem Plesk-Server
+# KI-ckoff (kikurs/: KI-Einstieg und KI-Werkstatt) als ki-ckoff.kandzior.de auf dem Plesk-Server
 # einrichten und deployen — nach dem Muster von "SBF-Kurs einrichten"
 # (Schlüssel-Pinning, CLI-Gateway, SSH über frisch gesetztes
 # Systembenutzer-Passwort). Läuft gefahrlos mehrfach: Subdomain und
@@ -22,7 +22,7 @@
 # trotzdem durch — der Zertifikatsschritt warnt dann und lässt sich nach dem
 # DNS-Eintrag einfach wiederholen.
 
-name: KI-Werkstatt einrichten
+name: KI-ckoff einrichten
 
 on:
   workflow_dispatch:
@@ -251,8 +251,8 @@ jobs:
           <?php
 
           /**
-           * Konfiguration der KI-Werkstatt — liegt bewusst OBERHALB der Webroots.
-           * Angelegt vom Workflow "KI-Werkstatt einrichten"; ein erneuter Lauf
+           * Konfiguration von KI-ckoff — liegt bewusst OBERHALB der Webroots.
+           * Angelegt vom Workflow "KI-ckoff einrichten"; ein erneuter Lauf
            * überschreibt die Datei (neues Admin-Passwort, frisches Salz), lässt
            * kikurs-daten/ aber unangetastet.
            */
@@ -355,7 +355,7 @@ jobs:
           holen "https://$SUB/api.php?aktion=ich" | jq -e '.angemeldet == false' >/dev/null \
             || { echo "::error::api.php?aktion=ich antwortet unerwartet."; diagnose; exit 1; }
           echo "== Kursseite, Skripte, ein Film und eine Vorlage =="
-          for datei in / /kurs.css /kurs.js /inhalte.js /grafiken.js /filme/m1.mp4 /filme/m1.vtt /vorlagen/impediment-melder.n8n.json; do
+          for datei in / /kurs.css /kurs.js /einstieg.js /inhalte.js /grafiken.js /filme/e2.mp4 /filme/m1.mp4 /filme/m1.vtt /vorlagen/impediment-melder.n8n.json; do
             CODE_HTTP=$(holen -o /dev/null -w '%{http_code}' "https://$SUB$datei")
             [ "$CODE_HTTP" = "200" ] || { echo "::error::$datei wird nicht ausgeliefert (HTTP $CODE_HTTP)."; exit 1; }
           done
@@ -365,7 +365,7 @@ jobs:
           [ "$CODE_HTTP" != "200" ] || { echo "::error::src/ ist über das Webroot erreichbar."; exit 1; }
           echo
           {
-            echo "## KI-Werkstatt eingerichtet"
+            echo "## KI-ckoff eingerichtet"
             echo
             echo "- Adresse: https://$SUB"
             echo "- Kursleitung: ${{ inputs.admin_email }} (Passwort aus dem Lauf) — unter »Teilnehmende« alle Lernstände"

@@ -1,0 +1,25 @@
+WEBVTT
+
+1
+00:00:06.340 --> 00:00:16.532
+Am Anfang stehen riesige Mengen Text: Bücher, Webseiten, Artikel und Programmcode. Zusammen sind das Billionen Wörter.
+
+2
+00:00:16.732 --> 00:00:27.031
+Im Vortraining übt das Modell wochenlang auf tausenden Spezialchips eine einzige Aufgabe: das nächste Wort vorherzusagen.
+
+3
+00:00:27.212 --> 00:00:35.582
+Heraus kommt ein Basismodell. Es kann Texte fortsetzen, aber es führt noch kein hilfreiches Gespräch.
+
+4
+00:00:35.772 --> 00:00:45.135
+Im Feinschliff bewerten Menschen viele Antworten. Das Modell lernt, hilfreich, ehrlich und sicher zu antworten.
+
+5
+00:00:45.332 --> 00:00:53.226
+Erst jetzt ist es ein Assistent, wie du ihn als ChatGPT, Claude oder Gemini kennst.
+
+6
+00:00:53.412 --> 00:01:04.497
+Wichtig: Danach ist das Wissen eingefroren. Neues erfährt das Modell nur über eine Websuche oder über Dateien, die du ihm gibst.

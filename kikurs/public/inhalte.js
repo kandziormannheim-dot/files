@@ -4,9 +4,21 @@
    In Lektionstexten setzt <figure class="grafik" data-grafik="name"></figure>
    eine Grafik aus grafiken.js ein. */
 window.KURS = {
+  id: "werkstatt",
   titel: "KI-Werkstatt",
+  kurzname: "Werkstatt",
   untertitel: "Vom Chatbot zur eigenen KI-Lösung",
+  beschreibung: "Für alle, die KI schon im Chat nutzen: Prompts und Assistenten, Automatisierung mit n8n, Agenten, Recht, Business Case und ein eigenes Abschlussprojekt.",
+  lead: "Du nutzt KI schon im Chat. Hier lernst du, wie sie funktioniert, wie du sie in Abläufe einbaust und wie du daraus Lösungen machst, die im Team verlässlich laufen. Ohne Programmieren, mit deinem Vorwissen aus VWL, Scrum und Coaching als Rückenwind.",
+  startKnopf: "Mit dem Kick-off beginnen",
+  heldGrafik: "leiter",
+  dauerText: "6 Wochen",
+  dauerKurz: "6 Wo.",
+  einheit: "Woche",
   wochen: 6,
+  planTitel: "Sechs Wochen, zehn Module",
+  planText: "Je nach Woche 3,5 bis 7,5 Stunden. Am besten zwei feste Termine im Kalender, wie ein Sprint mit fester Kadenz. Die Wochen sind ein Vorschlag: Wer schneller ist, zieht vor.",
+  zertifikatText: "alle zehn Module mit Praxisübungen und Wissenschecks abgeschlossen hat: Funktionsweise von Sprachmodellen, Prompting und Kontext, Werkzeugauswahl, Automatisierung mit n8n, KI in Workflows, RAG und Agenten, Datenschutz und EU AI Act, Business Case und Einführung sowie ein eigenes Abschlussprojekt.",
   bestehen: 0.7,
 
   persona: [
@@ -31,6 +43,7 @@ window.KURS = {
         {
           id: "m0l1", titel: "Die vier Stufen der KI-Nutzung",
           html: `
+<div class="notiz"><span class="eyebrow">Ganz neu bei KI?</span><p>Dann starte mit dem <a href="#einstieg">KI-Einstieg</a>. In gut vier Stunden lernst du dort, was KI und Sprachmodelle sind und was du damit machen kannst.</p></div>
 <p>Die meisten Menschen nutzen KI heute auf Stufe 1: Sie tippen eine Frage in ein Chatfenster und kopieren die Antwort heraus. Das ist nützlich, bleibt aber Handarbeit. Jede Antwort hängt davon ab, wie gut du an diesem Tag fragst, und nichts davon läuft ohne dich.</p>
 <figure class="grafik" data-grafik="leiter"><figcaption>Jede Stufe baut auf der vorigen auf. Der Kurs führt dich Schritt für Schritt nach rechts.</figcaption></figure>
 <ul>

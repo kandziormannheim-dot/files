@@ -144,11 +144,21 @@ $node = trim((string) shell_exec('command -v node'));
 if ($node !== '') {
     $skript = <<<'JS'
         global.window = {};
+        require(process.argv[1] + '/public/einstieg.js');
         require(process.argv[1] + '/public/inhalte.js');
         require(process.argv[1] + '/public/grafiken.js');
         const K = window.KURS, G = window.GRAFIKEN, fs = require('fs'), fehler = [];
         const ids = new Set();
-        K.module.forEach((m) => {
+        const kurse = [window.EINSTIEG, window.KURS];
+        if (!window.EINSTIEG) fehler.push('einstieg.js definiert window.EINSTIEG nicht');
+        const html = fs.readFileSync(process.argv[1] + '/public/index.html', 'utf8');
+        if (!html.includes('einstieg.js')) fehler.push('index.html bindet einstieg.js nicht ein');
+        kurse.filter(Boolean).forEach((kurs) => {
+        ['id', 'titel', 'kurzname', 'untertitel', 'lead', 'heldGrafik', 'einheit', 'wochen', 'planTitel', 'zertifikatText'].forEach((f) => kurs[f] == null && fehler.push(kurs.id + ': ' + f + ' fehlt'));
+        if (!G[kurs.heldGrafik]) fehler.push(kurs.id + ': heldGrafik ' + kurs.heldGrafik + ' fehlt');
+        kurs.module.forEach((m) => {
+          if (ids.has(m.id)) fehler.push('doppelte Modul-ID ' + m.id); ids.add(m.id);
+          if (!/^\d+(,\d+)? h$/.test(m.dauer)) fehler.push(m.id + ': dauer muss „x h“ bzw. „x,y h“ sein');
           ['id', 'titel', 'kurztitel', 'dauer', 'woche'].forEach((f) => m[f] == null && fehler.push(m.id + ': ' + f + ' fehlt'));
           m.lektionen.forEach((l) => { if (ids.has(l.id)) fehler.push('doppelte Lektion ' + l.id); ids.add(l.id);
             (l.html.match(/data-grafik="([a-zA-Z]+)"/g) || []).forEach((g) => { const n = g.slice(13, -1); if (!G[n]) fehler.push(l.id + ': Grafik ' + n + ' fehlt'); }); });
@@ -158,6 +168,7 @@ if ($node !== '') {
             if (!G[m.film.grafik]) fehler.push(m.id + ': Filmgrafik ' + m.film.grafik + ' fehlt');
             const svg = G[m.film.grafik]();
             m.film.szenen.forEach((s, i) => { if (s.schritt > 0 && !svg.includes('data-schritt="' + s.schritt + '"')) fehler.push(m.id + ' Szene ' + i + ': Schritt ' + s.schritt + ' nicht in Grafik'); }); }
+        });
         });
         (K.vorlagen || []).forEach((v) => { if (!fs.existsSync(process.argv[1] + '/public/' + v.datei)) fehler.push('Vorlage fehlt: ' + v.datei); });
         console.log(JSON.stringify(fehler));

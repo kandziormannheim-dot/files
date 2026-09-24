@@ -10,7 +10,15 @@
 (function () {
   "use strict";
 
-  const K = window.KURS, G = window.GRAFIKEN;
+  // Zwei Kurse auf einer Plattform: KI-Einstieg (ohne Vorwissen) und
+  // KI-Werkstatt. Modul- und Lektions-IDs sind kursübergreifend eindeutig,
+  // darum teilen sich beide einen Lernstand. K ist der gerade gewählte Kurs,
+  // W die Werkstatt (sie bringt Prompts, Vorlagen und Werkzeuge mit).
+  const W = window.KURS, G = window.GRAFIKEN;
+  const KURSE = [window.EINSTIEG, W].filter(Boolean);
+  const PLATTFORM = { titel: "KI-ckoff", untertitel: "Dein Weg in die KI-Welt" };
+  let K = KURSE[0];
+  const kursVon = (m) => KURSE.find((k) => k.module.includes(m)) || K;
   const SPEICHER = "ki-werkstatt-v1";
   const API = "api.php";
   const $ = (sel, el = document) => el.querySelector(sel);
@@ -84,14 +92,15 @@
     if (erledigt > 0 || q) return "laeuft";
     return "offen";
   };
-  const fortschritt = (S = Z) => {
+  const fortschritt = (S = Z, kurs = K) => {
     const fertig = S.fertig || {}, quiz = S.quiz || {};
-    const alle = K.module.flatMap((m) => m.lektionen);
+    const alle = kurs.module.flatMap((m) => m.lektionen);
     const l = alle.filter((x) => fertig[x.id]).length;
-    const q = K.module.filter((m) => quiz[m.id] && quiz[m.id].quote >= K.bestehen).length;
-    return { anteil: (l + q) / (alle.length + K.module.length), module: K.module.filter((m) => modulStatus(m, S) === "fertig").length };
+    const q = kurs.module.filter((m) => quiz[m.id] && quiz[m.id].quote >= kurs.bestehen).length;
+    return { anteil: (l + q) / (alle.length + kurs.module.length), module: kurs.module.filter((m) => modulStatus(m, S) === "fertig").length, gesamt: kurs.module.length };
   };
-  const stundenGesamt = () => K.module.reduce((a, m) => a + parseFloat(m.dauer.replace(",", ".")), 0);
+  const stundenGesamt = (kurs = K) => kurs.module.reduce((a, m) => a + parseFloat(m.dauer.replace(",", ".")), 0);
+  const zahl = (x) => x.toLocaleString("de-DE", { maximumFractionDigits: 1 });
   const zeitLesen = (s) => (s ? new Date(String(s).replace(" ", "T") + "Z") : null);
   const zeitText = (s) => {
     const d = zeitLesen(s); if (!d || isNaN(d)) return "–";
@@ -126,26 +135,28 @@
       `<a class="nav-link" href="#${hash}" ${aktiv === hash ? 'aria-current="page"' : ""} ${status ? `data-status="${status}"` : ""}>
         <span class="nav-nr">${nr}</span><span>${esc(text)}</span><span class="nav-meta">${meta || ""}</span></a>`;
     $("#leiste").innerHTML = `
-      <a class="marke" href="#start">${G.marke()}<div><strong>${esc(K.titel)}</strong><span>${esc(K.untertitel)}</span></div></a>
+      <a class="marke" href="#start">${G.marke()}<div><strong>${esc(PLATTFORM.titel)}</strong><span>${esc(PLATTFORM.untertitel)}</span></div></a>
+      <div class="reiter kurswahl" role="tablist" aria-label="Kurs wählen">${KURSE.map((k) =>
+        `<a role="tab" href="#${k.id}" aria-selected="${k === K}">${esc(k.kurzname)}</a>`).join("")}</div>
       <div class="gesamt">
-        <div class="gesamt-zeile"><span>Fortschritt</span><span>${Math.round(f.anteil * 100)} % · ${f.module}/${K.module.length} Module</span></div>
+        <div class="gesamt-zeile"><span>${esc(K.kurzname)}</span><span>${Math.round(f.anteil * 100)} % · ${f.module}/${K.module.length} Module</span></div>
         <div class="balken"><i style="width:${(f.anteil * 100).toFixed(1)}%"></i></div>
       </div>
       <nav class="nav-gruppe" aria-label="Überblick"><span class="eyebrow">Überblick</span>
-        ${link("start", "◎", "Start", "")}
-        ${link("plan", "▦", "Lernplan", K.wochen + " Wo.")}
+        ${link(K.id, "◎", "Kursübersicht", "")}
+        ${link(K.id + "-plan", "▦", "Lernplan", K.dauerKurz)}
+        ${link(K.id + "-zertifikat", "★", "Teilnahmebestätigung", "")}
       </nav>
       <nav class="nav-gruppe" aria-label="Module"><span class="eyebrow">Module</span>
         ${K.module.map((m) => link(m.id, m.nr, m.kurztitel, m.dauer, modulStatus(m))).join("")}
       </nav>
       <nav class="nav-gruppe" aria-label="Werkzeuge"><span class="eyebrow">Werkzeuge</span>
         ${link("baukasten", "✎", "Prompt-Baukasten", "")}
-        ${link("prompts", "❏", "Prompt-Bibliothek", K.prompts.length)}
+        ${link("prompts", "❏", "Prompt-Bibliothek", W.prompts.length)}
         ${link("rechner", "€", "Automatisierungs-Rechner", "")}
         ${link("canvas", "▣", "Use-Case-Canvas", "")}
-        ${link("vorlagen", "⇩", "n8n-Vorlagen", K.vorlagen.length)}
-        ${link("glossar", "Aa", "Glossar", K.glossar.length)}
-        ${link("zertifikat", "★", "Zertifikat", "")}
+        ${link("vorlagen", "⇩", "n8n-Vorlagen", W.vorlagen.length)}
+        ${link("glossar", "Aa", "Glossar", glossar().length)}
       </nav>
       ${SERVER && SERVER.angemeldet && SERVER.benutzer.rolle === "admin" ? `<nav class="nav-gruppe" aria-label="Kursleitung"><span class="eyebrow">Kursleitung</span>
         ${link("teilnehmende", "☷", "Teilnehmende", "")}</nav>` : ""}
@@ -161,13 +172,45 @@
   /* ---------- Seiten ---------- */
   const seiten = {};
 
-  seiten.start = () => {
+  const glossar = () => {
+    const alle = new Map();
+    KURSE.forEach((k) => (k.glossar || []).forEach(([b, d]) => { if (!alle.has(b)) alle.set(b, d); }));
+    return [...alle].sort((a, b) => a[0].localeCompare(b[0], "de"));
+  };
+
+  /* Portal: beide Kurse auf einen Blick */
+  seiten.start = () => `<div class="spalte breit">
+      <section class="held">
+        <span class="eyebrow">${esc(PLATTFORM.titel)} · zwei Selbstlernkurse · Deutsch</span>
+        <h1>Willkommen in der KI-Welt</h1>
+        <p class="lead">Zwei Kurse, ein Weg: Im Einstieg lernst du, was KI und Sprachmodelle sind und was du damit machen kannst. In der Werkstatt baust du daraus eigene Lösungen und Automatisierungen.</p>
+      </section>
+      <div class="kurswahl-karten">${KURSE.map((k, i) => {
+        const f = fortschritt(Z, k);
+        const weiter = k.module.find((m) => modulStatus(m) !== "fertig");
+        return `<a class="kurskarte" href="#${k.id}">
+          <span class="eyebrow">Kurs ${i + 1} · ${esc(k.dauerText)}</span>
+          <strong>${esc(k.titel)}</strong><span class="kk-unter">${esc(k.untertitel)}</span>
+          <p>${esc(k.beschreibung)}</p>
+          <span class="kk-fuss"><span class="balken"><i style="width:${(f.anteil * 100).toFixed(1)}%"></i></span>
+            <small>${f.module === f.gesamt ? "abgeschlossen" : f.anteil > 0 ? "weiter mit Modul " + weiter.nr : "noch nicht begonnen"} · ${f.module}/${f.gesamt} Module</small></span></a>`;
+      }).join("")}</div>
+      <section class="block"><h2>Welcher Kurs passt?</h2>
+        <div class="tabelle-wrap"><table>
+          <tr><th>Du …</th><th>Dann</th></tr>
+          <tr><td>hast KI noch kaum ausprobiert oder willst verstehen, was dahintersteckt</td><td><a href="#${KURSE[0].id}">${esc(KURSE[0].titel)}</a></td></tr>
+          <tr><td>nutzt ChatGPT, Claude oder Copilot schon regelmäßig und willst mehr daraus machen</td><td><a href="#${W.id}">${esc(W.titel)}</a>, gern nach einem Blick in Modul 2 des Einstiegs</td></tr>
+          <tr><td>sollst andere Teams bei der KI-Einführung begleiten</td><td>beide nacheinander</td></tr>
+        </table></div></section>
+    </div>`;
+
+  seiten.kurs = () => {
     const f = fortschritt();
     const naechstes = K.module.find((m) => modulStatus(m) !== "fertig") || K.module[K.module.length - 1];
     const spalten = { offen: [], laeuft: [], fertig: [] };
     K.module.forEach((m) => spalten[modulStatus(m)].push(m));
     const karte = (m) => `<a class="karte" href="#${m.id}" data-status="${modulStatus(m)}">
-        <span class="eyebrow">Modul ${m.nr} · Woche ${m.woche} · ${m.dauer}</span><strong>${esc(m.titel)}</strong><small>${esc(m.kurz)}</small></a>`;
+        <span class="eyebrow">Modul ${m.nr} · ${esc(K.einheit)} ${m.woche} · ${m.dauer}</span><strong>${esc(m.titel)}</strong><small>${esc(m.kurz)}</small></a>`;
     const regler = [
       ["prompt", "Ich schreibe Prompts mit Kontext, Format und Beispielen"],
       ["werkzeug", "Ich habe schon einen eigenen Assistenten oder ein Projekt eingerichtet"],
@@ -176,12 +219,12 @@
     ];
     return `<div class="spalte breit">
       <section class="held">
-        <span class="eyebrow">Selbstlernkurs · ${K.wochen} Wochen · Deutsch</span>
-        <h1>Vom Chatbot zur eigenen KI-Lösung</h1>
-        <p class="lead">Du nutzt KI schon im Chat. Hier lernst du, wie sie funktioniert, wie du sie in Abläufe einbaust und wie du daraus Lösungen machst, die im Team verlässlich laufen. Ohne Programmieren, mit deinem Vorwissen aus VWL, Scrum und Coaching als Rückenwind.</p>
-        <div class="chips"><a class="knopf" href="#${naechstes.id}">${f.anteil > 0 ? "Weitermachen: Modul " + naechstes.nr : "Mit dem Kick-off beginnen"}</a><a class="knopf leise" href="#plan">Lernplan ansehen</a></div>
+        <span class="eyebrow">${esc(K.titel)} · Selbstlernkurs · ${esc(K.dauerText)}</span>
+        <h1>${esc(K.untertitel)}</h1>
+        <p class="lead">${esc(K.lead)}</p>
+        <div class="chips"><a class="knopf" href="#${naechstes.id}">${f.anteil > 0 ? "Weitermachen: Modul " + naechstes.nr : esc(K.startKnopf)}</a><a class="knopf leise" href="#${K.id}-plan">Lernplan ansehen</a></div>
       </section>
-      <div class="leiter-wrap">${G.leiter()}</div>
+      <div class="leiter-wrap">${G[K.heldGrafik]()}</div>
       <section class="block"><h2>Für wen dieser Kurs ist</h2><div class="persona">${K.persona.map((p) => `<div><h4>${esc(p.titel)}</h4><p>${esc(p.text)}</p></div>`).join("")}</div></section>
       <section class="block">
         <div class="block-kopf"><h2>Dein Kurs-Board</h2><span class="chip">${f.module} von ${K.module.length} Modulen fertig</span></div>
@@ -191,7 +234,7 @@
           <div class="board-spalte"><h3><span>Fertig</span><span>${spalten.fertig.length}</span></h3>${spalten.fertig.map(karte).join("")}</div>
         </div>
       </section>
-      <section class="block">
+      ${K === W ? `<section class="block">
         <h2>Selbsteinschätzung</h2>
         <p style="margin:0;color:var(--tinte-2)">0 = trifft gar nicht zu, 4 = trifft voll zu. Daraus ergibt sich, wo du Schwerpunkte setzen solltest.</p>
         <div class="zwei">
@@ -199,7 +242,7 @@
             <input type="range" id="s-${k}" name="${k}" min="0" max="4" step="1" value="${Z.selbst[k] ?? 1}"></div>`).join("")}</form>
           <div class="ausgabe" id="selbst-ergebnis"></div>
         </div>
-      </section>
+      </section>` : ""}
     </div>`;
   };
   function selbstAuswerten() {
@@ -219,12 +262,12 @@
   seiten.plan = () => {
     const wochen = Array.from({ length: K.wochen }, (_, i) => K.module.filter((m) => m.woche === i + 1));
     return `<div class="spalte breit">
-      <div class="modul-kopf"><span class="eyebrow">Lernplan</span><h1>Sechs Wochen, zehn Module</h1>
-        <p>Insgesamt rund ${stundenGesamt().toLocaleString("de-DE")} Stunden, je nach Woche 3,5 bis 7,5 Stunden. Am besten zwei feste Termine im Kalender, wie ein Sprint mit fester Kadenz. Die Wochen sind ein Vorschlag: Wer schneller ist, zieht vor.</p></div>
-      <div class="plan-wrap">${G.plan(K.module, K.wochen)}</div>
+      <div class="modul-kopf"><span class="eyebrow">Lernplan · ${esc(K.titel)}</span><h1>${esc(K.planTitel)}</h1>
+        <p>Insgesamt rund ${zahl(stundenGesamt())} Stunden. ${esc(K.planText)}</p></div>
+      <div class="plan-wrap">${G.plan(K.module, K.wochen, K.einheit)}</div>
       <div class="wochen">${wochen.map((ms, i) => {
         const h = ms.reduce((a, m) => a + parseFloat(m.dauer.replace(",", ".")), 0);
-        return `<div class="woche"><span class="eyebrow">Woche ${i + 1}</span><span class="zeit">ca. ${h.toLocaleString("de-DE")} Stunden</span>
+        return `<div class="woche"><span class="eyebrow">${esc(K.einheit)} ${i + 1}</span><span class="zeit">ca. ${zahl(h)} Stunden</span>
           <ul>${ms.map((m) => `<li><a href="#${m.id}">Modul ${m.nr}: ${esc(m.kurztitel)}</a> <span class="chip ${modulStatus(m) === "fertig" ? "fertig" : ""}">${m.dauer}</span></li>`).join("")}</ul>
           <small style="color:var(--tinte-2)">Ergebnis: ${esc(ms.map((m) => m.uebung.ergebnis).slice(-1)[0])}</small></div>`;
       }).join("")}</div>
@@ -245,7 +288,7 @@
     const q = Z.quiz[m.id];
     return `<div class="spalte">
       <div class="modul-kopf">
-        <span class="eyebrow">Modul ${m.nr} · Woche ${m.woche} · ${m.dauer}</span>
+        <span class="eyebrow">${esc(K.kurzname)} · Modul ${m.nr} · ${esc(K.einheit)} ${m.woche} · ${m.dauer}</span>
         <h1>${esc(m.titel)}</h1><p>${esc(m.kurz)}</p>
         <div class="chips"><span class="chip ${modulStatus(m) === "fertig" ? "fertig" : "akzent"}">${{ offen: "Offen", laeuft: "In Arbeit", fertig: "Fertig" }[modulStatus(m)]}</span>
           <span class="chip">${m.lektionen.filter((l) => Z.fertig[l.id]).length}/${m.lektionen.length} Lektionen</span>
@@ -278,7 +321,7 @@
           <p class="erklaerung" hidden></p></div>`).join("")}
           <div class="quiz-ergebnis" hidden></div></div></section>
       <div class="weiter">${vor ? `<a class="knopf leise" href="#${vor.id}">← Modul ${vor.nr}</a>` : "<span></span>"}
-        ${nach ? `<a class="knopf" href="#${nach.id}">Modul ${nach.nr}: ${esc(nach.kurztitel)} →</a>` : `<a class="knopf" href="#zertifikat">Zum Zertifikat →</a>`}</div>
+        ${nach ? `<a class="knopf" href="#${nach.id}">Modul ${nach.nr}: ${esc(nach.kurztitel)} →</a>` : `<a class="knopf" href="#${K.id}-zertifikat">Zur Teilnahmebestätigung →</a>`}</div>
     </div>`;
   };
 
@@ -372,12 +415,12 @@
   }
 
   seiten.prompts = () => {
-    const kats = [...new Set(K.prompts.map((p) => p.kat))];
+    const kats = [...new Set(W.prompts.map((p) => p.kat))];
     return `<div class="spalte breit">
       <div class="modul-kopf"><span class="eyebrow">Werkzeug</span><h1>Prompt-Bibliothek</h1>
         <p>Erprobte Vorlagen für den agilen Alltag. Platzhalter in {GESCHWEIFTEN KLAMMERN} ersetzt du durch deine Inhalte. Die JSON-Vorlagen sind für Workflows gedacht (Modul 5).</p></div>
       <div class="filter" id="prompt-filter"><button class="chip" aria-pressed="true" data-kat="">Alle</button>${kats.map((k) => `<button class="chip" aria-pressed="false" data-kat="${esc(k)}">${esc(k)}</button>`).join("")}</div>
-      <div class="prompts">${K.prompts.map((p, i) => `<div class="prompt" data-kat="${esc(p.kat)}">
+      <div class="prompts">${W.prompts.map((p, i) => `<div class="prompt" data-kat="${esc(p.kat)}">
         <div class="prompt-kopf"><div><span class="eyebrow">${esc(p.kat)}</span><h3>${esc(p.titel)}</h3></div><button class="knopf klein" data-kopiere="${i}">Kopieren</button></div>
         <pre>${esc(p.text)}</pre></div>`).join("")}</div></div>`;
   };
@@ -458,24 +501,24 @@
   }
 
   seiten.glossar = () => `<div class="spalte">
-    <div class="modul-kopf"><span class="eyebrow">Nachschlagen</span><h1>Glossar</h1><p>Die wichtigsten Begriffe aus dem Kurs, kurz erklärt.</p></div>
+    <div class="modul-kopf"><span class="eyebrow">Nachschlagen</span><h1>Glossar</h1><p>Die wichtigsten Begriffe aus beiden Kursen, kurz erklärt.</p></div>
     <input type="search" id="glossar-suche" placeholder="Begriff suchen, z. B. Token" aria-label="Glossar durchsuchen">
-    <dl class="glossar" id="glossar-liste">${K.glossar.map(([b, d]) => `<div data-such="${esc((b + " " + d).toLowerCase())}"><dt>${esc(b)}</dt><dd>${esc(d)}</dd></div>`).join("")}</dl></div>`;
+    <dl class="glossar" id="glossar-liste">${glossar().map(([b, d]) => `<div data-such="${esc((b + " " + d).toLowerCase())}"><dt>${esc(b)}</dt><dd>${esc(d)}</dd></div>`).join("")}</dl></div>`;
 
   seiten.zertifikat = () => {
     const f = fortschritt(), alle = f.module === K.module.length;
     const offen = K.module.filter((m) => modulStatus(m) !== "fertig");
     const heute = new Date().toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
     return `<div class="spalte">
-      <div class="modul-kopf"><span class="eyebrow">Abschluss</span><h1>Teilnahmebestätigung</h1>
+      <div class="modul-kopf"><span class="eyebrow">Abschluss · ${esc(K.titel)}</span><h1>Teilnahmebestätigung</h1>
         <p>${alle ? "Glückwunsch, alle Module sind abgeschlossen. Mach einen Screenshot als Nachweis für die KI-Kompetenz nach Artikel 4 EU AI Act." : `Das Zertifikat schaltet sich frei, wenn alle Module fertig sind (Lektionen abgehakt, Quiz ab ${Math.round(K.bestehen * 100)} %). Noch offen: ${offen.map((m) => `<a href="#${m.id}">Modul ${m.nr}</a>`).join(", ")}.`}</p></div>
       <div class="feld"><label for="z-name">Name auf dem Zertifikat</label><input type="text" id="z-name" value="${esc(Z.name)}" placeholder="Vor- und Nachname"></div>
       <div class="zertifikat ${alle ? "" : "gesperrt"}">
-        ${G.marke()}<span class="eyebrow">${esc(K.titel)} · Selbstlernkurs</span>
-        <h2>Vom Chatbot zur eigenen KI-Lösung</h2>
+        ${G.marke()}<span class="eyebrow">${esc(PLATTFORM.titel)} · ${esc(K.titel)} · Selbstlernkurs</span>
+        <h2>${esc(K.untertitel)}</h2>
         <p style="margin:0">Hiermit wird bestätigt, dass</p>
         <div class="name" id="z-anzeige">${esc(Z.name || "Dein Name")}</div>
-        <p style="margin:0;max-width:52ch">alle zehn Module mit Praxisübungen und Wissenschecks abgeschlossen hat: Funktionsweise von Sprachmodellen, Prompting und Kontext, Werkzeugauswahl, Automatisierung ohne Code, KI in Workflows, RAG und Agenten, Datenschutz und EU AI Act, Business Case und Einführung sowie ein eigenes Abschlussprojekt. Umfang ca. ${stundenGesamt().toLocaleString("de-DE")} Stunden.</p>
+        <p style="margin:0;max-width:52ch">${esc(K.zertifikatText)} Umfang ca. ${zahl(stundenGesamt())} Stunden.</p>
         <p class="eyebrow" style="margin:0">${alle ? heute : "noch nicht freigeschaltet"}</p>
       </div></div>`;
   };
@@ -483,8 +526,8 @@
   seiten.vorlagen = () => `<div class="spalte">
     <div class="modul-kopf"><span class="eyebrow">Werkzeug · Module 4 bis 6</span><h1>n8n-Vorlagen</h1>
       <p>Fertige Workflows für euren n8n-Server. In n8n: neuer Workflow → Menü „…“ oben rechts → „Import from File“. Jede Vorlage enthält eine gelbe Notiz mit den drei, vier Handgriffen nach dem Import (Credential wählen, Empfänger eintragen, Tabelle verbinden).</p></div>
-    <div class="prompts">${K.vorlagen.map((v) => {
-      const m = K.module.find((x) => x.id === v.modul);
+    <div class="prompts">${W.vorlagen.map((v) => {
+      const m = W.module.find((x) => x.id === v.modul);
       return `<div class="prompt"><div class="prompt-kopf"><div><span class="eyebrow">Modul ${m.nr} · ${esc(m.kurztitel)}</span><h3>${esc(v.titel)}</h3></div>
         <a class="knopf klein" href="${esc(v.datei)}" download>Herunterladen</a></div><p style="margin:0">${esc(v.text)}</p></div>`;
     }).join("")}</div>
@@ -519,28 +562,29 @@
     try { uebersicht = await api("admin_uebersicht", {}); }
     catch (e) { ziel.innerHTML = `<div class="achtung"><strong>Fehler</strong><p>${esc(e.message)}</p></div>`; return; }
     const lerner = uebersicht.teilnehmende.filter((t) => t.rolle !== "admin");
-    const f = (t) => fortschritt(t.stand || {});
-    const schnitt = lerner.length ? lerner.reduce((a, t) => a + f(t).anteil, 0) / lerner.length : 0;
     const aktiv7 = lerner.filter((t) => { const d = zeitLesen(t.aktualisiertAm || t.letzteAnmeldung); return d && Date.now() - d < 7 * 86400000; }).length;
-    const fertigAlle = lerner.filter((t) => f(t).module === K.module.length).length;
-    const jeModul = K.module.map((m) => ({ m, n: lerner.filter((t) => modulStatus(m, t.stand || {}) === "fertig").length }));
-    const aktuell = (t) => { const m = K.module.find((x) => modulStatus(x, t.stand || {}) !== "fertig"); return m ? "Modul " + m.nr : "fertig"; };
+    const fertig = (k) => lerner.filter((t) => fortschritt(t.stand || {}, k).module === k.module.length).length;
+    const aktuell = (t) => {
+      for (const k of KURSE) { const m = k.module.find((x) => modulStatus(x, t.stand || {}) !== "fertig"); if (m) return k.kurzname + ", Modul " + m.nr; }
+      return "alles fertig";
+    };
+    const zelle = (t, k) => { const x = fortschritt(t.stand || {}, k);
+      return `<td style="min-width:140px"><div class="balken"><i style="width:${(x.anteil * 100).toFixed(1)}%"></i></div><small>${Math.round(x.anteil * 100)} % · ${x.module}/${x.gesamt}</small></td>`; };
     ziel.innerHTML = `
       <div class="kennzahlen">
         <div class="kennzahl"><b>${lerner.length}</b><span>Teilnehmende</span></div>
-        <div class="kennzahl"><b>${Math.round(schnitt * 100)} %</b><span>Fortschritt im Schnitt</span></div>
         <div class="kennzahl"><b>${aktiv7}</b><span>aktiv in den letzten 7 Tagen</span></div>
-        <div class="kennzahl"><b>${fertigAlle}</b><span>Kurs abgeschlossen</span></div>
+        ${KURSE.map((k) => `<div class="kennzahl"><b>${fertig(k)}</b><span>${esc(k.kurzname)} abgeschlossen</span></div>`).join("")}
       </div>
-      <section class="block"><h2>Module abgeschlossen</h2>
-        <div class="modulbalken">${jeModul.map(({ m, n }) => `<div><span>${m.nr} · ${esc(m.kurztitel)}</span>
-          <div class="balken"><i style="width:${lerner.length ? (n / lerner.length * 100).toFixed(1) : 0}%"></i></div><span class="tab">${n}/${lerner.length}</span></div>`).join("")}</div></section>
+      ${KURSE.map((k) => `<section class="block"><h2>${esc(k.titel)}: Module abgeschlossen</h2>
+        <div class="modulbalken">${k.module.map((m) => { const n = lerner.filter((t) => modulStatus(m, t.stand || {}) === "fertig").length;
+          return `<div><span>${m.nr} · ${esc(m.kurztitel)}</span>
+          <div class="balken"><i style="width:${lerner.length ? (n / lerner.length * 100).toFixed(1) : 0}%"></i></div><span class="tab">${n}/${lerner.length}</span></div>`; }).join("")}</div></section>`).join("")}
       <section class="block"><h2>Konten</h2><div class="tabelle-wrap"><table class="tn-tabelle">
-        <tr><th>Name</th><th>Fortschritt</th><th>Steht bei</th><th>Zuletzt aktiv</th><th>Aktionen</th></tr>
+        <tr><th>Name</th>${KURSE.map((k) => `<th>${esc(k.kurzname)}</th>`).join("")}<th>Steht bei</th><th>Zuletzt aktiv</th><th>Aktionen</th></tr>
         ${uebersicht.teilnehmende.map((t) => {
-          const x = f(t);
           return `<tr class="${t.aktiv ? "" : "inaktiv"}"><td><strong>${esc(t.name)}</strong>${t.rolle === "admin" ? ' <span class="chip">Kursleitung</span>' : ""}<br><small>${esc(t.email)}</small>${t.aktiv ? "" : ' <span class="chip">gesperrt</span>'}</td>
-            <td style="min-width:150px"><div class="balken"><i style="width:${(x.anteil * 100).toFixed(1)}%"></i></div><small>${Math.round(x.anteil * 100)} % · ${x.module}/${K.module.length} Module</small></td>
+            ${KURSE.map((k) => zelle(t, k)).join("")}
             <td>${t.rolle === "admin" ? "–" : aktuell(t)}</td><td>${zeitText(t.aktualisiertAm || t.letzteAnmeldung)}</td>
             <td>${t.id === SERVER.benutzer.id ? "" : `<div class="chips" data-konto="${t.id}">
               <button class="knopf leise klein" data-admin="passwort">Passwort zurücksetzen</button>
@@ -562,7 +606,7 @@
     const reg = modus === "registrieren";
     $("#leiste").innerHTML = "";
     $("#inhalt").innerHTML = `<div class="anmeldung">
-      <div class="marke">${G.marke()}<div><strong>${esc(K.titel)}</strong><span>${esc(K.untertitel)}</span></div></div>
+      <div class="marke">${G.marke()}<div><strong>${esc(PLATTFORM.titel)}</strong><span>${esc(PLATTFORM.untertitel)}</span></div></div>
       <div class="leiter-wrap">${G.leiter()}</div>
       <div class="reiter" role="tablist">
         <button role="tab" aria-selected="${!reg}" data-aktion="zu-anmelden">Anmelden</button>
@@ -594,14 +638,15 @@
 
   /* ---------- Filmbild für die MP4-Erzeugung (werkzeuge/filme-rendern.mjs) ---------- */
   function filmbild(modulId, n) {
-    const m = K.module.find((x) => x.id === modulId);
+    const m = KURSE.flatMap((k) => k.module).find((x) => x.id === modulId);
+    K = kursVon(m);
     const szenen = [{ schritt: -1, text: `Modul ${m.nr}: ${m.titel}` }].concat(m.film.szenen);
     const s = szenen[n];
     document.documentElement.setAttribute("data-theme", "light");
     document.body.className = "filmbild";
     document.body.innerHTML = s.schritt === -1
-      ? `<div class="fb-titel">${G.marke()}<span class="eyebrow">${esc(K.titel)} · Erklärfilm</span><h1>${esc(m.film.titel.replace(/^Erklärfilm:\s*/, ""))}</h1><p>Modul ${m.nr} · ${esc(m.titel)}</p></div>`
-      : `<div class="fb-kopf"><span>${G.marke()}<b>${esc(K.titel)}</b></span><span>Modul ${m.nr} · ${esc(m.kurztitel)}</span></div>
+      ? `<div class="fb-titel">${G.marke()}<span class="eyebrow">${esc(PLATTFORM.titel)} · ${esc(K.titel)} · Erklärfilm</span><h1>${esc(m.film.titel.replace(/^Erklärfilm:\s*/, ""))}</h1><p>Modul ${m.nr} · ${esc(m.titel)}</p></div>`
+      : `<div class="fb-kopf"><span>${G.marke()}<b>${esc(PLATTFORM.titel)} · ${esc(K.kurzname)}</b></span><span>Modul ${m.nr} · ${esc(m.kurztitel)}</span></div>
          <div class="fb-buehne film-buehne ${s.schritt > 0 ? "aktiv" : ""}">${G[m.film.grafik]()}</div>
          <div class="fb-text">${esc(s.text)}</div>`;
     document.querySelectorAll("[data-schritt]").forEach((g) => g.classList.toggle("an", Number(g.dataset.schritt) === s.schritt));
@@ -611,9 +656,13 @@
 
   /* ---------- Router ---------- */
   function zeige() {
-    const hash = (location.hash || "#start").slice(1);
-    const m = K.module.find((x) => x.id === hash);
-    const eigene = hash !== "modul" && seiten[hash];
+    let hash = (location.hash || "#start").slice(1);
+    if (hash === "plan" || hash === "zertifikat") hash = W.id + "-" + hash; // alte Links der Werkstatt
+    const m = KURSE.flatMap((k) => k.module).find((x) => x.id === hash);
+    if (m) K = kursVon(m);
+    const kursTeil = KURSE.map((k) => [k, hash === k.id ? "kurs" : hash === k.id + "-plan" ? "plan" : hash === k.id + "-zertifikat" ? "zertifikat" : null]).find(([, t]) => t);
+    if (kursTeil) K = kursTeil[0];
+    const eigene = kursTeil ? seiten[kursTeil[1]] : !["modul", "kurs", "plan", "zertifikat"].includes(hash) && seiten[hash];
     const seite = m ? seiten.modul(m) : (eigene || seiten.start)();
     filmStopp(); film = null;
     $("#inhalt").innerHTML = seite;
@@ -622,7 +671,7 @@
       const fn = G[f.dataset.grafik];
       if (fn) f.insertAdjacentHTML("afterbegin", fn());
     });
-    if (!m && (hash === "start" || !eigene)) selbstAuswerten();
+    if (kursTeil && kursTeil[1] === "kurs" && K === W) selbstAuswerten();
     if (hash === "baukasten") baukastenText();
     if (hash === "rechner") rechnerAuswerten();
     if (hash === "canvas") canvasAuswerten();
@@ -630,7 +679,7 @@
     if (m) quizWiederherstellen(m);
     document.body.classList.remove("menue-offen");
     window.scrollTo(0, 0);
-    const h1 = $("#inhalt h1"); document.title = (h1 ? h1.textContent + " · " : "") + K.titel;
+    const h1 = $("#inhalt h1"); document.title = (h1 ? h1.textContent + " · " : "") + PLATTFORM.titel;
   }
 
   function quizWiederherstellen(m) {
@@ -738,7 +787,7 @@
       }
       return;
     }
-    if (t.dataset.kopiere != null) { kopieren(K.prompts[Number(t.dataset.kopiere)].text, t); return; }
+    if (t.dataset.kopiere != null) { kopieren(W.prompts[Number(t.dataset.kopiere)].text, t); return; }
     if (t.dataset.kat != null && t.closest("#prompt-filter")) {
       document.querySelectorAll("#prompt-filter .chip").forEach((c) => c.setAttribute("aria-pressed", String(c === t)));
       document.querySelectorAll(".prompt").forEach((p) => { p.hidden = !!t.dataset.kat && p.dataset.kat !== t.dataset.kat; });

@@ -242,19 +242,20 @@
   };
 
   /* Lernplan als Balkenplan */
-  G.plan = (module, wochen) => {
-    const X0 = 230, Y0 = 34, BW = 90, RH = 30;
+  G.plan = (module, wochen, einheit = "Woche") => {
+    const X0 = 230, Y0 = 34, BW = Math.max(90, Math.floor(540 / wochen)), RH = 30;
     let s = "";
     for (let w = 1; w <= wochen; w++) {
-      s += box(X0 + (w - 1) * BW, 4, BW - 4, 22, "g-fl2", 4) + txt(X0 + (w - 1) * BW + BW / 2 - 2, 20, "Woche " + w, "tm");
+      s += box(X0 + (w - 1) * BW, 4, BW - 4, 22, "g-fl2", 4) + txt(X0 + (w - 1) * BW + BW / 2 - 2, 20, einheit + " " + w, "tm");
     }
     module.forEach((m, i) => {
       const y = Y0 + i * RH;
       s += txt(X0 - 12, y + 19, `${m.nr} · ${m.kurztitel}`, "", "end");
       s += `<line x1="${X0}" y1="${y + RH - 1}" x2="${X0 + wochen * BW}" y2="${y + RH - 1}" class="g-gitter"/>`;
       const x = X0 + (m.woche - 1) * BW + (m.versatz || 0) * BW;
-      s += schritt(i + 1, box(x + 2, y + 5, BW * (m.breite || 1) - 8, RH - 10, m.nr === 9 ? "g-no" : "g-ak", 5) +
-        txt(x + 10, y + 20, m.dauer, "tm " + (m.nr === 9 ? "tn" : "ti"), "start"));
+      const letzt = i === module.length - 1;
+      s += schritt(i + 1, box(x + 2, y + 5, BW * (m.breite || 1) - 8, RH - 10, letzt ? "g-no" : "g-ak", 5) +
+        txt(x + 10, y + 20, m.dauer, "tm " + (letzt ? "tn" : "ti"), "start"));
     });
     return svg(X0 + wochen * BW + 10, Y0 + module.length * RH + 10, s, "Lernplan über sechs Wochen");
   };
@@ -315,6 +316,113 @@
     s += schritt(5, `<path d="M700 152 C 700 220, 105 220, 105 154" class="g-linak" stroke-dasharray="6 5" marker-end="url(#spitze)"/>` +
       txt(402, 236, "Retro: Was machst du beim nächsten KI-Projekt anders?", "t2"));
     return svg(790, 250, s, "Abschlussprojekt in zwei Mini-Sprints");
+  };
+
+  /* KI als Zwiebel: KI ⊃ Maschinelles Lernen ⊃ Deep Learning ⊃ Generative KI */
+  G.zwiebel = () => {
+    const ringe = [
+      [300, 170, 280, 160, "g-fl", "Künstliche Intelligenz", "Maschinen lösen Aufgaben, die sonst Denken brauchen"],
+      [330, 196, 216, 124, "g-akh", "Maschinelles Lernen", "lernt aus Beispielen statt aus festen Regeln"],
+      [360, 222, 152, 88, "g-nog", "Deep Learning", "große neuronale Netze"],
+      [390, 246, 92, 54, "g-ak", "Generative KI", "erzeugt Neues"],
+    ];
+    let s = "";
+    ringe.forEach(([cx, cy, rx, ry, cls, titel], i) => {
+      s += schritt(i + 1, `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" class="${cls}"/>` +
+        txt(cx, cy - ry + (i === 3 ? 34 : 26), titel, "tb" + (i === 3 ? " ti" : i === 2 ? " tn" : i === 1 ? " tak" : "")));
+    });
+    s += schritt(4, txt(390, 252, "ChatGPT, Claude,", "t2 ti") + txt(390, 270, "Gemini, Bildgeneratoren", "t2 ti"));
+    const erkl = [
+      ["Künstliche Intelligenz", "Oberbegriff seit 1956: Maschinen, die Aufgaben", "lösen, für die Menschen Denken brauchen."],
+      ["Maschinelles Lernen", "Statt Regeln zu programmieren, lernt das", "System Muster aus vielen Beispielen."],
+      ["Deep Learning", "Lernen mit sehr großen künstlichen", "neuronalen Netzen, braucht viele Daten."],
+      ["Generative KI", "Erzeugt neue Texte, Bilder, Töne.", "Sprachmodelle (LLMs) gehören dazu."],
+    ];
+    erkl.forEach((e, i) => {
+      const y = 22 + i * 82;
+      s += schritt(i + 1, box(612, y, 330, 70, i === 3 ? "g-akh" : "g-fl", 8) + txt(628, y + 24, e[0], "tb", "start") +
+        txt(628, y + 44, e[1], "t2", "start") + txt(628, y + 60, e[2], "t2", "start"));
+    });
+    return svg(960, 352, s, "KI, Maschinelles Lernen, Deep Learning und Generative KI als Schichten");
+  };
+
+  /* Kurze Geschichte der KI */
+  G.zeitleiste = () => {
+    const punkte = [
+      [1956, "Begriff „KI“", "Dartmouth-Konferenz"],
+      [1966, "ELIZA", "erster Chatbot"],
+      [1997, "Deep Blue", "schlägt Schachweltmeister"],
+      [2012, "Bilderkennung", "Durchbruch Deep Learning"],
+      [2017, "Transformer", "Bauplan heutiger LLMs"],
+      [2022, "ChatGPT", "KI für alle"],
+      [2025, "Agenten", "KI erledigt Aufgaben"],
+    ];
+    // Punkte auf der Achse jahresgenau, Kästen gleichmäßig verteilt,
+    // damit sich die dichten letzten Jahre nicht überlagern.
+    const x = (j) => 40 + (j - 1950) / 80 * 880;
+    let s = pfeil(20, 150, 940, 150) + [1960, 1980, 2000, 2020].map((j) => `<line x1="${x(j)}" y1="144" x2="${x(j)}" y2="156" class="g-lin"/>` + txt(x(j), 176, String(j), "tm")).join("");
+    punkte.forEach(([j, t, u], i) => {
+      const oben = i % 2 === 0, bx = 104 + i * 125, y = oben ? 22 : 200, px = x(j), neu = j >= 2017;
+      s += schritt(i + 1, `<line x1="${bx}" y1="${oben ? y + 62 : y}" x2="${px}" y2="150" class="g-lin" stroke-dasharray="3 3"/>` +
+        `<circle cx="${px}" cy="150" r="7" class="${neu ? "g-ak" : "g-no"}"/>` +
+        box(bx - 92, y, 184, 62, neu ? "g-akh" : "g-fl", 8) + txt(bx, y + 22, j + " · " + t, "tb") + txt(bx, y + 44, u, "t2"));
+    });
+    return svg(960, 276, s, "Meilensteine der KI von 1956 bis heute");
+  };
+
+  /* Wie ein LLM entsteht */
+  G.training = () => {
+    const stufen = [
+      ["Riesige Textmengen", "Bücher, Webseiten,", "Code: Billionen Wörter", "g-fl"],
+      ["Vortraining", "wochenlang üben:", "nächstes Wort raten", "g-akh"],
+      ["Basismodell", "setzt Texte fort,", "führt kein Gespräch", "g-fl"],
+      ["Feinschliff", "Menschen bewerten", "Antworten, Regeln", "g-akh"],
+      ["Assistent", "ChatGPT, Claude,", "Gemini: hilfsbereit", "g-gut"],
+    ];
+    let s = "";
+    stufen.forEach((t, i) => {
+      const x = 14 + i * 190;
+      s += schritt(i + 1, box(x, 50, 170, 120, t[3], 12) + txt(x + 85, 84, t[0], "tb") + txt(x + 85, 114, t[1], "t2") + txt(x + 85, 132, t[2], "t2") +
+        (i < 4 ? pfeil(x + 172, 110, x + 188, 110) : ""));
+    });
+    s += schritt(6, box(14, 200, 930, 50, "g-nog", 10) + txt(479, 231, "Danach ist das Wissen eingefroren. Neues kennt das Modell nur über Websuche oder deine Dateien.", "tn"));
+    return svg(960, 264, s, "Wie aus Texten ein KI-Assistent wird");
+  };
+
+  /* Was man mit KI machen kann */
+  G.einsatz = () => {
+    const felder = [
+      ["Schreiben", "Mails, Berichte, Texte", "entwerfen und verbessern"],
+      ["Zusammenfassen", "lange Dokumente, Protokolle,", "Studien auf den Punkt"],
+      ["Erklären & Lernen", "schwierige Themen einfach,", "Übungsfragen, Nachhilfe"],
+      ["Ideen finden", "Brainstorming, Namen,", "Gegenargumente"],
+      ["Übersetzen", "in viele Sprachen,", "Ton anpassen"],
+      ["Analysieren", "Tabellen, Umfragen,", "Muster erkennen"],
+      ["Bilder & Audio", "Bilder erzeugen, Fotos lesen,", "Sprache in Text"],
+      ["Abläufe automatisieren", "wiederkehrende Aufgaben", "von selbst erledigen"],
+    ];
+    let s = "";
+    felder.forEach((f, i) => {
+      const sp = i % 4, z = Math.floor(i / 4), x = 14 + sp * 236, y = 14 + z * 124;
+      s += schritt(i + 1, box(x, y, 220, 110, i === 7 ? "g-nog" : "g-akh", 12) + txt(x + 110, y + 36, f[0], "tb" + (i === 7 ? " tn" : " tak")) +
+        txt(x + 110, y + 64, f[1], "t2") + txt(x + 110, y + 82, f[2], "t2"));
+    });
+    return svg(960, 264, s, "Acht Dinge, die du mit KI machen kannst");
+  };
+
+  /* Schlecht gefragt, gut gefragt */
+  G.fragen = () => {
+    let s = schritt(1, box(14, 20, 440, 250, "g-wa", 12) + txt(234, 50, "So eher nicht", "tb twa") +
+      box(34, 70, 400, 50, "g-fl", 8) + txt(234, 101, "„Schreib was über unser Sommerfest.“", "") +
+      txt(234, 150, "Die KI kennt weder Anlass, Publikum", "t2") + txt(234, 170, "noch Länge oder Ton.", "t2") +
+      txt(234, 206, "Ergebnis: allgemein, austauschbar,", "t2") + txt(234, 226, "muss komplett umgeschrieben werden.", "t2"));
+    s += schritt(2, box(488, 20, 460, 250, "g-gut", 12) + txt(718, 50, "So klappt es", "tb") +
+      box(506, 70, 424, 124, "g-fl", 8) +
+      txt(522, 94, "Ziel: Einladungsmail zum Sommerfest", "", "start") + txt(522, 116, "Wer: 80 Kolleginnen und Kollegen", "", "start") +
+      txt(522, 138, "Fakten: 12. Juli, 16 Uhr, Innenhof, Grillen", "", "start") + txt(522, 160, "Ton: locker, per du · Länge: 5 Sätze", "", "start") +
+      txt(522, 182, "Danach: Stell mir Rückfragen, falls etwas fehlt.", "t2", "start") +
+      txt(718, 226, "Ergebnis: passt fast sofort.", "tb") + txt(718, 248, "Nachschärfen im Gespräch: „kürzer“, „lustiger“.", "t2"));
+    return svg(962, 286, s, "Eine unklare und eine gute Anfrage an die KI im Vergleich");
   };
 
   /* Marke oben links */

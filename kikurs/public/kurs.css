@@ -413,3 +413,17 @@ body.filmbild .fb-titel .eyebrow { font-size: 16px; }
 #tn-inhalt { display: grid; gap: 28px; }
 #tn-inhalt .kennzahl { background: var(--flaeche); border: 1px solid var(--linie); }
 @media (max-width: 600px) { .anmeldung .leiter-wrap { display: none; } }
+
+/* ---------- Zwei Kurse ---------- */
+.kurswahl a { flex: 1; text-align: center; font: 600 .88rem var(--schrift-text); color: var(--tinte-2); text-decoration: none; padding: 7px; border-radius: 7px; }
+.kurswahl a[aria-selected="true"] { background: var(--flaeche); color: var(--tinte); box-shadow: var(--schatten); }
+.kurswahl-karten { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.kurskarte { display: grid; gap: 8px; align-content: start; text-decoration: none; color: var(--tinte); background: var(--flaeche);
+  border: 1px solid var(--linie); border-radius: var(--radius); padding: 22px; box-shadow: var(--schatten); border-top: 6px solid var(--akzent); }
+.kurskarte:first-child { border-top-color: var(--notiz); }
+.kurskarte:hover { border-color: var(--akzent); }
+.kurskarte strong { font: 700 1.5rem/1.15 var(--schrift-titel); }
+.kurskarte .kk-unter { color: var(--tinte-2); font-weight: 600; }
+.kurskarte p { margin: 0; color: var(--tinte-2); font-size: .95rem; }
+.kurskarte .kk-fuss { display: grid; gap: 6px; margin-top: 6px; }
+.kurskarte small { color: var(--tinte-2); }
