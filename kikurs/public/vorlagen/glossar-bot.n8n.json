@@ -1,0 +1,126 @@
+{
+  "name": "KI-Werkstatt · Glossar-Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Glossar-Bot (Modul 6)\n1. Chat Model wählen.\n2. Im **Glossar-Agent** unter *Options → System Message* euer echtes Team-Glossar einfügen.\n3. Unten links **Open chat** zum Testen. Mit **Active** und *Make Chat Publicly Available* im Chat-Knoten bekommt das Team eine Chat-Seite.\n4. Nächster Schritt: ein lesendes Tool anhängen (z. B. eure Glossar-Tabelle).",
+        "width": 460,
+        "height": 260,
+        "color": 6
+      },
+      "id": "47fc47fa-ca2c-5ad2-a030-323a6a20e6fb",
+      "name": "Anleitung",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "17dd22bb-c16d-55e8-9d30-a89bc2c928ea",
+      "name": "Chat",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "570969e8-fc6f-556f-b12c-48283bacaae8"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Du bist der Glossar-Bot eines agilen Teams. Beantworte Fragen zu Begriffen kurz und freundlich auf Deutsch, per du.\nNutze vor allem das Team-Glossar unten. Wenn ein Begriff dort fehlt, erkläre ihn allgemein und sag dazu, dass er nicht im Team-Glossar steht.\nErfinde keine teamspezifischen Regeln.\n\nTeam-Glossar:\n- DoD: Definition of Done. Bei uns: Code-Review, Tests grün, Doku aktualisiert, vom PO abgenommen.\n- Refinement: jeden Dienstag 60 Minuten, Stories für die nächsten zwei Sprints.\n- Impediment: alles, was das Team bremst. Meldung über das Impediment-Formular."
+        }
+      },
+      "id": "9abe33f8-c4c6-5698-a07c-9528767aa92b",
+      "name": "Glossar-Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5",
+          "cachedResultName": "Claude Sonnet 5"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "9c879b75-4ec7-5f92-a1e7-16a2d442ccb0",
+      "name": "Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        200,
+        220
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "9bb533d1-a0f6-54ce-99cc-9b03e4b8085e",
+      "name": "Gedächtnis",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        380,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Chat": {
+      "main": [
+        [
+          {
+            "node": "Glossar-Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Glossar-Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gedächtnis": {
+      "ai_memory": [
+        [
+          {
+            "node": "Glossar-Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

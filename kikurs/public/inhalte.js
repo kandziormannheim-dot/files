@@ -10,10 +10,10 @@ window.KURS = {
   bestehen: 0.7,
 
   persona: [
-    { titel: "Für wen", text: "Menschen, die ChatGPT, Claude oder Copilot schon im Chat nutzen und jetzt verstehen wollen, wie man daraus verlässliche Abläufe baut." },
+    { titel: "Für wen", text: "Menschen, die ChatGPT, Claude oder Copilot schon im Chat nutzen und jetzt selbst KI-Lösungen bauen und andere Teams bei der Einführung begleiten wollen." },
     { titel: "Vorwissen, das trägt", text: "VWL: Wahrscheinlichkeit, Kosten-Nutzen, Anreize. Scrum und Agile Coaching: Experimente, Iteration, Prozesse sichtbar machen. Genau das braucht KI-Arbeit." },
-    { titel: "Kein Programmieren nötig", text: "Alles läuft über No-Code-Werkzeuge. Wer später tiefer will, bekommt in Modul 6 einen kurzen Blick unter die Haube." },
-    { titel: "Aufwand", text: "Sechs Wochen mit insgesamt rund 29 Stunden, also im Schnitt knapp 5 Stunden pro Woche. Jedes Modul endet mit einer Praxisübung und einem kurzen Wissenscheck." },
+    { titel: "Kein Programmieren nötig", text: "Alles läuft über Chat-Assistenten und euren eigenen n8n-Server. Du klickst Abläufe zusammen, statt Code zu schreiben." },
+    { titel: "Aufwand", text: "Sechs Wochen mit insgesamt rund 30 Stunden, also im Schnitt 5 Stunden pro Woche. Jedes Modul endet mit einer Praxisübung und einem kurzen Wissenscheck." },
   ],
 
   module: [
@@ -44,14 +44,14 @@ window.KURS = {
         {
           id: "m0l2", titel: "Werkzeugkiste einrichten",
           html: `
-<p>Für den Kurs reichen kostenlose oder günstige Konten. Prüfe vorher, welche Werkzeuge dein Arbeitgeber freigegeben hat, denn für echte Arbeitsdaten gelten dessen Regeln (mehr dazu in Modul 7).</p>
+<p>Bei euch sind alle großen Modelle verfügbar, und n8n läuft auf einem eigenen Server. Das ist eine sehr gute Ausgangslage: Du kannst Modelle vergleichen, und eure Automatisierungsdaten bleiben im eigenen Haus. Für echte Arbeitsdaten gelten trotzdem die Regeln deines Arbeitgebers (Modul 7).</p>
 <div class="tabelle-wrap"><table>
 <tr><th>Wofür</th><th>Beispiele</th><th>Brauchst du ab</th></tr>
 <tr><td>Chat und Assistenten</td><td>Claude, ChatGPT, Microsoft Copilot, Gemini</td><td>Modul 1</td></tr>
 <tr><td>Recherche mit Quellen</td><td>NotebookLM, Perplexity, Claude/ChatGPT mit Websuche</td><td>Modul 3</td></tr>
-<tr><td>Automatisierung (No-Code)</td><td>n8n, Make, Zapier, Microsoft Power Automate</td><td>Modul 4</td></tr>
-<tr><td>Formular als Auslöser</td><td>Google Forms, Microsoft Forms, Tally</td><td>Modul 4</td></tr>
-<tr><td>Agenten</td><td>Claude mit Konnektoren, Claude Cowork/Code, ChatGPT Agent, Copilot Studio</td><td>Modul 6</td></tr>
+<tr><td>Automatisierung (No-Code)</td><td><b>n8n auf eurem eigenen Server</b>. Zugang bei der n8n-Verwaltung erfragen.</td><td>Modul 4</td></tr>
+<tr><td>Formular als Auslöser</td><td>das eingebaute n8n-Formular (kein weiteres Werkzeug nötig)</td><td>Modul 4</td></tr>
+<tr><td>Agenten</td><td>Claude mit Konnektoren, Claude Cowork, ChatGPT Agent, der AI-Agent-Knoten in n8n</td><td>Modul 6</td></tr>
 </table></div>
 <div class="achtung"><strong>Wichtig</strong><p>Werkzeugnamen und Preise ändern sich alle paar Monate. Lerne die Konzepte, dann kannst du jedes neue Werkzeug schnell einordnen.</p></div>`
         },
@@ -69,6 +69,17 @@ window.KURS = {
 <p>Eine davon wird dein Abschlussprojekt in Modul 9.</p>`
         },
       ],
+      film: {
+        titel: "Erklärfilm: Vom Chatbot zum Agenten",
+        grafik: "leiter",
+        szenen: [
+          { schritt: 1, text: "Willkommen in der KI-Werkstatt. Heute nutzt du KI wahrscheinlich als Chatbot: Du fragst, die KI antwortet, und du kopierst das Ergebnis heraus." },
+          { schritt: 2, text: "Auf der zweiten Stufe richtest du einen Assistenten ein. Er kennt deine Anweisungen und dein Material, du musst dich nicht jedes Mal wiederholen." },
+          { schritt: 3, text: "Auf der dritten Stufe baust du Workflows. Ein Ablauf startet von selbst, etwa wenn ein Formular eingeht, und die KI ist ein Schritt darin." },
+          { schritt: 4, text: "Ganz rechts stehen Agenten. Sie bekommen ein Ziel und Werkzeuge und planen die Schritte selbst. Das ist mächtig, braucht aber gute Leitplanken." },
+          { schritt: 0, text: "In sechs Wochen gehst du diese Stufen Schritt für Schritt hinauf. Am Ende steht deine eigene KI-Lösung, die im Team wirklich läuft." },
+        ],
+      },
       videos: [
         { titel: "AI Fluency: Framework & Foundations", quelle: "Anthropic Academy · kostenloser Kurs", dauer: "ca. 1 h, Englisch", url: "https://anthropic.skilljar.com/", warum: "Die 4D-Denkweise (Delegation, Beschreibung, Urteilsvermögen, Sorgfalt) ist ein guter Rahmen für alles, was hier folgt." },
       ],
@@ -241,6 +252,19 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <p>Beispiele für dich: ein <i>Retro-Assistent</i>, der Notizen clustert und Formate vorschlägt; ein <i>Story-Coach</i>, der User Stories gegen INVEST prüft; ein <i>Stakeholder-Übersetzer</i>, der Sprint-Ergebnisse in Management-Sprache fasst.</p>`
         },
       ],
+      film: {
+        titel: "Erklärfilm: Ein Prompt wie ein gutes Briefing",
+        grafik: "prompt",
+        szenen: [
+          { schritt: 1, text: "Ein guter Prompt ist ein gutes Briefing. Er beginnt mit der Rolle: Aus welcher Perspektive soll die KI arbeiten?" },
+          { schritt: 2, text: "Dann das Ziel: Was soll am Ende herauskommen, und wofür brauchst du es?" },
+          { schritt: 3, text: "Der Kontext ist der wichtigste Baustein. Wer ist das Team, was ist passiert, welches Material gibt es?" },
+          { schritt: 4, text: "Das Format legt fest, wie die Antwort aussieht, zum Beispiel eine Tabelle mit festen Spalten und einer Längengrenze." },
+          { schritt: 5, text: "Ein Beispiel für ein gutes Ergebnis wirkt oft stärker als jede Beschreibung." },
+          { schritt: 6, text: "Zum Schluss die Grenzen: Was darf nicht passieren, und wann soll die KI lieber nachfragen?" },
+          { schritt: 0, text: "Ändere beim Verbessern immer nur einen Baustein. So weißt du, was gewirkt hat, genau wie bei einem Team-Experiment." },
+        ],
+      },
       videos: [
         { titel: "Prompting best practices", quelle: "Claude-Dokumentation", dauer: "Lesen, 20 min, Englisch", url: "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices", warum: "Kompakte Sammlung erprobter Techniken, gilt sinngemäß für alle Modelle." },
       ],
@@ -267,7 +291,7 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
     {
       id: "m3", nr: 3, titel: "Die Werkzeuglandschaft verstehen", kurztitel: "Werkzeuge",
       kurz: "Welches Werkzeug wofür: Modelle, Recherche, Meetings, Automatisierung, Agenten.",
-      dauer: "2 h", woche: 2, versatz: 0.6, breite: 0.4,
+      dauer: "2,5 h", woche: 2, versatz: 0.6, breite: 0.4,
       ziele: [
         "Du ordnest KI-Werkzeuge nach Einsatzzweck statt nach Marke.",
         "Du kennst Auswahlkriterien und kannst eine begründete Empfehlung geben.",
@@ -282,9 +306,10 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <tr><td><b>Allzweck-Assistenten</b></td><td>Schreiben, Analysieren, Denken, Projekte</td><td>Claude, ChatGPT, Gemini, Microsoft Copilot</td></tr>
 <tr><td><b>Recherche mit Quellen</b></td><td>Antworten aus Web oder eigenen Dokumenten, mit Belegen</td><td>NotebookLM, Perplexity, Deep-Research-Modi</td></tr>
 <tr><td><b>KI in bestehender Software</b></td><td>KI direkt dort, wo du arbeitest</td><td>Atlassian Rovo (Jira, Confluence), Copilot in Teams/Outlook, Miro AI</td></tr>
-<tr><td><b>Automatisierungsplattformen</b></td><td>Abläufe zwischen Programmen, mit KI-Schritten</td><td>n8n, Make, Zapier, Power Automate</td></tr>
+<tr><td><b>Automatisierungsplattformen</b></td><td>Abläufe zwischen Programmen, mit KI-Schritten</td><td>n8n (bei euch auf eigenem Server), Make, Zapier, Power Automate</td></tr>
 <tr><td><b>Agenten</b></td><td>Ziel vorgeben, KI arbeitet mit Werkzeugen selbstständig</td><td>Claude Cowork/Code, ChatGPT Agent, Copilot Studio</td></tr>
 </table></div>
+<figure class="grafik" data-grafik="werkzeuge"><figcaption>Die Klassen überlappen, helfen aber beim Sortieren.</figcaption></figure>
 <p>Die Grenzen verschwimmen: Allzweck-Assistenten bekommen Konnektoren und Agentenfunktionen, Automatisierungsplattformen bekommen Agenten-Bausteine. Frag deshalb immer: <i>Was soll erledigt werden?</i> und erst dann: <i>Welches Werkzeug?</i></p>`
         },
         {
@@ -300,6 +325,19 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <div class="notiz"><span class="eyebrow">VWL-Brücke</span><p>Achte auf Lock-in-Effekte und Wechselkosten. Offene Standards wie MCP (Modul 6) und selbst betreibbare Werkzeuge wie n8n senken sie.</p></div>`
         },
         {
+          id: "m3l4", titel: "Welches Modell wofür?",
+          html: `
+<p>Bei euch stehen alle großen Modellfamilien zur Verfügung: Claude (Anthropic), GPT (OpenAI), Gemini (Google) und weitere. Jede Familie gibt es in mehreren Größen. Die Namen und Versionen wechseln alle paar Monate, die Faustregeln bleiben:</p>
+<div class="tabelle-wrap"><table>
+<tr><th>Größe</th><th>Stärken</th><th>Gut für</th></tr>
+<tr><td><b>Klein und schnell</b></td><td>günstig, antwortet in Sekunden</td><td>Einordnen, Felder herausziehen, kurze Umformulierungen, viele Durchläufe in n8n</td></tr>
+<tr><td><b>Mittel</b></td><td>guter Ausgleich aus Qualität und Kosten</td><td>die meisten Texte, Zusammenfassungen, Assistenten im Alltag</td></tr>
+<tr><td><b>Groß, mit Denkmodus</b></td><td>beste Qualität bei schwierigen Aufgaben, langsamer, teurer</td><td>Analysen, Business Cases, lange Dokumente, Agenten mit vielen Schritten</td></tr>
+</table></div>
+<p><b>So wählst du aus:</b> Nimm eine echte Aufgabe und fünf Beispiele. Lass zwei oder drei Modelle dieselbe Aufgabe lösen und bewerte blind, ohne zu wissen, welches Ergebnis von wem ist. Das ist ein kleiner A/B-Test, und er schlägt jede Rangliste aus dem Internet.</p>
+<div class="notiz"><span class="eyebrow">VWL-Brücke</span><p>Grenzkosten und Grenznutzen: Lohnt das teurere Modell den Aufpreis bei <i>dieser</i> Aufgabe? Beim Einordnen von Feedback oft nicht, beim Business Case meistens schon.</p></div>`
+        },
+        {
           id: "m3l3", titel: "Meetings, Whiteboards, Audio",
           html: `
 <p>Für Scrum Master besonders ergiebig: KI rund um Meetings.</p>
@@ -311,6 +349,18 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <div class="achtung"><strong>Achtung</strong><p>Aufzeichnungen und Transkripte sind personenbezogene Daten. Ein Retro-Protokoll mit Namen und Stimmungsbildern gehört in die rote Zone der Datenampel (Modul 7).</p></div>`
         },
       ],
+      film: {
+        titel: "Erklärfilm: Welches Werkzeug wofür?",
+        grafik: "werkzeuge",
+        szenen: [
+          { schritt: 1, text: "Allzweck-Assistenten wie Claude, ChatGPT oder Gemini sind dein Denk- und Schreibwerkzeug. Bei euch sind alle großen Modelle verfügbar." },
+          { schritt: 2, text: "Recherche-Werkzeuge antworten mit Quellenangaben, aus dem Web oder aus deinen eigenen Dokumenten." },
+          { schritt: 3, text: "Viele Programme haben KI inzwischen eingebaut, etwa Jira und Confluence oder Teams. Dort arbeitet die KI direkt mit deinen Daten." },
+          { schritt: 4, text: "Für Automatisierungen habt ihr n8n auf einem eigenen Server. Damit verbindest du Programme und KI zu festen Abläufen." },
+          { schritt: 5, text: "Agenten verfolgen ein Ziel selbstständig. Auch n8n hat dafür einen eigenen Baustein." },
+          { schritt: 6, text: "Frag immer zuerst: Was soll erledigt werden? Dann wähle die Werkzeugklasse, und erst ganz zum Schluss das Produkt." },
+        ],
+      },
       videos: [
         { titel: "NotebookLM: Quellen hochladen, Fragen stellen", quelle: "Google · Hilfeseite", dauer: "Lesen, 10 min", url: "https://support.google.com/notebooklm/", warum: "Einfachster Einstieg in „KI antwortet nur aus meinen Dokumenten“." },
       ],
@@ -345,14 +395,14 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
         {
           id: "m4l1", titel: "Die Anatomie eines Workflows",
           html: `
-<p>Jede Automatisierung besteht aus denselben Bausteinen, egal ob in n8n, Make, Zapier oder Power Automate:</p>
+<p>Jede Automatisierung besteht aus denselben Bausteinen, egal in welchem Werkzeug. Die Begriffe in Klammern sind die aus n8n:</p>
 <figure class="grafik" data-grafik="workflow"><figcaption>Der KI-Schritt ist nur einer unter mehreren. In diesem Modul bauen wir zuerst ohne ihn.</figcaption></figure>
 <ul>
   <li><b>Auslöser (Trigger):</b> startet den Ablauf. Neue E-Mail, neues Formular, neues Ticket, feste Uhrzeit.</li>
-  <li><b>Aktionen:</b> etwas tun. Zeile in Tabelle schreiben, Nachricht senden, Ticket anlegen.</li>
-  <li><b>Daten:</b> jeder Schritt gibt Felder weiter, die der nächste nutzen kann (z. B. „Name“, „Text“, „Datum“).</li>
-  <li><b>Bedingungen (Weichen):</b> „Wenn Kategorie = Bug, dann …“.</li>
-  <li><b>Fehlerbehandlung:</b> Was passiert, wenn ein Schritt scheitert? Mindestens: Benachrichtigung an dich.</li>
+  <li><b>Aktionen (Nodes):</b> etwas tun. Zeile in Tabelle schreiben, Nachricht senden, Ticket anlegen.</li>
+  <li><b>Daten (Items):</b> jeder Schritt gibt Felder weiter, die der nächste nutzen kann (z. B. „Name“, „Text“, „Datum“).</li>
+  <li><b>Bedingungen (If, Switch):</b> „Wenn Kategorie = Bug, dann …“.</li>
+  <li><b>Fehlerbehandlung (Error Workflow):</b> Was passiert, wenn ein Schritt scheitert? Mindestens: Benachrichtigung an dich.</li>
 </ul>`
         },
         {
@@ -370,30 +420,34 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <p><b>Faustregel für gute Kandidaten:</b> häufig, regelbasiert, digital, mit klarem Anfang und Ende.</p>`
         },
         {
-          id: "m4l3", titel: "Plattformen im Vergleich",
+          id: "m4l3", titel: "n8n kennenlernen: euer eigener Automatisierungsserver",
           html: `
+<p>Bei euch läuft <b>n8n auf einem eigenen Server</b>. Das hat zwei große Vorteile: Die Daten, die durch eure Abläufe fließen, verlassen das Haus nur dort, wo ihr es wollt (etwa beim Aufruf eines KI-Modells). Und es gibt keine Kosten pro Ausführung, sodass du ausprobieren kannst, so viel du magst.</p>
 <div class="tabelle-wrap"><table>
-<tr><th></th><th>n8n</th><th>Make</th><th>Zapier</th><th>Power Automate</th></tr>
-<tr><td>Stärke</td><td>Sehr flexibel, selbst betreibbar, starke KI-Bausteine</td><td>Visuell, gut für komplexe Abläufe</td><td>Am einfachsten, riesige App-Auswahl</td><td>Tief in Microsoft 365 integriert</td></tr>
-<tr><td>Datenstandort</td><td>eigener Server möglich (DSGVO-freundlich)</td><td>Cloud, EU-Region wählbar</td><td>Cloud (USA)</td><td>Microsoft-Cloud des Unternehmens</td></tr>
-<tr><td>Lernkurve</td><td>mittel</td><td>mittel</td><td>niedrig</td><td>mittel</td></tr>
-<tr><td>Gut, wenn …</td><td>du Kontrolle und KI-Tiefe willst</td><td>du viel visuell gestalten willst</td><td>es schnell gehen soll</td><td>deine Firma Microsoft nutzt</td></tr>
+<tr><th>Begriff in n8n</th><th>Bedeutung</th></tr>
+<tr><td><b>Workflow</b></td><td>ein Ablauf auf der Arbeitsfläche (Canvas)</td></tr>
+<tr><td><b>Node</b> (Knoten)</td><td>ein Schritt. Der erste ist immer ein Trigger-Knoten.</td></tr>
+<tr><td><b>Credential</b></td><td>gespeicherte Zugangsdaten, z. B. für E-Mail, Teams oder ein KI-Modell. Einmal anlegen, überall nutzen.</td></tr>
+<tr><td><b>Execution</b></td><td>ein einzelner Durchlauf. Unter „Executions“ siehst du jeden Lauf mit allen Daten, ideal zur Fehlersuche.</td></tr>
+<tr><td><b>Test workflow / Active</b></td><td>Testlauf per Knopfdruck. Erst mit dem Schalter „Active“ läuft der Workflow dauerhaft.</td></tr>
+<tr><td><b>Ausdruck</b> <code>{{ }}</code></td><td>holt Werte aus früheren Schritten, z. B. <code>{{ $json.Name }}</code>. Du ziehst Felder einfach per Maus hinein.</td></tr>
 </table></div>
-<p>Für den Kurs sind die Beispiele so beschrieben, dass sie in allen vier Plattformen funktionieren. Die Begriffe unterscheiden sich leicht (Node, Modul, Zap, Flow), das Prinzip nicht.</p>`
+<div class="notiz"><span class="eyebrow">So kommst du rein</span><p>Frag bei der Stelle, die euren n8n-Server betreibt, nach einem Konto und nach vorhandenen Credentials (E-Mail-Versand, Teams/Slack, KI-Modelle). Oft sind sie schon angelegt und für dich freigegeben.</p></div>`
         },
         {
-          id: "m4l4", titel: "Dein erster Workflow: Formular → Tabelle → Nachricht",
+          id: "m4l4", titel: "Dein erster Workflow in n8n: der Impediment-Melder",
           html: `
-<p>Wir bauen einen Ablauf, den jedes Team brauchen kann: einen <b>Impediment-Melder</b>. Teammitglieder melden Hindernisse über ein Formular, du bekommst eine Nachricht, und alles landet in einer Tabelle.</p>
+<p>Teammitglieder melden Hindernisse über ein Formular. Bei starken Hindernissen bekommst du sofort eine Nachricht. Alles ohne Code, nur mit n8n-Bordmitteln.</p>
 <ol>
-  <li><b>Formular:</b> Felder „Was blockiert dich?“, „Seit wann?“, „Wie stark (1–3)?“.</li>
-  <li><b>Auslöser:</b> „Neue Formularantwort“.</li>
-  <li><b>Aktion 1:</b> neue Zeile in einer Tabelle (Google Sheets, Excel) mit allen Feldern und Datum.</li>
-  <li><b>Bedingung:</b> Wenn Stärke = 3 …</li>
-  <li><b>Aktion 2:</b> … Nachricht an dich in Teams/Slack oder per E-Mail.</li>
-  <li><b>Testen:</b> drei Testeinträge abschicken, einen davon mit Stärke 3.</li>
+  <li><b>Neuer Workflow</b> → „Add first step“ → <b>On form submission</b> (n8n Form Trigger). Felder: „Was blockiert dich?“ (Textfeld), „Seit wann?“ (Text), „Wie stark?“ (Auswahl 1, 2, 3). n8n erzeugt dafür eine eigene Formularseite mit Link.</li>
+  <li><b>+ → If:</b> Bedingung „Wie stark?“ <i>is equal to</i> <code>3</code>. Feld per Maus aus der linken Spalte hineinziehen.</li>
+  <li><b>Ausgang „true“ → Send Email</b> (oder Microsoft Teams / Slack, je nachdem, welche Credentials es bei euch gibt). Betreff: <code>Starkes Hindernis: {{ $json['Was blockiert dich?'] }}</code>.</li>
+  <li><b>Speichern (optional):</b> einen Knoten für eure Tabelle anhängen, etwa <b>Data Table</b> (in neueren n8n-Versionen eingebaut), Google Sheets oder Microsoft Excel.</li>
+  <li><b>Testen:</b> „Test workflow“ → das Testformular öffnet sich. Drei Einträge abschicken, einer davon mit Stärke 3. Unter „Executions“ jeden Lauf ansehen.</li>
+  <li><b>Aktivieren:</b> Schalter „Active“ oben rechts. Ab jetzt gilt die Produktions-URL des Formulars. Diese gibst du dem Team.</li>
 </ol>
-<div class="achtung"><strong>Typische Stolpersteine</strong><p>Zugangsdaten (Verbindungen) müssen einmal angelegt werden. Felder aus früheren Schritten erscheinen erst, wenn du einmal Testdaten durchgeschickt hast. Workflow am Ende aktivieren, sonst läuft er nur im Testmodus.</p></div>`
+<p>Fertige Vorlage zum Importieren: <a href="vorlagen/impediment-melder.n8n.json" download>impediment-melder.n8n.json</a>. In n8n: Menü „…“ → „Import from File“. Danach nur noch Empfänger und Credentials setzen.</p>
+<div class="achtung"><strong>Typische Stolpersteine</strong><p>Test-URL und Produktions-URL des Formulars sind verschieden. Felder aus früheren Schritten erscheinen erst, wenn einmal Testdaten durchgelaufen sind. Ein Workflow ohne „Active“ reagiert nur im Testmodus.</p></div>`
         },
       ],
       film: {
@@ -417,8 +471,8 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
         schritte: [
           "Zeichne den heutigen Weg, wie Hindernisse bei dir gemeldet werden, als kleine Value Stream Map.",
           "Lege das Formular und die Tabelle an.",
-          "Baue den Workflow nach Lektion 4 in einer Plattform deiner Wahl.",
-          "Füge eine Fehlerbenachrichtigung hinzu.",
+          "Baue den Workflow nach Lektion 4 in n8n, von Hand oder aus der Vorlage.",
+          "Füge eine Fehlerbenachrichtigung hinzu: In den Workflow-Einstellungen („Settings“ → „Error Workflow“) einen kleinen Workflow mit „Error Trigger“ und E-Mail an dich hinterlegen.",
           "Teste mit drei Einträgen und notiere im Lerntagebuch, was nicht auf Anhieb funktioniert hat.",
         ],
         ergebnis: "Ein laufender Workflow ohne KI. Er ist die Grundlage für Modul 5.",
@@ -452,7 +506,15 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <tr><td><b>Herausziehen</b></td><td>Felder aus freiem Text lesen</td><td>E-Mail vom Stakeholder → Wunsch, Frist, Priorität</td></tr>
 <tr><td><b>Entwerfen</b></td><td>Neuen Text nach Vorgabe schreiben</td><td>Stichpunkte → User Story mit Akzeptanzkriterien</td></tr>
 </table></div>
-<p>Alle vier brauchen dasselbe: klare Anweisung, feste Ausgabeform (oft JSON, siehe Modul 2) und ein paar Beispiele. In der Plattform heißt der Baustein etwa „AI Agent“, „Basic LLM Chain“ oder „OpenAI/Anthropic“ (n8n), „AI“ (Make), „AI by Zapier“ oder „AI Builder“ (Power Automate).</p>`
+<figure class="grafik" data-grafik="aufgaben"><figcaption>Vier Aufgaben, ein Prinzip: Text rein, feste Felder raus.</figcaption></figure>
+<p>Alle vier brauchen dasselbe: klare Anweisung, feste Ausgabeform (JSON, siehe Modul 2) und ein paar Beispiele. In n8n nimmst du dafür meist diese Knoten:</p>
+<ul>
+  <li><b>Basic LLM Chain:</b> ein Prompt, eine Antwort. Darunter hängst du ein <b>Chat Model</b> (Anthropic, OpenAI, Google Gemini …) und für JSON einen <b>Structured Output Parser</b>.</li>
+  <li><b>Text Classifier:</b> fertiger Knoten fürs Einordnen. Du trägst nur die Kategorien mit Beschreibung ein, und für jede Kategorie gibt es einen eigenen Ausgang.</li>
+  <li><b>Information Extractor:</b> fertiger Knoten fürs Herausziehen. Du beschreibst die Felder, n8n liefert sie sauber zurück.</li>
+  <li><b>Summarization Chain:</b> für lange Texte, die zusammengefasst werden sollen.</li>
+</ul>
+<div class="notiz"><span class="eyebrow">Alle Modelle verfügbar</span><p>Da bei euch alle großen Modelle angebunden sind, kannst du im Chat-Model-Knoten einfach wechseln und mit demselben Testsatz vergleichen (Lektion 4). Für Einordnen reicht oft ein kleines, schnelles Modell, fürs Zusammenfassen langer Transkripte lohnt ein großes.</p></div>`
         },
         {
           id: "m5l2", titel: "Praxis: der Retro-Radar",
@@ -460,12 +522,13 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <p>Wir erweitern den Workflow aus Modul 4. Das Team gibt vor der Retro anonym Feedback über ein Formular. Der Workflow ordnet jede Antwort ein, sammelt alles in einer Tabelle und schickt dir am Retro-Morgen eine Zusammenfassung.</p>
 <ol>
   <li><b>Auslöser:</b> neue Formularantwort (Felder: „Was lief gut?“, „Was hat gebremst?“, „Idee“).</li>
-  <li><b>KI-Schritt „Einordnen“:</b> Prompt aus der Bibliothek „Retro-Feedback einordnen“, Ausgabe als JSON mit <code>thema</code>, <code>stimmung</code> (-1/0/1), <code>kernaussage</code>.</li>
+  <li><b>KI-Schritt „Einordnen“:</b> Basic LLM Chain mit dem Prompt „Retro-Feedback einordnen“ aus der Bibliothek, darunter Chat Model und Structured Output Parser. Ergebnis: <code>thema</code>, <code>stimmung</code> (-1/0/1), <code>kernaussage</code>, <code>sicher</code>.</li>
   <li><b>Tabelle:</b> Originaltext plus die drei KI-Felder speichern.</li>
-  <li><b>Zweiter Workflow, zeitgesteuert:</b> am Retro-Tag um 8 Uhr alle Zeilen des Sprints holen.</li>
+  <li><b>Zweiter Workflow, zeitgesteuert:</b> Knoten <b>Schedule Trigger</b>, am Retro-Tag um 8 Uhr. Alle Zeilen des Sprints holen und mit <b>Aggregate</b> zu einer Liste zusammenfassen.</li>
   <li><b>KI-Schritt „Zusammenfassen“:</b> Top-Themen, Stimmungstrend, drei Vorschläge für Retro-Formate.</li>
   <li><b>Nachricht an dich</b>, nicht direkt ans Team. Du prüfst und entscheidest.</li>
 </ol>
+<p>Vorlagen zum Importieren: <a href="vorlagen/retro-radar-einordnen.n8n.json" download>retro-radar-einordnen.n8n.json</a> und <a href="vorlagen/retro-radar-zusammenfassung.n8n.json" download>retro-radar-zusammenfassung.n8n.json</a>. Nach dem Import im Chat-Model-Knoten euer Modell-Credential wählen und die Tabelle verbinden.</p>
 <div class="notiz"><span class="eyebrow">Warum an dich?</span><p>Die KI bereitet vor, du moderierst. So bleibt die Retro ein Raum des Teams und kein Bericht einer Maschine.</p></div>`
         },
         {
@@ -478,7 +541,7 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
   <li><b>Freigabe:</b> alles, was nach außen geht oder Menschen betrifft (E-Mails an Kunden, Aussagen über Personen).</li>
   <li><b>Nie automatisch:</b> Entscheidungen über Personal, Leistung, Geld.</li>
 </ul>
-<p>Die meisten Plattformen haben dafür einen Freigabeschritt: Nachricht mit „Freigeben / Ablehnen“-Knopf, der Workflow wartet.</p>`
+<p>In n8n geht das mit „Send and Wait for Response“ (verfügbar in den Knoten für E-Mail, Teams, Slack u. a.): Du bekommst eine Nachricht mit „Freigeben / Ablehnen“, und der Workflow wartet, bis du entschieden hast.</p>`
         },
         {
           id: "m5l4", titel: "Qualität messen statt hoffen",
@@ -494,15 +557,26 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <div class="notiz"><span class="eyebrow">VWL-Brücke</span><p>Das ist eine Stichprobe mit Trefferquote. Bei 20 Fällen ist die Unsicherheit noch groß: 18 von 20 richtig heißt ungefähr 70–97 % im 95-%-Konfidenzintervall. Für kritische Abläufe also mehr testen.</p></div>`
         },
       ],
+      film: {
+        titel: "Erklärfilm: Vier Dinge, die KI im Workflow erledigt",
+        grafik: "aufgaben",
+        szenen: [
+          { schritt: 1, text: "Erstens: Einordnen. Die KI liest einen Text und ordnet ihn einer Kategorie zu, zum Beispiel Bug, Idee oder Lob." },
+          { schritt: 2, text: "Zweitens: Zusammenfassen. Aus einem langen Transkript werden fünf Kernpunkte und die offenen Fragen." },
+          { schritt: 3, text: "Drittens: Herausziehen. Aus einer freien E-Mail werden feste Felder wie Wunsch, Frist und Priorität." },
+          { schritt: 4, text: "Viertens: Entwerfen. Aus Stichpunkten wird eine User Story mit Akzeptanzkriterien." },
+          { schritt: 5, text: "Wichtig ist immer eine feste Ausgabeform, damit der nächste Schritt weiterarbeiten kann. Und ein Mensch an den heiklen Stellen." },
+        ],
+      },
       videos: [
         { titel: "n8n: KI-Agenten und LLM-Bausteine", quelle: "n8n Docs", dauer: "Lesen, 15 min, Englisch", url: "https://docs.n8n.io/advanced-ai/", warum: "Wie KI-Schritte in n8n aufgebaut sind, mit Beispielen." },
       ],
       uebung: {
         titel: "Retro-Radar bauen",
         schritte: [
-          "Erweitere deinen Workflow aus Modul 4 um einen KI-Schritt „Einordnen“ mit JSON-Ausgabe.",
+          "Importiere die Vorlage „Retro-Radar: einordnen“ oder erweitere deinen Workflow aus Modul 4 um eine Basic LLM Chain mit Structured Output Parser.",
           "Lege einen Testsatz mit 20 selbst ausgedachten Feedback-Sätzen an und ordne sie von Hand ein.",
-          "Miss die Trefferquote. Verbessere den Prompt, bis sie mindestens 85 % erreicht.",
+          "Miss die Trefferquote. Verbessere den Prompt, bis sie mindestens 85 % erreicht. Vergleiche danach zwei Modelle mit demselben Testsatz.",
           "Baue den zweiten, zeitgesteuerten Workflow mit der Zusammenfassung an dich.",
           "Trage Trefferquote vorher/nachher ins Lerntagebuch ein.",
         ],
@@ -556,20 +630,16 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <div class="achtung"><strong>Sicherheit</strong><p>Gib Agenten nur die Rechte, die sie brauchen. Lesen reicht oft. Vorsicht bei Inhalten von außen: Eine Webseite oder E-Mail kann versteckte Anweisungen enthalten („Prompt Injection“), die einen Agenten zu ungewollten Aktionen verleiten. Deshalb: Freigabe vor jeder Aktion, die etwas verändert oder versendet.</p></div>`
         },
         {
-          id: "m6l4", titel: "Blick unter die Haube: ein API-Aufruf",
+          id: "m6l4", titel: "Agenten in n8n: der AI-Agent-Knoten",
           html: `
-<p>Alle Automatisierungsplattformen machen im Hintergrund dasselbe: Sie schicken eine Anfrage an die Schnittstelle (API) eines Modellanbieters. So sieht das aus, freiwillig und nur zum Verstehen:</p>
-<pre>curl https://api.anthropic.com/v1/messages \\
-  -H "x-api-key: DEIN_SCHLÜSSEL" \\
-  -H "anthropic-version: 2023-06-01" \\
-  -H "content-type: application/json" \\
-  -d '{
-    "model": "claude-sonnet-5",
-    "max_tokens": 500,
-    "system": "Du ordnest Retro-Feedback ein. Antworte nur mit JSON.",
-    "messages": [{"role": "user", "content": "Das Daily dauert zu lang."}]
-  }'</pre>
-<p>Du erkennst alles wieder: Systemanweisung, Nachricht, Grenze für die Länge. Abgerechnet wird nach Tokens. Den API-Schlüssel behandelst du wie ein Passwort: nie in Dokumente, Chats oder Tickets kopieren.</p>`
+<p>Auch in n8n kannst du Agenten bauen, ohne Code. Der Knoten <b>AI Agent</b> bekommt drei Dinge angehängt:</p>
+<ul>
+  <li><b>Chat Model:</b> welches Modell denkt (bei euch frei wählbar).</li>
+  <li><b>Memory:</b> ob sich der Agent an frühere Nachrichten im selben Gespräch erinnert.</li>
+  <li><b>Tools:</b> was er tun darf, z. B. Jira durchsuchen, in einer Tabelle nachsehen, eine Webseite abrufen, einen anderen Workflow starten oder einen MCP-Server nutzen („MCP Client Tool“).</li>
+</ul>
+<p>Mit einem <b>Chat Trigger</b> davor entsteht ein kleiner Team-Bot, den ihr über eine Chat-Seite im Browser ansprecht. Die Systemanweisung schreibst du wie in Modul 2.</p>
+<div class="achtung"><strong>Leitplanken in n8n</strong><p>Gib dem Agenten zuerst nur lesende Tools. Schreibende Aktionen (Ticket anlegen, Mail senden) hängst du erst an, wenn er sich im Test bewährt hat, und dann mit „Send and Wait for Response“ als Freigabe davor. Unter „Executions“ siehst du jeden Denkschritt und jeden Tool-Aufruf.</p></div>`
         },
       ],
       film: {
@@ -593,7 +663,7 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
         titel: "Workflow oder Agent?",
         schritte: [
           "Lege in einem Projekt oder in NotebookLM drei bis fünf Team-Dokumente ab (Arbeitsvereinbarung, DoD, Onboarding). Stelle fünf Fragen, die ein neues Teammitglied hätte. Prüfe die Quellenangaben.",
-          "Aktiviere, falls freigegeben, einen Konnektor (z. B. Google Drive oder Atlassian) und lass die KI eine Übersicht aus echten, unkritischen Daten erstellen, nur lesend.",
+          "Baue in n8n einen kleinen Glossar-Bot: Chat Trigger → AI Agent mit Chat Model und einem lesenden Tool (z. B. eure Glossar-Tabelle). Stelle ihm zehn Fragen und prüfe, wann er ehrlich „weiß ich nicht“ sagt.",
           "Nimm die drei Aufgaben aus deinem Lerntagebuch und entscheide für jede: Assistent, Workflow oder Agent? Begründe mit der Tabelle aus Lektion 2.",
         ],
         ergebnis: "Ein Team-Wissensassistent und eine begründete Architekturentscheidung für dein Abschlussprojekt.",
@@ -665,6 +735,16 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <p><b>Gegenmittel:</b> Tausche testweise Namen oder Merkmale aus und vergleiche die Ergebnisse. Frag ausdrücklich nach Gegenpositionen. Lass Entscheidungen über Menschen bei Menschen.</p>`
         },
       ],
+      film: {
+        titel: "Erklärfilm: Die Datenampel",
+        grafik: "ampel",
+        szenen: [
+          { schritt: 1, text: "Grün sind öffentliche Informationen: Fachartikel, Webseiten, deine eigenen anonymen Notizen. Die darfst du in jedes seriöse KI-Werkzeug geben." },
+          { schritt: 2, text: "Gelb sind interne Informationen wie Backlog, Prozessbeschreibungen oder Protokolle ohne Namen. Die gehören nur in die freigegebene Firmen-KI." },
+          { schritt: 3, text: "Rot sind personenbezogene und vertrauliche Daten, etwa Namen mit Bewertungen oder Kundendaten. Hier brauchst du eine Freigabe, oder du lässt es ganz." },
+          { schritt: 0, text: "Im Zweifel stufst du eine Stufe strenger ein. Und du wertest Themen aus, nicht Personen." },
+        ],
+      },
       videos: [
         { titel: "EU AI Act: Zeitplan der Umsetzung", quelle: "artificialintelligenceact.eu", dauer: "Lesen, 10 min, Englisch", url: "https://artificialintelligenceact.eu/implementation-timeline/", warum: "Laufend aktualisierte Übersicht, welche Pflicht ab wann gilt." },
         { titel: "Navigating the AI Act (FAQ)", quelle: "Europäische Kommission", dauer: "Lesen, 20 min, Englisch", url: "https://digital-strategy.ec.europa.eu/en/faqs/navigating-ai-act", warum: "Offizielle Antworten, auch zur KI-Kompetenz nach Artikel 4." },
@@ -691,7 +771,7 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
     {
       id: "m8", nr: 8, titel: "Wirtschaftlichkeit und Einführung im Team", kurztitel: "Business Case & Einführung",
       kurz: "Rechnen wie eine Volkswirtin, einführen wie ein Agile Coach: Nutzen belegen und KI im Team verankern.",
-      dauer: "3 h", woche: 6, breite: 0.5,
+      dauer: "3,5 h", woche: 6, breite: 0.5,
       ziele: [
         "Du rechnest einen einfachen Business Case mit Gewinnschwelle und Opportunitätskosten.",
         "Du priorisierst Use Cases nach Nutzen und Risiko.",
@@ -735,6 +815,20 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <div class="notiz"><span class="eyebrow">Change-Tipps</span><ul><li>Eine <b>Community of Practice</b> „KI im Alltag“ mit 30 Minuten Show &amp; Tell alle zwei Wochen.</li><li>Ängste ernst nehmen: KI übernimmt Aufgaben, nicht Rollen. Sag offen, was mit gewonnener Zeit passieren soll.</li><li>Sichtbare Erfolge feiern, aber ehrlich über Grenzen sprechen.</li></ul></div>`
         },
         {
+          id: "m8l5", titel: "Teams begleiten: vier Formate für die KI-Einführung",
+          html: `
+<p>Du willst nicht nur selbst bauen, sondern auch andere Teams befähigen. Diese vier Formate haben sich bewährt und passen zu deinem Coaching-Werkzeugkasten:</p>
+<div class="tabelle-wrap"><table>
+<tr><th>Format</th><th>Dauer</th><th>Ablauf</th><th>Ergebnis</th></tr>
+<tr><td><b>Use-Case-Discovery</b></td><td>90 min</td><td>Aufgaben sammeln (Stille Arbeit), clustern, auf der Nutzen-Risiko-Matrix einordnen, Top-3 wählen</td><td>priorisierte Liste mit Verantwortlichen</td></tr>
+<tr><td><b>KI-Dojo</b></td><td>2 h</td><td>Eine echte Teamaufgabe wird live gemeinsam gelöst, erst im Chat, dann als n8n-Workflow. Alle probieren mit.</td><td>ein erster Assistent oder Workflow</td></tr>
+<tr><td><b>Sprechstunde</b></td><td>30 min, wöchentlich</td><td>Offene Fragen, Fehlersuche an echten Executions, Prompts gemeinsam verbessern</td><td>weniger Frust, schnellere Fortschritte</td></tr>
+<tr><td><b>Community of Practice</b></td><td>45 min, alle 2 Wochen</td><td>Show &amp; Tell: ein Team zeigt, was funktioniert hat und was nicht</td><td>Wissen verbreitet sich, Doppelarbeit sinkt</td></tr>
+</table></div>
+<p>Für jedes Team, das startet, lohnt eine eigene kleine <b>Team-Arbeitsvereinbarung KI</b> (Übung in Modul 7) und eine Hypothese, die nach vier Wochen überprüft wird.</p>
+<div class="notiz"><span class="eyebrow">Coaching-Haltung</span><p>Frag zuerst nach dem Schmerz, nicht nach der Technik: „Was kostet euch jede Woche Zeit, ohne dass es jemandem Freude macht?“ Die Antwort ist fast immer ein guter erster Use Case.</p></div>`
+        },
+        {
           id: "m8l4", titel: "Deine Rolle: KI-Coach im Unternehmen",
           html: `
 <p>Die Kombination aus ökonomischem Denken, Prozessverständnis und Coaching ist genau das, was Unternehmen bei der KI-Einführung fehlt. Mögliche Rollen:</p>
@@ -768,6 +862,7 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
           "Rechne für den besten Kandidaten im Rechner die Gewinnschwelle aus, mit ehrlichen Werten inklusive Pflege.",
           "Formuliere eine Hypothese im Format „Wir glauben … Wir wissen es, wenn …“.",
           "Überlege, wer im Team profitiert und wer Bedenken haben könnte. Plane ein Gespräch.",
+          "Plane für ein anderes Team eine Use-Case-Discovery (90 Minuten) nach Lektion 5 und schreib die Agenda auf.",
         ],
         ergebnis: "Ein begründeter, gerechneter Vorschlag für dein Abschlussprojekt.",
       },
@@ -819,6 +914,17 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <p>Stelle die Lösung deinem Team oder einer Kollegin vor und hol Feedback ein. Wenn alle Module abgeschlossen sind, schaltet sich dein <a href="#zertifikat">Zertifikat</a> frei.</p>`
         },
       ],
+      film: {
+        titel: "Erklärfilm: Dein Abschlussprojekt in zwei Sprints",
+        grafik: "abschluss",
+        szenen: [
+          { schritt: 1, text: "Am Anfang steht der Canvas. Du klärst Problem, Nutzer, Daten und woran du den Erfolg misst." },
+          { schritt: 2, text: "Im ersten Sprint baust du das Walking Skeleton: die kleinste Version, die einmal von Anfang bis Ende läuft." },
+          { schritt: 3, text: "Im zweiten Sprint kommen Testsatz, Leitplanken und eine Woche echte Nutzung dazu." },
+          { schritt: 4, text: "Im Review zeigst du in fünf Minuten, was die Lösung bringt, mit echten Zahlen, und entscheidest über den nächsten Schritt." },
+          { schritt: 5, text: "Und wie immer endet es mit einer Retro: Was machst du beim nächsten KI-Projekt anders?" },
+        ],
+      },
       videos: [],
       uebung: {
         titel: "Abschlussprojekt",
@@ -836,6 +942,14 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
         { frage: "Was gehört unbedingt ins Review?", antworten: ["Nur die Technik.", "Gemessener Nutzen und Leitplanken.", "Eine Liste aller Werkzeuge, die du ausprobiert hast."], richtig: 1, erklaerung: "Entscheider wollen wissen: Was bringt es, und ist es sicher?" },
       ],
     },
+  ],
+
+  /* ---------------------------------------------------------------------- */
+  vorlagen: [
+    { titel: "Impediment-Melder", modul: "m4", datei: "vorlagen/impediment-melder.n8n.json", text: "Formular → Bedingung → Nachricht bei starken Hindernissen. Ohne KI." },
+    { titel: "Retro-Radar: einordnen", modul: "m5", datei: "vorlagen/retro-radar-einordnen.n8n.json", text: "Formular → KI ordnet Feedback ein (JSON) → Tabelle, unsichere Fälle an dich." },
+    { titel: "Retro-Radar: Zusammenfassung", modul: "m5", datei: "vorlagen/retro-radar-zusammenfassung.n8n.json", text: "Zeitgesteuert: Feedback des Sprints holen → KI fasst zusammen → E-Mail an dich." },
+    { titel: "Glossar-Bot", modul: "m6", datei: "vorlagen/glossar-bot.n8n.json", text: "Chat → AI Agent mit Gedächtnis beantwortet Fragen zu Team-Begriffen." },
   ],
 
   /* ---------------------------------------------------------------------- */
@@ -924,10 +1038,12 @@ Fehlerfälle: {FAELLE}` },
     ["Human in the Loop", "Ein Mensch prüft oder gibt frei, bevor ein automatisierter Schritt wirkt."],
     ["JSON", "Einfaches Textformat mit benannten Feldern. Ideal, damit Automatisierungen KI-Antworten weiterverarbeiten."],
     ["Kontextfenster", "Alles, was ein Modell in einer Unterhaltung gleichzeitig sehen kann. Gemessen in Tokens."],
+    ["Credential", "In n8n gespeicherte Zugangsdaten zu einem Dienst, etwa E-Mail, Teams oder einem KI-Modell."],
     ["Konnektor", "Fertige Verbindung zwischen KI-Anwendung und einem Werkzeug wie Jira oder Google Drive."],
     ["LLM", "Large Language Model, großes Sprachmodell. Die Technik hinter Claude, ChatGPT und Co."],
     ["MCP", "Model Context Protocol. Offener Standard, um KI-Anwendungen an Werkzeuge und Daten anzubinden."],
     ["Multimodal", "Ein Modell verarbeitet neben Text auch Bilder, Audio oder Dateien."],
+    ["Node", "Ein Schritt in einem n8n-Workflow, z. B. Formular, Bedingung oder KI-Aufruf."],
     ["Prompt", "Die Anweisung an ein Sprachmodell."],
     ["Prompt Injection", "Angriff, bei dem versteckte Anweisungen in fremden Inhalten ein Modell manipulieren."],
     ["RAG", "Retrieval Augmented Generation. Erst passende Textstellen suchen, dann damit antworten."],

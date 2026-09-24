@@ -259,6 +259,64 @@
     return svg(X0 + wochen * BW + 10, Y0 + module.length * RH + 10, s, "Lernplan über sechs Wochen");
   };
 
+  /* Fünf Werkzeugklassen */
+  G.werkzeuge = () => {
+    const klassen = [
+      ["Assistenten", "Claude, ChatGPT,", "Gemini, Copilot"],
+      ["Recherche", "NotebookLM, Deep", "Research, Perplexity"],
+      ["KI in Software", "Rovo, Copilot in", "Teams, Miro AI"],
+      ["Automatisierung", "n8n (euer Server),", "Power Automate"],
+      ["Agenten", "Cowork, ChatGPT", "Agent, n8n-Agent"],
+    ];
+    let s = "";
+    klassen.forEach((k, i) => {
+      const x = 14 + i * 154;
+      s += schritt(i + 1, box(x, 30, 140, 150, i === 3 ? "g-nog" : "g-akh", 10) +
+        txt(x + 70, 62, k[0], "tb" + (i === 3 ? " tn" : " tak")) + txt(x + 70, 100, k[1], "t2") + txt(x + 70, 118, k[2], "t2"));
+    });
+    s += schritt(6, box(14, 214, 756, 60, "g-fl", 10) + txt(392, 240, "Erst fragen: Was soll erledigt werden?", "tb") +
+      txt(392, 262, "Dann: Welche Klasse passt? Erst danach: welches Produkt.", "t2"));
+    return svg(784, 290, s, "Fünf Klassen von KI-Werkzeugen");
+  };
+
+  /* Vier KI-Aufgaben im Workflow */
+  G.aufgaben = () => {
+    const a = [
+      ["Einordnen", "„Export stürzt ab“", "→ Kategorie: Bug"],
+      ["Zusammenfassen", "Transkript, 40 min", "→ 5 Kernpunkte"],
+      ["Herausziehen", "Mail vom Stakeholder", "→ Wunsch, Frist, Prio"],
+      ["Entwerfen", "Stichpunkte", "→ User Story + Kriterien"],
+    ];
+    let s = "";
+    a.forEach((t, i) => {
+      const y = 14 + i * 66;
+      s += schritt(i + 1, box(20, y, 180, 54, "g-ak", 8) + txt(110, y + 33, t[0], "tb ti") +
+        box(214, y, 250, 54, "g-fl", 8) + txt(339, y + 33, t[1], "") + pfeil(466, y + 27, 500, y + 27) +
+        box(502, y, 268, 54, "g-akh", 8) + txt(636, y + 33, t[2], "tb tak"));
+    });
+    s += schritt(5, txt(395, 292, "Immer mit fester Ausgabeform (JSON) und einem Menschen an den heiklen Stellen.", "t2"));
+    return svg(790, 304, s, "Vier Aufgaben, die KI in Workflows übernimmt");
+  };
+
+  /* Abschlussprojekt in zwei Mini-Sprints */
+  G.abschluss = () => {
+    const phasen = [
+      ["Canvas", "Problem, Daten,", "Messgröße klären", "g-nog"],
+      ["Sprint 1", "Walking Skeleton:", "läuft einmal durch", "g-akh"],
+      ["Sprint 2", "Testsatz, Leitplanken,", "eine Woche Nutzung", "g-akh"],
+      ["Review", "5 Minuten Demo,", "Zahlen, Entscheidung", "g-gut"],
+    ];
+    let s = "";
+    phasen.forEach((p, i) => {
+      const x = 20 + i * 192;
+      s += schritt(i + 1, box(x, 40, 170, 110, p[3], 12) + txt(x + 85, 74, p[0], "tb" + (i === 0 ? " tn" : "")) +
+        txt(x + 85, 104, p[1], "t2") + txt(x + 85, 122, p[2], "t2") + (i < 3 ? pfeil(x + 172, 95, x + 190, 95) : ""));
+    });
+    s += schritt(5, `<path d="M700 152 C 700 220, 105 220, 105 154" class="g-linak" stroke-dasharray="6 5" marker-end="url(#spitze)"/>` +
+      txt(402, 236, "Retro: Was machst du beim nächsten KI-Projekt anders?", "t2"));
+    return svg(790, 250, s, "Abschlussprojekt in zwei Mini-Sprints");
+  };
+
   /* Marke oben links */
   G.marke = () => `<svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
       <rect x="1" y="1" width="36" height="36" rx="8" class="g-ak"/>

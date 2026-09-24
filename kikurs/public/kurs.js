@@ -1,35 +1,102 @@
 /* KI-Werkstatt — Anwendung
    Liest window.KURS (inhalte.js) und window.GRAFIKEN (grafiken.js).
-   Fortschritt liegt nur im Browser (localStorage), jeder Zugriff abgesichert. */
+
+   Zwei Betriebsarten:
+   - Mit Server (api.php antwortet mit JSON): Konten, Anmeldung, der
+     Lernstand wird zusätzlich zentral gespeichert, Admins sehen alle
+     Teilnehmenden.
+   - Ohne Server (Datei geöffnet, statische Vorschau): alles bleibt im
+     localStorage dieses Browsers. Jeder Zugriff ist abgesichert. */
 (function () {
   "use strict";
 
   const K = window.KURS, G = window.GRAFIKEN;
   const SPEICHER = "ki-werkstatt-v1";
+  const API = "api.php";
   const $ = (sel, el = document) => el.querySelector(sel);
   const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
   /* ---------- Zustand ---------- */
-  let Z = { fertig: {}, quiz: {}, selbst: {}, baukasten: {}, rechner: {}, canvas: {}, name: "" };
-  try {
-    const roh = localStorage.getItem(SPEICHER);
-    if (roh) Z = Object.assign(Z, JSON.parse(roh));
-  } catch (e) { /* ohne Speicher weiter */ }
-  const sichern = () => { try { localStorage.setItem(SPEICHER, JSON.stringify(Z)); } catch (e) { /* ignoriert */ } };
+  const leer = () => ({ fertig: {}, quiz: {}, selbst: {}, baukasten: {}, rechner: {}, canvas: {}, name: "" });
+  let Z = leer();
+  let SERVER = null;          // Antwort von api.php?aktion=ich, null = ohne Server
+  let speicherSchluessel = SPEICHER;
+  let syncTimer = null, syncStatus = "lokal";
+  const lokalLesen = (schluessel) => {
+    try { const roh = localStorage.getItem(schluessel); return roh ? JSON.parse(roh) : null; } catch (e) { return null; }
+  };
+  // PHP gibt leere Objekte als [] zurück; ein Array würde benannte Schlüssel
+  // beim Speichern stillschweigend verlieren. Darum hier normalisieren.
+  const zustandSetzen = (daten) => {
+    Z = Object.assign(leer(), daten && typeof daten === "object" && !Array.isArray(daten) ? daten : {});
+    for (const k of ["fertig", "quiz", "selbst", "baukasten", "rechner", "canvas"]) {
+      if (!Z[k] || typeof Z[k] !== "object" || Array.isArray(Z[k])) Z[k] = {};
+    }
+    if (typeof Z.name !== "string") Z.name = "";
+  };
+  zustandSetzen(lokalLesen(SPEICHER));
 
-  const modulStatus = (m) => {
-    const gesamt = m.lektionen.length, erledigt = m.lektionen.filter((l) => Z.fertig[l.id]).length;
-    const q = Z.quiz[m.id];
+  async function api(aktion, daten) {
+    const post = daten !== undefined;
+    const antwort = await fetch(API + "?aktion=" + aktion, {
+      method: post ? "POST" : "GET", credentials: "same-origin", keepalive: post && aktion === "stand",
+      headers: Object.assign({ Accept: "application/json" }, post ? { "Content-Type": "application/json", "X-CSRF": SERVER ? SERVER.csrf : "" } : {}),
+      body: post ? JSON.stringify(daten) : undefined,
+    });
+    let json = null;
+    try { json = await antwort.json(); } catch (e) { /* kein JSON */ }
+    if (!antwort.ok) {
+      const f = new Error((json && json.fehler) || "Der Server antwortet nicht (HTTP " + antwort.status + ").");
+      f.status = antwort.status; throw f;
+    }
+    return json || {};
+  }
+
+  const syncAnzeigen = () => {
+    const el = $("#sync"); if (!el) return;
+    el.textContent = { lokal: "Lernstand nur in diesem Browser", ok: "Lernstand gespeichert", wartet: "Wird gleich gespeichert …", laeuft: "Wird gespeichert …", fehler: "Nicht gespeichert, nächster Versuch läuft" }[syncStatus];
+    el.dataset.status = syncStatus;
+  };
+  async function serverSichern() {
+    if (!SERVER || !SERVER.angemeldet) return;
+    clearTimeout(syncTimer); syncTimer = null;
+    syncStatus = "laeuft"; syncAnzeigen();
+    try { await api("stand", { stand: Z }); syncStatus = "ok"; }
+    catch (e) {
+      syncStatus = "fehler";
+      if (e.status === 401) { SERVER.angemeldet = false; zeigeAnmeldung("Deine Anmeldung ist abgelaufen. Bitte melde dich neu an, dein Stand in diesem Browser bleibt erhalten."); return; }
+      syncTimer = setTimeout(serverSichern, 15000);
+    }
+    syncAnzeigen();
+  }
+  const sichern = () => {
+    try { localStorage.setItem(speicherSchluessel, JSON.stringify(Z)); } catch (e) { /* ignoriert */ }
+    if (SERVER && SERVER.angemeldet) { clearTimeout(syncTimer); syncTimer = setTimeout(serverSichern, 1200); syncStatus = "wartet"; syncAnzeigen(); }
+  };
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && syncTimer) serverSichern(); });
+
+  const modulStatus = (m, S = Z) => {
+    const fertig = S.fertig || {}, quiz = S.quiz || {};
+    const gesamt = m.lektionen.length, erledigt = m.lektionen.filter((l) => fertig[l.id]).length;
+    const q = quiz[m.id];
     const quizOk = q && q.quote >= K.bestehen;
     if (erledigt === gesamt && quizOk) return "fertig";
     if (erledigt > 0 || q) return "laeuft";
     return "offen";
   };
-  const fortschritt = () => {
+  const fortschritt = (S = Z) => {
+    const fertig = S.fertig || {}, quiz = S.quiz || {};
     const alle = K.module.flatMap((m) => m.lektionen);
-    const l = alle.filter((x) => Z.fertig[x.id]).length;
-    const q = K.module.filter((m) => Z.quiz[m.id] && Z.quiz[m.id].quote >= K.bestehen).length;
-    return { anteil: (l + q) / (alle.length + K.module.length), module: K.module.filter((m) => modulStatus(m) === "fertig").length };
+    const l = alle.filter((x) => fertig[x.id]).length;
+    const q = K.module.filter((m) => quiz[m.id] && quiz[m.id].quote >= K.bestehen).length;
+    return { anteil: (l + q) / (alle.length + K.module.length), module: K.module.filter((m) => modulStatus(m, S) === "fertig").length };
+  };
+  const stundenGesamt = () => K.module.reduce((a, m) => a + parseFloat(m.dauer.replace(",", ".")), 0);
+  const zeitLesen = (s) => (s ? new Date(String(s).replace(" ", "T") + "Z") : null);
+  const zeitText = (s) => {
+    const d = zeitLesen(s); if (!d || isNaN(d)) return "–";
+    const tage = Math.floor((Date.now() - d) / 86400000);
+    return tage <= 0 ? "heute" : tage === 1 ? "gestern" : "vor " + tage + " Tagen";
   };
 
   const toast = (text) => {
@@ -76,9 +143,19 @@
         ${link("prompts", "❏", "Prompt-Bibliothek", K.prompts.length)}
         ${link("rechner", "€", "Automatisierungs-Rechner", "")}
         ${link("canvas", "▣", "Use-Case-Canvas", "")}
+        ${link("vorlagen", "⇩", "n8n-Vorlagen", K.vorlagen.length)}
         ${link("glossar", "Aa", "Glossar", K.glossar.length)}
         ${link("zertifikat", "★", "Zertifikat", "")}
-      </nav>`;
+      </nav>
+      ${SERVER && SERVER.angemeldet && SERVER.benutzer.rolle === "admin" ? `<nav class="nav-gruppe" aria-label="Kursleitung"><span class="eyebrow">Kursleitung</span>
+        ${link("teilnehmende", "☷", "Teilnehmende", "")}</nav>` : ""}
+      <div class="leiste-fuss">
+        ${SERVER && SERVER.angemeldet
+          ? `<div class="konto-zeile"><strong>${esc(SERVER.benutzer.name)}</strong><span id="sync" data-status="${syncStatus}"></span>
+             <span class="chips"><a class="knopf leise klein" href="#konto">Konto</a><button class="knopf leise klein" data-aktion="abmelden">Abmelden</button></span></div>`
+          : `<div class="konto-zeile"><span id="sync" data-status="lokal"></span></div>`}
+      </div>`;
+    syncAnzeigen();
   }
 
   /* ---------- Seiten ---------- */
@@ -94,7 +171,7 @@
     const regler = [
       ["prompt", "Ich schreibe Prompts mit Kontext, Format und Beispielen"],
       ["werkzeug", "Ich habe schon einen eigenen Assistenten oder ein Projekt eingerichtet"],
-      ["auto", "Ich habe schon einmal eine Automatisierung (z. B. Power Automate) gebaut"],
+      ["auto", "Ich habe schon einmal eine Automatisierung gebaut (z. B. in n8n)"],
       ["recht", "Ich weiß, welche Daten ich in welches KI-Werkzeug geben darf"],
     ];
     return `<div class="spalte breit">
@@ -143,7 +220,7 @@
     const wochen = Array.from({ length: K.wochen }, (_, i) => K.module.filter((m) => m.woche === i + 1));
     return `<div class="spalte breit">
       <div class="modul-kopf"><span class="eyebrow">Lernplan</span><h1>Sechs Wochen, zehn Module</h1>
-        <p>Insgesamt rund 29 Stunden, je nach Woche 3,5 bis 7 Stunden. Am besten zwei feste Termine im Kalender, wie ein Sprint mit fester Kadenz. Die Wochen sind ein Vorschlag: Wer schneller ist, zieht vor.</p></div>
+        <p>Insgesamt rund ${stundenGesamt().toLocaleString("de-DE")} Stunden, je nach Woche 3,5 bis 7,5 Stunden. Am besten zwei feste Termine im Kalender, wie ein Sprint mit fester Kadenz. Die Wochen sind ein Vorschlag: Wer schneller ist, zieht vor.</p></div>
       <div class="plan-wrap">${G.plan(K.module, K.wochen)}</div>
       <div class="wochen">${wochen.map((ms, i) => {
         const h = ms.reduce((a, m) => a + parseFloat(m.dauer.replace(",", ".")), 0);
@@ -182,8 +259,12 @@
             <div class="lektion-fuss"><button class="knopf ${Z.fertig[l.id] ? "leise" : ""} klein" data-lektion="${l.id}">${Z.fertig[l.id] ? "Als offen markieren" : "Als erledigt abhaken"}</button></div>
           </div></details>`).join("")}
       </section>
-      ${m.film ? `<section class="block"><h2>${esc(m.film.titel)}</h2>${filmHtml(m)}</section>` : ""}
-      ${m.videos.length ? `<section class="block"><h2>Videos und Lesestoff</h2><div class="videos">${m.videos.map((v) => `
+      ${m.film ? `<section class="block"><h2>${esc(m.film.titel)}</h2>
+        <video class="filmvideo" controls preload="none" playsinline poster="filme/${m.id}.jpg" src="filme/${m.id}.mp4">
+          <track kind="captions" srclang="de" label="Deutsch" src="filme/${m.id}.vtt">
+          Dein Browser kann das Video nicht abspielen. Nutze die Schritt-für-Schritt-Fassung darunter.</video>
+        <details class="film-details"><summary>Schritt für Schritt ansehen (mit Stimme deines Browsers)</summary>${filmHtml(m)}</details></section>` : ""}
+      ${m.videos.length ? `<section class="block"><div class="block-kopf"><h2>Zum Weiterlernen</h2><span class="chip">meist Englisch, freiwillig</span></div><div class="videos">${m.videos.map((v) => `
         <a class="video" href="${esc(v.url)}" target="_blank" rel="noopener">
           <span class="play" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M5 3 L15 9 L5 15 z" style="fill:currentColor"/></svg></span>
           <span><strong>${esc(v.titel)}</strong><small>${esc(v.quelle)} · ${esc(v.dauer)}</small><small>${esc(v.warum)}</small></span></a>`).join("")}
@@ -394,10 +475,139 @@
         <h2>Vom Chatbot zur eigenen KI-Lösung</h2>
         <p style="margin:0">Hiermit wird bestätigt, dass</p>
         <div class="name" id="z-anzeige">${esc(Z.name || "Dein Name")}</div>
-        <p style="margin:0;max-width:52ch">alle zehn Module mit Praxisübungen und Wissenschecks abgeschlossen hat: Funktionsweise von Sprachmodellen, Prompting und Kontext, Werkzeugauswahl, Automatisierung ohne Code, KI in Workflows, RAG und Agenten, Datenschutz und EU AI Act, Business Case und Einführung sowie ein eigenes Abschlussprojekt. Umfang ca. 29 Stunden.</p>
+        <p style="margin:0;max-width:52ch">alle zehn Module mit Praxisübungen und Wissenschecks abgeschlossen hat: Funktionsweise von Sprachmodellen, Prompting und Kontext, Werkzeugauswahl, Automatisierung ohne Code, KI in Workflows, RAG und Agenten, Datenschutz und EU AI Act, Business Case und Einführung sowie ein eigenes Abschlussprojekt. Umfang ca. ${stundenGesamt().toLocaleString("de-DE")} Stunden.</p>
         <p class="eyebrow" style="margin:0">${alle ? heute : "noch nicht freigeschaltet"}</p>
       </div></div>`;
   };
+
+  seiten.vorlagen = () => `<div class="spalte">
+    <div class="modul-kopf"><span class="eyebrow">Werkzeug · Module 4 bis 6</span><h1>n8n-Vorlagen</h1>
+      <p>Fertige Workflows für euren n8n-Server. In n8n: neuer Workflow → Menü „…“ oben rechts → „Import from File“. Jede Vorlage enthält eine gelbe Notiz mit den drei, vier Handgriffen nach dem Import (Credential wählen, Empfänger eintragen, Tabelle verbinden).</p></div>
+    <div class="prompts">${K.vorlagen.map((v) => {
+      const m = K.module.find((x) => x.id === v.modul);
+      return `<div class="prompt"><div class="prompt-kopf"><div><span class="eyebrow">Modul ${m.nr} · ${esc(m.kurztitel)}</span><h3>${esc(v.titel)}</h3></div>
+        <a class="knopf klein" href="${esc(v.datei)}" download>Herunterladen</a></div><p style="margin:0">${esc(v.text)}</p></div>`;
+    }).join("")}</div>
+    <div class="achtung"><strong>Vor dem ersten echten Einsatz</strong><p>Die Vorlagen nutzen Knoten ab n8n 1.x und den Data-Table-Knoten neuerer Versionen. Kennt euer Server einen Knoten nicht, ersetze ihn durch Google Sheets oder Excel. Teste jeden Workflow mit Beispieldaten, bevor echte Teamdaten hindurchlaufen.</p></div>
+  </div>`;
+
+  seiten.konto = () => {
+    if (!SERVER || !SERVER.angemeldet) return `<div class="spalte"><h1>Konto</h1><p>Der Kurs läuft gerade ohne Server. Dein Lernstand liegt nur in diesem Browser.</p></div>`;
+    const b = SERVER.benutzer;
+    return `<div class="spalte">
+      <div class="modul-kopf"><span class="eyebrow">Konto</span><h1>${esc(b.name)}</h1><p>${esc(b.email)} · ${b.rolle === "admin" ? "Kursleitung" : "Teilnehmer*in"}</p></div>
+      ${b.wechselNoetig ? `<div class="achtung"><strong>Neues Passwort nötig</strong><p>Dein Passwort wurde zurückgesetzt. Bitte vergib jetzt ein eigenes.</p></div>` : ""}
+      <form class="formular ausgabe" id="pw-form" style="max-width:460px">
+        <h3>Passwort ändern</h3>
+        <div class="feld"><label for="pw-alt">Bisheriges Passwort</label><input type="password" id="pw-alt" autocomplete="current-password" required></div>
+        <div class="feld"><label for="pw-neu">Neues Passwort</label><small>mindestens 10 Zeichen</small><input type="password" id="pw-neu" autocomplete="new-password" minlength="10" required></div>
+        <p class="formular-meldung" id="pw-meldung" role="status"></p>
+        <div><button class="knopf" type="submit">Passwort speichern</button></div>
+      </form></div>`;
+  };
+
+  let uebersicht = null;
+  seiten.teilnehmende = () => {
+    if (!SERVER || !SERVER.angemeldet || SERVER.benutzer.rolle !== "admin") return `<div class="spalte"><h1>Nur für die Kursleitung</h1></div>`;
+    return `<div class="spalte breit">
+      <div class="modul-kopf"><span class="eyebrow">Kursleitung</span><h1>Teilnehmende</h1>
+        <p>Lernstand aller Konten, wie er zuletzt gespeichert wurde. Die Daten kommen aus den Häkchen und Quizergebnissen der Teilnehmenden.</p></div>
+      <div id="tn-inhalt"><p>Wird geladen …</p></div></div>`;
+  };
+  async function teilnehmendeLaden() {
+    const ziel = $("#tn-inhalt"); if (!ziel) return;
+    try { uebersicht = await api("admin_uebersicht", {}); }
+    catch (e) { ziel.innerHTML = `<div class="achtung"><strong>Fehler</strong><p>${esc(e.message)}</p></div>`; return; }
+    const lerner = uebersicht.teilnehmende.filter((t) => t.rolle !== "admin");
+    const f = (t) => fortschritt(t.stand || {});
+    const schnitt = lerner.length ? lerner.reduce((a, t) => a + f(t).anteil, 0) / lerner.length : 0;
+    const aktiv7 = lerner.filter((t) => { const d = zeitLesen(t.aktualisiertAm || t.letzteAnmeldung); return d && Date.now() - d < 7 * 86400000; }).length;
+    const fertigAlle = lerner.filter((t) => f(t).module === K.module.length).length;
+    const jeModul = K.module.map((m) => ({ m, n: lerner.filter((t) => modulStatus(m, t.stand || {}) === "fertig").length }));
+    const aktuell = (t) => { const m = K.module.find((x) => modulStatus(x, t.stand || {}) !== "fertig"); return m ? "Modul " + m.nr : "fertig"; };
+    ziel.innerHTML = `
+      <div class="kennzahlen">
+        <div class="kennzahl"><b>${lerner.length}</b><span>Teilnehmende</span></div>
+        <div class="kennzahl"><b>${Math.round(schnitt * 100)} %</b><span>Fortschritt im Schnitt</span></div>
+        <div class="kennzahl"><b>${aktiv7}</b><span>aktiv in den letzten 7 Tagen</span></div>
+        <div class="kennzahl"><b>${fertigAlle}</b><span>Kurs abgeschlossen</span></div>
+      </div>
+      <section class="block"><h2>Module abgeschlossen</h2>
+        <div class="modulbalken">${jeModul.map(({ m, n }) => `<div><span>${m.nr} · ${esc(m.kurztitel)}</span>
+          <div class="balken"><i style="width:${lerner.length ? (n / lerner.length * 100).toFixed(1) : 0}%"></i></div><span class="tab">${n}/${lerner.length}</span></div>`).join("")}</div></section>
+      <section class="block"><h2>Konten</h2><div class="tabelle-wrap"><table class="tn-tabelle">
+        <tr><th>Name</th><th>Fortschritt</th><th>Steht bei</th><th>Zuletzt aktiv</th><th>Aktionen</th></tr>
+        ${uebersicht.teilnehmende.map((t) => {
+          const x = f(t);
+          return `<tr class="${t.aktiv ? "" : "inaktiv"}"><td><strong>${esc(t.name)}</strong>${t.rolle === "admin" ? ' <span class="chip">Kursleitung</span>' : ""}<br><small>${esc(t.email)}</small>${t.aktiv ? "" : ' <span class="chip">gesperrt</span>'}</td>
+            <td style="min-width:150px"><div class="balken"><i style="width:${(x.anteil * 100).toFixed(1)}%"></i></div><small>${Math.round(x.anteil * 100)} % · ${x.module}/${K.module.length} Module</small></td>
+            <td>${t.rolle === "admin" ? "–" : aktuell(t)}</td><td>${zeitText(t.aktualisiertAm || t.letzteAnmeldung)}</td>
+            <td>${t.id === SERVER.benutzer.id ? "" : `<div class="chips" data-konto="${t.id}">
+              <button class="knopf leise klein" data-admin="passwort">Passwort zurücksetzen</button>
+              <button class="knopf leise klein" data-admin="${t.aktiv ? "sperren" : "entsperren"}">${t.aktiv ? "Sperren" : "Entsperren"}</button>
+              <button class="knopf leise klein" data-admin="loeschen">Löschen</button></div><div class="admin-meldung" id="am-${t.id}"></div>`}</td></tr>`;
+        }).join("")}</table></div></section>
+      <section class="block"><h2>Einladungen</h2>
+        ${uebersicht.einladungscode ? `<p style="margin:0">Gemeinsamer Code für alle: <code class="gross">${esc(uebersicht.einladungscode)}</code>. Neue Teilnehmende öffnen die Kursadresse, wählen „Konto anlegen“ und geben den Code ein.</p>` : "<p style=\"margin:0\">Es gibt keinen gemeinsamen Code. Neue Teilnehmende brauchen einen Einmalcode.</p>"}
+        <form class="filter" id="einladung-form"><input type="text" id="einladung-bemerkung" placeholder="Für wen? (z. B. Team Blau)" style="max-width:280px" aria-label="Bemerkung zum Einmalcode">
+          <button class="knopf klein" type="submit">Einmalcode erzeugen</button></form>
+        ${uebersicht.einladungen.length ? `<div class="tabelle-wrap"><table><tr><th>Code</th><th>Für</th><th>Erstellt</th><th>Eingelöst von</th></tr>
+          ${uebersicht.einladungen.map((e) => `<tr><td><code>${esc(e.code)}</code></td><td>${esc(e.bemerkung)}</td><td>${zeitText(e.erstellt_am)}</td><td>${e.verbraucht_am ? esc(e.verbraucht_von || "gelöschtes Konto") : "noch offen"}</td></tr>`).join("")}</table></div>` : ""}
+      </section>`;
+  }
+
+  /* ---------- Anmeldung ---------- */
+  function zeigeAnmeldung(hinweis, modus) {
+    document.body.classList.add("ohne-leiste");
+    const reg = modus === "registrieren";
+    $("#leiste").innerHTML = "";
+    $("#inhalt").innerHTML = `<div class="anmeldung">
+      <div class="marke">${G.marke()}<div><strong>${esc(K.titel)}</strong><span>${esc(K.untertitel)}</span></div></div>
+      <div class="leiter-wrap">${G.leiter()}</div>
+      <div class="reiter" role="tablist">
+        <button role="tab" aria-selected="${!reg}" data-aktion="zu-anmelden">Anmelden</button>
+        <button role="tab" aria-selected="${reg}" data-aktion="zu-registrieren">Konto anlegen</button></div>
+      ${hinweis ? `<div class="notiz"><p>${esc(hinweis)}</p></div>` : ""}
+      <form class="formular" id="${reg ? "reg-form" : "login-form"}">
+        ${reg ? `<div class="feld"><label for="f-code">Einladungscode</label><small>bekommst du von der Kursleitung</small><input type="text" id="f-code" autocomplete="off" required style="text-transform:uppercase"></div>
+                 <div class="feld"><label for="f-name">Dein Name</label><small>erscheint auf der Teilnahmebestätigung</small><input type="text" id="f-name" autocomplete="name" required></div>` : ""}
+        <div class="feld"><label for="f-email">E-Mail</label><input type="email" id="f-email" autocomplete="email" required></div>
+        <div class="feld"><label for="f-pw">Passwort</label>${reg ? "<small>mindestens 10 Zeichen</small>" : ""}<input type="password" id="f-pw" autocomplete="${reg ? "new-password" : "current-password"}" ${reg ? 'minlength="10"' : ""} required></div>
+        <p class="formular-meldung" id="f-meldung" role="alert"></p>
+        <button class="knopf" type="submit">${reg ? "Konto anlegen und loslegen" : "Anmelden"}</button>
+        ${reg ? "" : "<small style=\"color:var(--tinte-2)\">Passwort vergessen? Die Kursleitung kann es zurücksetzen.</small>"}
+      </form></div>`;
+  }
+  async function nachAnmeldung() {
+    SERVER = await api("ich");
+    speicherSchluessel = SPEICHER + ":" + SERVER.benutzer.id;
+    const lokal = lokalLesen(speicherSchluessel) || lokalLesen(SPEICHER);
+    if (SERVER.stand) zustandSetzen(SERVER.stand);
+    else { zustandSetzen(lokal); await serverSichern(); }
+    if (!Z.name) Z.name = SERVER.benutzer.name;
+    try { localStorage.setItem(speicherSchluessel, JSON.stringify(Z)); } catch (e) { /* - */ }
+    syncStatus = "ok";
+    document.body.classList.remove("ohne-leiste");
+    if (SERVER.benutzer.wechselNoetig) location.hash = "#konto";
+    zeige();
+  }
+
+  /* ---------- Filmbild für die MP4-Erzeugung (werkzeuge/filme-rendern.mjs) ---------- */
+  function filmbild(modulId, n) {
+    const m = K.module.find((x) => x.id === modulId);
+    const szenen = [{ schritt: -1, text: `Modul ${m.nr}: ${m.titel}` }].concat(m.film.szenen);
+    const s = szenen[n];
+    document.documentElement.setAttribute("data-theme", "light");
+    document.body.className = "filmbild";
+    document.body.innerHTML = s.schritt === -1
+      ? `<div class="fb-titel">${G.marke()}<span class="eyebrow">${esc(K.titel)} · Erklärfilm</span><h1>${esc(m.film.titel.replace(/^Erklärfilm:\s*/, ""))}</h1><p>Modul ${m.nr} · ${esc(m.titel)}</p></div>`
+      : `<div class="fb-kopf"><span>${G.marke()}<b>${esc(K.titel)}</b></span><span>Modul ${m.nr} · ${esc(m.kurztitel)}</span></div>
+         <div class="fb-buehne film-buehne ${s.schritt > 0 ? "aktiv" : ""}">${G[m.film.grafik]()}</div>
+         <div class="fb-text">${esc(s.text)}</div>`;
+    document.querySelectorAll("[data-schritt]").forEach((g) => g.classList.toggle("an", Number(g.dataset.schritt) === s.schritt));
+    window.FILM = { szenen: szenen.map((x) => x.text), anzahl: szenen.length };
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { document.body.dataset.fertig = "ja"; });
+  }
 
   /* ---------- Router ---------- */
   function zeige() {
@@ -416,6 +626,7 @@
     if (hash === "baukasten") baukastenText();
     if (hash === "rechner") rechnerAuswerten();
     if (hash === "canvas") canvasAuswerten();
+    if (hash === "teilnehmende") teilnehmendeLaden();
     if (m) quizWiederherstellen(m);
     document.body.classList.remove("menue-offen");
     window.scrollTo(0, 0);
@@ -468,6 +679,31 @@
     const t = ev.target.closest("button, a");
     if (!t) return;
     if (t.id === "menue-knopf") { document.body.classList.toggle("menue-offen"); return; }
+    if (t.dataset.aktion === "zu-anmelden" || t.dataset.aktion === "zu-registrieren") { zeigeAnmeldung("", t.dataset.aktion === "zu-registrieren" ? "registrieren" : ""); return; }
+    if (t.dataset.aktion === "abmelden") {
+      (async () => {
+        if (syncTimer) await serverSichern();
+        try { await api("abmelden", {}); } catch (e) { /* trotzdem abmelden */ }
+        SERVER.angemeldet = false; zustandSetzen(null); speicherSchluessel = SPEICHER;
+        try { SERVER = await api("ich"); } catch (e) { /* - */ }
+        zeigeAnmeldung("Du bist abgemeldet.");
+      })();
+      return;
+    }
+    if (t.dataset.admin) {
+      const box = t.closest("[data-konto]"), id = Number(box.dataset.konto), was = t.dataset.admin;
+      const meldung = $("#am-" + id);
+      if (was === "loeschen" && t.dataset.sicher !== "ja") {
+        t.dataset.sicher = "ja"; t.textContent = "Wirklich löschen? Klick noch einmal";
+        setTimeout(() => { if (t.isConnected) { t.dataset.sicher = ""; t.textContent = "Löschen"; } }, 5000);
+        return;
+      }
+      api("admin_konto", { id, was }).then((a) => {
+        if (was === "passwort") meldung.innerHTML = `Neues Einmal-Passwort: <code class="gross">${esc(a.passwort)}</code><br><small>Gib es persönlich weiter. Beim nächsten Anmelden wird ein eigenes Passwort verlangt.</small>`;
+        else teilnehmendeLaden();
+      }, (e) => { meldung.textContent = e.message; });
+      return;
+    }
     if (t.dataset.lektion) {
       const id = t.dataset.lektion;
       Z.fertig[id] = !Z.fertig[id]; if (!Z.fertig[id]) delete Z.fertig[id]; sichern();
@@ -531,9 +767,53 @@
       document.querySelectorAll("#glossar-liste > div").forEach((d) => { d.hidden = !!s && !d.dataset.such.includes(s); });
     }
   });
-  document.addEventListener("submit", (ev) => ev.preventDefault());
-  window.addEventListener("hashchange", zeige);
+  document.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const f = ev.target, wert = (id) => ($("#" + id) ? $("#" + id).value : "");
+    const knopf = f.querySelector('button[type="submit"]');
+    const melde = (el, text, gut) => { if (el) { el.textContent = text; el.dataset.gut = gut ? "ja" : ""; } };
+    const laufen = async (fn, meldung) => {
+      if (knopf) knopf.disabled = true;
+      try { await fn(); } catch (e) { melde(meldung, e.message, false); }
+      if (knopf && knopf.isConnected) knopf.disabled = false;
+    };
+    if (f.id === "login-form") {
+      laufen(async () => { await api("anmelden", { email: wert("f-email"), passwort: wert("f-pw") }); await nachAnmeldung(); }, $("#f-meldung"));
+    } else if (f.id === "reg-form") {
+      laufen(async () => {
+        await api("registrieren", { code: wert("f-code").trim(), name: wert("f-name"), email: wert("f-email"), passwort: wert("f-pw") });
+        await nachAnmeldung();
+      }, $("#f-meldung"));
+    } else if (f.id === "pw-form") {
+      laufen(async () => {
+        await api("passwort", { alt: wert("pw-alt"), neu: wert("pw-neu") });
+        SERVER.benutzer.wechselNoetig = false; f.reset();
+        melde($("#pw-meldung"), "Neues Passwort gespeichert.", true);
+      }, $("#pw-meldung"));
+    } else if (f.id === "einladung-form") {
+      laufen(async () => { await api("admin_einladung", { bemerkung: wert("einladung-bemerkung") }); await teilnehmendeLaden(); }, null);
+    }
+  });
+  window.addEventListener("hashchange", () => {
+    if (SERVER && !SERVER.angemeldet) return;
+    if (SERVER && SERVER.benutzer && SERVER.benutzer.wechselNoetig && location.hash !== "#konto") { location.hash = "#konto"; return; }
+    zeige();
+  });
   try { speechSynthesis.getVoices(); } catch (e) { /* - */ }
 
-  zeige();
+  /* ---------- Start ---------- */
+  (async function starten() {
+    const R = new URLSearchParams(location.search);
+    if (R.get("film")) { filmbild(R.get("film"), Number(R.get("szene") || 0)); return; }
+    if (location.protocol !== "file:") {
+      try {
+        const ich = await api("ich");
+        if (ich && typeof ich.angemeldet === "boolean") SERVER = ich;
+      } catch (e) { SERVER = null; /* statische Vorschau ohne PHP */ }
+    }
+    if (SERVER && !SERVER.angemeldet) { zeigeAnmeldung(); return; }
+    if (SERVER) { await nachAnmeldung(); return; }
+    zeige();
+  })();
 })();
+

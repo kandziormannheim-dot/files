@@ -368,3 +368,48 @@ svg text.tak { fill: var(--akzent); }
 .rechner-grafik { background: var(--flaeche); border: 1px solid var(--linie); border-radius: var(--radius); padding: 16px; overflow-x: auto; }
 .rechner-grafik svg { display: block; width: 100%; min-width: 560px; height: auto; }
 #canvas-matrix svg { display: block; width: 100%; min-width: 460px; height: auto; }
+
+/* ---------- Konten, Anmeldung, Kursleitung ---------- */
+body.ohne-leiste .rahmen { grid-template-columns: 1fr; }
+body.ohne-leiste .seitenleiste, body.ohne-leiste .knopf.menue-knopf { display: none; }
+.anmeldung { max-width: 560px; margin: 0 auto; display: grid; gap: 18px; }
+.anmeldung .leiter-wrap svg { min-width: 0; }
+.reiter { display: flex; gap: 4px; background: var(--flaeche-2); padding: 4px; border-radius: 10px; }
+.reiter button { flex: 1; font: 600 .95rem var(--schrift-text); color: var(--tinte-2); background: transparent; border: 0; padding: 9px; border-radius: 7px; cursor: pointer; }
+.reiter button[aria-selected="true"] { background: var(--flaeche); color: var(--tinte); box-shadow: var(--schatten); }
+input[type="email"], input[type="password"] { font: inherit; color: var(--tinte); background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 9px 11px; width: 100%; }
+.formular-meldung { margin: 0; min-height: 1.4em; color: var(--warn); font-size: .92rem; }
+.formular-meldung[data-gut="ja"] { color: var(--gut); }
+.konto-zeile { display: grid; gap: 6px; width: 100%; border-top: 1px solid var(--linie); padding-top: 12px; font-size: .88rem; }
+#sync { font-size: .76rem; color: var(--tinte-2); }
+#sync[data-status="fehler"] { color: var(--warn); }
+#sync[data-status="ok"]::before { content: "✓ "; color: var(--gut); }
+.modulbalken { display: grid; gap: 8px; }
+.modulbalken > div { display: grid; grid-template-columns: minmax(150px, 260px) 1fr 52px; gap: 12px; align-items: center; font-size: .9rem; }
+.modulbalken .tab { font-variant-numeric: tabular-nums; text-align: right; color: var(--tinte-2); }
+.tn-tabelle small { color: var(--tinte-2); }
+.tn-tabelle tr.inaktiv td { opacity: .6; }
+.admin-meldung { font-size: .85rem; margin-top: 6px; }
+code.gross { font-size: 1.05rem; padding: .15em .5em; letter-spacing: .06em; user-select: all; }
+
+/* ---------- Filme ---------- */
+.filmvideo { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; background: var(--tinte); border-radius: var(--radius); display: block; }
+.film-details > summary { cursor: pointer; color: var(--akzent); font-weight: 600; padding: 6px 0; }
+.film-details[open] > summary { margin-bottom: 10px; }
+
+/* Einzelbild für die MP4-Erzeugung: feste 1280 × 720 */
+body.filmbild { width: 1280px; height: 720px; overflow: hidden; margin: 0; background: var(--grund); display: grid; grid-template-rows: auto 1fr auto; }
+body.filmbild .fb-kopf { display: flex; justify-content: space-between; align-items: center; padding: 22px 48px 0; font: 600 20px var(--schrift-titel); color: var(--tinte-2); }
+body.filmbild .fb-kopf > span:first-child { display: flex; gap: 12px; align-items: center; color: var(--tinte); }
+body.filmbild .fb-buehne { padding: 14px 120px 0; display: grid; place-items: center; min-height: 0; background: transparent; }
+body.filmbild .fb-buehne svg { width: 100%; max-height: 430px; min-width: 0; }
+body.filmbild .fb-text { margin: 0 48px 34px; padding: 18px 26px; background: var(--flaeche); border-radius: 12px; box-shadow: var(--schatten);
+  font: 500 27px/1.4 var(--schrift-text); color: var(--tinte); min-height: 120px; display: flex; align-items: center; }
+body.filmbild .fb-titel { grid-row: 1 / -1; display: grid; place-content: center; justify-items: start; gap: 18px; padding: 0 120px; }
+body.filmbild .fb-titel svg { width: 72px; height: 72px; }
+body.filmbild .fb-titel h1 { font-size: 64px; max-width: 26ch; }
+body.filmbild .fb-titel p { font-size: 26px; color: var(--tinte-2); margin: 0; }
+body.filmbild .fb-titel .eyebrow { font-size: 16px; }
+#tn-inhalt { display: grid; gap: 28px; }
+#tn-inhalt .kennzahl { background: var(--flaeche); border: 1px solid var(--linie); }
+@media (max-width: 600px) { .anmeldung .leiter-wrap { display: none; } }
