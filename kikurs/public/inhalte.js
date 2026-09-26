@@ -442,7 +442,7 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
 <tr><td><b>Node</b> (Knoten)</td><td>ein Schritt. Der erste ist immer ein Trigger-Knoten.</td></tr>
 <tr><td><b>Credential</b></td><td>gespeicherte Zugangsdaten, z. B. für E-Mail, Teams oder ein KI-Modell. Einmal anlegen, überall nutzen.</td></tr>
 <tr><td><b>Execution</b></td><td>ein einzelner Durchlauf. Unter „Executions“ siehst du jeden Lauf mit allen Daten, ideal zur Fehlersuche.</td></tr>
-<tr><td><b>Test workflow / Active</b></td><td>Testlauf per Knopfdruck. Erst mit dem Schalter „Active“ läuft der Workflow dauerhaft.</td></tr>
+<tr><td><b>Execute workflow / Publish</b></td><td>Testlauf per Knopfdruck. Erst nach „Publish“ (in älteren Versionen: Schalter „Active“) läuft der Workflow dauerhaft.</td></tr>
 <tr><td><b>Ausdruck</b> <code>{{ }}</code></td><td>holt Werte aus früheren Schritten, z. B. <code>{{ $json.Name }}</code>. Du ziehst Felder einfach per Maus hinein.</td></tr>
 </table></div>
 <div class="notiz"><span class="eyebrow">So kommst du rein</span><p>Frag bei der Stelle, die euren n8n-Server betreibt, nach einem Konto und nach vorhandenen Credentials (E-Mail-Versand, Teams/Slack, KI-Modelle). Oft sind sie schon angelegt und für dich freigegeben.</p></div>`
@@ -456,11 +456,11 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
   <li><b>+ → If:</b> Bedingung „Wie stark?“ <i>is equal to</i> <code>3</code>. Feld per Maus aus der linken Spalte hineinziehen.</li>
   <li><b>Ausgang „true“ → Send Email</b> (oder Microsoft Teams / Slack, je nachdem, welche Credentials es bei euch gibt). Betreff: <code>Starkes Hindernis: {{ $json['Was blockiert dich?'] }}</code>.</li>
   <li><b>Speichern (optional):</b> einen Knoten für eure Tabelle anhängen, etwa <b>Data Table</b> (in neueren n8n-Versionen eingebaut), Google Sheets oder Microsoft Excel.</li>
-  <li><b>Testen:</b> „Test workflow“ → das Testformular öffnet sich. Drei Einträge abschicken, einer davon mit Stärke 3. Unter „Executions“ jeden Lauf ansehen.</li>
-  <li><b>Aktivieren:</b> Schalter „Active“ oben rechts. Ab jetzt gilt die Produktions-URL des Formulars. Diese gibst du dem Team.</li>
+  <li><b>Testen:</b> „Execute workflow“ → das Testformular öffnet sich. Drei Einträge abschicken, einer davon mit Stärke 3. Unter „Executions“ jeden Lauf ansehen.</li>
+  <li><b>Aktivieren:</b> oben rechts „Publish“ (ältere Versionen: Schalter „Active“). Ab jetzt gilt die Produktions-URL des Formulars. Diese gibst du dem Team.</li>
 </ol>
 <p>Fertige Vorlage zum Importieren: <a href="vorlagen/impediment-melder.n8n.json" download>impediment-melder.n8n.json</a>. In n8n: Menü „…“ → „Import from File“. Danach nur noch Empfänger und Credentials setzen.</p>
-<div class="achtung"><strong>Typische Stolpersteine</strong><p>Test-URL und Produktions-URL des Formulars sind verschieden. Felder aus früheren Schritten erscheinen erst, wenn einmal Testdaten durchgelaufen sind. Ein Workflow ohne „Active“ reagiert nur im Testmodus.</p></div>`
+<div class="achtung"><strong>Typische Stolpersteine</strong><p>Test-URL und Produktions-URL des Formulars sind verschieden. Felder aus früheren Schritten erscheinen erst, wenn einmal Testdaten durchgelaufen sind. Ein Workflow ohne „Publish“ reagiert nur im Testmodus.</p></div>`
         },
       ],
       film: {
@@ -963,6 +963,17 @@ Feedback: "Seit dem letzten Release stürzt der Export bei großen Dateien ab."<
     { titel: "Retro-Radar: einordnen", modul: "m5", datei: "vorlagen/retro-radar-einordnen.n8n.json", text: "Formular → KI ordnet Feedback ein (JSON) → Tabelle, unsichere Fälle an dich." },
     { titel: "Retro-Radar: Zusammenfassung", modul: "m5", datei: "vorlagen/retro-radar-zusammenfassung.n8n.json", text: "Zeitgesteuert: Feedback des Sprints holen → KI fasst zusammen → E-Mail an dich." },
     { titel: "Glossar-Bot", modul: "m6", datei: "vorlagen/glossar-bot.n8n.json", text: "Chat → AI Agent mit Gedächtnis beantwortet Fragen zu Team-Begriffen." },
+  ],
+
+  /* Schritt-für-Schritt-Anleitungen als Bildschirmfilme (anleitungen/<id>.mp4),
+     erzeugt mit werkzeuge/anleitungen.mjs. module: wo der Film zusätzlich
+     erscheint. echt: aufgenommen in der echten Oberfläche (sonst Nachbildung). */
+  anleitungen: [
+    { id: "claude", titel: "Claude: Chat, Dateien und Projekte", text: "Neuer Chat, gute Bitte mit vier Zutaten, nachschärfen, PDF anhängen, Projekt mit Anweisungen und Wissen anlegen.", module: ["e4", "m2"], echt: false },
+    { id: "gemini", titel: "Gemini: Chat, Dateien und Gems", text: "Dieselben Handgriffe in Gemini: Chat, Datei, eigenes Gem mit Anleitung und Wissen.", module: ["e4", "m2"], echt: false },
+    { id: "n8n-import", titel: "n8n: eine Vorlage importieren und testen", text: "Impediment-Melder importieren, Knoten ansehen, Testformular ausfüllen, Lauf unter Executions prüfen.", module: ["m4"], echt: true },
+    { id: "n8n-bauen", titel: "n8n: den ersten Workflow selbst bauen", text: "Formular-Auslöser anlegen, testen und die Antwort per Drag-and-drop weiterverarbeiten.", module: ["m4"], echt: true },
+    { id: "n8n-ki", titel: "n8n: der KI-Baustein im Retro-Radar", text: "Prompt, Sprachmodell, Zugangsdaten und JSON-Format im Retro-Radar erklärt.", module: ["m5", "m6"], echt: true },
   ],
 
   /* ---------------------------------------------------------------------- */

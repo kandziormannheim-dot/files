@@ -8,18 +8,21 @@
 // Ablauf je Szene: Chromium rendert public/index.html?film=<modul>&szene=<n>
 // als 1280 × 720-Bild, die Tonspur kommt aus einer eigenen Aufnahme
 // (kikurs/aufnahmen/<modul>-<n>.wav, falls vorhanden) oder aus der
-// Sprachsynthese espeak-ng mit deutscher MBROLA-Stimme. ffmpeg setzt Bild
+// Sprachausgabe in stimme.mjs: ElevenLabs, wenn ELEVENLABS_API_KEY gesetzt
+// ist, sonst espeak-ng mit deutscher MBROLA-Stimme. ffmpeg setzt Bild
 // und Ton zusammen. Szene 0 ist die Titelkarte.
 //
 // Voraussetzungen: Node, Playwright mit Chromium, ffmpeg, espeak-ng und
 // mbrola-de6 (Ubuntu: apt install ffmpeg espeak-ng mbrola mbrola-de6).
-// Andere Stimme: STIMME=mb-de7 (weiblich) oder STIMME=de (espeak, ohne MBROLA).
+// ElevenLabs-Stimme wählen: ELEVENLABS_VOICE_ID. Computerstimme wählen:
+// ESPEAK_STIMME=mb-de7 (weiblich) oder de (ohne MBROLA).
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
+import { sprechen, dauer, quelle } from './stimme.mjs';
 
 const hier = path.dirname(fileURLToPath(import.meta.url));
 const kurs = path.resolve(hier, '..');
@@ -27,8 +30,6 @@ const oeffentlich = path.join(kurs, 'public');
 const ziel = path.join(oeffentlich, 'filme');
 const aufnahmen = path.join(kurs, 'aufnahmen');
 const arbeit = fs.mkdtempSync(path.join(process.env.TMPDIR || '/tmp', 'kikurs-filme-'));
-const STIMME = process.env.STIMME || 'mb-de6';
-const TEMPO = process.env.TEMPO || '150';
 
 const require = createRequire(import.meta.url);
 let playwright;
@@ -38,22 +39,6 @@ for (const kandidat of [process.env.PLAYWRIGHT_MODULE, 'playwright', '/opt/node2
 }
 if (!playwright) { console.error('Playwright nicht gefunden (PLAYWRIGHT_MODULE setzen).'); process.exit(2); }
 
-// Aussprachehilfen für die deutsche Sprachsynthese. Die Untertitel behalten
-// den Originaltext; nur der gesprochene Text wird angepasst.
-const AUSSPRACHE = [
-  [/\bz\. ?B\./g, 'zum Beispiel'], [/\bn8n\b/g, 'N acht N'], [/\bKI-/g, 'K I-'], [/\bKI\b/g, 'K I'],
-  [/\bMCP\b/g, 'M C P'], [/\bJSON\b/g, 'Dschäisen'], [/\bRAG\b/g, 'Rägg'], [/\bDoD\b/g, 'Definition of Done'],
-  [/Workflows/g, 'Wörkflous'], [/Workflow/g, 'Wörkflou'], [/Chatbots?/g, (w) => w.replace('Chatbot', 'Tschättbott')],
-  [/\bChatGPT\b/g, 'Tschätt G P T'], [/\bClaude\b/g, 'Klohd'], [/\bGemini\b/g, 'Dschemini'], [/\bJira\b/g, 'Dschira'],
-  [/\bConfluence\b/g, 'Konfluenz'], [/\bTeams\b/g, 'Tiems'], [/\bTokens\b/g, 'Toukens'], [/\bToken\b/g, 'Touken'],
-  [/\bBugs?\b/g, 'Back'], [/\bReview\b/g, 'Riwju'], [/\bUser Story\b/g, 'Juhser Stori'], [/\bWalking Skeleton\b/g, 'Woking Skelleten'],
-  [/\bCanvas\b/g, 'Känwes'], [/\bTools?\b/g, 'Tuhl'], [/\bRetro\b/g, 'Retro'], [/\bSprints?\b/g, (w) => w],
-  [/\bScrum Master\b/g, 'Skramm Master'], [/\bAgile Coach\b/g, 'Ädschail Koutsch'], [/\bDaily\b/g, 'Däili'],
-  [/‚|‘|„|“/g, ''], [/ – /g, ', '],
-];
-const sprechbar = (t) => AUSSPRACHE.reduce((a, [muster, ersatz]) => a.replace(muster, ersatz), t);
-
-const dauer = (datei) => Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', datei]).toString().trim());
 const vttZeit = (s) => {
   const ms = Math.round(s * 1000), h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60, sek = Math.floor(ms / 1000) % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sek).padStart(2, '0')}.${String(ms % 1000).padStart(3, '0')}`;
@@ -89,6 +74,7 @@ const gewuenscht = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const module = K.module.filter((m) => m.film && (!gewuenscht.length || gewuenscht.includes(m.id)));
 
 fs.mkdirSync(ziel, { recursive: true });
+console.log(`Stimme: ${quelle() === 'elevenlabs' ? 'ElevenLabs' : 'Computerstimme (espeak-ng/MBROLA)'}`);
 const browser = await playwright.chromium.launch();
 const seite = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, ignoreHTTPSErrors: true });
 const basis = pathToFileURL(path.join(oeffentlich, 'index.html')).href;
@@ -107,7 +93,7 @@ for (const m of module) {
     let ton = eigen;
     if (!fs.existsSync(eigen)) {
       ton = path.join(arbeit, `${m.id}-${n}.wav`);
-      execFileSync('espeak-ng', ['-v', STIMME, '-s', TEMPO, '-w', ton, sprechbar(szenen[n])]);
+      await sprechen(szenen[n], ton);
     }
     const pause = n === 0 ? 0.6 : 0.9;
     const laenge = dauer(ton) + pause;

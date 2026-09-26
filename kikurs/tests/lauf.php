@@ -172,6 +172,10 @@ if ($node !== '') {
             m.film.szenen.forEach((s, i) => { if (s.schritt > 0 && !svg.includes('data-schritt="' + s.schritt + '"')) fehler.push(m.id + ' Szene ' + i + ': Schritt ' + s.schritt + ' nicht in Grafik'); }); }
         });
         });
+        (K.anleitungen || []).forEach((a) => {
+          ['mp4', 'vtt', 'jpg'].forEach((e) => { if (!fs.existsSync(process.argv[1] + '/public/anleitungen/' + a.id + '.' + e)) fehler.push('Anleitungsfilm fehlt: anleitungen/' + a.id + '.' + e + ' (werkzeuge/anleitungen.mjs)'); });
+          a.module.forEach((m) => { if (!ids.has(m)) fehler.push('Anleitungsfilm ' + a.id + ': Modul ' + m + ' gibt es nicht'); });
+        });
         (K.vorlagen || []).forEach((v) => { if (!fs.existsSync(process.argv[1] + '/public/' + v.datei)) fehler.push('Vorlage fehlt: ' + v.datei); });
         console.log(JSON.stringify(fehler));
         JS;

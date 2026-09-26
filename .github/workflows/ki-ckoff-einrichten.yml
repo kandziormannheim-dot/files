@@ -365,7 +365,7 @@ jobs:
           holen "https://$SUB/api.php?aktion=ich" | jq -e '.angemeldet == false' >/dev/null \
             || { echo "::error::api.php?aktion=ich antwortet unerwartet."; diagnose; exit 1; }
           echo "== Kursseite, Skripte, ein Film und eine Vorlage =="
-          for datei in / /kurs.css /kurs.js /einstieg.js /inhalte.js /grafiken.js /filme/e2.mp4 /filme/m1.mp4 /filme/m1.vtt /vorlagen/impediment-melder.n8n.json; do
+          for datei in / /kurs.css /kurs.js /einstieg.js /inhalte.js /grafiken.js /filme/e2.mp4 /filme/m1.mp4 /filme/m1.vtt /anleitungen/n8n-import.mp4 /vorlagen/impediment-melder.n8n.json; do
             CODE_HTTP=$(holen -o /dev/null -w '%{http_code}' "https://$SUB$datei")
             [ "$CODE_HTTP" = "200" ] || { echo "::error::$datei wird nicht ausgeliefert (HTTP $CODE_HTTP)."; exit 1; }
           done

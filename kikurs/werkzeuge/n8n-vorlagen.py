@@ -55,7 +55,7 @@ def mail(betreff, text):
 
 def notiz(wf, name, x, y, text, breite=420, hoehe=260):
     return knoten(wf, name, "n8n-nodes-base.stickyNote", 1, x, y,
-                  {"content": text, "width": breite, "height": hoehe, "color": 6})
+                  {"content": text, "width": breite, "height": hoehe, "color": 1})
 
 
 def workflow(name, nodes, connections):
@@ -71,7 +71,7 @@ w = "impediment"
 feld_was, feld_seit, feld_stark = "Was blockiert dich?", "Seit wann?", "Wie stark?"
 vorlagen["impediment-melder"] = workflow("KI-Werkstatt · Impediment-Melder", [
     notiz(w, "Anleitung", -80, -300,
-          "## Impediment-Melder (Modul 4)\n1. Empfänger in **Nachricht an Scrum Master** eintragen und SMTP-Credential wählen (oder Knoten durch Teams/Slack ersetzen).\n2. **Test workflow** klicken, Formular ausfüllen.\n3. Oben rechts **Active** einschalten und die Produktions-URL des Formulars ans Team geben."),
+          "## Impediment-Melder (Modul 4)\n1. Empfänger in **Nachricht an Scrum Master** eintragen und SMTP-Credential wählen (oder Knoten durch Teams/Slack ersetzen).\n2. **Execute workflow** klicken (ältere Versionen: **Test workflow**), Formular ausfüllen.\n3. Oben rechts **Publish** klicken (ältere n8n-Versionen: Schalter **Active**) und die Produktions-URL des Formulars ans Team geben."),
     knoten(w, "Formular: Hindernis melden", "n8n-nodes-base.formTrigger", 2.2, 0, 0, {
         "formTitle": "Hindernis melden",
         "formDescription": "Was hält dich gerade auf? Die Meldung geht an den Scrum Master.",
@@ -147,7 +147,7 @@ c = haupt(("Retro-Tag 8 Uhr", 0, "Feedback holen"), ("Feedback holen", 0, "Zusam
 ai(c, "Chat Model", "ai_languageModel", "KI: zusammenfassen")
 vorlagen["retro-radar-zusammenfassung"] = workflow("KI-Werkstatt · Retro-Radar: Zusammenfassung", [
     notiz(w, "Anleitung", -80, -320,
-          "## Retro-Radar: Zusammenfassung (Modul 5)\n1. Im **Retro-Tag 8 Uhr** Wochentag und Rhythmus eurer Retro einstellen.\n2. In **Feedback holen** die Tabelle *retro_feedback* wählen (optional nach Sprint filtern).\n3. Chat Model und Empfänger setzen, dann **Active** einschalten.", 440, 240),
+          "## Retro-Radar: Zusammenfassung (Modul 5)\n1. Im **Retro-Tag 8 Uhr** Wochentag und Rhythmus eurer Retro einstellen.\n2. In **Feedback holen** die Tabelle *retro_feedback* wählen (optional nach Sprint filtern).\n3. Chat Model und Empfänger setzen, dann **Publish** klicken (ältere Versionen: **Active**).", 440, 240),
     knoten(w, "Retro-Tag 8 Uhr", "n8n-nodes-base.scheduleTrigger", 1.2, 0, 0,
            {"rule": {"interval": [{"field": "weeks", "weeksInterval": 2, "triggerAtDay": [4], "triggerAtHour": 8}]}}),
     knoten(w, "Feedback holen", "n8n-nodes-base.dataTable", 1, 240, 0,
@@ -181,7 +181,7 @@ GLOSSAR = ("Du bist der Glossar-Bot eines agilen Teams. Beantworte Fragen zu Beg
            "- Impediment: alles, was das Team bremst. Meldung über das Impediment-Formular.")
 vorlagen["glossar-bot"] = workflow("KI-Werkstatt · Glossar-Bot", [
     notiz(w, "Anleitung", -80, -320,
-          "## Glossar-Bot (Modul 6)\n1. Chat Model wählen.\n2. Im **Glossar-Agent** unter *Options → System Message* euer echtes Team-Glossar einfügen.\n3. Unten links **Open chat** zum Testen. Mit **Active** und *Make Chat Publicly Available* im Chat-Knoten bekommt das Team eine Chat-Seite.\n4. Nächster Schritt: ein lesendes Tool anhängen (z. B. eure Glossar-Tabelle).", 460, 260),
+          "## Glossar-Bot (Modul 6)\n1. Chat Model wählen.\n2. Im **Glossar-Agent** unter *Options → System Message* euer echtes Team-Glossar einfügen.\n3. Unten **Open chat** zum Testen. Mit **Publish** und *Make Chat Publicly Available* im Chat-Knoten bekommt das Team eine Chat-Seite.\n4. Nächster Schritt: ein lesendes Tool anhängen (z. B. eure Glossar-Tabelle).", 460, 260),
     knoten(w, "Chat", "@n8n/n8n-nodes-langchain.chatTrigger", 1.1, 0, 0, {"options": {}}, webhookId=uid(w, "webhook")),
     knoten(w, "Glossar-Agent", "@n8n/n8n-nodes-langchain.agent", 1.7, 260, 0, {"options": {"systemMessage": GLOSSAR}}),
     knoten(w, "Chat Model", "@n8n/n8n-nodes-langchain.lmChatAnthropic", 1.3, 200, 220, {"model": MODELL, "options": {"temperature": 0.3}}),

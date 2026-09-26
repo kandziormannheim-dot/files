@@ -3,10 +3,10 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Retro-Radar: Zusammenfassung (Modul 5)\n1. Im **Retro-Tag 8 Uhr** Wochentag und Rhythmus eurer Retro einstellen.\n2. In **Feedback holen** die Tabelle *retro_feedback* wählen (optional nach Sprint filtern).\n3. Chat Model und Empfänger setzen, dann **Active** einschalten.",
+        "content": "## Retro-Radar: Zusammenfassung (Modul 5)\n1. Im **Retro-Tag 8 Uhr** Wochentag und Rhythmus eurer Retro einstellen.\n2. In **Feedback holen** die Tabelle *retro_feedback* wählen (optional nach Sprint filtern).\n3. Chat Model und Empfänger setzen, dann **Publish** klicken (ältere Versionen: **Active**).",
         "width": 440,
         "height": 240,
-        "color": 6
+        "color": 1
       },
       "id": "fe8083b4-8791-5980-a28c-12bdffdc38bb",
       "name": "Anleitung",
