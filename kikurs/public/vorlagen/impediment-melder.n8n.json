@@ -3,10 +3,10 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Impediment-Melder (Modul 4)\n1. Empfänger in **Nachricht an Scrum Master** eintragen und SMTP-Credential wählen (oder Knoten durch Teams/Slack ersetzen).\n2. **Test workflow** klicken, Formular ausfüllen.\n3. Oben rechts **Active** einschalten und die Produktions-URL des Formulars ans Team geben.",
+        "content": "## Impediment-Melder (Modul 4)\n1. Empfänger in **Nachricht an Scrum Master** eintragen und SMTP-Credential wählen (oder Knoten durch Teams/Slack ersetzen).\n2. **Execute workflow** klicken (ältere Versionen: **Test workflow**), Formular ausfüllen.\n3. Oben rechts **Publish** klicken (ältere n8n-Versionen: Schalter **Active**) und die Produktions-URL des Formulars ans Team geben.",
         "width": 420,
         "height": 260,
-        "color": 6
+        "color": 1
       },
       "id": "f28ebc11-a775-552c-b005-15336aafd1de",
       "name": "Anleitung",

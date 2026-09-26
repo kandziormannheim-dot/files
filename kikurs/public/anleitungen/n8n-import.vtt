@@ -1,0 +1,61 @@
+WEBVTT
+
+1
+00:00:12.595 --> 00:00:22.156
+Du bist in n8n angemeldet. Über das Plus-Zeichen oben links legst du einen neuen, leeren Workflow an.
+
+2
+00:00:22.206 --> 00:00:30.878
+Neben dem Namen des Workflows öffnen die drei Punkte ein Menü. Dort findest du den Eintrag Import.
+
+3
+00:00:30.928 --> 00:00:43.481
+Wähle „From file“ und dann die Vorlagendatei aus dem Kurs, hier den Impediment-Melder. Mit einem Klick auf „Zoom to fit“ siehst du alles auf einen Blick.
+
+4
+00:00:43.531 --> 00:00:58.435
+Der Workflow ist da. Links der Auslöser, das Formular. In der Mitte die Weiche. Rechts die Nachricht an dich. Die Notiz oben erklärt, was nach dem Import noch zu tun ist.
+
+5
+00:00:58.485 --> 00:01:09.803
+Ein Doppelklick auf das Formular öffnet seine Einstellungen: Titel, Beschreibung und die drei Felder. Hier passt du alles an dein Team an.
+
+6
+00:01:09.853 --> 00:01:14.814
+Mit der Escape-Taste geht es zurück auf die Arbeitsfläche.
+
+7
+00:01:14.864 --> 00:01:27.352
+Die Weiche prüft die Stärke des Hindernisses. Nur bei Stufe drei, blockiert, geht es oben weiter zur Nachricht. Alles andere läuft unten aus, ohne Nachricht.
+
+8
+00:01:27.402 --> 00:01:40.571
+Das kleine Warndreieck heißt: Hier fehlen noch Zugangsdaten für den E-Mail-Versand. Die legst du einmal an, oder du tauschst den Knoten gegen Teams oder Slack.
+
+9
+00:01:40.621 --> 00:01:50.847
+Jetzt testen wir. Ein Klick auf „Execute workflow“, und n8n öffnet das Testformular in einem neuen Fenster.
+
+10
+00:01:50.897 --> 00:02:01.976
+So sieht dein Team das Formular. Wir tragen ein Hindernis ein: Die Testumgebung ist seit gestern nicht erreichbar. Stärke zwei.
+
+11
+00:02:02.026 --> 00:02:04.095
+Abschicken.
+
+12
+00:02:04.145 --> 00:02:17.255
+Zurück im Editor siehst du den Durchlauf. Grüne Haken zeigen, welche Schritte gelaufen sind. Bei Stärke zwei ging es unten aus der Weiche heraus, also ohne Nachricht.
+
+13
+00:02:17.305 --> 00:02:26.180
+Unter „Executions“ steht jeder Lauf mit allen Daten. Das ist dein wichtigstes Werkzeug bei der Fehlersuche.
+
+14
+00:02:26.230 --> 00:02:38.426
+Wenn alles passt, klickst du oben rechts auf „Publish“. Ab dann läuft der Workflow dauerhaft, und dein Team bekommt den Link zum Produktionsformular.
+
+15
+00:02:38.476 --> 00:02:45.812
+Geschafft. Im nächsten Film kommt ein KI-Schritt dazu: der Retro-Radar.

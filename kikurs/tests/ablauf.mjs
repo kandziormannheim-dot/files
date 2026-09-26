@@ -127,7 +127,7 @@ try {
   pruefe(true, 'Einmalcode erzeugt und gelistet');
   await p3.screenshot({ path: path.join(tmp, 'teilnehmende.png'), fullPage: true });
 
-  for (const r of ['start', 'einstieg', 'einstieg-plan', 'einstieg-zertifikat', 'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'werkstatt', 'werkstatt-plan', 'plan', 'm0', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'baukasten', 'prompts', 'vorlagen', 'rechner', 'canvas', 'glossar', 'zertifikat', 'konto']) {
+  for (const r of ['start', 'einstieg', 'einstieg-plan', 'einstieg-zertifikat', 'e0', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'werkstatt', 'werkstatt-plan', 'plan', 'm0', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'baukasten', 'prompts', 'anleitungen', 'vorlagen', 'rechner', 'canvas', 'glossar', 'zertifikat', 'konto']) {
     await p3.evaluate((h) => { location.hash = h; }, r);
     await p3.waitForTimeout(80);
   }

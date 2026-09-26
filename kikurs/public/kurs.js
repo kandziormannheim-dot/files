@@ -157,6 +157,7 @@
         ${link("prompts", "❏", "Prompt-Bibliothek", W.prompts.length)}
         ${link("rechner", "€", "Automatisierungs-Rechner", "")}
         ${link("canvas", "▣", "Use-Case-Canvas", "")}
+        ${link("anleitungen", "▶", "Anleitungsfilme", W.anleitungen.length)}
         ${link("vorlagen", "⇩", "n8n-Vorlagen", W.vorlagen.length)}
         ${link("glossar", "Aa", "Glossar", glossar().length)}
       </nav>
@@ -309,6 +310,8 @@
           <track kind="captions" srclang="de" label="Deutsch" src="filme/${m.id}.vtt">
           Dein Browser kann das Video nicht abspielen. Nutze die Schritt-für-Schritt-Fassung darunter.</video>
         <details class="film-details"><summary>Schritt für Schritt ansehen (mit Stimme deines Browsers)</summary>${filmHtml(m)}</details></section>` : ""}
+      ${W.anleitungen.some((a) => a.module.includes(m.id)) ? `<section class="block"><h2>Schritt für Schritt vorgemacht</h2>
+        ${W.anleitungen.filter((a) => a.module.includes(m.id)).map(anleitungVideo).join("")}</section>` : ""}
       ${m.videos.length ? `<section class="block"><div class="block-kopf"><h2>Zum Weiterlernen</h2><span class="chip">meist Englisch, freiwillig</span></div><div class="videos">${m.videos.map((v) => `
         <a class="video" href="${esc(v.url)}" target="_blank" rel="noopener">
           <span class="play" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M5 3 L15 9 L5 15 z" style="fill:currentColor"/></svg></span>
@@ -650,6 +653,17 @@
     let pos = 0; teile.forEach((t) => { gesamt.set(t, pos); pos += t.length; });
     return gesamt;
   }
+
+  const anleitungVideo = (a) => `<div class="anleitung">
+      <div class="block-kopf"><h3>${esc(a.titel)}</h3><span class="chip ${a.echt ? "akzent" : ""}">${a.echt ? "echte Oberfläche" : "vereinfachte Nachbildung"}</span></div>
+      <p>${esc(a.text)}</p>
+      <video class="filmvideo" controls preload="none" playsinline poster="anleitungen/${a.id}.jpg" src="anleitungen/${a.id}.mp4">
+        <track kind="captions" srclang="de" label="Deutsch" src="anleitungen/${a.id}.vtt"></video></div>`;
+  seiten.anleitungen = () => `<div class="spalte">
+    <div class="modul-kopf"><span class="eyebrow">Werkzeug · zum Zuschauen</span><h1>Anleitungsfilme</h1>
+      <p>Schritt für Schritt vorgemacht: So sehen Claude, Gemini und n8n in der Praxis aus. Die n8n-Filme sind in einer echten n8n-Installation aufgenommen. Claude und Gemini zeigen eine vereinfachte Nachbildung mit denselben Bedienwegen, weil sich echte Konten nicht automatisch aufnehmen lassen. Untertitel stehen im Bild, eine Sprecherstimme erklärt jeden Schritt.</p></div>
+    ${W.anleitungen.map(anleitungVideo).join("")}
+  </div>`;
 
   seiten.vorlagen = () => `<div class="spalte">
     <div class="modul-kopf"><span class="eyebrow">Werkzeug · Module 4 bis 6</span><h1>n8n-Vorlagen</h1>

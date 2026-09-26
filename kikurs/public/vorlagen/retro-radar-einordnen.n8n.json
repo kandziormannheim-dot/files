@@ -6,7 +6,7 @@
         "content": "## Retro-Radar: einordnen (Modul 5)\n1. Im **Chat Model** euer Modell-Credential wählen (jedes Chat-Model-Knoten-Paar geht, z. B. OpenAI oder Gemini statt Anthropic).\n2. Unter **Data Tables** eine Tabelle *retro_feedback* mit den Spalten sprint, thema, stimmung, kernaussage, sicher, original anlegen und in **Speichern** auswählen.\n3. Empfänger in **Zur Prüfung an dich** eintragen.\n4. Mit 20 Test-Einträgen die Trefferquote messen.",
         "width": 460,
         "height": 300,
-        "color": 6
+        "color": 1
       },
       "id": "dcb25e6e-aa40-5a24-bbc9-322842022aba",
       "name": "Anleitung",

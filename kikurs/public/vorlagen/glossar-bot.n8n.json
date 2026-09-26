@@ -3,10 +3,10 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Glossar-Bot (Modul 6)\n1. Chat Model wählen.\n2. Im **Glossar-Agent** unter *Options → System Message* euer echtes Team-Glossar einfügen.\n3. Unten links **Open chat** zum Testen. Mit **Active** und *Make Chat Publicly Available* im Chat-Knoten bekommt das Team eine Chat-Seite.\n4. Nächster Schritt: ein lesendes Tool anhängen (z. B. eure Glossar-Tabelle).",
+        "content": "## Glossar-Bot (Modul 6)\n1. Chat Model wählen.\n2. Im **Glossar-Agent** unter *Options → System Message* euer echtes Team-Glossar einfügen.\n3. Unten **Open chat** zum Testen. Mit **Publish** und *Make Chat Publicly Available* im Chat-Knoten bekommt das Team eine Chat-Seite.\n4. Nächster Schritt: ein lesendes Tool anhängen (z. B. eure Glossar-Tabelle).",
         "width": 460,
         "height": 260,
-        "color": 6
+        "color": 1
       },
       "id": "47fc47fa-ca2c-5ad2-a030-323a6a20e6fb",
       "name": "Anleitung",

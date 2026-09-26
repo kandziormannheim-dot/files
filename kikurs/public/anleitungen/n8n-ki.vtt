@@ -1,0 +1,45 @@
+WEBVTT
+
+1
+00:00:11.898 --> 00:00:23.387
+Wir öffnen die Vorlage „Retro-Radar: einordnen“ aus Modul 5, wieder über das Menü mit den drei Punkten, Import, From file.
+
+2
+00:00:23.437 --> 00:00:38.020
+Der Ablauf: Das Team schickt anonymes Feedback per Formular. Die KI ordnet es ein. Das Ergebnis wird gespeichert. Ist die KI unsicher, bekommst du eine Nachricht.
+
+3
+00:00:38.070 --> 00:00:49.568
+Unter dem KI-Schritt hängen zwei kleine Bausteine: das Sprachmodell, das denkt, und das JSON-Format, das die Antwort in feste Felder bringt.
+
+4
+00:00:49.618 --> 00:01:02.883
+Ein Doppelklick auf „KI: einordnen“ zeigt den Prompt. Die Stellen in doppelten geschweiften Klammern setzt n8n mit den Antworten aus dem Formular.
+
+5
+00:01:02.933 --> 00:01:13.044
+Zurück, und jetzt das Sprachmodell. Hier wählst du, welches Modell arbeitet. In der Vorlage ist Claude eingetragen.
+
+6
+00:01:13.094 --> 00:01:29.907
+Damit n8n das Modell nutzen darf, braucht es Zugangsdaten. Ein Klick auf „Connect“ öffnet das Fenster für den API-Schlüssel. Den bekommst du von eurer IT oder aus dem Konto beim Anbieter.
+
+7
+00:01:29.957 --> 00:01:41.922
+Wir tragen hier nichts ein und schließen das Fenster. Ein API-Schlüssel ist wie ein Passwort: nie in Chats, Tickets oder Dokumente kopieren.
+
+8
+00:01:41.972 --> 00:01:56.761
+Du willst lieber GPT oder Gemini nutzen? Dann löschst du diesen Modell-Baustein und hängst über das Plus am KI-Schritt einen anderen Chat-Model-Baustein an. Alles andere bleibt gleich.
+
+9
+00:01:56.811 --> 00:02:09.575
+Das JSON-Format legt fest, welche Felder die KI zurückgibt: Thema, Stimmung, Kernaussage und ob sie sich sicher ist. Genau diese Felder nutzt die Weiche danach.
+
+10
+00:02:09.625 --> 00:02:23.109
+Die Warndreiecke zeigen, was noch fehlt: Zugangsdaten für das Modell, eine Tabelle zum Speichern und die E-Mail-Zugangsdaten. Die gelbe Notiz beschreibt jeden Handgriff.
+
+11
+00:02:23.159 --> 00:02:35.666
+Sind die Zugangsdaten eingetragen, testest du wie gewohnt mit „Execute workflow“ und miss mit zwanzig Beispielen, wie oft die KI richtig liegt.

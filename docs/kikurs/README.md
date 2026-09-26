@@ -82,6 +82,72 @@ Dateinamen. Eine Aufnahme als `kikurs/aufnahmen/m1-2.wav` ersetzt genau diese
 Szene, danach den Film neu erzeugen. Eine andere Computerstimme wählt
 `STIMME=mb-de7` (weiblich).
 
+## Anleitungsfilme (Schritt für Schritt)
+
+Fünf Bildschirmfilme zeigen die Werkzeuge in Aktion (`public/anleitungen/`,
+Seite „Anleitungsfilme“ und eingebettet in den passenden Modulen):
+
+| Film | Inhalt | Oberfläche | Module |
+|---|---|---|---|
+| `claude` | Chat, gute Bitte, nachschärfen, PDF anhängen, Projekt mit Anweisungen und Wissen | vereinfachte Nachbildung | e4, m2 |
+| `gemini` | dasselbe in Gemini mit Gems | vereinfachte Nachbildung | e4, m2 |
+| `n8n-import` | Vorlage importieren, Knoten ansehen, Testformular, Executions, Publish | **echtes n8n 2.40** | m4 |
+| `n8n-bauen` | Formular-Auslöser von Grund auf, Test, Drag-and-drop in „Edit Fields“ | **echtes n8n 2.40** | m4 |
+| `n8n-ki` | Retro-Radar: Prompt, Chat Model, Zugangsdaten-Dialog, JSON-Format | **echtes n8n 2.40** | m5, m6 |
+
+Claude und Gemini lassen sich ohne echte Konten nicht automatisch aufnehmen.
+Die Nachbildung (`werkzeuge/demos/chat.html`) ist im Film und auf der Seite
+als solche gekennzeichnet, trägt keine Logos und zeigt dieselben Bedienwege.
+
+`werkzeuge/anleitungen.mjs` enthält die Drehbücher, `werkzeuge/bildschirmfilm.mjs`
+nimmt auf. Chromium bedient die Oberfläche, und die Bilder kommen mit
+Zeitstempel über das Chrome-Screencast-Protokoll. Ein eingeblendeter
+Mauszeiger mit Klick-Markierung zeigt jede Bewegung, ein Band unter dem Bild
+den Untertitel. Jeder Schritt dauert so lange wie seine Sprache.
+
+Neu drehen, etwa nach einem n8n-Update:
+
+```sh
+# n8n lokal (braucht Node 24), einmalig ein Konto anlegen
+npx n8n start                         # oder vorhandene Test-Instanz
+N8N_URL=http://127.0.0.1:5678 N8N_EMAIL=… N8N_PASSWORT=… \
+N8N_DB=~/.n8n/database.sqlite \
+  node kikurs/werkzeuge/anleitungen.mjs            # alle fünf
+node kikurs/werkzeuge/anleitungen.mjs claude       # nur einer
+```
+
+`N8N_DB` ist optional. Damit räumt das Skript vor jeder Aufnahme die
+Workflows der Demo-Instanz ab, sodass jeder Film mit leerer Startseite
+beginnt. **Nie gegen die echte Firmen-Instanz verwenden.**
+
+## Sprachausgabe: ElevenLabs
+
+Alle Filme, also die Erklärfilme und die Anleitungsfilme, sprechen über
+`werkzeuge/stimme.mjs`:
+
+- **ElevenLabs**, sobald `ELEVENLABS_API_KEY` gesetzt ist (Modell
+  `eleven_multilingual_v2`, Stimme per `ELEVENLABS_VOICE_ID`, sonst eine
+  mehrsprachige Standardstimme). Fertige Aufnahmen landen in
+  `~/.cache/kikurs-stimmen/`, ein erneuter Lauf kostet also keine Zeichen
+  doppelt.
+- **Computerstimme** (espeak-ng mit MBROLA `de6`) ohne Schlüssel oder mit
+  `STIMME=espeak`.
+
+Die eingecheckten Filme sprechen noch mit der Computerstimme, weil in der
+Umgebung, in der sie entstanden sind, weder ein Schlüssel hinterlegt noch
+`api.elevenlabs.io` erreichbar war. Mit Schlüssel neu vertonen:
+
+```sh
+export ELEVENLABS_API_KEY=…            # aus dem ElevenLabs-Konto, nie einchecken
+export ELEVENLABS_VOICE_ID=…           # optional, z. B. eine deutsche Stimme
+node kikurs/werkzeuge/filme-rendern.mjs          # 17 Erklärfilme
+node kikurs/werkzeuge/anleitungen.mjs            # 5 Anleitungsfilme
+```
+
+Bei ElevenLabs werden die Texte unverändert gesprochen. Die
+Aussprachehilfen (etwa „n8n“ → „N acht N“) gelten nur für die
+Computerstimme.
+
 ## n8n-Vorlagen
 
 `public/vorlagen/*.n8n.json` sind importierbare Workflows (Impediment-Melder,
@@ -96,7 +162,8 @@ npm install n8n --prefix /tmp/n8n
 N8N_MODULE=/tmp/n8n/node_modules node kikurs/werkzeuge/n8n-pruefen.cjs
 ```
 
-Geprüft mit n8n 2.40. Die Vorlagen nutzen bewusst ältere, weiterhin
+Geprüft mit n8n 2.40, zusätzlich per echtem Import in eine laufende
+n8n-2.40-Instanz (siehe Anleitungsfilme). Die Vorlagen nutzen bewusst ältere, weiterhin
 unterstützte Knotenversionen, damit sie auch auf etwas älteren Servern
 laufen. Der Data-Table-Knoten braucht eine neuere n8n-Version. Fehlt er,
 ersetzt man ihn durch Google Sheets oder Excel. Als Modell ist Anthropic
