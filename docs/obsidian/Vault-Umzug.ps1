@@ -84,13 +84,15 @@ function Invoke-Git {
 
 # Startet ein Geschwisterskript in eigenem Prozess: dessen "exit" und
 # $ErrorActionPreference sollen dieses Skript nicht mitreißen.
+# Seine Ausgabe geht direkt auf den Bildschirm (Out-Host). Sonst landet sie im
+# Rückgabewert, und aus dem Fehlercode wird ein Array aus Text und Zahl.
 function Invoke-Skript {
     param([string]$Name, [string[]]$Argumente)
     $pfad = Join-Path $PSScriptRoot $Name
     $alt = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $pfad @Argumente
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $pfad @Argumente | Out-Host
         return $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $alt
