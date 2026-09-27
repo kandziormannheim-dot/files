@@ -10,6 +10,7 @@ lokal auf dem Windows-Rechner laufen:
 | [`Vault-Sync.ps1`](Vault-Sync.ps1) | Der regelmäßige Abgleich über Git. Läuft aus der Aufgabenplanung, nicht von Hand. |
 | [`Vault-Sicherung.ps1`](Vault-Sicherung.ps1) | Die Alternative ohne Git: Spiegel und datierte Schnappschüsse. |
 | [`Obsidian-Einrichten.cmd`](Obsidian-Einrichten.cmd) | Zum Doppelklicken: lädt die Skripte und führt Einrichtung und Prüflauf aus. |
+| [`Umzug-Google-Drive.md`](Umzug-Google-Drive.md) | Runbook: Vault in den gespiegelten Google-Drive-Ordner umziehen, Git behalten. |
 
 ## Zuerst: wie Obsidian speichert
 
@@ -256,6 +257,11 @@ regelmäßig Vaults beschädigen.
 
 Genau deshalb steht die Datei in der `.gitignore`, die das Einrichtungsskript
 anlegt — beim Git-Weg tritt das Problem nicht auf.
+
+Git und ein Cloud-Ordner gleichzeitig gehen nur, wenn `.git` **nicht** im
+Cloud-Ordner liegt — sonst synchronisiert der Cloud-Dienst die internen Dateien
+des Repositorys und beschädigt es. Wie man das Repository herauslegt und die Vault
+nach Google Drive umzieht, beschreibt [`Umzug-Google-Drive.md`](Umzug-Google-Drive.md).
 
 ## Zurückdrehen
 
