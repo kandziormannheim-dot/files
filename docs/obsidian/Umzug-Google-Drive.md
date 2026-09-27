@@ -84,6 +84,17 @@ git -C $alt log --oneline origin/main..main   # keine Ausgabe = alles gepusht
 Meldet der Abgleich `FEHLER`, erst den Konflikt auflösen (siehe
 [README](README.md#wenn-ein-git-konflikt-entsteht)) und dann weitermachen.
 
+- [ ] **Keine Verknüpfungen in der Vault.** Junctions oder Symlinks (etwa
+      `.claude\skills\…` → `.agents\skills\…`) zeigen nach dem Umzug ins Leere,
+      Drive gleicht sie nicht ab, und ZIP und `robocopy` zählen ihren Inhalt doppelt.
+      Jede Verknüpfung durch einen echten Ordner ersetzen: `cmd /c rmdir "<Link>"`
+      (entfernt nur den Link), dann `robocopy "<Ziel>" "<Link>" /E`. Keine Ausgabe
+      heißt: alles in Ordnung.
+
+```powershell
+Get-ChildItem -LiteralPath $alt -Recurse -Force -Attributes ReparsePoint | Select-Object FullName, LinkType, Target
+```
+
 - [ ] **Größe der Vault und der gesamten „Meine Ablage“ prüfen.** Beim Spiegeln
       landet alles aus Drive auf `C:`. Die Belegung steht unter
       drive.google.com/settings/storage. Freier Platz auf `C:`:

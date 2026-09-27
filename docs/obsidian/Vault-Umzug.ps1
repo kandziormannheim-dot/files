@@ -206,6 +206,18 @@ if (-not $vaultDa) {
     $bestandAlt = Get-Bestand $VaultPath
     Ok "Vault gefunden: $VaultPath ($($bestandAlt.Anzahl) Dateien, $(Format-MB $bestandAlt.Bytes))"
 
+    # Verknüpfungen (Junctions, Symlinks): ZipFile und robocopy folgen ihnen,
+    # Get-Bestand nicht — die Vergleiche in Schritt 2 und 4 schlagen dann fehl.
+    # Absolute Ziele zeigen außerdem nach dem Umbenennen ins Leere, und Drive
+    # gleicht Verknüpfungen nicht ab.
+    $links = @(Get-ChildItem -LiteralPath $VaultPath -Recurse -Force -Attributes ReparsePoint -ErrorAction SilentlyContinue)
+    if ($links.Count -gt 0) {
+        Problem "Die Vault enthält $($links.Count) Verknüpfung(en) (Junction/Symlink). Erst durch echte Ordner bzw. Dateien ersetzen."
+        foreach ($l in $links) { Write-Info "$($l.FullName.Substring($VaultPath.Length + 1)) -> $($l.Target -join '; ')" }
+        Write-Info 'Je Ordner-Verknüpfung:  cmd /c rmdir "<Verknüpfung>"   (entfernt nur die Verknüpfung, nicht das Ziel)'
+        Write-Info '                        robocopy "<Ziel>" "<Verknüpfung>" /E /COPY:DAT /DCOPY:DAT'
+    } else { Ok 'Keine Verknüpfungen (Junctions/Symlinks) in der Vault.' }
+
     $gitEintrag = Get-Item -LiteralPath (Join-Path $VaultPath '.git') -Force -ErrorAction SilentlyContinue
     if (-not $gitEintrag) {
         Problem 'Die Vault ist kein Git-Repository. Dieses Skript ist für den Weg mit Git gebaut.'
