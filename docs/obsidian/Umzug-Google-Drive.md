@@ -25,6 +25,20 @@ und der Git-Abgleich laufen dort weiter wie bisher. Die alte Vault unter
    `MartinKandzior_ALT` liegen. Ohne Verweis auf Git kann sie nichts mehr
    anrichten, und sie ist der schnellste Weg zurück.
 
+> **In einem Rutsch:** [`Vault-Umzug.ps1`](Vault-Umzug.ps1) erledigt die Phasen 0
+> bis 5 in einem Durchgang. Nach jedem Schritt prüft es das Ergebnis und hält
+> bei einem Fehler an. Von Hand bleiben nur Phase 3 (Drive auf „Spiegeln“
+> stellen, **vorher**) und das Öffnen in Obsidian samt Phase 6 (**nachher**).
+>
+> ```powershell
+> cd "$env:USERPROFILE\Downloads\Obsidian-Skripte"
+> powershell -ExecutionPolicy Bypass -File .\Vault-Umzug.ps1 -Backupziel 'E:\Backups\Obsidian' -NurPruefen
+> powershell -ExecutionPolicy Bypass -File .\Vault-Umzug.ps1 -Backupziel 'E:\Backups\Obsidian'
+> ```
+>
+> Der erste Aufruf prüft nur und ändert nichts. Der Rest dieses Dokuments
+> beschreibt dieselben Schritte von Hand.
+
 Alle Befehle sind für **Windows PowerShell** gedacht. Die Variablen aus Phase 0
 werden in den späteren Phasen weiterverwendet. Wer das Fenster zwischendurch
 schließt, führt den Block aus Phase 0 einfach noch einmal aus.

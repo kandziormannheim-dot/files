@@ -11,6 +11,7 @@ lokal auf dem Windows-Rechner laufen:
 | [`Vault-Sicherung.ps1`](Vault-Sicherung.ps1) | Die Alternative ohne Git: Spiegel und datierte Schnappschüsse. |
 | [`Obsidian-Einrichten.cmd`](Obsidian-Einrichten.cmd) | Zum Doppelklicken: lädt die Skripte und führt Einrichtung und Prüflauf aus. |
 | [`Umzug-Google-Drive.md`](Umzug-Google-Drive.md) | Runbook: Vault in den gespiegelten Google-Drive-Ordner umziehen, Git behalten. |
+| [`Vault-Umzug.ps1`](Vault-Umzug.ps1) | Derselbe Umzug in einem Rutsch, mit Prüfung nach jedem Schritt. |
 
 ## Zuerst: wie Obsidian speichert
 
