@@ -65,8 +65,13 @@ if (-not (Test-Path -LiteralPath (Join-Path $VaultPath '.git'))) {
 
 # Ein hängengebliebener Rebase oder Merge aus einem früheren Lauf: nicht
 # blind daraufsetzen, sondern melden und aussteigen.
-foreach ($marker in @('.git\rebase-merge', '.git\rebase-apply', '.git\MERGE_HEAD')) {
-    if (Test-Path -LiteralPath (Join-Path $VaultPath $marker)) {
+# Das Repository-Verzeichnis wird bei Git erfragt, nicht als "<Vault>\.git"
+# angenommen: nach dem Umzug in einen Cloud-Ordner ist ".git" nur noch eine
+# Verweisdatei, und das eigentliche Repository liegt woanders.
+$gitDir = (Git-Auf @('rev-parse','--absolute-git-dir')).Ausgabe.Trim()
+if (-not $gitDir) { Schreibe 'Git findet das Repository der Vault nicht.' 'FEHLER'; exit 2 }
+foreach ($marker in @('rebase-merge', 'rebase-apply', 'MERGE_HEAD')) {
+    if (Test-Path -LiteralPath (Join-Path $gitDir $marker)) {
         Schreibe "Unaufgelöster Zustand im Repository ($marker). Bitte von Hand klären." 'FEHLER'
         exit 3
     }
