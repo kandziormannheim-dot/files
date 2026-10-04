@@ -1,5 +1,6 @@
 import path from "node:path";
 import { db } from "./db";
+import { seedDefaultLinks } from "./default-links";
 import { seedTemplates } from "./templates/seed-core";
 
 /**
@@ -10,6 +11,8 @@ export async function bootstrap() {
   try {
     const created = await seedTemplates(db, path.join(/*turbopackIgnore: true*/ process.cwd(), "templates"));
     if (created.length) console.info(`[start] Vorlagen angelegt: ${created.join(", ")}`);
+    const links = await seedDefaultLinks(db);
+    if (links) console.info(`[start] Standard-Links ergänzt: ${links}`);
     const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
     if (email && (await db.user.count({ where: { role: "ADMIN" } })) === 0) {
       await db.user.upsert({
