@@ -57,6 +57,7 @@ model User {
   accounts  Account[]
   sessions  Session[]
   auditLogs AuditLog[]
+  links     Link[]     @relation("LinkCreatedBy")
 
   @@index([active, sortOrder])
 }
@@ -111,4 +112,36 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Link-Hub (Paket 1.3) – keine Zugangsdaten speichern (CLAUDE.md Regel 5)
+// ---------------------------------------------------------------------------
+
+enum LinkCategory {
+  PARTEI
+  OV_WEBSEITE
+  SOCIAL_MEDIA
+  VERWALTUNG
+  PRESSE
+  SONSTIGES
+}
+
+model Link {
+  id            String       @id @default(cuid())
+  title         String
+  url           String
+  category      LinkCategory @default(SONSTIGES)
+  description   String       @default("")
+  /// „Zugang über …“ – Hinweis, wer Zugang hat, nie das Passwort selbst
+  accessNote    String       @default("")
+  /// Redaktionsnotiz für Social-Media-Kanäle (wer betreut, Posting-Rhythmus)
+  editorialNote String       @default("")
+  position      Int          @default(0)
+  createdById   String?
+  createdBy     User?        @relation("LinkCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([category, position])
 }

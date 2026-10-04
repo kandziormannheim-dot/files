@@ -8,6 +8,7 @@ Web-App für die Vorstandsarbeit des Ortsverbands. Spezifikation: [`SPEC.md`](SP
 |---|---|---|
 | 1.1 | Projekt-Setup: Next.js, Prisma, Docker Compose (app, db), Lint/Tests, Grundlayout mit Navigation | erledigt |
 | 1.2 | Auth und Rollen: Magic-Link-Login, Rollen, Nutzerverwaltung, Rechteprüfung, Audit-Log | erledigt |
+| 1.3 | Link-Hub: Kategorien, Suche, Sortierung per Drag & Drop, Schutz gegen gespeicherte Passwörter | erledigt |
 
 ## Lokal starten
 
