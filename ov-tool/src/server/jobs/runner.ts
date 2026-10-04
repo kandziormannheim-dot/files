@@ -1,6 +1,8 @@
 import "server-only";
 import { PgBoss } from "pg-boss";
 import { registerMailQueue } from "@/server/mail/outbox";
+import "./definitions";
+import { jobHandlers, setJobSender } from "./queue";
 import { sendMail, type OutgoingMail } from "@/server/mail/transport";
 import {
   enforceRetention,
@@ -18,15 +20,7 @@ type MailJob = Omit<OutgoingMail, "attachments"> & {
   attachments?: { filename: string; contentBase64: string; contentType?: string }[];
 };
 
-type Worker = { queue: string; handler: (data: Record<string, unknown>) => Promise<unknown>; options?: object };
-
 let boss: PgBoss | null = null;
-const extraWorkers: Worker[] = [];
-
-/** Weitere Queues (z. B. Transkription) vor dem Start anmelden. */
-export function registerWorker(w: Worker) {
-  extraWorkers.push(w);
-}
 
 export function getBoss(): PgBoss | null {
   return boss;
@@ -74,22 +68,13 @@ export async function startJobs() {
       console.info(`[jobs] ${s.queue}:`, JSON.stringify(result));
     });
   }
-  for (const w of extraWorkers) {
-    await instance.createQueue(w.queue, w.options);
-    await instance.work<Record<string, unknown>>(w.queue, async ([job]) => {
-      if (job) await w.handler(job.data);
+  // Transkription und KI-Entwurf: lange Laufzeit, eine Wiederholung
+  for (const [queue, handler] of jobHandlers()) {
+    await instance.createQueue(queue, { retryLimit: 1, retryDelay: 120, expireInSeconds: 6 * 3600 });
+    await instance.work<Record<string, unknown>>(queue, async ([job]) => {
+      if (job) await handler(job.data);
     });
   }
-  console.info(`[jobs] gestartet: mail, ${[...SCHEDULES.map((s) => s.queue), ...extraWorkers.map((w) => w.queue)].join(", ")}`);
-}
-
-/** Einen Job in eine Queue stellen (oder ohne Queue direkt ausführen, z. B. in Tests/Entwicklung ohne Jobs). */
-export async function enqueue(queue: string, data: Record<string, unknown>, options?: object) {
-  if (boss) return boss.send(queue, data, options);
-  const w = extraWorkers.find((x) => x.queue === queue);
-  if (w) {
-    void w.handler(data).catch((err) => console.error(`[jobs] ${queue}:`, err));
-    return null;
-  }
-  throw new Error(`Unbekannte Queue: ${queue}`);
+  setJobSender((queue, data) => instance.send(queue, data));
+  console.info(`[jobs] gestartet: mail, ${[...SCHEDULES.map((s) => s.queue), ...jobHandlers().keys()].join(", ")}`);
 }

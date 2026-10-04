@@ -15,6 +15,7 @@ Web-App für die Vorstandsarbeit des Ortsverbands. Spezifikation: [`SPEC.md`](SP
 | 1.7 | Protokolle: Live-/nachträglicher Editor mit Autosave, Anwesenheit und Beschlussfähigkeit, Aufhebung/Wiedereröffnung, Beschlüsse mit Mehrheitsberechnung, Aufgaben, Prüfliste, Versand, Versionen, Genehmigung (Sitzung/Umlauf), Übersendung an die Geschäftsstelle, PDF/DOCX; Umlaufverfahren | erledigt |
 | 1.8 | Deployment: Dockerfile mit Chromium, Compose (app, db, whisper, caddy), Caddy mit HTTPS, Start-Initialisierung, Backup/Restore, Deploy-Workflow, Betriebsanleitung (`docs/betrieb.md`) | erledigt (Image-Build auf dem Server zu prüfen) |
 | 2.1 | Job-Queue (pg-boss): Mails mit Wiederholung, Aufgaben- und Zusage-Erinnerungen, Ladungsfrist-Hinweis, Fristablauf Umlauf, Löschfristen, Übersendung an die Geschäftsstelle | erledigt |
+| 2.2 | Transkript-Pipeline: Upload mit Zustimmungsbestätigung (Audio/VTT/DOCX/TXT), faster-whisper, Claude-Entwurf als strukturierte Daten, Vorschläge prüfen und übernehmen, Löschfristen | erledigt (Claude-Aufruf ohne API-Schlüssel nicht live getestet) |
 
 ## Lokal starten
 

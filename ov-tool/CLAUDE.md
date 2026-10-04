@@ -111,7 +111,8 @@ SMTP_USER=
 SMTP_PASSWORD=
 MAIL_FROM=
 ANTHROPIC_API_KEY=
-ANTHROPIC_MODEL=
+ANTHROPIC_MODEL=         # leer = claude-opus-5-5
+ANTHROPIC_FALLBACKS=     # "off" = kein serverseitiger Rückfall bei Ablehnungen
 WHISPER_URL=http://whisper:9000
 WHISPER_MODEL=
 FILE_STORAGE_PATH=/data/files

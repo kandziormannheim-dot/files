@@ -108,6 +108,7 @@ aktion.*, schichten[] (Helferaufruf)
 | `antrag-einberufung.mail.hbs` | `antrag.einberufung` | an Admins, sobald fünf Mitglieder einen Antrag auf Einberufung tragen (LV § 31 Abs. 3) |
 | `ladungsfrist-hinweis.mail.hbs` | `ladungsfrist.hinweis` | an Admins, wenn die Ladungsfrist naht und die Einladung fehlt |
 | `umlauf-frist.mail.hbs` | `umlauf.frist` | an Admins nach Fristablauf eines Umlaufverfahrens |
+| `transkript-fertig.mail.hbs` | `transkript.fertig` | Protokollentwurf aus Transkript bereit (an die hochladende Person) |
 | `anmeldung.mail.hbs` | `anmeldung.mail` | Anmeldelink (Magic Link) |
 | `zugang-einladung.mail.hbs` | `zugang.einladung` | Hinweis an neue Nutzer, dass ein Zugang besteht |
 | `briefbogen.css` | – | Layout für alle Dokument-Vorlagen |

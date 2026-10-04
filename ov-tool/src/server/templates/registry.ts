@@ -22,6 +22,7 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { key: "antrag.einberufung", file: "antrag-einberufung.mail.hbs", kind: "mail", name: "Antrag auf Einberufung", usage: "an Admins, sobald fünf Mitglieder einen Antrag tragen" },
   { key: "ladungsfrist.hinweis", file: "ladungsfrist-hinweis.mail.hbs", kind: "mail", name: "Hinweis Ladungsfrist", usage: "an Admins, wenn die Einladung bald raus muss" },
   { key: "umlauf.frist", file: "umlauf-frist.mail.hbs", kind: "mail", name: "Umlaufverfahren: Frist abgelaufen", usage: "an Admins nach Fristablauf" },
+  { key: "transkript.fertig", file: "transkript-fertig.mail.hbs", kind: "mail", name: "Protokollentwurf bereit", usage: "an die Person, die das Transkript hochgeladen hat" },
   { key: "anmeldung.mail", file: "anmeldung.mail.hbs", kind: "mail", name: "Anmeldelink", usage: "Login per Magic Link" },
   { key: "zugang.einladung", file: "zugang-einladung.mail.hbs", kind: "mail", name: "Zugang eingerichtet", usage: "Nutzer angelegt" },
 ];
