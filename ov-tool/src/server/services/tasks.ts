@@ -93,7 +93,7 @@ function parseTaskForm(formData: FormData): TaskInput {
     title: raw.title,
     description: raw.description ?? "",
     assigneeGroup: raw.assigneeGroup,
-    assigneeIds: [...new Set(raw["assigneeIds[]"])],
+    assigneeIds: [...new Set(raw["assigneeIds[]"].filter(Boolean))],
     dueDate,
     // Datum oder Freitext – ein Datum hat Vorrang (nur dann gibt es Erinnerungen)
     dueText: dueDate ? "" : (raw.dueText ?? ""),

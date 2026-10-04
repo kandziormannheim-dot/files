@@ -94,6 +94,7 @@ aktion.*, schichten[] (Helferaufruf)
 | `standard-tagesordnung.json` | `tagesordnung.standard` | Vorbelegung neuer Sitzungen |
 | `protokoll.dokument.hbs` | `protokoll.dokument` | Protokoll als PDF (und Struktur für DOCX) |
 | `protokoll-versand.mail.hbs` | `protokoll.versand` | Versand zur Kenntnis, Genehmigung in Folgesitzung |
+| `protokoll-geschaeftsstelle.mail.hbs` | `protokoll.geschaeftsstelle` | Übersendung der genehmigten Niederschrift an die Kreisgeschäftsstelle (LV § 51 Abs. 3) |
 | `umlauf-einleitung.mail.hbs` | `umlauf.einleitung` | Start eines Umlaufbeschlusses (auch Protokollgenehmigung), Statut § 42 Abs. 3 |
 | `umlauf-ergebnis.mail.hbs` | `umlauf.ergebnis` | Feststellung und Bekanntgabe des Ergebnisses |
 | `einladung-wiederholung.mail.hbs` | `einladung.wiederholung` | Neue Einladung nach Aufhebung wegen Beschlussunfähigkeit, LV § 52 Abs. 3 |

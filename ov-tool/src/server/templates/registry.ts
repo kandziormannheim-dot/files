@@ -10,6 +10,7 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { key: "tagesordnung.standard", file: "standard-tagesordnung.json", kind: "json", name: "Standard-Tagesordnung", usage: "Vorbelegung neuer Sitzungen" },
   { key: "protokoll.dokument", file: "protokoll.dokument.hbs", kind: "dokument", name: "Protokoll (PDF)", usage: "Protokoll als PDF und DOCX" },
   { key: "protokoll.versand", file: "protokoll-versand.mail.hbs", kind: "mail", name: "Protokollversand", usage: "Protokoll versendet" },
+  { key: "protokoll.geschaeftsstelle", file: "protokoll-geschaeftsstelle.mail.hbs", kind: "mail", name: "Übersendung an die Kreisgeschäftsstelle", usage: "nach Genehmigung (LV-Satzung § 51 Abs. 3)" },
   { key: "umlauf.einleitung", file: "umlauf-einleitung.mail.hbs", kind: "mail", name: "Einleitung Umlaufverfahren", usage: "Umlaufbeschluss gestartet" },
   { key: "umlauf.ergebnis", file: "umlauf-ergebnis.mail.hbs", kind: "mail", name: "Ergebnis Umlaufverfahren", usage: "Ergebnis festgestellt" },
   { key: "erinnerung.zusage", file: "erinnerung-zusage.mail.hbs", kind: "mail", name: "Erinnerung Zu-/Absage", usage: "an alle ohne Rückmeldung" },

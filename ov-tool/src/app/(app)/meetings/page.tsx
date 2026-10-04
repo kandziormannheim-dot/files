@@ -23,6 +23,9 @@ export default async function MeetingsPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader title="Sitzungen" />
         <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href="/circulations">Umlaufbeschlüsse</Link>
+          </Button>
           {can(user.role, "agenda.propose") ? (
             <Button asChild variant="outline">
               <Link href="/meetings/proposals">TO-Vorschläge</Link>

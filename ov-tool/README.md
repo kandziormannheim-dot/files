@@ -12,6 +12,7 @@ Web-App für die Vorstandsarbeit des Ortsverbands. Spezifikation: [`SPEC.md`](SP
 | 1.4 | Aufgaben: Ansichten Meine/Alle/Überfällig, Filter, Kommentare, Herkunft, Mail bei Zuweisung | erledigt |
 | 1.5 | Sitzungen und Tagesordnung: automatische Vorbelegung, TOP-Editor mit Drag & Drop, TO-Vorschläge/Antrag auf Einberufung, Zu-/Absagen (auch per Link), Satzungslogik | erledigt |
 | 1.6 | Vorlagen-Engine und Einladungsversand: versionierte Vorlagen mit Prüfung und Vorschau, PDF auf Briefbogen, Versand mit persönlichem Zusage-Link, Ladungsfrist-Prüfung, Unterschriftsbild, Einstellungen | erledigt (Ladungsfrist-Erinnerung per Job: 2.1) |
+| 1.7 | Protokolle: Live-/nachträglicher Editor mit Autosave, Anwesenheit und Beschlussfähigkeit, Aufhebung/Wiedereröffnung, Beschlüsse mit Mehrheitsberechnung, Aufgaben, Prüfliste, Versand, Versionen, Genehmigung (Sitzung/Umlauf), Übersendung an die Geschäftsstelle, PDF/DOCX; Umlaufverfahren | erledigt |
 
 ## Lokal starten
 

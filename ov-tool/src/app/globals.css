@@ -9,6 +9,15 @@
   --font-sans: "Inter Variable", Arial, sans-serif;
 }
 
+@layer base {
+  /* Tailwind 4 nutzt currentColor als Standard-Rahmenfarbe – hier dezent grau wie bei shadcn/ui */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-neutral-200);
+  }
+}
+
 body {
   @apply bg-white text-text antialiased;
 }
