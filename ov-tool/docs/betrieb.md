@@ -35,7 +35,7 @@ In `.env` mindestens setzen:
 
 | Variable | Wert |
 |---|---|
-| `POSTGRES_PASSWORD` | langes Zufallspasswort (`openssl rand -base64 32`) |
+| `POSTGRES_PASSWORD` | langes Zufallspasswort (`openssl rand -hex 32` – nur Hex, da es in `DATABASE_URL` landet) |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
 | `APP_URL` | `https://management.cdu-sf.de` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | Postfach des OV bei manitu, z. B. `MAIL_FROM="CDU Seckenheim-Friedrichsfeld <vorstand@cdu-sf.de>"` |
@@ -99,6 +99,18 @@ dann anmelden, eine Sitzung öffnen und ein Protokoll-PDF erzeugen.
 Auf einem Plesk-Server gehören Ports 80/443 und die Zertifikate Plesk. Die App läuft trotzdem in Docker (app, db,
 optional whisper), aber **ohne Caddy**; Plesks nginx leitet an `127.0.0.1:3000` weiter. Beispiel-Adresse:
 `https://cduverwaltung.kandzior.cc`.
+
+**Kurzweg:** [`scripts/plesk-setup.sh`](../scripts/plesk-setup.sh) erledigt 7.1–7.3 automatisch (Subdomain, Postfach,
+Zertifikat, nginx, Docker, `.env` mit erzeugten Schlüsseln, Start mit Funktionsprüfung). Per SSH als root:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kandziormannheim-dot/files/main/ov-tool/scripts/plesk-setup.sh | bash
+```
+
+Es fragt nur Admin-Adresse, Absender-Postfach, SMTP-Server und optional den Claude-API-Schlüssel ab. Erneut
+ausgeführt aktualisiert es den Code und startet neu (vorhandene `.env` bleibt). Andere Adresse:
+`OVTOOL_DOMAIN=… OVTOOL_SUB=…` voranstellen (bei `curl … | bash` vor `bash`). Was nicht automatisch klappt, meldet
+es mit dem passenden Handgriff aus den folgenden Abschnitten.
 
 ### 7.1 Domain und Zertifikat (Plesk-Oberfläche)
 
