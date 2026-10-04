@@ -33,10 +33,13 @@ export function SideNav({ isAdmin }: Props) {
   );
 }
 
-/** Leiste am unteren Rand auf dem Handy (mobile-first, 375 px ohne Querscrollen). */
-export function BottomNav({ isAdmin }: Props) {
+/**
+ * Leiste am unteren Rand auf dem Handy (mobile-first, 375 px ohne Querscrollen).
+ * Einstellungen stehen dort im Nutzermenü, damit die Beschriftungen nicht abgeschnitten werden.
+ */
+export function BottomNav() {
   const pathname = usePathname();
-  const items = visibleNavItems(isAdmin);
+  const items = visibleNavItems(false);
   return (
     <nav
       aria-label="Hauptnavigation"

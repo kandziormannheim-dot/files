@@ -73,6 +73,8 @@ beschluesse[]         top, gegenstand, ergebnisText
 aufgaben[]            nr, titel, verantwortlich, frist
 
 empfaenger.name, empfaenger.anrede (nur Mails an Einzelpersonen)
+anmeldung.link, anmeldung.gueltigMinuten   (Anmeldelink)
+zugang.link           (Zugang eingerichtet → Login-Seite)
 aufgabe.*             (Aufgaben-Erinnerung)
 aktion.*, schichten[] (Helferaufruf)
 ```
@@ -94,6 +96,8 @@ aktion.*, schichten[] (Helferaufruf)
 | `aufgaben-erinnerung.mail.hbs` | `aufgabe.erinnerung` | Frist naht / überschritten |
 | `helferaufruf.mail.hbs` | `aktion.helferaufruf` | Aktion veröffentlicht |
 | `prompt-protokollentwurf.md` | `prompt.protokoll` | Systemprompt für den Claude-Entwurf aus Transkripten |
+| `anmeldung.mail.hbs` | `anmeldung.mail` | Anmeldelink (Magic Link) |
+| `zugang-einladung.mail.hbs` | `zugang.einladung` | Hinweis an neue Nutzer, dass ein Zugang besteht |
 | `briefbogen.css` | – | Layout für alle Dokument-Vorlagen |
 | `assets/briefbogen.png` | – | Briefbogen als Seitenhintergrund (A4, 1414×2000 px) – in den Einstellungen austauschbar |
 | (Unterschrift) | – | nicht im Repo; jeder Unterzeichner lädt sein Unterschriftsbild in der App selbst hoch |

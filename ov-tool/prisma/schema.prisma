@@ -14,3 +14,101 @@ model Setting {
   key   String @id
   value String
 }
+
+// ---------------------------------------------------------------------------
+// Nutzer, Anmeldung, Audit (Paket 1.2)
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  SCHRIFTFUEHRER
+  VORSTAND
+  LESEZUGRIFF
+  GAST
+}
+
+/// Stimmrecht im Vorstand, unabhängig von der App-Rolle (SPEC.md Abschnitt 2, LV-Satzung § 37)
+enum VotingRight {
+  STIMMBERECHTIGT
+  BERATEND
+  OHNE
+}
+
+model User {
+  id                 String      @id @default(cuid())
+  name               String
+  /// immer kleingeschrieben gespeichert
+  email              String      @unique
+  emailVerified      DateTime?
+  image              String?
+  role               Role        @default(VORSTAND)
+  /// z. B. „Ortsvorsitzender“, „Beisitzerin“ – steuert die Beschriftung in Anwesenheitslisten
+  functionTitle      String      @default("")
+  votingRight        VotingRight @default(STIMMBERECHTIGT)
+  sortOrder          Int         @default(100)
+  active             Boolean     @default(true)
+  /// Gäste können ohne Login geführt werden (erhalten nur Mails)
+  loginEnabled       Boolean     @default(true)
+  signatureImagePath String?
+  icsToken           String      @unique @default(cuid())
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+  auditLogs AuditLog[]
+
+  @@index([active, sortOrder])
+}
+
+// Tabellen für Auth.js (@auth/prisma-adapter)
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  /// null bei Systemaktionen (Jobs) oder Aktionen ohne Login (Zusage-Link)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String?
+  diff       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

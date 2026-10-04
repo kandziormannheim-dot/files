@@ -34,9 +34,10 @@ docker compose up -d db
 npm run dev            # Entwicklungsserver auf http://localhost:3000
 npm run lint           # ESLint (eslint-config-next)
 npm run typecheck      # tsc --noEmit
-npm test               # Vitest (jsdom)
+npm test               # Vitest; DB-Tests (*.int.test.ts) nur mit TEST_DATABASE_URL (eigene DB, wird geleert)
 npm run build          # Produktions-Build (output: standalone)
 npm run db:migrate     # = npx prisma migrate dev (Migration lokal anlegen/anwenden)
+npm run db:seed        # erster Admin aus SEED_ADMIN_* (Paket 1.6: Vorlagen, Standard-TOPs)
 npx prisma studio
 docker compose up -d --build   # app + db; das app-Image wendet Migrationen beim Start an
 ```
@@ -61,6 +62,14 @@ prisma/
 templates/             # Standardvorlagen (werden per Seed in die DB übernommen)
 docker/                # Dockerfiles, Caddyfile, whisper-Konfiguration
 ```
+
+## Muster im Code
+
+- **Rechte:** `src/server/auth/permissions.ts` (Fähigkeiten je Rolle, `assertCan`). Jeder Service ruft `assertCan(actor, …)` auf; Seiten nutzen `requirePageCapability`, Server Actions `requireUser()` und übergeben den Nutzer an den Service.
+- **Server Actions** liegen als `actions.ts` neben der Seite, rufen nur Services auf und laufen über `runAction` (`src/server/action.ts`) → einheitliche Feld- und Fehlermeldungen für `ActionForm` (`src/components/form.tsx`).
+- **Audit:** `audit(tx, actor, "objekt.aktion", "Typ", id, diff)` aus `src/server/audit.ts`, in derselben Transaktion.
+- **Mails:** nur über Vorlagen (`src/server/templates/engine.ts`, `renderMailTemplate`) und `sendMail`. Ohne `SMTP_HOST` landen Mails im Server-Log.
+- **Datum/Zeit:** ausschließlich über `src/lib/dates.ts` (Europe/Berlin).
 
 ## Verbindliche Regeln
 
@@ -102,6 +111,10 @@ WHISPER_URL=http://whisper:9000
 WHISPER_MODEL=
 FILE_STORAGE_PATH=/data/files
 ENCRYPTION_KEY=          # für Bürgerkontaktdaten
+SEED_ADMIN_EMAIL=        # Seed: erster Admin
+SEED_ADMIN_NAME=
+SEED_ADMIN_FUNCTION=
+TEST_DATABASE_URL=       # nur Tests: separate Datenbank, wird vor jedem DB-Test geleert
 ```
 
 `.env.example` immer aktuell halten.

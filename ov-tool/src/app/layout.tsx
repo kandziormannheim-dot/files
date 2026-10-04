@@ -1,27 +1,24 @@
+import "@fontsource-variable/inter";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
-import { AppShell } from "@/components/layout/app-shell";
+import { Toaster } from "sonner";
 import "./globals.css";
-
-// next/font lädt Inter beim Build und liefert sie selbst aus (keine Anfragen an Google zur Laufzeit).
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: { default: "OV-Management", template: "%s · OV-Management" },
   description: "Vorstandsarbeit der CDU Seckenheim-Friedrichsfeld",
   robots: { index: false, follow: false },
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = { themeColor: "#52b7c1" };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  // Rollen kommen mit Paket 1.2 (Auth); bis dahin ist der Admin-Bereich ausgeblendet.
-  const isAdmin = false;
   return (
-    <html lang="de" className={inter.variable}>
+    <html lang="de">
       <body>
-        <AppShell isAdmin={isAdmin}>{children}</AppShell>
+        {children}
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

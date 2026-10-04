@@ -6,7 +6,7 @@
   --color-akzent-dunkel: #2f8a93;
   --color-akzent-hell: #e6f4f5;
   --color-text: #1a1a1a;
-  --font-sans: var(--font-inter), Arial, sans-serif;
+  --font-sans: "Inter Variable", Arial, sans-serif;
 }
 
 body {

@@ -1,0 +1,10 @@
+{
+  "name": "OV-Management CDU Seckenheim-Friedrichsfeld",
+  "short_name": "OV-Management",
+  "lang": "de",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#52b7c1",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
