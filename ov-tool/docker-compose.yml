@@ -1,0 +1,86 @@
+# Dienste laut SPEC.md 5: app, db, whisper, caddy.
+# Entwicklung: nur die Datenbank starten → docker compose up -d db
+# Produktion:  docker compose up -d --build
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://ovtool:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}@db:5432/ovtool
+      AUTH_URL: ${APP_URL:-https://management.cdu-sf.de}
+      FILE_STORAGE_PATH: /data/files
+      WHISPER_URL: http://whisper:9000
+    expose:
+      - "3000"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - files:/data/files
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ovtool
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}
+      POSTGRES_DB: ovtool
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ovtool -d ovtool"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Transkription auf dem eigenen Server (faster-whisper, Deutsch). Audio verlässt den Server nicht.
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    restart: unless-stopped
+    profiles: ["prod", "whisper"]
+    environment:
+      ASR_ENGINE: faster_whisper
+      ASR_MODEL: ${WHISPER_MODEL:-small}
+      ASR_MODEL_PATH: /models
+    volumes:
+      - whisper-models:/models
+    expose:
+      - "9000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    profiles: ["prod"]
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-management.cdu-sf.de}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+volumes:
+  db:
+  files:
+  whisper-models:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,26 @@
+---
+betreff: Erneute Einladung {{sitzung.art}} am {{datum sitzung.beginn}} um {{uhrzeitKurz sitzung.beginn}} Uhr
+---
+Sehr geehrte Damen und Herren,
+
+die {{sitzung.art}} am {{datum vorherigeSitzung.beginn}} musste wegen fehlender Beschlussfähigkeit aufgehoben werden. Hiermit lade ich Sie erneut ein:
+
+{{datumLang sitzung.beginn}}, {{uhrzeitKurz sitzung.beginn}} Uhr
+{{#if sitzung.ort}}{{sitzung.ort}}
+{{/if}}{{#if sitzung.onlineLink}}Online: {{sitzung.onlineLink}}
+{{/if}}
+
+Tagesordnung:
+
+{{#each tagesordnung}}{{#if ebene}}    {{/if}}TOP {{nummer}}  {{titel}}
+{{/each}}
+
+Hinweis gemäß § 52 Abs. 3 der Satzung der CDU Baden-Württemberg: Diese Sitzung ist ohne Rücksicht auf die Zahl der anwesenden Mitglieder beschlussfähig.
+
+Bitte sagen Sie Ihre Teilnahme zu oder ab:
+{{sitzung.zusageLink}}
+
+Mit freundlichen Grüßen
+
+{{absender.name}}
+{{absender.funktion}}

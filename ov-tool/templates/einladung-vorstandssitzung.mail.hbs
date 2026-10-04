@@ -1,0 +1,27 @@
+---
+betreff: Einladung {{sitzung.art}} am {{datum sitzung.beginn}} um {{uhrzeitKurz sitzung.beginn}} Uhr
+---
+Sehr geehrte Damen und Herren,
+
+hiermit lade ich Sie herzlich zur {{sitzung.art}} der {{ov.nameLang}} ein:
+
+{{datumLang sitzung.beginn}}, {{uhrzeitKurz sitzung.beginn}} Uhr
+{{#if sitzung.ort}}{{sitzung.ort}}
+{{/if}}{{#if sitzung.onlineLink}}Online: {{sitzung.onlineLink}}
+{{/if}}
+
+Folgende Tagesordnung schlage ich vor:
+
+{{#each tagesordnung}}{{#if ebene}}    {{/if}}TOP {{nummer}}  {{titel}}
+{{/each}}
+
+Bitte sagen Sie Ihre Teilnahme bis {{datum sitzung.rueckmeldungBis}} zu oder ab:
+{{sitzung.zusageLink}}
+
+Die Einladung mit Tagesordnung finden Sie auch als PDF im Anhang.
+
+Mit freundlichen Grüßen
+
+{{absender.name}}
+{{absender.funktion}}
+{{ov.nameLang}}

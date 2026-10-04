@@ -1,0 +1,15 @@
+---
+betreff: Neue Aufgabe: {{aufgabe.titel}}
+---
+Hallo {{empfaenger.name}},
+
+{{aufgabe.von}} hat Ihnen eine Aufgabe zugewiesen:
+
+{{aufgabe.titel}}
+{{#if aufgabe.frist}}Frist: {{aufgabe.frist}}
+{{/if}}{{#if aufgabe.herkunft}}Aus: {{aufgabe.herkunft}}
+{{/if}}
+Details und Status:
+{{aufgabe.link}}
+
+Diese Nachricht wurde automatisch vom OV-Management-Tool versendet.

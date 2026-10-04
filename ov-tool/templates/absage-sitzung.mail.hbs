@@ -1,0 +1,17 @@
+---
+betreff: Absage: {{sitzung.art}} am {{datum sitzung.beginn}}
+---
+Sehr geehrte Damen und Herren,
+
+die für {{datumLang sitzung.beginn}}, {{uhrzeitKurz sitzung.beginn}} Uhr geplante {{sitzung.art}} muss leider entfallen.
+{{#if sitzung.absagegrund}}
+Grund: {{sitzung.absagegrund}}
+{{/if}}{{#if ersatztermin}}
+Ein neuer Termin ist für {{datumLang ersatztermin.beginn}}, {{uhrzeitKurz ersatztermin.beginn}} Uhr vorgesehen. Die Einladung folgt gesondert.
+{{else}}
+Über einen neuen Termin informiere ich Sie rechtzeitig.
+{{/if}}
+Mit freundlichen Grüßen
+
+{{absender.name}}
+{{absender.funktion}}

@@ -1,0 +1,27 @@
+---
+betreff: Beschluss im Umlaufverfahren: {{umlauf.betreff}} – Rückmeldung bis {{datum umlauf.frist}}
+---
+Sehr geehrte Damen und Herren,
+
+gemäß § 42 Abs. 3 des Statuts der CDU Deutschlands leite ich folgendes Umlaufverfahren ein:
+
+{{umlauf.text}}
+{{#if umlauf.begruendung}}
+Begründung: {{umlauf.begruendung}}
+{{/if}}{{#if umlauf.protokoll}}
+Gegenstand ist die Genehmigung des Protokolls der {{sitzung.artGenitiv}} vom {{datum sitzung.beginn}}; das Protokoll finden Sie im Anhang.
+{{/if}}
+Bitte stimmen Sie bis {{datum umlauf.frist}} über Ihren persönlichen Link ab:
+{{umlauf.link}}
+
+Sie können zustimmen, ablehnen, sich enthalten oder dem Umlaufverfahren widersprechen.
+
+Hinweise:
+– Widerspricht mehr als ein Viertel der Vorstandsmitglieder, ist das Umlaufverfahren unzulässig; der Gegenstand wird dann in der nächsten Sitzung behandelt.
+– Der Beschluss erfordert die Zustimmung der Mehrheit aller stimmberechtigten Vorstandsmitglieder ({{umlauf.erforderlich}} von {{umlauf.stimmberechtigt}}).
+– Keine Rückmeldung gilt nicht als Zustimmung.
+
+Mit freundlichen Grüßen
+
+{{absender.name}}
+{{absender.funktion}}

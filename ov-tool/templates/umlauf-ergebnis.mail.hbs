@@ -1,0 +1,21 @@
+---
+betreff: Ergebnis des Umlaufverfahrens: {{umlauf.betreff}}
+---
+Sehr geehrte Damen und Herren,
+
+das Umlaufverfahren „{{umlauf.betreff}}“ (Frist: {{datum umlauf.frist}}) ist abgeschlossen. Ich stelle folgendes Ergebnis fest:
+
+Stimmberechtigt: {{umlauf.stimmberechtigt}}
+Zustimmung: {{umlauf.ja}} · Ablehnung: {{umlauf.nein}} · Enthaltung: {{umlauf.enthaltung}} · Widerspruch: {{umlauf.widerspruch}} · keine Rückmeldung: {{umlauf.ohneRueckmeldung}}
+
+{{umlauf.ergebnisText}}
+{{#if umlauf.angenommen}}
+Beschluss Nr. {{umlauf.nummer}}:
+{{umlauf.text}}
+{{/if}}
+Das Ergebnis wird in der nächsten Vorstandssitzung bekanntgegeben und im Protokoll vermerkt.
+
+Mit freundlichen Grüßen
+
+{{absender.name}}
+{{absender.funktion}}

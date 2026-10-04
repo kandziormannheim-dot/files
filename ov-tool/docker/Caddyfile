@@ -1,0 +1,25 @@
+# Reverse Proxy mit automatischem HTTPS (Let's Encrypt), ohne Cloudflare (SPEC.md 5).
+{
+	email {$ACME_EMAIL}
+}
+
+{$APP_DOMAIN:management.cdu-sf.de} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+
+	# Uploads (Audio-Transkripte) dürfen groß sein
+	request_body {
+		max_size 300MB
+	}
+
+	reverse_proxy app:3000
+}

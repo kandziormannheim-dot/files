@@ -1,0 +1,19 @@
+---
+betreff: Protokoll der {{sitzung.artGenitiv}} vom {{datum sitzung.beginn}}
+---
+Sehr geehrte Damen und Herren,
+
+anbei erhalten Sie das Protokoll der {{sitzung.artGenitiv}} vom {{datum sitzung.beginn}}.
+
+Das Protokoll wird in der nächsten Vorstandssitzung zur Genehmigung vorgelegt. Änderungswünsche können Sie vorab gern direkt im Tool als Kommentar hinterlegen:
+{{protokoll.link}}
+
+{{#if aufgaben.length}}Aus der Sitzung ergeben sich folgende Aufgaben:
+{{#each aufgaben}}
+{{nr}}. {{titel}} – {{verantwortlich}} – {{frist}}
+{{/each}}
+{{/if}}
+Mit freundlichen Grüßen
+
+{{absender.name}}
+{{absender.funktion}}
