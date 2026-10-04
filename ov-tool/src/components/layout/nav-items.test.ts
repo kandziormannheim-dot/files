@@ -9,6 +9,8 @@ describe("Hauptnavigation", () => {
       "Aufgaben",
       "Aktionen",
       "Themen",
+      "Marketing",
+      "Vorstand",
       "Links",
       "Einstellungen",
     ]);

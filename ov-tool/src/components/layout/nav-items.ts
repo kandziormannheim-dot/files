@@ -5,6 +5,8 @@ import {
   ListChecks,
   Megaphone,
   MapPin,
+  Newspaper,
+  Users,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -14,6 +16,8 @@ export type NavItem = {
   label: string;
   icon: LucideIcon;
   adminOnly?: boolean;
+  /** auf dem Handy nicht in der unteren Leiste, sondern unter „Mehr“ */
+  secondary?: boolean;
 };
 
 // Hauptnavigation laut SPEC.md Abschnitt 8. Pfade englisch, Beschriftung deutsch.
@@ -22,8 +26,10 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/meetings", label: "Sitzungen", icon: CalendarDays },
   { href: "/tasks", label: "Aufgaben", icon: ListChecks },
   { href: "/actions", label: "Aktionen", icon: Megaphone },
-  { href: "/topics", label: "Themen", icon: MapPin },
-  { href: "/links", label: "Links", icon: Link2 },
+  { href: "/topics", label: "Themen", icon: MapPin, secondary: true },
+  { href: "/marketing", label: "Marketing", icon: Newspaper },
+  { href: "/board", label: "Vorstand", icon: Users, secondary: true },
+  { href: "/links", label: "Links", icon: Link2, secondary: true },
   { href: "/settings", label: "Einstellungen", icon: Settings, adminOnly: true },
 ];
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Ellipsis } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isActive, visibleNavItems } from "./nav-items";
@@ -39,7 +40,10 @@ export function SideNav({ isAdmin }: Props) {
  */
 export function BottomNav() {
   const pathname = usePathname();
-  const items = visibleNavItems(false);
+  const items = [
+    ...visibleNavItems(false).filter((i) => !i.secondary),
+    { href: "/more", label: "Mehr", icon: Ellipsis },
+  ];
   return (
     <nav
       aria-label="Hauptnavigation"
@@ -47,7 +51,10 @@ export function BottomNav() {
     >
       <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map(({ href, label, icon: Icon }) => {
-          const active = isActive(pathname, href);
+          const active =
+            href === "/more"
+              ? pathname === "/more" || visibleNavItems(true).some((i) => i.secondary && isActive(pathname, i.href))
+              : isActive(pathname, href);
           return (
             <li key={href}>
               <Link
