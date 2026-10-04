@@ -163,10 +163,14 @@ EOF
   # ---------------------------------------------------------------- nginx
   schritt "Weiterleitung nginx → 127.0.0.1:$port"
   sed "s#http://127.0.0.1:3000#http://127.0.0.1:$port#" "$app_dir/docker/plesk-nginx.conf" > "$nginx_file"
-  if plesk bin site --update-web-server-settings "$fqdn" -nginx-proxy-mode false -additional-nginx-settings-file "$nginx_file" >/dev/null 2>&1 \
-    || plesk bin subdomain --update-web-server-settings "$sub" -domain "$domain" -nginx-proxy-mode false -additional-nginx-settings-file "$nginx_file" >/dev/null 2>&1 \
-    || plesk bin domain --update-web-server-settings "$fqdn" -nginx-proxy-mode false -additional-nginx-settings-file "$nginx_file" >/dev/null 2>&1; then
-    ok "Proxy-Modus aus, Anweisungen eingetragen"
+  # Plesk Obsidian kennt keine Option für eine Datei mit nginx-Anweisungen; Plesk bindet aber
+  # /var/www/vhosts/system/<domain>/conf/vhost_nginx.conf automatisch ein.
+  local vhost_conf="/var/www/vhosts/system/$fqdn/conf/vhost_nginx.conf"
+  plesk bin domain --update-web-server-settings "$fqdn" -nginx-proxy-mode false >/dev/null 2>&1 \
+    || plesk bin subdomain --update-web-server-settings "$sub" -domain "$domain" -nginx-proxy-mode false >/dev/null 2>&1 || true
+  if [ -d "$(dirname "$vhost_conf")" ] && cp "$nginx_file" "$vhost_conf" \
+    && plesk sbin httpdmng --reconfigure-domain "$fqdn" >/dev/null 2>&1 && nginx -t >/dev/null 2>&1; then
+    ok "Proxy-Modus aus, Anweisungen in $vhost_conf"
   else
     warnung "Automatisch nicht möglich. In Plesk: $fqdn → Apache & nginx-Einstellungen → „Proxy-Modus“ aus,"
     warnung "Inhalt von $nginx_file in „Zusätzliche nginx-Anweisungen“ einfügen."
