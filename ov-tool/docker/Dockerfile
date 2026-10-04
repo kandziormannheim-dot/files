@@ -30,6 +30,8 @@ COPY --from=build /app/templates ./templates
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /opt/prisma-cli /opt/prisma-cli
+# playwright-core vollständig (der Standalone-Trace erfasst browsers.json nicht)
+COPY --from=build /app/node_modules/playwright-core ./node_modules/playwright-core
 RUN mkdir -p /data/files && chown -R node:node /data
 USER node
 EXPOSE 3000
