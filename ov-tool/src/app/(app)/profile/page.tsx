@@ -6,12 +6,15 @@ import { Input } from "@/components/ui/input";
 import { ROLE_LABELS, VOTING_RIGHT_LABELS } from "@/server/auth/permissions";
 import { requireUser } from "@/server/auth/session";
 import { icsUrl } from "@/server/services/calendar";
-import { removeSignatureAction, renewIcsAction, updateProfileAction, uploadSignatureAction } from "./actions";
+import { formatDateTime } from "@/lib/dates";
+import { pendingEmailChange } from "@/server/services/users";
+import { removeSignatureAction, renewIcsAction, requestEmailChangeAction, updateProfileAction, uploadSignatureAction } from "./actions";
 
 export const metadata: Metadata = { title: "Mein Profil" };
 
 export default async function ProfilePage() {
   const user = await requireUser();
+  const pending = await pendingEmailChange(user.id);
   return (
     <>
       <PageHeader title="Mein Profil" />
@@ -25,9 +28,14 @@ export default async function ProfilePage() {
               <Field label="Name" name="name">
                 <Input id="name" name="name" defaultValue={user.name} required />
               </Field>
+              <Field label="Telefon (optional)" name="phone">
+                <Input id="phone" name="phone" type="tel" defaultValue={user.phone ?? ""} placeholder="+49 621 …" />
+              </Field>
+              <label className="flex items-start gap-2 text-sm">
+                <input type="checkbox" name="showPhoneInBoard" defaultChecked={user.showPhoneInBoard} className="mt-1" />
+                <span>Telefonnummer in der Vorstandsliste für alle Nutzer des Tools anzeigen</span>
+              </label>
               <dl className="grid grid-cols-[8rem_1fr] gap-y-1 text-sm">
-                <dt className="text-neutral-600">E-Mail</dt>
-                <dd>{user.email}</dd>
                 <dt className="text-neutral-600">Rolle</dt>
                 <dd>{ROLE_LABELS[user.role]}</dd>
                 <dt className="text-neutral-600">Funktion</dt>
@@ -35,8 +43,35 @@ export default async function ProfilePage() {
                 <dt className="text-neutral-600">Stimmrecht</dt>
                 <dd>{VOTING_RIGHT_LABELS[user.votingRight]}</dd>
               </dl>
-              <p className="text-xs text-neutral-600">E-Mail, Rolle, Funktion und Stimmrecht ändert der Admin.</p>
+              <p className="text-xs text-neutral-600">Rolle, Funktion und Stimmrecht ändert der Admin.</p>
               <SubmitButton className="self-start">Speichern</SubmitButton>
+            </ActionForm>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>E-Mail-Adresse</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            <p>
+              Aktuell: <strong>{user.email}</strong>
+            </p>
+            <p className="text-neutral-600">
+              An diese Adresse gehen Anmeldelinks, Einladungen und Protokolle. Nach einer Änderung erhalten Sie einen
+              Bestätigungslink an die neue Adresse; erst danach wird sie übernommen.
+            </p>
+            {pending ? (
+              <p className="rounded-md border border-amber-300 bg-amber-50 p-2">
+                Änderung auf <strong>{pending.newEmail}</strong> wartet auf Bestätigung (Link gültig bis {formatDateTime(pending.expiresAt)} Uhr).
+              </p>
+            ) : null}
+            <ActionForm action={requestEmailChangeAction} className="flex flex-col gap-2">
+              <Field label="Neue E-Mail-Adresse" name="newEmail">
+                <Input id="newEmail" name="newEmail" type="email" required autoComplete="email" />
+              </Field>
+              <SubmitButton variant="outline" className="self-start" pendingText="Wird gesendet …">
+                Bestätigungslink senden
+              </SubmitButton>
             </ActionForm>
           </CardContent>
         </Card>

@@ -5,7 +5,7 @@ import type { ActionState } from "@/lib/action-state";
 import { runAction } from "@/server/action";
 import { requireUser } from "@/server/auth/session";
 import { renewIcsToken } from "@/server/services/calendar";
-import { removeSignature, updateOwnProfile, uploadSignature } from "@/server/services/users";
+import { removeSignature, requestEmailChange, updateOwnProfile, uploadSignature } from "@/server/services/users";
 
 export async function updateProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return runAction(async () => {
@@ -36,5 +36,13 @@ export async function renewIcsAction(_prev: ActionState): Promise<ActionState> {
     await renewIcsToken(await requireUser());
     revalidatePath("/profile");
     return "Neuer Kalender-Link erzeugt. Der alte funktioniert nicht mehr.";
+  });
+}
+
+export async function requestEmailChangeAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    const to = await requestEmailChange(await requireUser(), formData);
+    revalidatePath("/profile");
+    return `Bestätigungslink an ${to} gesendet. Die Adresse ändert sich erst nach dem Klick auf den Link.`;
   });
 }

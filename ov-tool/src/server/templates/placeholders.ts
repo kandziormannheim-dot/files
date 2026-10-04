@@ -95,6 +95,7 @@ export const KNOWN_PLACEHOLDERS: readonly string[] = [
 
   "anmeldung.*",
   "zugang.*",
+  "emailAenderung.*",
   "antrag.*",
   "transkript.*",
   "frist.*",

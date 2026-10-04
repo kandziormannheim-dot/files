@@ -17,6 +17,7 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { key: "sitzung.absage", file: "absage-sitzung.mail.hbs", kind: "mail", name: "Absage einer Sitzung", usage: "Sitzung abgesagt" },
   { key: "aufgabe.erinnerung", file: "aufgaben-erinnerung.mail.hbs", kind: "mail", name: "Aufgaben-Erinnerung", usage: "Frist naht / überschritten" },
   { key: "aktion.helferaufruf", file: "helferaufruf.mail.hbs", kind: "mail", name: "Helferaufruf", usage: "Aktion veröffentlicht" },
+  { key: "prompt.marketing", file: "prompt-marketing.md", kind: "prompt", name: "Prompt Social Media & Blog", usage: "Claude-Entwurf für Marketing-Beiträge" },
   { key: "prompt.protokoll", file: "prompt-protokollentwurf.md", kind: "prompt", name: "Prompt Protokollentwurf", usage: "Claude-Entwurf aus Transkript" },
   { key: "aufgabe.zugewiesen", file: "aufgabe-zugewiesen.mail.hbs", kind: "mail", name: "Neue Aufgabe zugewiesen", usage: "Aufgabe zugewiesen" },
   { key: "antrag.einberufung", file: "antrag-einberufung.mail.hbs", kind: "mail", name: "Antrag auf Einberufung", usage: "an Admins, sobald fünf Mitglieder einen Antrag tragen" },
@@ -25,6 +26,8 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { key: "transkript.fertig", file: "transkript-fertig.mail.hbs", kind: "mail", name: "Protokollentwurf bereit", usage: "an die Person, die das Transkript hochgeladen hat" },
   { key: "anmeldung.mail", file: "anmeldung.mail.hbs", kind: "mail", name: "Anmeldelink", usage: "Login per Magic Link" },
   { key: "zugang.einladung", file: "zugang-einladung.mail.hbs", kind: "mail", name: "Zugang eingerichtet", usage: "Nutzer angelegt" },
+  { key: "email.bestaetigung", file: "email-bestaetigung.mail.hbs", kind: "mail", name: "Neue E-Mail-Adresse bestätigen", usage: "an die neue Adresse, wenn jemand seine E-Mail-Adresse ändert" },
+  { key: "email.geaendert", file: "email-geaendert.mail.hbs", kind: "mail", name: "E-Mail-Adresse geändert", usage: "Hinweis an die alte Adresse nach der Änderung" },
 ];
 
 export function templateDef(key: string): TemplateDef {

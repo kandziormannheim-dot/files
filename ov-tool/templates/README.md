@@ -79,6 +79,7 @@ aufgaben[]            nr, titel, verantwortlich, frist
 empfaenger.name, empfaenger.anrede (nur Mails an Einzelpersonen)
 anmeldung.link, anmeldung.gueltigMinuten   (Anmeldelink)
 zugang.link           (Zugang eingerichtet → Login-Seite)
+emailAenderung.*      neueAdresse, alteAdresse, link, gueltigStunden (Änderung der eigenen E-Mail-Adresse)
 antrag.*              titel, beschreibung, unterstuetzer, erforderlich, link
 transkript.*          sitzung, link (Entwurf aus Transkript fertig)
 frist.letzterTag, frist.link   (Hinweis Ladungsfrist)
@@ -111,6 +112,8 @@ aktion.*, schichten[] (Helferaufruf)
 | `transkript-fertig.mail.hbs` | `transkript.fertig` | Protokollentwurf aus Transkript bereit (an die hochladende Person) |
 | `anmeldung.mail.hbs` | `anmeldung.mail` | Anmeldelink (Magic Link) |
 | `zugang-einladung.mail.hbs` | `zugang.einladung` | Hinweis an neue Nutzer, dass ein Zugang besteht |
+| `email-bestaetigung.mail.hbs` | `email.bestaetigung` | Bestätigungslink an die neue Adresse, wenn jemand seine E-Mail-Adresse ändert |
+| `email-geaendert.mail.hbs` | `email.geaendert` | Hinweis an die bisherige Adresse nach erfolgter Änderung |
 | `briefbogen.css` | – | Layout für alle Dokument-Vorlagen |
 | `assets/briefbogen.png` | – | Briefbogen als Seitenhintergrund (A4, 1414×2000 px) – in den Einstellungen austauschbar |
 | (Unterschrift) | – | nicht im Repo; jeder Unterzeichner lädt sein Unterschriftsbild in der App selbst hoch |

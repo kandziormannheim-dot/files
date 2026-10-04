@@ -117,6 +117,12 @@ export function sampleContext(appUrl: string) {
     ],
     anmeldung: { link: `${appUrl}/api/auth/callback/email?token=beispiel`, gueltigMinuten: 15 },
     zugang: { link: `${appUrl}/login` },
+    emailAenderung: {
+      neueAdresse: "neu@example.org",
+      alteAdresse: "alt@example.org",
+      link: `${appUrl}/email-confirm/beispiel`,
+      gueltigStunden: 24,
+    },
     antrag: { titel: "Sondersitzung Haushalt", beschreibung: "", unterstuetzer: 5, erforderlich: 5, link: `${appUrl}/meetings/proposals` },
     transkript: { sitzung: "Vorstandssitzung am 12.11.2026", link: `${appUrl}/meetings/beispiel/minutes` },
   };
