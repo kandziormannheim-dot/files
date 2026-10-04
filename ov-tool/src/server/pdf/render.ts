@@ -60,12 +60,24 @@ async function briefbogenDataUri(): Promise<string> {
 }
 
 /** Komplettes HTML-Dokument um den Inhalt einer Dokument-Vorlage. */
-export async function wrapDocument(contentHtml: string, title: string): Promise<string> {
+/** Bildschirm-Vorschau: A4-Blatt zentriert, auf schmalen Geräten verkleinert (nur @media screen – PDF unverändert). */
+const SCREEN_CSS = `@media screen {
+  html { background: #e8ecec; }
+  body { box-sizing: border-box; width: 210mm; min-height: 297mm; margin: 12px auto; background: #fff; position: relative; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  .briefbogen-hintergrund { position: absolute; }
+}
+@media screen and (max-width: 820px) { html { zoom: .9; } }
+@media screen and (max-width: 720px) { html { zoom: .75; } }
+@media screen and (max-width: 600px) { html { zoom: .6; } }
+@media screen and (max-width: 480px) { html { zoom: .47; } }
+@media screen and (max-width: 380px) { html { zoom: .43; } }`;
+
+export async function wrapDocument(contentHtml: string, title: string, opts: { screen?: boolean } = {}): Promise<string> {
   const css = (await readFile(path.join(/*turbopackIgnore: true*/ TEMPLATES_DIR, "briefbogen.css"), "utf8"))
     // Keine externen Schriften laden (Datenschutz, Offline-Rendering) – Inter ist eingebettet.
     .replace(/@import\s+url\([^)]*\)\s*;?/g, "");
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${title.replace(/</g, "&lt;")}</title>
-<style>${await fontFaceCss()}\n${css}</style></head><body>
+<style>${await fontFaceCss()}\n${css}${opts.screen ? `\n${SCREEN_CSS}` : ""}</style></head><body>
 <div class="briefbogen-hintergrund" style="background-image:url(${await briefbogenDataUri()})"></div>
 <table class="seite"><thead><tr><td></td></tr></thead><tfoot><tr><td></td></tr></tfoot>
 <tbody><tr><td>
@@ -83,6 +95,12 @@ export async function htmlToPdf(html: string): Promise<Buffer> {
   } finally {
     await page.close();
   }
+}
+
+/** HTML-Vorschau einer Dokument-Vorlage für den Bildschirm (gleiche Vorlage wie das PDF). */
+export async function renderDocumentPreview(key: string, context: object, title: string) {
+  const { source } = await getTemplateSource(key);
+  return wrapDocument(renderHtml(source, { ov: await ovContext(), ...context }), title, { screen: true });
 }
 
 /** Rendert eine Dokument-Vorlage (einladung.dokument, protokoll.dokument) zu PDF. */

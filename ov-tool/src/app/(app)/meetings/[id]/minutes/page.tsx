@@ -25,7 +25,8 @@ import {
   minutesChecklistFor,
   resultText,
 } from "@/server/services/minutes";
-import { minutesContext } from "@/server/services/minutes-export";
+import { minutesContext, minutesPreviewHtml } from "@/server/services/minutes-export";
+import { DocumentPreview } from "@/components/document-preview";
 import { getSettings } from "@/server/services/settings";
 import { listActiveUsers } from "@/server/services/users";
 import { newVersionAction, sendMinutesAction, sendToOfficeAction, startMinutesAction } from "./actions";
@@ -71,7 +72,7 @@ export default async function MinutesPage({
     );
   }
 
-  const editing = canEdit && minutes.status === "ENTWURF" && ansicht !== "vorschau";
+  const editing = canEdit && minutes.status === "ENTWURF" && !ansicht;
   const [checklist, ctx, settings] = await Promise.all([minutesChecklistFor(minutes, meeting), minutesContext(minutes, meeting), getSettings()]);
   const complete = checklistComplete(checklist);
   const runningCirculation = minutes.circulations.find((c) => c.status === "LAUFEND");
@@ -171,12 +172,18 @@ export default async function MinutesPage({
         <Button asChild variant="outline">
           <a href={`/api/minutes/${minutes.id}/download?format=docx`}>DOCX</a>
         </Button>
-        {canEdit && minutes.status === "ENTWURF" ? (
-          <nav className="flex gap-1" aria-label="Ansicht">
-            {[
-              ["", "Bearbeiten"],
-              ["vorschau", "Vorschau"],
-            ].map(([v, label]) => (
+        <nav className="flex gap-1" aria-label="Ansicht">
+            {(canEdit && minutes.status === "ENTWURF"
+              ? [
+                  ["", "Bearbeiten"],
+                  ["vorschau", "Lesen"],
+                  ["dokument", "Vorschau"],
+                ]
+              : [
+                  ["", "Lesen"],
+                  ["dokument", "Vorschau"],
+                ]
+            ).map(([v, label]) => (
               <Link
                 key={v}
                 href={`/meetings/${id}/minutes${v ? `?ansicht=${v}` : ""}`}
@@ -189,13 +196,20 @@ export default async function MinutesPage({
               </Link>
             ))}
           </nav>
-        ) : null}
         {canEdit && minutes.status === "ENTWURF" ? (
           <Button asChild variant="outline">
             <Link href={`/meetings/${id}/transcripts`}>Aus Transkript</Link>
           </Button>
         ) : null}
       </div>
+
+      {ansicht === "dokument" ? (
+        <DocumentPreview
+          html={await minutesPreviewHtml(user, minutes.id)}
+          title={`Protokoll${minutes.version > 1 ? ` (Version ${minutes.version})` : ""}`}
+          pdfHref={`/api/minutes/${minutes.id}/download?format=pdf`}
+        />
+      ) : null}
 
       {minutes.status === "VERSENDET" ? (
         <Alert className="mb-4">

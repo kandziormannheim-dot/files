@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { meetingTitle } from "@/lib/meetings";
 import { requirePageCapability } from "@/server/auth/session";
-import { invitationPreview } from "@/server/services/invitations";
+import { DocumentPreview } from "@/components/document-preview";
+import { invitationPreview, invitationPreviewHtml } from "@/server/services/invitations";
 import { sendInvitationAction } from "./actions";
 import { InvitationForm } from "./invitation-form";
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = { title: "Einladung" };
 export default async function InvitationPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requirePageCapability("invitation.send");
   const { id } = await params;
-  const p = await invitationPreview(user, id);
+  const [p, previewHtml] = await Promise.all([invitationPreview(user, id), invitationPreviewHtml(user, id)]);
   const newCount = p.recipients.filter((r) => !r.invitedAt).length;
   const { meeting, deadline } = p;
 
@@ -34,6 +35,8 @@ export default async function InvitationPage({ params }: { params: Promise<{ id:
           </a>
         </Button>
       </div>
+
+      <DocumentPreview html={previewHtml} title="Einladung (Briefbogen)" pdfHref={`/api/meetings/${id}/invitation-pdf`} />
 
       {meeting.invitationSentAt ? (
         <Alert variant="success" className="mb-4">

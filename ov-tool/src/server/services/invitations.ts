@@ -9,7 +9,7 @@ import { UserError } from "@/server/errors";
 import { queueMail } from "@/server/mail/outbox";
 import { renderMail } from "@/server/mail/render";
 import { appUrl } from "@/server/ov";
-import { renderDocumentPdf } from "@/server/pdf/render";
+import { renderDocumentPdf, renderDocumentPreview } from "@/server/pdf/render";
 import { textToHtml } from "@/server/templates/engine";
 import { ensureAttendances, getMeeting, isMeetingLocked, type MeetingWithAgenda } from "./meetings";
 import { getSettings } from "./settings";
@@ -88,6 +88,14 @@ export async function invitationPdf(actor: Pick<User, "id" | "role">, meetingId:
   const { pdf, version } = await renderDocumentPdf("einladung.dokument", ctx, `Einladung ${formatDate(meeting.startsAt)}`);
   await audit(db, actor, "invitation.pdf", "Meeting", meetingId);
   return { pdf, version, filename: `Einladung-${meeting.startsAt.toISOString().slice(0, 10)}.pdf` };
+}
+
+/** Bildschirm-Vorschau der Einladung (gleiche Vorlage wie das PDF). */
+export async function invitationPreviewHtml(actor: Pick<User, "id" | "role">, meetingId: string) {
+  assertCan(actor, "read");
+  const meeting = await getMeeting(actor, meetingId);
+  const ctx = await invitationContext(meeting, { withSignature: true, actorId: actor.id });
+  return renderDocumentPreview("einladung.dokument", ctx, "Einladung");
 }
 
 const sendSchema = z.object({

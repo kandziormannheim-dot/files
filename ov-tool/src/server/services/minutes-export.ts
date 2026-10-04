@@ -143,9 +143,10 @@ export async function downloadMinutes(actor: Pick<User, "id" | "role">, minutesI
 }
 
 /** HTML-Vorschau für die Leseansicht (gleiche Vorlage wie das PDF). */
-export async function minutesPreviewHtml(minutesId: string) {
+export async function minutesPreviewHtml(actor: Pick<User, "id" | "role">, minutesId: string) {
+  assertCan(actor, "read");
   const { minutes, meeting } = await load(minutesId);
   const ctx = await minutesContext(minutes, meeting);
   const { source } = await getTemplateSource("protokoll.dokument");
-  return wrapDocument(renderHtml(source, ctx), "Protokoll");
+  return wrapDocument(renderHtml(source, ctx), "Protokoll", { screen: true });
 }
