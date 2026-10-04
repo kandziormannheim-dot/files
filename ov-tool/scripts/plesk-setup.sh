@@ -18,7 +18,13 @@ main() {
 
   schritt "Voraussetzungen prüfen"
   [ "$(id -u)" -eq 0 ] || fehler "Bitte als root ausführen."
-  command -v plesk >/dev/null || fehler "Plesk-Kommandozeile (plesk) nicht gefunden – ist das ein Plesk-Server?"
+  if ! command -v plesk >/dev/null; then
+    local d
+    for d in /usr/sbin /usr/local/psa/bin /opt/psa/bin; do
+      [ -x "$d/plesk" ] && export PATH="$d:$PATH" && break
+    done
+  fi
+  command -v plesk >/dev/null || fehler "Plesk-Kommandozeile (plesk) nicht gefunden (gesucht: PATH, /usr/sbin, /usr/local/psa/bin, /opt/psa/bin) – ist Plesk auf diesem Server installiert?"
   command -v curl >/dev/null || apt-get install -y curl >/dev/null
   command -v git >/dev/null || apt-get install -y git >/dev/null
   command -v openssl >/dev/null || apt-get install -y openssl >/dev/null
