@@ -10,6 +10,8 @@ FROM deps AS build
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
+# Prisma-CLI mit allen Abhängigkeiten separat installieren (im Standalone-Output fehlen u. a. "effect", "c12")
+RUN npm install --prefix /opt/prisma-cli --no-save --no-audit --no-fund prisma@$(node -p "require('./node_modules/prisma/package.json').version")
 
 FROM node:22-bookworm-slim AS run
 WORKDIR /app
@@ -24,12 +26,12 @@ COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/templates ./templates
-# Prisma-CLI für "migrate deploy" beim Start
-COPY --from=build /app/node_modules/prisma ./node_modules/prisma
+# Prisma-Client (generiert) und Prisma-CLI für "migrate deploy" beim Start
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /opt/prisma-cli /opt/prisma-cli
 RUN mkdir -p /data/files && chown -R node:node /data
 USER node
 EXPOSE 3000
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node server.js"]
+CMD ["sh", "-c", "node /opt/prisma-cli/node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma && node server.js"]
