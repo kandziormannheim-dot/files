@@ -150,13 +150,14 @@ Domain stimmt und das DNS auf den Server zeigt.
 
 # OV-Tool deployen — Einrichtung
 
-[`ov-tool-deploy.yml`](ov-tool-deploy.yml) meldet sich per SSH auf dem VPS an, holt den gewünschten Stand
-(`git pull`) und startet `docker compose --profile prod up -d --build` im Ordner `ov-tool/`. Vorher einmalig den
-Server einrichten wie in [`ov-tool/docs/betrieb.md`](../../ov-tool/docs/betrieb.md) beschrieben.
+[`ov-tool-deploy.yml`](ov-tool-deploy.yml) meldet sich per SSH auf dem Server (eigener VPS oder Plesk) an, holt den
+gewünschten Stand (`git pull`) und startet `docker compose up -d --build` im Ordner `ov-tool/`. Welche Zusatzdienste
+laufen, steuert `COMPOSE_PROFILES` in der `.env` auf dem Server (`prod` mit Caddy, `whisper` hinter Plesk). Vorher
+einmalig den Server einrichten wie in [`ov-tool/docs/betrieb.md`](../../ov-tool/docs/betrieb.md) beschrieben.
 
 | Art | Name | Inhalt |
 | --- | --- | --- |
-| Variable | `OVTOOL_HOST` | IP oder Hostname des VPS |
+| Variable | `OVTOOL_HOST` | IP oder Hostname des Servers |
 | Variable | `OVTOOL_USER` | SSH-Benutzer mit Docker-Rechten |
 | Variable | `OVTOOL_PATH` | Pfad des Repo-Klons auf dem Server, z. B. `/srv/files` |
 | Secret | `OVTOOL_SSH_KEY` | privater Deploy-Schlüssel (ed25519) |
