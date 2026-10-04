@@ -7,5 +7,4 @@ coverage
 data
 .env*
 !.env.example
-tests
 *.tsbuildinfo
