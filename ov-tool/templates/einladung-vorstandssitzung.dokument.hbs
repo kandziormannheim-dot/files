@@ -1,0 +1,37 @@
+<div class="anschrift">
+  <p>An die Vorstandsmitglieder und Gäste<br>
+  des {{ov.nameAnschrift}}</p>
+</div>
+
+<p class="ort-datum">{{ov.ort}}, {{datum sitzung.einladungVom}}</p>
+
+<p class="betreff">Einladung {{sitzung.art}} am {{datum sitzung.beginn}} um {{uhrzeitKurz sitzung.beginn}} Uhr</p>
+
+<p>Sehr geehrte Damen und Herren,</p>
+
+<p>hiermit lade ich Sie herzlich zur</p>
+
+<p class="hervorgehoben">{{sitzung.art}} der {{ov.nameLang}}</p>
+<p class="hervorgehoben">am {{datumLang sitzung.beginn}}, {{uhrzeitKurz sitzung.beginn}} Uhr</p>
+{{#if sitzung.ort}}<p class="hervorgehoben">im {{sitzung.ort}}</p>{{/if}}
+{{#if sitzung.onlineLink}}<p class="hervorgehoben">{{#if sitzung.ort}}oder online: {{else}}online: {{/if}}{{sitzung.onlineLink}}</p>{{/if}}
+
+<p>ein.</p>
+
+<p>Folgende Tagesordnung schlage ich vor:</p>
+
+<ol class="tagesordnung">
+{{#each tagesordnung}}
+  <li class="ebene-{{ebene}}"><span>TOP {{nummer}}</span><span>{{titel}}</span></li>
+{{/each}}
+</ol>
+
+<p class="bitte">Ich bitte höflich, Ihre Teilnahme bis {{datum sitzung.rueckmeldungBis}} zu- oder abzusagen – am einfachsten über den Link in der Einladungs-E-Mail.</p>
+
+<p>Mit freundlichen Grüßen</p>
+
+<div class="unterschrift">
+  {{#if absender.unterschrift}}<img src="{{absender.unterschrift}}" alt="">{{/if}}
+  <p class="name">{{absender.name}}</p>
+  <p>{{absender.funktion}}</p>
+</div>

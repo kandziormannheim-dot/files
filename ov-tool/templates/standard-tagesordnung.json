@@ -1,0 +1,23 @@
+{
+  "beschreibung": "Vorbelegung jeder neuen Vorstandssitzung. 'position': 'start' = vor den sitzungsspezifischen TOPs, 'ende' = danach. 'auto' markiert TOPs, die das Tool mit Inhalt füllt oder nur bei Bedarf einfügt.",
+  "tops": [
+    { "titel": "Begrüßung durch den Vorsitzenden", "position": "start",
+      "unterpunkte": [
+        { "titel": "Bericht aus dem CDU Kreisverband Mannheim" }
+      ]
+    },
+    { "titel": "Genehmigung des Protokolls der Sitzung vom {{datum letztesProtokoll.sitzungsdatum}}", "position": "start",
+      "auto": "nur_wenn_protokoll_versendet_und_nicht_genehmigt" },
+    { "titel": "Bericht aus dem BBR Seckenheim", "position": "start" },
+    { "titel": "Bericht aus dem BBR Friedrichsfeld", "position": "start" },
+    { "titel": "Bericht aus dem Gemeinderat", "position": "start" },
+    { "titel": "Stand offener Aufgaben", "position": "start",
+      "auto": "nur_wenn_ueberfaellige_aufgaben" },
+
+    { "platzhalter": "sitzungsspezifische TOPs, Stadtteil-Themen 'für nächste Sitzung', übernommene TO-Vorschläge" },
+
+    { "titel": "Termine", "position": "ende" },
+    { "titel": "Sonstiges", "position": "ende" }
+  ],
+  "nummerierung": "fortlaufend 1, 2, 3 … ; Unterpunkte 1.1, 1.2 …; wird bei jeder Änderung neu berechnet"
+}

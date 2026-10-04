@@ -1,0 +1,21 @@
+---
+betreff: Helfer gesucht: {{aktion.titel}} am {{datum aktion.beginn}}
+---
+Sehr geehrte Damen und Herren,
+
+für unsere Aktion „{{aktion.titel}}“ am {{datumLang aktion.beginn}}{{#if aktion.ort}} ({{aktion.ort}}){{/if}} suchen wir Unterstützung.
+{{#if aktion.beschreibung}}
+{{aktion.beschreibung}}
+{{/if}}
+Offene Schichten:
+{{#each schichten}}
+– {{uhrzeit beginn}}–{{uhrzeit ende}} Uhr: noch {{offen}} von {{benoetigt}} Plätzen frei
+{{/each}}
+
+Hier können Sie sich eintragen:
+{{aktion.link}}
+
+Vielen Dank für Ihre Unterstützung!
+
+{{absender.name}}
+{{absender.funktion}}

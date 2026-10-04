@@ -1,0 +1,75 @@
+<h1>Protokoll der {{sitzung.artGenitiv}}</h1>
+<p class="untertitel">{{ov.nameLang}}</p>
+{{#if protokoll.aenderungshinweis}}<p class="version">Version {{protokoll.version}} – {{protokoll.aenderungshinweis}}</p>{{/if}}
+
+<table class="kopf">
+  <tr><th>Datum</th><td>{{datumLang sitzung.beginn}}</td></tr>
+  <tr><th>Ort</th><td>{{sitzung.ort}}{{#if sitzung.onlineLink}}{{#if sitzung.ort}} / {{/if}}online{{/if}}</td></tr>
+  <tr><th>Beginn / Ende</th><td>{{uhrzeit sitzung.eroeffnetUm}} Uhr{{#if sitzung.unterbrechung}} ({{sitzung.unterbrechung}}){{/if}} bis {{uhrzeit sitzung.geschlossenUm}} Uhr</td></tr>
+  <tr><th>Sitzungsleitung</th><td>{{sitzung.sitzungsleitung}}</td></tr>
+  <tr><th>Protokollführung</th><td>{{protokoll.protokollfuehrung}}</td></tr>
+  <tr><th>Einladung vom</th><td>{{datum sitzung.einladungVom}}, {{sitzung.einladungsweg}}</td></tr>
+</table>
+
+<h2>Anwesenheit</h2>
+<table>
+  <thead><tr><th>Name</th><th>Funktion</th><th>Status</th></tr></thead>
+  <tbody>
+  {{#each anwesenheit}}
+    <tr><td>{{name}}</td><td>{{funktion}}</td><td>{{statusText status}}</td></tr>
+  {{/each}}
+  </tbody>
+</table>
+
+<h2>Formalia</h2>
+{{#if protokoll.formalia.eroeffnung}}<p><strong>Eröffnung:</strong> {{protokoll.formalia.eroeffnung}}</p>{{/if}}
+{{#if protokoll.formalia.wiedereroeffnung}}<p><strong>Wiedereröffnung:</strong> {{protokoll.formalia.wiedereroeffnung}}</p>{{/if}}
+<p><strong>Beschlussfähigkeit:</strong> {{#if sitzung.wiederholungNachBeschlussunfaehigkeit}}gegeben gemäß § 52 Abs. 3 LV-Satzung (erneute Einladung nach Beschlussunfähigkeit){{else}}{{#if sitzung.beschlussfaehig}}festgestellt durch {{sitzung.feststellungDurch}}{{else}}nicht gegeben – die Sitzung wurde gemäß § 52 Abs. 3 LV-Satzung aufgehoben{{/if}}{{/if}} ({{sitzung.quorumAnwesend}} von {{sitzung.quorumStimmberechtigt}} stimmberechtigten Mitgliedern anwesend)</p>
+{{#if sitzung.eilbeduerftig}}<p><strong>Verkürzte Ladungsfrist:</strong> {{sitzung.eilbeduerftigBegruendung}}</p>{{/if}}
+{{#if umlaufbeschluesse.length}}<p><strong>Umlaufbeschlüsse seit der letzten Sitzung:</strong> {{#each umlaufbeschluesse}}Nr. {{nummer}} „{{betreff}}“ – {{ergebnisText}}{{#unless @last}}; {{/unless}}{{/each}}</p>{{/if}}
+<p><strong>Tagesordnung:</strong> {{protokoll.formalia.tagesordnung}}</p>
+{{#if protokoll.formalia.letztesProtokoll}}<p><strong>Protokoll der letzten Sitzung:</strong> {{protokoll.formalia.letztesProtokoll}}</p>{{/if}}
+
+<h2>Verlauf der Sitzung</h2>
+{{#each protokoll.abschnitte}}
+<section class="top-block">
+  <p class="top"><span>TOP {{topNummer}}</span><span>{{topTitel}}</span></p>
+  <ul class="punkte">
+  {{#each punkte}}
+    <li>{{text}}{{#if unterpunkte.length}}<ul>{{#each unterpunkte}}<li>{{this}}</li>{{/each}}</ul>{{/if}}</li>
+  {{/each}}
+  </ul>
+  {{#if ergebnis}}<p class="ergebnis">{{#eq ergebnis.art "BESCHLUSS"}}Beschluss:{{else}}Ergebnis:{{/eq}} {{ergebnis.text}}</p>{{/if}}
+</section>
+{{/each}}
+
+{{#if beschluesse.length}}
+<h2>Beschlüsse und Ergebnisse im Überblick</h2>
+<table>
+  <thead><tr><th>TOP</th><th>Gegenstand</th><th>Ergebnis</th></tr></thead>
+  <tbody>
+  {{#each beschluesse}}<tr><td>{{top}}</td><td>{{gegenstand}}</td><td>{{ergebnisText}}</td></tr>{{/each}}
+  </tbody>
+</table>
+{{/if}}
+
+{{#if aufgaben.length}}
+<h2>Aufgaben</h2>
+<table>
+  <thead><tr><th>Nr.</th><th>Aufgabe</th><th>Verantwortlich</th><th>Frist</th></tr></thead>
+  <tbody>
+  {{#each aufgaben}}<tr><td>{{nr}}</td><td>{{titel}}</td><td>{{verantwortlich}}</td><td>{{frist}}</td></tr>{{/each}}
+  </tbody>
+</table>
+{{/if}}
+
+<p><strong>Ende der Sitzung:</strong> {{uhrzeit sitzung.geschlossenUm}} Uhr</p>
+
+<div class="unterschriften">
+{{#each protokoll.unterzeichner}}
+  <div>
+    <p>{{../ov.ort}}, ________________</p>
+    <p class="linie"><strong>{{name}}</strong><br>{{funktion}}</p>
+  </div>
+{{/each}}
+</div>

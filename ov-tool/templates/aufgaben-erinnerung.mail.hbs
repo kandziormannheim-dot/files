@@ -1,0 +1,14 @@
+---
+betreff: {{#if aufgabe.ueberfaellig}}Überfällig{{else}}Erinnerung{{/if}}: {{aufgabe.titel}}
+---
+Hallo {{empfaenger.name}},
+
+{{#if aufgabe.ueberfaellig}}die folgende Aufgabe ist seit {{datum aufgabe.frist}} überfällig:{{else}}die folgende Aufgabe ist am {{datum aufgabe.frist}} fällig:{{/if}}
+
+{{aufgabe.titel}}
+{{#if aufgabe.herkunft}}Aus: {{aufgabe.herkunft}}
+{{/if}}
+Status ändern oder kommentieren:
+{{aufgabe.link}}
+
+Diese Nachricht wurde automatisch vom OV-Management-Tool versendet.

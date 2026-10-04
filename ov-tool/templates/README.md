@@ -1,0 +1,99 @@
+# Standardvorlagen
+
+Abgeleitet aus der Einladung vom 19.02.2026 und dem Protokoll der Vorstandssitzung vom 26.02.2026. Die Inhalte dieser Sitzung sind **nicht** enthalten, nur Aufbau, Formulierungen und Layout.
+
+Die Vorlagen werden per `prisma/seed.ts` in die Tabelle `Template` übernommen und sind danach in den Einstellungen bearbeitbar (versioniert).
+
+## Engine
+
+**Handlebars** (`handlebars`-Paket). Platzhalter `{{bereich.feld}}`, Schleifen `{{#each}}`, Bedingungen `{{#if}}`.
+Beim Speichern einer Vorlage werden unbekannte Platzhalter als Fehler gemeldet (Whitelist aus dem Kontext-Typ unten).
+
+Mail-Vorlagen (`*.mail.hbs`) haben einen Front-Matter-Block mit `betreff:`. Der Rest ist Klartext; HTML-Mail wird daraus automatisch erzeugt.
+Dokument-Vorlagen (`*.dokument.hbs`) enthalten nur den Inhalt als HTML. Der Renderer legt Briefbogen und Seitenraster darum (siehe Kommentar in `briefbogen.css`) und druckt über Chromium zu PDF (A4).
+
+## Helfer
+
+| Helfer | Beispiel-Ausgabe |
+|---|---|
+| `{{datum x}}` | 26.02.2026 |
+| `{{datumLang x}}` | Donnerstag, 26. Februar 2026 |
+| `{{wochentag x}}` | Donnerstag |
+| `{{uhrzeit x}}` | 19:00 |
+| `{{uhrzeitKurz x}}` | 19 (bei vollen Stunden), sonst 19:30 |
+| `{{monatJahr x}}` | März 2026 |
+| `{{fristText aufgabe}}` | Datum der Frist oder der Freitext (z. B. „laufend“) |
+| `{{personen liste}}` | „Kelsch, Kandzior“ bzw. Gruppenbezeichnung („Vorstand“, „alle“) |
+
+**Wichtig:** Datum und Uhrzeit kommen überall aus genau einem Feld (`sitzung.beginn`). Betreff, Brieftext und Protokoll können sich dadurch nicht mehr widersprechen.
+
+## Kontext (verfügbare Platzhalter)
+
+```
+ov.name               Seckenheim-Friedrichsfeld
+ov.nameLang           CDU Mannheim-Süd / Seckenheim-Friedrichsfeld
+ov.nameAnschrift      CDU OV Mannheim-Süd Seckenheim-Friedrichsfeld
+ov.ort                Mannheim
+ov.absenderzeile      (nur Referenz; im Briefbogen-Bild bereits enthalten)
+ov.appUrl             https://management.cdu-sf.de
+
+absender.name         Martin Kandzior
+absender.funktion     Ortsvorsitzender
+absender.unterschrift (Bild-URL, optional)
+
+sitzung.art           Vorstandssitzung
+sitzung.artGenitiv    Vorstandssitzung   (für „Protokoll der …“)
+sitzung.beginn        DateTime
+sitzung.ort           Restaurant Weingärtner, Kehler Straße 4, 68239 Mannheim
+sitzung.onlineLink    optional
+sitzung.eroeffnetUm   DateTime
+sitzung.geschlossenUm DateTime
+sitzung.unterbrechung Freitext, optional („Wiedereröffnung 18:15 Uhr“)
+sitzung.sitzungsleitung Freitext (vorbelegt: Vorsitzender)
+sitzung.einladungVom  DateTime
+sitzung.einladungsweg „per E-Mail“
+sitzung.zusageLink    persönlicher Link (nur in Mails)
+sitzung.absagegrund   optional
+
+tagesordnung[]        nummer („1“, „1.1“), titel, ebene (0|1), status (OFFEN|BEHANDELT|ABGESETZT|VERTAGT)
+
+protokoll.protokollfuehrung  Name
+protokoll.version, protokoll.aenderungshinweis
+protokoll.formalia.eroeffnung / wiedereroeffnung / tagesordnung / letztesProtokoll  (Freitext)
+protokoll.abschnitte[]       topNummer, topTitel, punkte[] (text, unterpunkte[]), ergebnis? (art: BESCHLUSS|ERGEBNIS, text)
+protokoll.unterzeichner[]    name, funktion
+
+anwesenheit[]         name, funktion, status (ANWESEND|ANWESEND_DIGITAL|ENTSCHULDIGT|NICHT_ANWESEND)
+sitzung.beschlussfaehig, sitzung.quorumAnwesend, sitzung.quorumStimmberechtigt, sitzung.feststellungDurch
+sitzung.wiederholungNachBeschlussunfaehigkeit, sitzung.eilbeduerftig, sitzung.eilbeduerftigBegruendung
+vorherigeSitzung.beginn
+umlaufbeschluesse[]   nummer, betreff, ergebnisText
+umlauf.*              betreff, text, begruendung, frist, link, nummer, stimmberechtigt, erforderlich, ja, nein, enthaltung, widerspruch, ohneRueckmeldung, angenommen, ergebnisText, protokoll
+beschluesse[]         top, gegenstand, ergebnisText
+aufgaben[]            nr, titel, verantwortlich, frist
+
+empfaenger.name, empfaenger.anrede (nur Mails an Einzelpersonen)
+aufgabe.*             (Aufgaben-Erinnerung)
+aktion.*, schichten[] (Helferaufruf)
+```
+
+## Dateien
+
+| Datei | Schlüssel | Verwendung |
+|---|---|---|
+| `einladung-vorstandssitzung.dokument.hbs` | `einladung.dokument` | PDF-Anhang der Einladung (Briefbogen) |
+| `einladung-vorstandssitzung.mail.hbs` | `einladung.mail` | Einladungs-Mail |
+| `standard-tagesordnung.json` | `tagesordnung.standard` | Vorbelegung neuer Sitzungen |
+| `protokoll.dokument.hbs` | `protokoll.dokument` | Protokoll als PDF (und Struktur für DOCX) |
+| `protokoll-versand.mail.hbs` | `protokoll.versand` | Versand zur Kenntnis, Genehmigung in Folgesitzung |
+| `umlauf-einleitung.mail.hbs` | `umlauf.einleitung` | Start eines Umlaufbeschlusses (auch Protokollgenehmigung), Statut § 42 Abs. 3 |
+| `umlauf-ergebnis.mail.hbs` | `umlauf.ergebnis` | Feststellung und Bekanntgabe des Ergebnisses |
+| `einladung-wiederholung.mail.hbs` | `einladung.wiederholung` | Neue Einladung nach Aufhebung wegen Beschlussunfähigkeit, LV § 52 Abs. 3 |
+| `erinnerung-zusage.mail.hbs` | `erinnerung.zusage` | an alle ohne Rückmeldung |
+| `absage-sitzung.mail.hbs` | `sitzung.absage` | Sitzung abgesagt |
+| `aufgaben-erinnerung.mail.hbs` | `aufgabe.erinnerung` | Frist naht / überschritten |
+| `helferaufruf.mail.hbs` | `aktion.helferaufruf` | Aktion veröffentlicht |
+| `prompt-protokollentwurf.md` | `prompt.protokoll` | Systemprompt für den Claude-Entwurf aus Transkripten |
+| `briefbogen.css` | – | Layout für alle Dokument-Vorlagen |
+| `assets/briefbogen.png` | – | Briefbogen als Seitenhintergrund (A4, 1414×2000 px) – in den Einstellungen austauschbar |
+| (Unterschrift) | – | nicht im Repo; jeder Unterzeichner lädt sein Unterschriftsbild in der App selbst hoch |

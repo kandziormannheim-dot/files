@@ -1,0 +1,68 @@
+/* Briefbogen CDU OV Seckenheim-Friedrichsfeld
+   Schrift: Inter · Akzentfarbe aus Briefbogen: #52B7C1 · Tabellenhintergrund: #E6F4F5
+   Der Briefbogen (Kopf mit Logo, Fußzeile mit Kontakt/Spendenkonto) liegt als Bild auf jeder Seite. */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+/* Im Container lokal einbinden statt über Google Fonts (Datenschutz, Offline-Rendering). */
+
+:root {
+  --akzent: #52b7c1;
+  --akzent-hell: #e6f4f5;
+  --text: #1a1a1a;
+}
+
+@page { size: A4; margin: 0; }
+
+html { font-family: "Inter", Arial, sans-serif; font-size: 10.5pt; color: var(--text); line-height: 1.45; }
+
+/* Seitenraster – der Renderer (src/server/pdf) legt um jede Dokument-Vorlage:
+   <div class="briefbogen-hintergrund" style="background-image:url(...)"></div>
+   <table class="seite"><thead><tr><td></td></tr></thead><tfoot><tr><td></td></tr></tfoot>
+   <tbody><tr><td> …Vorlage… </td></tr></tbody></table>
+   thead/tfoot wiederholen sich auf jeder Seite und halten Kopf- und Fußbereich des Briefbogens frei.
+   Elemente mit position: fixed druckt Chromium auf jeder Seite → Briefbogen auf allen Seiten.
+   Playwright: page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true }) */
+body { margin: 0; padding: 0 22mm 0 25mm; }
+.briefbogen-hintergrund {
+  position: fixed; top: 0; left: 0; width: 210mm; height: 297mm;
+  background-repeat: no-repeat; background-size: 210mm 297mm;
+  z-index: -1;
+}
+table.seite { width: 100%; border-collapse: collapse; margin: 0; }
+table.seite > thead > tr > td { height: 50mm; padding: 0; border: 0; }
+table.seite > tfoot > tr > td { height: 44mm; padding: 0; border: 0; }
+table.seite > tbody > tr > td { padding: 0; border: 0; }
+
+/* Absenderzeile ist Teil des Briefbogen-Bilds */
+p { margin: 0 0 2.5mm; }
+.anschrift { margin: 6mm 0 8mm; }
+.ort-datum { text-align: right; margin-bottom: 6mm; }
+.betreff { font-weight: 700; margin-bottom: 6mm; }
+.hervorgehoben { font-weight: 700; margin: 0; }
+.bitte { font-weight: 700; margin-top: 6mm; }
+
+.tagesordnung { list-style: none; padding: 0; margin: 3mm 0; }
+.tagesordnung li { margin: 1mm 0; display: grid; grid-template-columns: 18mm 1fr; }
+.tagesordnung li.ebene-1 { padding-left: 8mm; grid-template-columns: 20mm 1fr; }
+
+.unterschrift img { height: 12mm; margin: 4mm 0 1mm; }
+.unterschrift .name { font-weight: 700; margin: 0; }
+
+/* Protokoll */
+h1 { font-size: 15pt; margin: 0; }
+.untertitel { margin: 0 0 6mm; }
+h2 { font-size: 11.5pt; margin: 7mm 0 2mm; color: var(--text); border-bottom: 1.5pt solid var(--akzent); padding-bottom: 1mm; break-after: avoid; page-break-after: avoid; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; page-break-inside: auto; }
+th, td { text-align: left; vertical-align: top; padding: 1.5mm 2mm; border-bottom: 0.5pt solid #cfdfe1; }
+thead th { background: var(--akzent-hell); }
+table.kopf th { width: 40mm; background: var(--akzent-hell); }
+.top { break-after: avoid; margin: 4mm 0 1mm; font-weight: 700; display: grid; grid-template-columns: 18mm 1fr; }
+.punkte { margin: 0 0 0 18mm; padding: 0; list-style: none; }
+.punkte > li::before { content: "– "; }
+.punkte ul { list-style: none; padding-left: 5mm; }
+.punkte ul li::before { content: "· "; }
+.ergebnis { margin: 1.5mm 0 0 18mm; font-weight: 700; }
+.top-block { page-break-inside: avoid; }
+.unterschriften { display: grid; grid-template-columns: 1fr 1fr; gap: 12mm; margin-top: 16mm; page-break-inside: avoid; }
+.unterschriften .linie { border-top: 0.75pt solid var(--text); padding-top: 1mm; margin-top: 12mm; }
+.version { font-size: 8pt; color: #666; }
