@@ -594,6 +594,8 @@ model Circulation {
   determinedBy        User?             @relation("CirculationDeterminedBy", fields: [determinedById], references: [id], onDelete: SetNull)
   determinedAt        DateTime?
   announcedAt         DateTime?
+  /// Admin wurde über den Fristablauf informiert
+  deadlineNotifiedAt  DateTime?
   resultText          String            @default("")
   /// in welcher Sitzung darüber berichtet wurde
   reportedInMeetingId String?

@@ -20,6 +20,8 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { key: "prompt.protokoll", file: "prompt-protokollentwurf.md", kind: "prompt", name: "Prompt Protokollentwurf", usage: "Claude-Entwurf aus Transkript" },
   { key: "aufgabe.zugewiesen", file: "aufgabe-zugewiesen.mail.hbs", kind: "mail", name: "Neue Aufgabe zugewiesen", usage: "Aufgabe zugewiesen" },
   { key: "antrag.einberufung", file: "antrag-einberufung.mail.hbs", kind: "mail", name: "Antrag auf Einberufung", usage: "an Admins, sobald fünf Mitglieder einen Antrag tragen" },
+  { key: "ladungsfrist.hinweis", file: "ladungsfrist-hinweis.mail.hbs", kind: "mail", name: "Hinweis Ladungsfrist", usage: "an Admins, wenn die Einladung bald raus muss" },
+  { key: "umlauf.frist", file: "umlauf-frist.mail.hbs", kind: "mail", name: "Umlaufverfahren: Frist abgelaufen", usage: "an Admins nach Fristablauf" },
   { key: "anmeldung.mail", file: "anmeldung.mail.hbs", kind: "mail", name: "Anmeldelink", usage: "Login per Magic Link" },
   { key: "zugang.einladung", file: "zugang-einladung.mail.hbs", kind: "mail", name: "Zugang eingerichtet", usage: "Nutzer angelegt" },
 ];

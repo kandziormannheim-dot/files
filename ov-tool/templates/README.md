@@ -81,6 +81,7 @@ anmeldung.link, anmeldung.gueltigMinuten   (Anmeldelink)
 zugang.link           (Zugang eingerichtet → Login-Seite)
 antrag.*              titel, beschreibung, unterstuetzer, erforderlich, link
 transkript.*          sitzung, link (Entwurf aus Transkript fertig)
+frist.letzterTag, frist.link   (Hinweis Ladungsfrist)
 aufgabe.*             titel, frist, ueberfaellig, herkunft, link, von (Aufgaben-Erinnerung, Zuweisung)
 aktion.*, schichten[] (Helferaufruf)
 ```
@@ -105,6 +106,8 @@ aktion.*, schichten[] (Helferaufruf)
 | `prompt-protokollentwurf.md` | `prompt.protokoll` | Systemprompt für den Claude-Entwurf aus Transkripten |
 | `aufgabe-zugewiesen.mail.hbs` | `aufgabe.zugewiesen` | Neue Aufgabe zugewiesen (an neu Verantwortliche) |
 | `antrag-einberufung.mail.hbs` | `antrag.einberufung` | an Admins, sobald fünf Mitglieder einen Antrag auf Einberufung tragen (LV § 31 Abs. 3) |
+| `ladungsfrist-hinweis.mail.hbs` | `ladungsfrist.hinweis` | an Admins, wenn die Ladungsfrist naht und die Einladung fehlt |
+| `umlauf-frist.mail.hbs` | `umlauf.frist` | an Admins nach Fristablauf eines Umlaufverfahrens |
 | `anmeldung.mail.hbs` | `anmeldung.mail` | Anmeldelink (Magic Link) |
 | `zugang-einladung.mail.hbs` | `zugang.einladung` | Hinweis an neue Nutzer, dass ein Zugang besteht |
 | `briefbogen.css` | – | Layout für alle Dokument-Vorlagen |
