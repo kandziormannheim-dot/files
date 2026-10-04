@@ -50,6 +50,9 @@ model User {
   /// Gäste können ohne Login geführt werden (erhalten nur Mails)
   loginEnabled       Boolean     @default(true)
   signatureImagePath String?
+  /// Telefonnummer (selbst gepflegt); in der Vorstandsliste nur mit Zustimmung sichtbar
+  phone              String?
+  showPhoneInBoard   Boolean     @default(false)
   icsToken           String      @unique @default(cuid())
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
@@ -77,8 +80,27 @@ model User {
   topicEvents         TopicEvent[]
   attachments         Attachment[]
   templates           Template[]
+  emailChangeTokens   EmailChangeToken[]
+  marketingCreated    MarketingPost[] @relation("MarketingCreatedBy")
+  marketingApproved   MarketingPost[] @relation("MarketingApprovedBy")
 
   @@index([active, sortOrder])
+}
+
+/// Bestätigung einer neuen E-Mail-Adresse: nur der Hash des Tokens wird gespeichert, einmal verwendbar.
+model EmailChangeToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// immer kleingeschrieben
+  newEmail  String
+  /// SHA-256 des Tokens (hex)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 // Tabellen für Auth.js (@auth/prisma-adapter)
@@ -843,4 +865,49 @@ model Template {
 
   @@unique([key, version])
   @@index([key, active])
+}
+
+// ---------------------------------------------------------------------------
+// Marketing: Social-Media-Beiträge und Blogartikel (KI-Entwurf → Freigabe → Veröffentlichung)
+// ---------------------------------------------------------------------------
+
+enum MarketingKind {
+  SOCIAL
+  BLOG
+}
+
+enum MarketingStatus {
+  ENTWURF
+  FREIGEGEBEN
+  VEROEFFENTLICHT
+}
+
+model MarketingPost {
+  id           String          @id @default(cuid())
+  kind         MarketingKind
+  status       MarketingStatus @default(ENTWURF)
+  title        String          @default("")
+  /// Beitragstext; bei Blogartikeln einfache Absätze (Leerzeile = neuer Absatz), Zwischenüberschriften mit "## "
+  body         String          @default("")
+  /// Stichpunkte/Anlass, aus denen der Entwurf entstand
+  brief        String          @default("")
+  /// Kanäle für Social-Beiträge, z. B. facebook, instagram, whatsapp, newsletter
+  channels     String[]
+  hashtags     String          @default("")
+  /// Blog: Zielseite (SF = cdu-sf.de, BBR = bbr.cdu-sf.de)
+  site         String?
+  plannedFor   DateTime?
+  wpPostId     Int?
+  wpLink       String?
+  wpStatus     String?
+  publishedAt  DateTime?
+  approvedAt   DateTime?
+  approvedById String?
+  approvedBy   User?           @relation("MarketingApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  createdById  String?
+  createdBy    User?           @relation("MarketingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([status, createdAt])
 }

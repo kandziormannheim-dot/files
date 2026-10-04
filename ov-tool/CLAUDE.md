@@ -89,6 +89,7 @@ docker/                # Dockerfiles, Caddyfile, whisper-Konfiguration
 9. Versendete Protokolle sind gesperrt; Änderungen nur als neue Version.
 10. **Satzungslogik zentral** in `src/server/services/statute.ts` (Ladungsfrist, Quorum, Mehrheiten, Umlaufverfahren) mit Quellenangabe je Regel als Kommentar und vollständigen Unit-Tests, inkl. Randfällen (Stimmengleichheit, genau die Hälfte anwesend, Widerspruch von genau einem Viertel). Siehe SPEC.md Abschnitt 2a.
 11. Nicht abgegebene Stimmen gelten im Umlaufverfahren **nie** als Zustimmung.
+12. **Veröffentlichung nach außen** (WordPress, Social Media) nur nach Freigabe im Tool (`marketing.publish`) und mit Audit-Eintrag; externe Zugangsdaten nur als Umgebungsvariablen.
 
 ## Konventionen
 
@@ -118,6 +119,8 @@ WHISPER_MODEL=
 FILE_STORAGE_PATH=/data/files
 CHROMIUM_PATH=           # PDF-Erzeugung; im Container /usr/bin/chromium
 ENCRYPTION_KEY=          # für Bürgerkontaktdaten
+WP_SF_URL= / WP_SF_USER= / WP_SF_APP_PASSWORD=     # Marketing: WordPress-REST cdu-sf.de
+WP_BBR_URL= / WP_BBR_USER= / WP_BBR_APP_PASSWORD=  # dito bbr.cdu-sf.de
 SEED_ADMIN_EMAIL=        # Seed: erster Admin
 SEED_ADMIN_NAME=
 SEED_ADMIN_FUNCTION=

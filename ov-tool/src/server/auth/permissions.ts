@@ -27,6 +27,8 @@ export const CAPABILITIES = [
   "minutes.send",
   "transcript.upload",
   "circulation.manage",
+  "marketing.create", // Social-/Blog-Entwürfe anlegen und eigene bearbeiten
+  "marketing.publish", // freigeben, alle bearbeiten, an WordPress senden
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
@@ -40,6 +42,7 @@ const VORSTAND: Capability[] = [
   "action.create",
   "shift.signup",
   "link.create",
+  "marketing.create",
 ];
 const SCHRIFTFUEHRER: Capability[] = [...VORSTAND, "minutes.edit", "minutes.send", "transcript.upload"];
 

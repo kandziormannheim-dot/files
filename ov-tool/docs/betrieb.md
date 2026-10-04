@@ -94,6 +94,15 @@ dann anmelden, eine Sitzung öffnen und ein Protokoll-PDF erzeugen.
 - Löschfristen setzt der Hintergrundjob durch (Einstellungen → Löschfristen).
 - Logs: `docker compose logs app`. Mails ohne `SMTP_HOST` landen im Log statt im Postfach.
 
+## 6a. Marketing: WordPress-Anbindung
+
+Blogartikel werden nach Freigabe über die WordPress-REST-API übertragen (als Entwurf oder direkt veröffentlicht).
+Einrichtung je Webseite: in WP-Admin einen Redaktionsnutzer (Rolle „Autor“ oder „Redakteur“) anlegen, unter
+Benutzer → Profil → Anwendungspasswörter ein Passwort „OV-Tool“ erzeugen und in der `.env` eintragen
+(`WP_SF_USER`, `WP_SF_APP_PASSWORD`, analog `WP_BBR_…`), danach `docker compose up -d`. Das Passwort steht nur in der `.env`.
+Social-Media-Beiträge werden kopiert/geteilt oder in der Meta Business Suite eingeplant; direktes Posten bräuchte eine
+freigegebene Meta-App und ist nicht eingebaut.
+
 ## 7. Variante: Plesk
 
 Auf einem Plesk-Server gehören Ports 80/443 und die Zertifikate Plesk. Die App läuft trotzdem in Docker (app, db,
