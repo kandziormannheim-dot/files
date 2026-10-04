@@ -1,5 +1,5 @@
 // Deutsche Bezeichnungen für Enums (Oberfläche).
-import type { ActionStatus, ActionType, LinkCategory } from "@prisma/client";
+import type { ActionStatus, ActionType, District, LinkCategory, TopicEventType, TopicStatus } from "@prisma/client";
 
 export const LINK_CATEGORY_LABELS: Record<LinkCategory, string> = {
   PARTEI: "Partei",
@@ -32,4 +32,30 @@ export const ACTION_STATUS_LABELS: Record<ActionStatus, string> = {
   BESTAETIGT: "bestätigt",
   DURCHGEFUEHRT: "durchgeführt",
   ABGESAGT: "abgesagt",
+};
+
+export const TOPIC_STATUS_LABELS: Record<TopicStatus, string> = {
+  NEU: "neu",
+  IN_BEARBEITUNG: "in Bearbeitung",
+  BEI_STADTRAETEN: "bei den Stadträten",
+  IM_BEZIRKSBEIRAT: "im Bezirksbeirat",
+  PRESSE: "Presse",
+  ERLEDIGT: "erledigt",
+  ZURUECKGESTELLT: "zurückgestellt",
+};
+
+export const DISTRICT_LABELS: Record<District, string> = {
+  SECKENHEIM: "Seckenheim",
+  FRIEDRICHSFELD: "Friedrichsfeld",
+  BEIDE: "beide",
+};
+
+export const TOPIC_EVENT_LABELS: Record<TopicEventType, string> = {
+  NOTIZ: "Notiz",
+  STATUS: "Status",
+  ANFRAGE: "Anfrage",
+  ANTWORT_VERWALTUNG: "Antwort der Verwaltung",
+  PRESSE: "Presseartikel",
+  SITZUNG: "Sitzung",
+  SONSTIGES: "Sonstiges",
 };

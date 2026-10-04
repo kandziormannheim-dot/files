@@ -18,6 +18,8 @@ Web-App für die Vorstandsarbeit des Ortsverbands. Spezifikation: [`SPEC.md`](SP
 | 2.2 | Transkript-Pipeline: Upload mit Zustimmungsbestätigung (Audio/VTT/DOCX/TXT), faster-whisper, Claude-Entwurf als strukturierte Daten, Vorschläge prüfen und übernehmen, Löschfristen | erledigt (Claude-Aufruf ohne API-Schlüssel nicht live getestet) |
 | 2.3 | Aktionen und Helferschichten: Aktionen mit Status und Partnern, Schichten mit Kapazität, Selbsteintrag, Helferaufruf, Aufgaben, Nachbereitung, Fotos/Dokumente | erledigt |
 | 2.4 | Kalender-Abo: persönlicher ICS-Feed mit Sitzungen, Aktionen und eigenen Schichten, Link widerrufbar | erledigt |
+| 3.1 | Stadtteil-Themen: Kategorie, Ortsteil, Status, Verantwortliche, Verlauf (Statuswechsel automatisch), Anhänge, Aufgaben, „für nächste Sitzung“ → Tagesordnung | erledigt |
+| 3.2 | Bürgeranliegen: Kontaktdaten optional mit Einwilligung, AES-256-GCM-verschlüsselt, nur für den Vorstand lesbar, automatische Löschung nach Erledigung | erledigt |
 
 ## Lokal starten
 
