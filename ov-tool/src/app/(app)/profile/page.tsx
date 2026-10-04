@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ROLE_LABELS, VOTING_RIGHT_LABELS } from "@/server/auth/permissions";
 import { requireUser } from "@/server/auth/session";
-import { removeSignatureAction, updateProfileAction, uploadSignatureAction } from "./actions";
+import { icsUrl } from "@/server/services/calendar";
+import { removeSignatureAction, renewIcsAction, updateProfileAction, uploadSignatureAction } from "./actions";
 
 export const metadata: Metadata = { title: "Mein Profil" };
 
@@ -63,6 +64,23 @@ export default async function ProfilePage() {
               <Input type="file" name="signature" accept="image/png,image/jpeg,image/webp" required aria-label="Bilddatei" />
               <SubmitButton variant="outline" className="self-start" pendingText="Wird hochgeladen …">
                 {user.signatureImagePath ? "Ersetzen" : "Hochladen"}
+              </SubmitButton>
+            </ActionForm>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Kalender-Abo</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            <p className="text-neutral-600">
+              Sitzungen, Aktionen und Ihre Schichten im eigenen Kalender (Outlook, Apple, Google: „Kalender abonnieren“ bzw. „Per URL
+              hinzufügen“). Der Link ist persönlich – nicht weitergeben.
+            </p>
+            <Input readOnly value={icsUrl(user.icsToken)} aria-label="Kalender-Link" className="font-mono text-xs" />
+            <ActionForm action={renewIcsAction}>
+              <SubmitButton size="sm" variant="outline">
+                Neuen Link erzeugen (alten sperren)
               </SubmitButton>
             </ActionForm>
           </CardContent>

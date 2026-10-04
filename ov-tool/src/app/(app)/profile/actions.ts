@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/lib/action-state";
 import { runAction } from "@/server/action";
 import { requireUser } from "@/server/auth/session";
+import { renewIcsToken } from "@/server/services/calendar";
 import { removeSignature, updateOwnProfile, uploadSignature } from "@/server/services/users";
 
 export async function updateProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -27,5 +28,13 @@ export async function removeSignatureAction(_prev: ActionState): Promise<ActionS
     await removeSignature(await requireUser());
     revalidatePath("/profile");
     return "Unterschrift entfernt.";
+  });
+}
+
+export async function renewIcsAction(_prev: ActionState): Promise<ActionState> {
+  return runAction(async () => {
+    await renewIcsToken(await requireUser());
+    revalidatePath("/profile");
+    return "Neuer Kalender-Link erzeugt. Der alte funktioniert nicht mehr.";
   });
 }

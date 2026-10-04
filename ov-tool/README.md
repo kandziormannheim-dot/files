@@ -17,6 +17,7 @@ Web-App für die Vorstandsarbeit des Ortsverbands. Spezifikation: [`SPEC.md`](SP
 | 2.1 | Job-Queue (pg-boss): Mails mit Wiederholung, Aufgaben- und Zusage-Erinnerungen, Ladungsfrist-Hinweis, Fristablauf Umlauf, Löschfristen, Übersendung an die Geschäftsstelle | erledigt |
 | 2.2 | Transkript-Pipeline: Upload mit Zustimmungsbestätigung (Audio/VTT/DOCX/TXT), faster-whisper, Claude-Entwurf als strukturierte Daten, Vorschläge prüfen und übernehmen, Löschfristen | erledigt (Claude-Aufruf ohne API-Schlüssel nicht live getestet) |
 | 2.3 | Aktionen und Helferschichten: Aktionen mit Status und Partnern, Schichten mit Kapazität, Selbsteintrag, Helferaufruf, Aufgaben, Nachbereitung, Fotos/Dokumente | erledigt |
+| 2.4 | Kalender-Abo: persönlicher ICS-Feed mit Sitzungen, Aktionen und eigenen Schichten, Link widerrufbar | erledigt |
 
 ## Lokal starten
 
