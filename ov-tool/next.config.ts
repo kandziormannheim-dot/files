@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // next dev soll CLAUDE.md nicht selbst ergänzen (Projektregeln pflegen wir von Hand)
   agentRules: false,
+  // Uploads (Unterschrift, Briefbogen, Anhänge, Transkripte) laufen über Server Actions
+  experimental: { serverActions: { bodySizeLimit: "200mb" } },
 };
 
 export default nextConfig;

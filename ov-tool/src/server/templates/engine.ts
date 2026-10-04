@@ -229,7 +229,10 @@ export function findUnknownPlaceholders(source: string, allowed: readonly string
     if (exact.has(p)) return false;
     if (prefixes.some((pre) => p.startsWith(pre))) return false;
     // "liste.length" ist erlaubt, wenn die Liste erlaubt ist
-    if (p.endsWith(".length") && [...exact].some((e) => e.startsWith(`${p.slice(0, -7)}[]`))) return false;
+    if (p.endsWith(".length")) {
+      const list = p.slice(0, -7);
+      if (exact.has(list) || [...exact].some((e) => e.startsWith(`${list}[]`))) return false;
+    }
     return true;
   });
 }

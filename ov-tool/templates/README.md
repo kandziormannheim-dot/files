@@ -7,7 +7,7 @@ Die Vorlagen werden per `prisma/seed.ts` in die Tabelle `Template` übernommen u
 ## Engine
 
 **Handlebars** (`handlebars`-Paket). Platzhalter `{{bereich.feld}}`, Schleifen `{{#each}}`, Bedingungen `{{#if}}`.
-Beim Speichern einer Vorlage werden unbekannte Platzhalter als Fehler gemeldet (Whitelist aus dem Kontext-Typ unten).
+Beim Speichern einer Vorlage werden unbekannte Platzhalter als Fehler gemeldet (Whitelist: `src/server/templates/placeholders.ts`).
 
 Mail-Vorlagen (`*.mail.hbs`) haben einen Front-Matter-Block mit `betreff:`. Der Rest ist Klartext; HTML-Mail wird daraus automatisch erzeugt.
 Dokument-Vorlagen (`*.dokument.hbs`) enthalten nur den Inhalt als HTML. Der Renderer legt Briefbogen und Seitenraster darum (siehe Kommentar in `briefbogen.css`) und druckt über Chromium zu PDF (A4).
@@ -52,7 +52,11 @@ sitzung.unterbrechung Freitext, optional („Wiedereröffnung 18:15 Uhr“)
 sitzung.sitzungsleitung Freitext (vorbelegt: Vorsitzender)
 sitzung.einladungVom  DateTime
 sitzung.einladungsweg „per E-Mail“
-sitzung.zusageLink    persönlicher Link (nur in Mails)
+sitzung.zusageLink    persönlicher Link (nur in Mails; im Versanddialog als [Zusage-Link], je Empfänger ersetzt)
+sitzung.rueckmeldungBis DateTime (Rückmeldefrist)
+sitzung.ende          DateTime, optional
+ersatztermin.beginn   (Absage mit neuem Termin, optional)
+letztesProtokoll.sitzungsdatum  (nur in Titeln der Standard-Tagesordnung)
 sitzung.absagegrund   optional
 
 tagesordnung[]        nummer („1“, „1.1“), titel, ebene (0|1), status (OFFEN|BEHANDELT|ABGESETZT|VERTAGT)
@@ -76,6 +80,7 @@ empfaenger.name, empfaenger.anrede (nur Mails an Einzelpersonen)
 anmeldung.link, anmeldung.gueltigMinuten   (Anmeldelink)
 zugang.link           (Zugang eingerichtet → Login-Seite)
 antrag.*              titel, beschreibung, unterstuetzer, erforderlich, link
+transkript.*          sitzung, link (Entwurf aus Transkript fertig)
 aufgabe.*             titel, frist, ueberfaellig, herkunft, link, von (Aufgaben-Erinnerung, Zuweisung)
 aktion.*, schichten[] (Helferaufruf)
 ```

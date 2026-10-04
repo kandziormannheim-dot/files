@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ROLE_LABELS, VOTING_RIGHT_LABELS } from "@/server/auth/permissions";
 import { requireUser } from "@/server/auth/session";
-import { updateProfileAction } from "./actions";
+import { removeSignatureAction, updateProfileAction, uploadSignatureAction } from "./actions";
 
 export const metadata: Metadata = { title: "Mein Profil" };
 
@@ -36,6 +36,34 @@ export default async function ProfilePage() {
               </dl>
               <p className="text-xs text-neutral-600">E-Mail, Rolle, Funktion und Stimmrecht ändert der Admin.</p>
               <SubmitButton className="self-start">Speichern</SubmitButton>
+            </ActionForm>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Unterschrift</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            <p className="text-neutral-600">
+              Wird in Einladungen eingesetzt, die Sie als Absender verschicken. Am besten PNG mit transparentem Hintergrund.
+              Protokolle erhalten Unterschriftslinien zur händischen Unterzeichnung.
+            </p>
+            {user.signatureImagePath ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/api/files/signature/${user.id}`} alt="Ihre Unterschrift" className="h-16 w-fit rounded border bg-white p-1" />
+                <ActionForm action={removeSignatureAction}>
+                  <SubmitButton variant="outline" size="sm">
+                    Unterschrift entfernen
+                  </SubmitButton>
+                </ActionForm>
+              </>
+            ) : null}
+            <ActionForm action={uploadSignatureAction} className="flex flex-col gap-2">
+              <Input type="file" name="signature" accept="image/png,image/jpeg,image/webp" required aria-label="Bilddatei" />
+              <SubmitButton variant="outline" className="self-start" pendingText="Wird hochgeladen …">
+                {user.signatureImagePath ? "Ersetzen" : "Hochladen"}
+              </SubmitButton>
             </ActionForm>
           </CardContent>
         </Card>

@@ -4,7 +4,10 @@ import { cache } from "react";
 import { email as emailSchema, formToObject, optionalText, z } from "@/lib/validation";
 import { assertCan } from "@/server/auth/permissions";
 import { audit } from "@/server/audit";
+import { sniffType } from "@/lib/file-types";
 import { db } from "@/server/db";
+import { UserError } from "@/server/errors";
+import { deleteStoredFile, saveFile } from "@/server/files";
 import { effectiveNoticeDays, type QuorumRule } from "./statute";
 
 // Einstellungen (SPEC.md 3.10) als Schlüssel/Wert in der Tabelle Setting, mit Standardwerten.
@@ -170,4 +173,25 @@ export async function setSetting(actor: Pick<User, "id" | "role">, key: SettingK
     await tx.setting.upsert({ where: { key }, create: { key, value }, update: { value } });
     await audit(tx, actor, "settings.update", "Setting", key, { [key]: value });
   });
+}
+
+/** Briefbogen (A4-Hintergrundbild, PNG) austauschen (SPEC.md 3.6). */
+export async function uploadBriefbogen(actor: Pick<User, "id" | "role">, formData: FormData) {
+  assertCan(actor, "settings.manage");
+  const file = formData.get("briefbogen");
+  if (!(file instanceof File) || file.size === 0) throw new UserError("Bitte eine PNG-Datei auswählen.");
+  if (file.size > 8_000_000) throw new UserError("Die Datei ist größer als 8 MB.");
+  const data = Buffer.from(await file.arrayBuffer());
+  if (sniffType(data) !== "image/png") throw new UserError("Der Briefbogen muss ein PNG-Bild sein (A4, z. B. 1414×2000 px).");
+  const rel = await saveFile("briefbogen", "briefbogen.png", data);
+  const before = (await loadRaw())["briefbogen.path"];
+  await setSetting(actor, "briefbogen.path", rel);
+  await deleteStoredFile(before);
+}
+
+export async function resetBriefbogen(actor: Pick<User, "id" | "role">) {
+  assertCan(actor, "settings.manage");
+  const before = (await loadRaw())["briefbogen.path"];
+  await setSetting(actor, "briefbogen.path", "");
+  await deleteStoredFile(before);
 }

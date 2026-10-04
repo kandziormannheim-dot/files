@@ -70,6 +70,9 @@ docker/                # Dockerfiles, Caddyfile, whisper-Konfiguration
 - **Audit:** `audit(tx, actor, "objekt.aktion", "Typ", id, diff)` aus `src/server/audit.ts`, in derselben Transaktion.
 - **Mails:** nur über Vorlagen (`src/server/templates/engine.ts`, `renderMailTemplate`) und `sendMail`. Ohne `SMTP_HOST` landen Mails im Server-Log.
 - **Datum/Zeit:** ausschließlich über `src/lib/dates.ts` (Europe/Berlin).
+- **Vorlagen:** aktive Fassung über `getTemplateSource(key)` (DB, versioniert; Rückfall auf `templates/`). Kontext für Sitzungen/Absender aus `src/server/services/template-context.ts`. Neue Platzhalter in `src/server/templates/placeholders.ts` und `templates/README.md` eintragen – der Test `placeholders.test.ts` prüft alle Standardvorlagen.
+- **PDF:** `renderDocumentPdf(key, kontext, titel)` in `src/server/pdf/render.ts` (Briefbogen, eingebettete Inter, keine externen Verbindungen).
+- **Dateien:** `src/server/files.ts` (relativ zu `FILE_STORAGE_PATH`, Pfad-Traversal-geschützt); Dateityp über `sniffType` prüfen.
 
 ## Verbindliche Regeln
 
@@ -110,6 +113,7 @@ ANTHROPIC_MODEL=
 WHISPER_URL=http://whisper:9000
 WHISPER_MODEL=
 FILE_STORAGE_PATH=/data/files
+CHROMIUM_PATH=           # PDF-Erzeugung; im Container /usr/bin/chromium
 ENCRYPTION_KEY=          # für Bürgerkontaktdaten
 SEED_ADMIN_EMAIL=        # Seed: erster Admin
 SEED_ADMIN_NAME=

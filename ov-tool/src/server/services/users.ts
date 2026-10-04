@@ -6,6 +6,8 @@ import { audit, changes } from "@/server/audit";
 import { db } from "@/server/db";
 import { NotFoundError, UserError } from "@/server/errors";
 import { sendMail } from "@/server/mail/transport";
+import { IMAGE_EXT, sniffType } from "@/lib/file-types";
+import { deleteStoredFile, saveFile } from "@/server/files";
 import { renderMail } from "@/server/mail/render";
 import { appUrl } from "@/server/ov";
 
@@ -125,4 +127,34 @@ export async function listAuditLog(actor: Actor, filter: { entityType?: string; 
     take: filter.take ?? 200,
     include: { user: { select: { name: true } } },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Unterschriftsbild (nur für sich selbst, SPEC.md 3.6)
+// ---------------------------------------------------------------------------
+
+const MAX_SIGNATURE_BYTES = 1_000_000;
+
+export async function uploadSignature(actor: User, formData: FormData) {
+  const file = formData.get("signature");
+  if (!(file instanceof File) || file.size === 0) throw new UserError("Bitte eine Bilddatei auswählen.");
+  if (file.size > MAX_SIGNATURE_BYTES) throw new UserError("Das Bild ist größer als 1 MB.");
+  const data = Buffer.from(await file.arrayBuffer());
+  const type = sniffType(data);
+  if (!type || !IMAGE_EXT[type]) throw new UserError("Nur PNG-, JPEG- oder WebP-Bilder sind erlaubt.");
+  const rel = await saveFile(`signatures/${actor.id}`, `unterschrift${IMAGE_EXT[type]}`, data);
+  const old = actor.signatureImagePath;
+  await db.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: actor.id }, data: { signatureImagePath: rel } });
+    await audit(tx, actor, "user.signature", "User", actor.id, { uploaded: true });
+  });
+  await deleteStoredFile(old);
+}
+
+export async function removeSignature(actor: User) {
+  await db.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: actor.id }, data: { signatureImagePath: null } });
+    await audit(tx, actor, "user.signature", "User", actor.id, { removed: true });
+  });
+  await deleteStoredFile(actor.signatureImagePath);
 }

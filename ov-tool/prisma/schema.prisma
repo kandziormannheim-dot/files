@@ -437,6 +437,8 @@ model Attendance {
   user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   response         RsvpResponse @default(OFFEN)
   respondedAt      DateTime?
+  /// Einladung an diese Person versendet (Nachversand an neu Hinzugekommene)
+  invitedAt        DateTime?
   /// persönlicher Link in der Einladungsmail (funktioniert ohne Login)
   responseToken    String       @unique
   presence         Presence?
