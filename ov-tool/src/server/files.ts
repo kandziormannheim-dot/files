@@ -6,12 +6,13 @@ import path from "node:path";
 // Dateiablage auf dem lokalen Volume (SPEC.md 5: Dateien). Pfade in der DB sind relativ zu FILE_STORAGE_PATH.
 
 export function storageRoot(): string {
-  return process.env.FILE_STORAGE_PATH || path.join(process.cwd(), "data", "files");
+  return process.env.FILE_STORAGE_PATH || path.join(/*turbopackIgnore: true*/ process.cwd(), "data", "files");
 }
 
 function resolveSafe(relPath: string): string {
-  const root = path.resolve(storageRoot());
-  const full = path.resolve(root, relPath);
+  // Laufzeitpfade (Volume) – nicht in den Build-Trace aufnehmen
+  const root = path.resolve(/*turbopackIgnore: true*/ storageRoot());
+  const full = path.resolve(/*turbopackIgnore: true*/ root, relPath);
   if (!full.startsWith(root + path.sep)) throw new Error("Ungültiger Dateipfad");
   return full;
 }

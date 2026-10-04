@@ -38,9 +38,9 @@ async function getBrowser(): Promise<Browser> {
 }
 
 async function fontFaceCss(): Promise<string> {
-  const dir = path.join(TEMPLATES_DIR, "assets", "fonts");
+  const dir = path.join(/*turbopackIgnore: true*/ TEMPLATES_DIR, "assets", "fonts");
   const face = async (file: string, style: string, range: string) => {
-    const data = (await readFile(path.join(dir, file))).toString("base64");
+    const data = (await readFile(path.join(/*turbopackIgnore: true*/ dir, file))).toString("base64");
     return `@font-face{font-family:"Inter";font-style:${style};font-weight:100 900;font-display:block;src:url(data:font/woff2;base64,${data}) format("woff2");unicode-range:${range};}`;
   };
   const latin = "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
@@ -55,13 +55,13 @@ async function fontFaceCss(): Promise<string> {
 async function briefbogenDataUri(): Promise<string> {
   const s = await getSettings();
   const custom = s.briefbogenPath && (await storedFileExists(s.briefbogenPath)) ? await readStoredFile(s.briefbogenPath) : null;
-  const data = custom ?? (await readFile(path.join(TEMPLATES_DIR, "assets", "briefbogen.png")));
+  const data = custom ?? (await readFile(path.join(/*turbopackIgnore: true*/ TEMPLATES_DIR, "assets", "briefbogen.png")));
   return `data:image/png;base64,${data.toString("base64")}`;
 }
 
 /** Komplettes HTML-Dokument um den Inhalt einer Dokument-Vorlage. */
 export async function wrapDocument(contentHtml: string, title: string): Promise<string> {
-  const css = (await readFile(path.join(TEMPLATES_DIR, "briefbogen.css"), "utf8"))
+  const css = (await readFile(path.join(/*turbopackIgnore: true*/ TEMPLATES_DIR, "briefbogen.css"), "utf8"))
     // Keine externen Schriften laden (Datenschutz, Offline-Rendering) – Inter ist eingebettet.
     .replace(/@import\s+url\([^)]*\)\s*;?/g, "");
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${title.replace(/</g, "&lt;")}</title>

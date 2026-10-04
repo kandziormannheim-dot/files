@@ -4,3 +4,8 @@ node_modules
 .env.*
 docs
 coverage
+data
+.env*
+!.env.example
+tests
+*.tsbuildinfo

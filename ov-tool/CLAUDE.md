@@ -39,10 +39,12 @@ npm run build          # Produktions-Build (output: standalone)
 npm run db:migrate     # = npx prisma migrate dev (Migration lokal anlegen/anwenden)
 npm run db:seed        # erster Admin aus SEED_ADMIN_* (Paket 1.6: Vorlagen, Standard-TOPs)
 npx prisma studio
-docker compose up -d --build   # app + db; das app-Image wendet Migrationen beim Start an
+docker compose --profile prod up -d --build   # Produktion: app, db, whisper, caddy (docs/betrieb.md)
 ```
 
 CI: `.github/workflows/ov-tool-tests.yml` (im Repo-Root) führt Lint, Typprüfung, Tests, Migrationen und Build aus.
+Deployment: `.github/workflows/ov-tool-deploy.yml` (manuell), Betrieb und Sicherung: `docs/betrieb.md`, `scripts/backup.sh`.
+Beim Serverstart (`src/instrumentation.ts`) werden fehlende Vorlagen angelegt, der erste Admin aus `SEED_ADMIN_*` und die Hintergrundjobs gestartet.
 
 ## Struktur
 

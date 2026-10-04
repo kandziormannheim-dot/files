@@ -13,6 +13,7 @@ Web-App für die Vorstandsarbeit des Ortsverbands. Spezifikation: [`SPEC.md`](SP
 | 1.5 | Sitzungen und Tagesordnung: automatische Vorbelegung, TOP-Editor mit Drag & Drop, TO-Vorschläge/Antrag auf Einberufung, Zu-/Absagen (auch per Link), Satzungslogik | erledigt |
 | 1.6 | Vorlagen-Engine und Einladungsversand: versionierte Vorlagen mit Prüfung und Vorschau, PDF auf Briefbogen, Versand mit persönlichem Zusage-Link, Ladungsfrist-Prüfung, Unterschriftsbild, Einstellungen | erledigt (Ladungsfrist-Erinnerung per Job: 2.1) |
 | 1.7 | Protokolle: Live-/nachträglicher Editor mit Autosave, Anwesenheit und Beschlussfähigkeit, Aufhebung/Wiedereröffnung, Beschlüsse mit Mehrheitsberechnung, Aufgaben, Prüfliste, Versand, Versionen, Genehmigung (Sitzung/Umlauf), Übersendung an die Geschäftsstelle, PDF/DOCX; Umlaufverfahren | erledigt |
+| 1.8 | Deployment: Dockerfile mit Chromium, Compose (app, db, whisper, caddy), Caddy mit HTTPS, Start-Initialisierung, Backup/Restore, Deploy-Workflow, Betriebsanleitung (`docs/betrieb.md`) | erledigt (Image-Build auf dem Server zu prüfen) |
 
 ## Lokal starten
 
