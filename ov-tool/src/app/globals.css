@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Farben wie im Briefbogen (templates/briefbogen.css) */
+@theme {
+  --color-akzent: #52b7c1;
+  --color-akzent-dunkel: #2f8a93;
+  --color-akzent-hell: #e6f4f5;
+  --color-text: #1a1a1a;
+  --font-sans: var(--font-inter), Arial, sans-serif;
+}
+
+body {
+  @apply bg-white text-text antialiased;
+}

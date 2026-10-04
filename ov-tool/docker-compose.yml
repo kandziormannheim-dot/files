@@ -1,0 +1,44 @@
+# Paket 1.1: app + db. whisper und caddy folgen mit den Paketen 2.2 und 1.8.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://ovtool:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}@db:5432/ovtool
+      FILE_STORAGE_PATH: /data/files
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - files:/data/files
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ovtool
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}
+      POSTGRES_DB: ovtool
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ovtool -d ovtool"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db:
+  files:

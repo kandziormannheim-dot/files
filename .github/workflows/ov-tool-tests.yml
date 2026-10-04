@@ -1,0 +1,45 @@
+# Lint, Typprüfung, Tests und Build des OV-Management-Tools bei jedem Push,
+# der ov-tool/ berührt. Die Migrationen laufen gegen ein frisches PostgreSQL 16.
+
+name: OV-Tool Tests
+
+on:
+  push:
+    paths: ['ov-tool/**', '.github/workflows/ov-tool-tests.yml']
+  pull_request:
+    paths: ['ov-tool/**', '.github/workflows/ov-tool-tests.yml']
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ov-tool
+    services:
+      db:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ovtool
+          POSTGRES_PASSWORD: ovtool
+          POSTGRES_DB: ovtool
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ovtool" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ovtool:ovtool@localhost:5432/ovtool
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ov-tool/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx prisma migrate deploy
+      - run: npm run build

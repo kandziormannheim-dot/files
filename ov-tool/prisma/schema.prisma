@@ -1,0 +1,16 @@
+// Datenmodell siehe SPEC.md Abschnitt 4. Modelle kommen paketweise hinzu.
+// Bewusst kein Mitglieder-Modell (CLAUDE.md, Regel 1).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Setting {
+  key   String @id
+  value String
+}
