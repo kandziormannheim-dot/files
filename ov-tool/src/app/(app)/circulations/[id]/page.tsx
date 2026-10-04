@@ -32,7 +32,7 @@ export default async function CirculationPage({ params }: { params: Promise<{ id
         <PageHeader title={`${c.number} · ${c.subject}`} description={`Eingeleitet am ${formatDate(c.initiatedAt)}${c.initiatedBy ? ` von ${c.initiatedBy.name}` : ""} · Frist ${formatDateTime(c.deadline)}`} />
         <CirculationBadge status={c.status} />
       </div>
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr] [&>*]:min-w-0">
         <div className="flex flex-col gap-4">
           <Card>
             <CardContent className="flex flex-col gap-2 pt-4 text-sm">

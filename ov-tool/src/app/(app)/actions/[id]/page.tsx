@@ -57,7 +57,7 @@ export default async function ActionPage({ params }: { params: Promise<{ id: str
           {action.helpCallSentAt ? <span className="self-center text-xs text-neutral-600">zuletzt {formatDateTime(action.helpCallSentAt)}</span> : null}
         </div>
       ) : null}
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr] [&>*]:min-w-0">
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>

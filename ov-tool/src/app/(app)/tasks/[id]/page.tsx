@@ -35,7 +35,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
         <PageHeader title={task.title} />
         <TaskStatusBadge task={task} />
       </div>
-      <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+      <div className="grid gap-4 md:grid-cols-[2fr_1fr] [&>*]:min-w-0">
         <div className="flex flex-col gap-4">
           {task.description ? <p className="whitespace-pre-wrap">{task.description}</p> : null}
           <dl className="grid grid-cols-[9rem_1fr] gap-y-2 text-sm">

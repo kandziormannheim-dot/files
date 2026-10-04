@@ -508,7 +508,7 @@ export async function cancelMeeting(actor: Actor, id: string, formData: FormData
   }
 }
 
-export function rsvpCounts(meeting: Pick<MeetingWithAgenda, "attendances">) {
+export function rsvpCounts(meeting: { attendances: { response: RsvpResponse }[] }) {
   const counts: Record<RsvpResponse, number> = { OFFEN: 0, ZUGESAGT: 0, ABGESAGT: 0 };
   for (const a of meeting.attendances) counts[a.response] += 1;
   return counts;

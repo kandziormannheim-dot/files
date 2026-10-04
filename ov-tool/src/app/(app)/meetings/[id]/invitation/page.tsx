@@ -67,7 +67,7 @@ export default async function InvitationPage({ params }: { params: Promise<{ id:
         </Alert>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr] [&>*]:min-w-0">
         <InvitationForm
           action={sendInvitationAction.bind(null, id)}
           subject={p.subject}

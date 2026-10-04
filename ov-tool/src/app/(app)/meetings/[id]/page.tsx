@@ -112,7 +112,7 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
         ) : null}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr] [&>*]:min-w-0">
         <div className="flex flex-col gap-6">
           <section>
             <h2 className="mb-2 font-semibold">Tagesordnung</h2>

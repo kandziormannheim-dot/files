@@ -20,6 +20,7 @@ Web-App für die Vorstandsarbeit des Ortsverbands. Spezifikation: [`SPEC.md`](SP
 | 2.4 | Kalender-Abo: persönlicher ICS-Feed mit Sitzungen, Aktionen und eigenen Schichten, Link widerrufbar | erledigt |
 | 3.1 | Stadtteil-Themen: Kategorie, Ortsteil, Status, Verantwortliche, Verlauf (Statuswechsel automatisch), Anhänge, Aufgaben, „für nächste Sitzung“ → Tagesordnung | erledigt |
 | 3.2 | Bürgeranliegen: Kontaktdaten optional mit Einwilligung, AES-256-GCM-verschlüsselt, nur für den Vorstand lesbar, automatische Löschung nach Erledigung | erledigt |
+| 3.3 | Übersicht: eigene Aufgaben (überfällige zuerst), nächste Sitzung mit Zusagen, Aktionen mit offenen Schichten, zuletzt geänderte Themen, Schnellzugriff, Hinweise je Rolle (Rhythmus, Ladungsfrist, Umlauf, offene Protokolle, fehlende Stimme/Zusage) | erledigt (Wochenzusammenfassung: nicht umgesetzt, optional) |
 
 ## Lokal starten
 

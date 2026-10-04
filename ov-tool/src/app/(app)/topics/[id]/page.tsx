@@ -60,7 +60,7 @@ export default async function TopicPage({ params }: { params: Promise<{ id: stri
           </Button>
         ) : null}
       </div>
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr] [&>*]:min-w-0">
         <div className="flex flex-col gap-6">
           {topic.description ? <p className="whitespace-pre-wrap">{topic.description}</p> : null}
           <section>
