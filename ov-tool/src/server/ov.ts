@@ -1,18 +1,13 @@
 import "server-only";
-
-// OV-Stammdaten für Vorlagen (Platzhalter ov.*). Paket 1.6 macht sie in den Einstellungen änderbar.
-export const OV_DEFAULTS = {
-  name: "Seckenheim-Friedrichsfeld",
-  nameLang: "CDU Mannheim-Süd / Seckenheim-Friedrichsfeld",
-  nameAnschrift: "CDU OV Mannheim-Süd Seckenheim-Friedrichsfeld",
-  ort: "Mannheim",
-  absenderzeile: "",
-};
+import { getSettings } from "./services/settings";
 
 export function appUrl(): string {
   return (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
+/** Platzhalter ov.* für Vorlagen (aus den Einstellungen). */
 export async function ovContext() {
-  return { ...OV_DEFAULTS, appUrl: appUrl() };
+  const s = await getSettings();
+  const { chairUserId: _c, deputyUserId: _d, ...ov } = s.ov;
+  return { ...ov, appUrl: appUrl() };
 }

@@ -368,6 +368,8 @@ model AgendaItem {
   carriedOverFromId  String?
   carriedOverFrom    AgendaItem?      @relation("CarryOver", fields: [carriedOverFromId], references: [id], onDelete: SetNull)
   carriedOverTo      AgendaItem[]     @relation("CarryOver")
+  /// abgesetzter/vertagter TOP soll nicht mehr als Vorschlag erscheinen
+  carryOverDismissed Boolean          @default(false)
   createdAt          DateTime         @default(now())
 
   tasks       Task[]

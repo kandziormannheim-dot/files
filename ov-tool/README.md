@@ -10,6 +10,7 @@ Web-App für die Vorstandsarbeit des Ortsverbands. Spezifikation: [`SPEC.md`](SP
 | 1.2 | Auth und Rollen: Magic-Link-Login, Rollen, Nutzerverwaltung, Rechteprüfung, Audit-Log | erledigt |
 | 1.3 | Link-Hub: Kategorien, Suche, Sortierung per Drag & Drop, Schutz gegen gespeicherte Passwörter | erledigt |
 | 1.4 | Aufgaben: Ansichten Meine/Alle/Überfällig, Filter, Kommentare, Herkunft, Mail bei Zuweisung | erledigt |
+| 1.5 | Sitzungen und Tagesordnung: automatische Vorbelegung, TOP-Editor mit Drag & Drop, TO-Vorschläge/Antrag auf Einberufung, Zu-/Absagen (auch per Link), Satzungslogik | erledigt |
 
 ## Lokal starten
 
