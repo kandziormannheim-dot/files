@@ -12,3 +12,7 @@ export const OV_DEFAULTS = {
 export function appUrl(): string {
   return (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
 }
+
+export async function ovContext() {
+  return { ...OV_DEFAULTS, appUrl: appUrl() };
+}

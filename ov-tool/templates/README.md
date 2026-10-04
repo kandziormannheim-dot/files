@@ -75,7 +75,7 @@ aufgaben[]            nr, titel, verantwortlich, frist
 empfaenger.name, empfaenger.anrede (nur Mails an Einzelpersonen)
 anmeldung.link, anmeldung.gueltigMinuten   (Anmeldelink)
 zugang.link           (Zugang eingerichtet → Login-Seite)
-aufgabe.*             (Aufgaben-Erinnerung)
+aufgabe.*             titel, frist, ueberfaellig, herkunft, link, von (Aufgaben-Erinnerung, Zuweisung)
 aktion.*, schichten[] (Helferaufruf)
 ```
 
@@ -96,6 +96,7 @@ aktion.*, schichten[] (Helferaufruf)
 | `aufgaben-erinnerung.mail.hbs` | `aufgabe.erinnerung` | Frist naht / überschritten |
 | `helferaufruf.mail.hbs` | `aktion.helferaufruf` | Aktion veröffentlicht |
 | `prompt-protokollentwurf.md` | `prompt.protokoll` | Systemprompt für den Claude-Entwurf aus Transkripten |
+| `aufgabe-zugewiesen.mail.hbs` | `aufgabe.zugewiesen` | Neue Aufgabe zugewiesen (an neu Verantwortliche) |
 | `anmeldung.mail.hbs` | `anmeldung.mail` | Anmeldelink (Magic Link) |
 | `zugang-einladung.mail.hbs` | `zugang.einladung` | Hinweis an neue Nutzer, dass ein Zugang besteht |
 | `briefbogen.css` | – | Layout für alle Dokument-Vorlagen |

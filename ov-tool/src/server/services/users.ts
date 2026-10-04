@@ -6,9 +6,8 @@ import { audit, changes } from "@/server/audit";
 import { db } from "@/server/db";
 import { NotFoundError, UserError } from "@/server/errors";
 import { sendMail } from "@/server/mail/transport";
-import { OV_DEFAULTS, appUrl } from "@/server/ov";
-import { renderMailTemplate } from "@/server/templates/engine";
-import { getTemplateSource } from "@/server/templates/store";
+import { renderMail } from "@/server/mail/render";
+import { appUrl } from "@/server/ov";
 
 type Actor = Pick<User, "id" | "role">;
 
@@ -41,13 +40,11 @@ export async function getUser(actor: Actor, id: string) {
 }
 
 async function sendAccessMail(user: Pick<User, "name" | "email">) {
-  const { source } = await getTemplateSource("zugang.einladung");
-  const mail = renderMailTemplate(source, {
-    ov: { ...OV_DEFAULTS, appUrl: appUrl() },
+  const { subject, text, html } = await renderMail("zugang.einladung", {
     empfaenger: { name: user.name },
     zugang: { link: `${appUrl()}/login` },
   });
-  await sendMail({ to: user.email, ...mail });
+  await sendMail({ to: user.email, subject, text, html });
 }
 
 export async function createUser(actor: Actor, formData: FormData) {

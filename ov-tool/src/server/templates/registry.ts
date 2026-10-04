@@ -17,6 +17,7 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { key: "aufgabe.erinnerung", file: "aufgaben-erinnerung.mail.hbs", kind: "mail", name: "Aufgaben-Erinnerung", usage: "Frist naht / überschritten" },
   { key: "aktion.helferaufruf", file: "helferaufruf.mail.hbs", kind: "mail", name: "Helferaufruf", usage: "Aktion veröffentlicht" },
   { key: "prompt.protokoll", file: "prompt-protokollentwurf.md", kind: "prompt", name: "Prompt Protokollentwurf", usage: "Claude-Entwurf aus Transkript" },
+  { key: "aufgabe.zugewiesen", file: "aufgabe-zugewiesen.mail.hbs", kind: "mail", name: "Neue Aufgabe zugewiesen", usage: "Aufgabe zugewiesen" },
   { key: "anmeldung.mail", file: "anmeldung.mail.hbs", kind: "mail", name: "Anmeldelink", usage: "Login per Magic Link" },
   { key: "zugang.einladung", file: "zugang-einladung.mail.hbs", kind: "mail", name: "Zugang eingerichtet", usage: "Nutzer angelegt" },
 ];

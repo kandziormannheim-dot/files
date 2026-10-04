@@ -3,9 +3,7 @@ import NextAuth from "next-auth";
 import type { EmailConfig } from "next-auth/providers";
 import { db } from "@/server/db";
 import { sendMail } from "@/server/mail/transport";
-import { OV_DEFAULTS, appUrl } from "@/server/ov";
-import { renderMailTemplate } from "@/server/templates/engine";
-import { getTemplateSource } from "@/server/templates/store";
+import { renderMail } from "@/server/mail/render";
 
 const LINK_MINUTES = 15;
 
@@ -19,13 +17,12 @@ const emailProvider: EmailConfig = {
   normalizeIdentifier: (identifier) => identifier.trim().toLowerCase(),
   async sendVerificationRequest({ identifier, url }) {
     const user = await db.user.findUnique({ where: { email: identifier } });
-    const { source } = await getTemplateSource("anmeldung.mail");
-    const mail = renderMailTemplate(source, {
-      ov: { ...OV_DEFAULTS, appUrl: appUrl() },
+    const { subject, text, html } = await renderMail("anmeldung.mail", {
       empfaenger: { name: user?.name ?? "" },
       anmeldung: { link: url, gueltigMinuten: LINK_MINUTES },
     });
-    await sendMail({ to: identifier, ...mail });
+    // Anmeldelinks sofort senden (nicht über die Queue), damit Fehler direkt sichtbar werden
+    await sendMail({ to: identifier, subject, text, html });
   },
 };
 
