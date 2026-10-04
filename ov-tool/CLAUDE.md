@@ -39,7 +39,7 @@ npm run build          # Produktions-Build (output: standalone)
 npm run db:migrate     # = npx prisma migrate dev (Migration lokal anlegen/anwenden)
 npm run db:seed        # erster Admin aus SEED_ADMIN_* (Paket 1.6: Vorlagen, Standard-TOPs)
 npx prisma studio
-docker compose --profile prod up -d --build   # Produktion: app, db, whisper, caddy (docs/betrieb.md)
+docker compose up -d --build   # Produktion; Zusatzdienste über COMPOSE_PROFILES in .env (prod = VPS mit Caddy, whisper = Plesk), docs/betrieb.md
 ```
 
 CI: `.github/workflows/ov-tool-tests.yml` (im Repo-Root) führt Lint, Typprüfung, Tests, Migrationen und Build aus.

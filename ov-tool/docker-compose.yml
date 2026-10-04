@@ -1,6 +1,8 @@
 # Dienste laut SPEC.md 5: app, db, whisper, caddy.
 # Entwicklung: nur die Datenbank starten → docker compose up -d db
-# Produktion:  docker compose up -d --build
+# Produktion:  docker compose up -d --build – welche Zusatzdienste laufen, steuert COMPOSE_PROFILES in .env:
+#   prod    = whisper + caddy (eigener VPS, Caddy übernimmt 80/443)
+#   whisper = nur whisper (hinter Plesk o. Ä., der Webserver dort übernimmt 80/443 und HTTPS)
 services:
   app:
     build:
@@ -16,7 +18,7 @@ services:
     expose:
       - "3000"
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
     volumes:
       - files:/data/files
     depends_on:
@@ -37,7 +39,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}
       POSTGRES_DB: ovtool
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - db:/var/lib/postgresql/data
     healthcheck:
