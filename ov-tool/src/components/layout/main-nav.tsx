@@ -21,8 +21,10 @@ export function SideNav({ isAdmin }: Props) {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
-              active ? "bg-akzent-hell text-akzent-dunkel" : "text-neutral-700 hover:bg-neutral-100",
+              "flex items-center gap-3 rounded-md border-l-4 px-3 py-2 text-sm",
+              active
+                ? "border-cadenabbia bg-cadenabbia-10 font-bold text-rhoendorf"
+                : "border-transparent font-medium text-rhoendorf/80 hover:bg-cadenabbia-10 hover:text-rhoendorf",
             )}
           >
             <Icon className="size-4 shrink-0" aria-hidden />
@@ -47,7 +49,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Hauptnavigation"
-      className="fixed inset-x-0 bottom-0 z-10 border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-10 border-t border-rhoendorf-10 bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map(({ href, label, icon: Icon }) => {
@@ -61,8 +63,8 @@ export function BottomNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 px-1 py-2 text-[10px] leading-tight",
-                  active ? "text-akzent-dunkel" : "text-neutral-600",
+                  "flex flex-col items-center gap-0.5 border-t-2 px-1 py-2 text-[10px] leading-tight",
+                  active ? "border-cadenabbia font-bold text-rhoendorf" : "border-transparent text-rhoendorf/70",
                 )}
               >
                 <Icon className="size-5" aria-hidden />

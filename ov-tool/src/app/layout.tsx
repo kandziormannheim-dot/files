@@ -1,4 +1,7 @@
 import "@fontsource-variable/inter";
+import "@fontsource/ibm-plex-serif/400.css";
+import "@fontsource/ibm-plex-serif/400-italic.css";
+import "@fontsource/ibm-plex-serif/600.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Toaster } from "sonner";
@@ -11,7 +14,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 };
 
-export const viewport: Viewport = { themeColor: "#52b7c1" };
+export const viewport: Viewport = { themeColor: "#52b7c1" }; // Cadenabbia-Türkis
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

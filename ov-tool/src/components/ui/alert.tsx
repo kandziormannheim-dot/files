@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 const alertVariants = cva("relative w-full rounded-lg border px-4 py-3 text-sm", {
   variants: {
     variant: {
-      default: "border-akzent bg-akzent-hell/50",
-      destructive: "border-red-300 bg-red-50 text-red-900",
-      warning: "border-amber-300 bg-amber-50 text-amber-950",
+      default: "border-cadenabbia bg-cadenabbia-10 text-rhoendorf",
+      destructive: "border-union-rot/40 bg-union-rot/5 text-union-rot",
+      warning: "border-union-gold bg-union-gold/10 text-[#5c3b00]",
       success: "border-green-300 bg-green-50 text-green-900",
     },
   },

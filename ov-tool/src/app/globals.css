@@ -1,23 +1,60 @@
 @import "tailwindcss";
 
-/* Farben wie im Briefbogen (templates/briefbogen.css) */
+/*
+ * CDU Corporate Design (CDU Manual 2023): Cadenabbia-Türkis als Markenfarbe und Fläche,
+ * Rhöndorf-Blau für Text, Überschriften und Bedienelemente, Union-Schwarz/-Rot/-Gold als Unterstützungsfarben.
+ * Schriften: Inter (Überschriften Extrabold, leicht enger gesetzt) und IBM Plex Serif für Sublines.
+ * Beide Schriften liegen lokal (@fontsource) – keine Verbindung zu Google Fonts.
+ */
 @theme {
+  --color-cadenabbia: #52b7c1;
+  --color-cadenabbia-60: #97d4da;
+  --color-cadenabbia-25: #d4edf0;
+  --color-cadenabbia-10: #eef8f9;
+  --color-rhoendorf: #2d3c4b;
+  --color-rhoendorf-60: #818a93;
+  --color-rhoendorf-25: #cacfd2;
+  --color-rhoendorf-10: #eaecee;
+  --color-union-schwarz: #1b191d;
+  --color-union-rot: #bf111b;
+  --color-union-gold: #ffa600;
+
+  /* Bestehende Namen im Code auf die CI-Farben abbilden */
   --color-akzent: #52b7c1;
-  --color-akzent-dunkel: #2f8a93;
-  --color-akzent-hell: #e6f4f5;
-  --color-text: #1a1a1a;
-  --font-sans: "Inter Variable", Arial, sans-serif;
+  --color-akzent-dunkel: #2d3c4b;
+  --color-akzent-hell: #d4edf0;
+  --color-text: #1b191d;
+
+  --font-sans: "Inter Variable", Inter, Arial, sans-serif;
+  --font-serif: "IBM Plex Serif", Georgia, serif;
 }
 
 @layer base {
-  /* Tailwind 4 nutzt currentColor als Standard-Rahmenfarbe – hier dezent grau wie bei shadcn/ui */
+  /* Tailwind 4 nutzt currentColor als Standard-Rahmenfarbe – hier dezent */
   *,
   ::before,
   ::after {
-    border-color: var(--color-neutral-200);
+    border-color: var(--color-rhoendorf-10);
+  }
+  h1,
+  h2,
+  h3 {
+    color: var(--color-rhoendorf);
+    letter-spacing: -0.01em;
+  }
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-cadenabbia);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-cadenabbia-25);
   }
 }
 
 body {
-  @apply bg-white text-text antialiased;
+  @apply bg-[#f6f8f9] text-text antialiased;
 }

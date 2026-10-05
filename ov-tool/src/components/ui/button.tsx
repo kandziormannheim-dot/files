@@ -4,16 +4,16 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-akzent focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-cadenabbia focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-akzent-dunkel text-white hover:bg-akzent-dunkel/90",
-        destructive: "bg-red-700 text-white hover:bg-red-700/90",
-        outline: "border border-neutral-300 bg-white hover:bg-neutral-50",
-        secondary: "bg-akzent-hell text-akzent-dunkel hover:bg-akzent-hell/80",
-        ghost: "hover:bg-neutral-100",
-        link: "text-akzent-dunkel underline-offset-4 hover:underline",
+        default: "bg-rhoendorf text-white hover:bg-union-schwarz",
+        destructive: "bg-union-rot text-white hover:bg-union-rot/90",
+        outline: "border border-rhoendorf-25 bg-white text-rhoendorf hover:border-cadenabbia hover:bg-cadenabbia-10",
+        secondary: "bg-cadenabbia text-white hover:bg-cadenabbia/90",
+        ghost: "text-rhoendorf hover:bg-cadenabbia-10",
+        link: "text-rhoendorf underline underline-offset-4 decoration-cadenabbia hover:decoration-2",
       },
       size: {
         default: "h-10 px-4 py-2",
