@@ -73,7 +73,7 @@ export function AttendanceCard({
                 <div className="font-medium">{r.name}</div>
                 <div className="text-xs text-neutral-500">
                   {[r.funktion, VOTING[r.voting]].filter(Boolean).join(" · ")}
-                  {r.response === "ZUGESAGT" ? " · hatte zugesagt" : r.response === "ABGESAGT" ? " · hatte abgesagt" : ""}
+                  {r.response === "ZUGESAGT" ? " · hatte zugesagt" : r.response === "ABGESAGT" ? " · hatte abgesagt" : r.response === "VIELLEICHT" ? " · vielleicht" : ""}
                 </div>
               </div>
               <NativeSelect

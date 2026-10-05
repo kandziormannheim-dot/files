@@ -87,6 +87,8 @@ describe.skipIf(!hasTestDb)("Sitzungen (DB)", () => {
     const att = await db.attendance.findFirstOrThrow({ where: { meetingId: m.id } });
     await respondByToken(att.responseToken, form({ response: "ABGESAGT", note: "Urlaub" }));
     expect((await db.attendance.findUniqueOrThrow({ where: { id: att.id } })).response).toBe("ABGESAGT");
+    await respondByToken(att.responseToken, form({ response: "VIELLEICHT", note: "komme ggf. später" }));
+    expect(await db.attendance.findUniqueOrThrow({ where: { id: att.id } })).toMatchObject({ response: "VIELLEICHT", note: "komme ggf. später" });
     await expect(respondByToken("x".repeat(30), form({ response: "ZUGESAGT" }))).rejects.toBeInstanceOf(UserError);
     await db.meeting.update({ where: { id: m.id }, data: { startsAt: new Date(Date.now() - 1000) } });
     await expect(respondByToken(att.responseToken, form({ response: "ZUGESAGT" }))).rejects.toBeInstanceOf(UserError);

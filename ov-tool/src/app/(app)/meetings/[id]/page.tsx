@@ -184,7 +184,7 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
                 <CardTitle>Ihre Teilnahme</CardTitle>
               </CardHeader>
               <CardContent>
-                <RsvpButtons action={respondAction.bind(null, id)} current={mine.response} />
+                <RsvpButtons action={respondAction.bind(null, id)} current={mine.response} note={mine.note} />
               </CardContent>
             </Card>
           ) : null}
@@ -193,7 +193,7 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
               <CardTitle>Rückmeldungen</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3 text-sm">
-              {(["ZUGESAGT", "ABGESAGT", "OFFEN"] as const).map((r) => {
+              {(["ZUGESAGT", "VIELLEICHT", "ABGESAGT", "OFFEN"] as const).map((r) => {
                 const list = byResponse(r);
                 return (
                   <div key={r}>
@@ -204,6 +204,21 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
                   </div>
                 );
               })}
+              {meeting.attendances.some((a) => a.note) ? (
+                <div className="border-t pt-3">
+                  <p className="mb-1 font-semibold text-rhoendorf">Nachrichten zur Rückmeldung</p>
+                  <ul className="flex flex-col gap-2">
+                    {meeting.attendances
+                      .filter((a) => a.note)
+                      .map((a) => (
+                        <li key={a.id}>
+                          <span className="font-medium">{a.nameSnapshot}</span> <RsvpBadge response={a.response} />
+                          <p className="whitespace-pre-wrap font-serif text-rhoendorf/80">„{a.note}“</p>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

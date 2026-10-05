@@ -39,6 +39,10 @@ describe.skipIf(!hasTestDb)("Einladungsversand (DB)", () => {
     expect(outbox.every((m) => !m.text.includes(RSVP_MARKER))).toBe(true);
     expect(tokens.every((t) => outbox.some((m) => m.text.includes(`/rsvp/${t}`)))).toBe(true);
     expect(outbox[0]!.attachments?.[0]?.contentType).toBe("application/pdf");
+    expect(outbox[0]!.text).toMatch(/\/rsvp\/[\w-]+\?antwort=vielleicht/);
+    expect(outbox[0]!.html).toContain("?antwort=ja");
+    expect(outbox[0]!.html).toContain("Vielleicht");
+    expect(outbox[0]!.html).not.toContain(RSVP_MARKER);
     const after = await db.meeting.findUniqueOrThrow({ where: { id: meeting.id } });
     expect(after.status).toBe("EINGELADEN");
     expect(after.invitationTemplateVersion).toBe(3);

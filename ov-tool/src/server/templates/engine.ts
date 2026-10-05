@@ -135,13 +135,13 @@ export function textToHtml(text: string): string {
     .split(/\n{2,}/)
     .map((p) => {
       const html = escapeHtml(p)
-        .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#2f8a93">$1</a>')
+        .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#2d3c4b">$1</a>')
         .replace(/\n/g, "<br>")
         .replace(/^( {4})/gm, "&nbsp;&nbsp;&nbsp;&nbsp;");
       return `<p style="margin:0 0 1em">${html}</p>`;
     })
     .join("\n");
-  return `<!doctype html><html lang="de"><body style="font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.5;color:#1a1a1a;max-width:640px">${paragraphs}</body></html>`;
+  return `<!doctype html><html lang="de"><body style="font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.5;color:#1b191d;max-width:640px">${paragraphs}</body></html>`;
 }
 
 type PathNode = { type: string; original?: string; parts?: string[]; data?: boolean };

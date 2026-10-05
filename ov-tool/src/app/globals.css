@@ -18,6 +18,7 @@
   --color-union-schwarz: #1b191d;
   --color-union-rot: #bf111b;
   --color-union-gold: #ffa600;
+  --color-gruen: #2e8b57; /* nur für Zusage-Status, keine CI-Fläche */
 
   /* Bestehende Namen im Code auf die CI-Farben abbilden */
   --color-akzent: #52b7c1;

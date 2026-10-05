@@ -444,6 +444,7 @@ model ProposalSupporter {
 enum RsvpResponse {
   OFFEN
   ZUGESAGT
+  VIELLEICHT
   ABGESAGT
 }
 

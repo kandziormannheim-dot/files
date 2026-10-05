@@ -69,7 +69,7 @@ export default async function DashboardPage() {
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {d.nextMeeting.myResponse ? <RsvpBadge response={d.nextMeeting.myResponse} /> : null}
                     <span className="text-xs text-neutral-600">
-                      {d.nextMeeting.counts.ZUGESAGT} Zusagen · {d.nextMeeting.counts.ABGESAGT} Absagen · {d.nextMeeting.counts.OFFEN} offen
+                      {d.nextMeeting.counts.ZUGESAGT} Zusagen · {d.nextMeeting.counts.VIELLEICHT} vielleicht · {d.nextMeeting.counts.ABGESAGT} Absagen · {d.nextMeeting.counts.OFFEN} offen
                       {d.nextMeeting.invitationSentAt ? ` · eingeladen am ${formatDate(d.nextMeeting.invitationSentAt)}` : " · noch nicht eingeladen"}
                     </span>
                   </div>

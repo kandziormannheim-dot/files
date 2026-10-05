@@ -436,7 +436,7 @@ export async function dismissCarryOver(actor: Actor, meetingId: string, itemId: 
 // Zu-/Absagen
 // ---------------------------------------------------------------------------
 
-const rsvpSchema = z.object({ response: z.enum(["ZUGESAGT", "ABGESAGT"]), note: optionalText(500) });
+const rsvpSchema = z.object({ response: z.enum(["ZUGESAGT", "VIELLEICHT", "ABGESAGT"]), note: optionalText(1000) });
 
 function assertCanRespond(meeting: Meeting) {
   if (isMeetingLocked(meeting)) throw new UserError("Diese Sitzung findet nicht statt.");
@@ -478,7 +478,7 @@ export async function respondByToken(token: string, formData: FormData) {
       where: { id: att.id },
       data: { response: v.response, respondedAt: new Date(), note: v.note ?? "" },
     });
-    await audit(tx, null, "meeting.respondByLink", "Meeting", att.meetingId, { attendance: att.id, response: v.response });
+    await audit(tx, null, "meeting.respondByLink", "Meeting", att.meetingId, { attendance: att.id, response: v.response, note: v.note ? "ja" : "nein" });
   });
 }
 
@@ -509,7 +509,7 @@ export async function cancelMeeting(actor: Actor, id: string, formData: FormData
 }
 
 export function rsvpCounts(meeting: { attendances: { response: RsvpResponse }[] }) {
-  const counts: Record<RsvpResponse, number> = { OFFEN: 0, ZUGESAGT: 0, ABGESAGT: 0 };
+  const counts: Record<RsvpResponse, number> = { OFFEN: 0, ZUGESAGT: 0, VIELLEICHT: 0, ABGESAGT: 0 };
   for (const a of meeting.attendances) counts[a.response] += 1;
   return counts;
 }

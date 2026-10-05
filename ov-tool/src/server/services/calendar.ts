@@ -68,3 +68,24 @@ export async function renewIcsToken(actor: Pick<User, "id">) {
   });
   return token;
 }
+
+/** Einzeltermin als .ics über den persönlichen Rückmelde-Link (ohne Login). */
+export async function meetingIcsForResponseToken(token: string): Promise<string | null> {
+  if (!token || token.length < 20) return null;
+  const att = await db.attendance.findUnique({ where: { responseToken: token }, include: { meeting: true } });
+  if (!att) return null;
+  const m = att.meeting;
+  const host = new URL(appUrl()).host;
+  return buildIcs("CDU Seckenheim-Friedrichsfeld", [
+    {
+      uid: `meeting-${m.id}@${host}`,
+      start: m.startsAt,
+      end: m.endsAt ?? new Date(m.startsAt.getTime() + 2 * 3600_000),
+      summary: meetingTitle(m).replace(/ am \d\d\.\d\d\.\d{4}$/, ""),
+      location: [m.location, m.onlineUrl].filter(Boolean).join(" · "),
+      url: `${appUrl()}/rsvp/${token}`,
+      cancelled: m.status === "ABGESAGT" || m.status === "AUFGEHOBEN",
+      updated: m.updatedAt,
+    },
+  ]);
+}

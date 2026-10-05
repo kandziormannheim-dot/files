@@ -25,6 +25,23 @@ export function rsvpUrl(token: string) {
   return `${appUrl()}/rsvp/${token}`;
 }
 
+/** Klartext: Link zur Rückmeldeseite plus Direktlinks je Antwort. */
+export function rsvpText(link: string) {
+  return [
+    link,
+    `Zusage: ${link}?antwort=ja`,
+    `Vielleicht: ${link}?antwort=vielleicht`,
+    `Absage: ${link}?antwort=nein`,
+  ].join("\n");
+}
+
+/** HTML-Mail: drei Knöpfe (Zusage/Vielleicht/Absage) im CDU-Design, darunter der Link für eine Nachricht. */
+export function rsvpButtonsHtml(link: string) {
+  const btn = (href: string, label: string, bg: string, fg: string) =>
+    `<td style="padding:4px"><a href="${href}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:${bg};color:${fg};font-weight:700;text-decoration:none;font-family:Inter,Arial,sans-serif;font-size:15px">${label}</a></td>`;
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:8px 0 4px"><tr>${btn(`${link}?antwort=ja`, "✓ Ich komme", "#2d3c4b", "#ffffff")}${btn(`${link}?antwort=vielleicht`, "? Vielleicht", "#ffa600", "#1b191d")}${btn(`${link}?antwort=nein`, "✗ Ich kann nicht", "#ffffff;border:2px solid #2d3c4b", "#2d3c4b")}</tr></table><p style="margin:0 0 1em;font-size:13px;color:#2d3c4b">Rückmeldung mit Nachricht an den Vorstand: <a href="${link}" style="color:#2d3c4b">${link}</a></p>`;
+}
+
 function mailKey(meeting: MeetingWithAgenda) {
   return meeting.isRepeatAfterNoQuorum ? "einladung.wiederholung" : "einladung.mail";
 }
@@ -123,12 +140,13 @@ export async function sendInvitation(actor: Actor, meetingId: string, formData: 
   const mailVersion = (await renderMail(mailKey(preview.meeting), {})).version;
   for (const a of recipients) {
     const link = rsvpUrl(a.responseToken);
-    const text = v.text.replaceAll(RSVP_MARKER, link);
+    const text = v.text.replaceAll(RSVP_MARKER, rsvpText(link));
+    const html = textToHtml(v.text).replaceAll(RSVP_MARKER, `</p>${rsvpButtonsHtml(link)}<p style="margin:0 0 1em">`).replace(/<p style="margin:0 0 1em">(<br>)*<\/p>/g, "");
     await queueMail({
       to: a.user.email,
       subject: v.subject,
       text,
-      html: textToHtml(text),
+      html,
       attachments: [{ filename, content: pdf, contentType: "application/pdf" }],
     });
   }

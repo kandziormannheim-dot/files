@@ -9,6 +9,6 @@ export function MeetingStatusBadge({ status }: { status: MeetingStatus }) {
 }
 
 export function RsvpBadge({ response }: { response: RsvpResponse }) {
-  const variant = response === "ZUGESAGT" ? "success" : response === "ABGESAGT" ? "secondary" : "warning";
+  const variant = response === "ZUGESAGT" ? "success" : response === "ABGESAGT" ? "secondary" : response === "VIELLEICHT" ? "default" : "warning";
   return <Badge variant={variant}>{RSVP_LABELS[response]}</Badge>;
 }

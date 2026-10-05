@@ -23,7 +23,7 @@ export const MEETING_STATUS_LABELS: Record<MeetingStatus, string> = {
   ABGESAGT: "abgesagt",
 };
 
-export const RSVP_LABELS: Record<RsvpResponse, string> = { OFFEN: "keine Rückmeldung", ZUGESAGT: "zugesagt", ABGESAGT: "abgesagt" };
+export const RSVP_LABELS: Record<RsvpResponse, string> = { OFFEN: "keine Rückmeldung", ZUGESAGT: "zugesagt", VIELLEICHT: "vielleicht", ABGESAGT: "abgesagt" };
 
 export const PRESENCE_LABELS: Record<Presence, string> = {
   ANWESEND: "anwesend",
