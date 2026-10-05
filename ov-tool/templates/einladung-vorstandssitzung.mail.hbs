@@ -5,14 +5,14 @@ Sehr geehrte Damen und Herren,
 
 hiermit lade ich Sie herzlich zur {{sitzung.art}} der {{ov.nameLang}} ein:
 
-{{datumLang sitzung.beginn}}, {{uhrzeitKurz sitzung.beginn}} Uhr
-{{#if sitzung.ort}}{{sitzung.ort}}
+**{{datumLang sitzung.beginn}}, {{uhrzeitKurz sitzung.beginn}} Uhr**
+{{#if sitzung.ort}}**{{sitzung.ort}}**
 {{/if}}{{#if sitzung.onlineLink}}Online: {{sitzung.onlineLink}}
 {{/if}}
 
 Folgende Tagesordnung schlage ich vor:
 
-{{#each tagesordnung}}{{#if ebene}}    {{/if}}TOP {{nummer}}  {{titel}}
+{{#each tagesordnung}}{{#if ebene}}	{{/if}}TOP {{nummer}}	{{titel}}
 {{/each}}
 
 Bitte geben Sie bis {{datum sitzung.rueckmeldungBis}} Bescheid, ob Sie teilnehmen – mit einem Klick auf Zusage, Vielleicht oder Absage (auf Wunsch mit einer Nachricht an den Vorstand):

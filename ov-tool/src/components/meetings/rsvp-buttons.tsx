@@ -11,9 +11,10 @@ import { cn } from "@/lib/utils";
 type Choice = Exclude<RsvpResponse, "OFFEN">;
 
 const CHOICES: { value: Choice; label: string; icon: typeof Check; active: string }[] = [
-  { value: "ZUGESAGT", label: "Ich komme", icon: Check, active: "border-gruen bg-gruen/10 text-[#1f6b43] ring-2 ring-gruen/40" },
-  { value: "VIELLEICHT", label: "Vielleicht", icon: CircleHelp, active: "border-union-gold bg-union-gold/15 text-[#6b4500] ring-2 ring-union-gold/50" },
-  { value: "ABGESAGT", label: "Ich kann nicht", icon: X, active: "border-union-rot bg-union-rot/10 text-union-rot ring-2 ring-union-rot/30" },
+  // Einheitlich im CDU-CI wie die Knöpfe in der Einladungsmail: Rhöndorf-Blau, Cadenabbia-Türkis, weiß mit Rahmen
+  { value: "ZUGESAGT", label: "Ich komme", icon: Check, active: "border-rhoendorf bg-rhoendorf text-white ring-2 ring-rhoendorf/30" },
+  { value: "VIELLEICHT", label: "Vielleicht", icon: CircleHelp, active: "border-rhoendorf bg-cadenabbia text-rhoendorf ring-2 ring-cadenabbia/40" },
+  { value: "ABGESAGT", label: "Ich kann nicht", icon: X, active: "border-rhoendorf bg-white text-rhoendorf ring-2 ring-rhoendorf/30" },
 ];
 
 /**
@@ -45,7 +46,7 @@ export function RsvpButtons({
               className={cn(
                 "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 bg-white text-center font-semibold text-rhoendorf transition",
                 large ? "min-h-24 px-2 py-4 text-sm sm:text-base" : "px-2 py-3 text-sm",
-                choice === value ? active : "border-rhoendorf-10 hover:border-cadenabbia",
+                choice === value ? active : "border-rhoendorf-25 text-rhoendorf/80 hover:border-rhoendorf",
               )}
             >
               <input type="radio" name="response" value={value} checked={choice === value} onChange={() => setChoice(value)} className="sr-only" required />

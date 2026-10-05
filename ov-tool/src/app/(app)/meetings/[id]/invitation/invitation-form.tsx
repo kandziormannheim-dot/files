@@ -35,7 +35,7 @@ export function InvitationForm({
       <Field
         label="Text der E-Mail"
         name="text"
-        hint="[Zusage-Link] wird für jede Person durch ihren persönlichen Link ersetzt. Datum, Ort und Tagesordnung bitte in der Sitzung ändern, nicht hier."
+        hint="[Zusage-Link] wird für jede Person durch die Knöpfe Zusage/Vielleicht/Absage ersetzt. **Text** erscheint in der Mail fett. Datum, Ort und Tagesordnung bitte in der Sitzung ändern, nicht hier."
       >
         <Textarea id="text" name="text" defaultValue={text} rows={18} className="font-mono text-sm" />
       </Field>

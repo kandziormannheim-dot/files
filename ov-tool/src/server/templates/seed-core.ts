@@ -8,9 +8,22 @@ import { TEMPLATE_DEFS } from "./registry";
 export async function seedTemplates(db: PrismaClient, templatesDir: string): Promise<string[]> {
   const created: string[] = [];
   for (const def of TEMPLATE_DEFS) {
-    const exists = await db.template.findFirst({ where: { key: def.key } });
-    if (exists) continue;
     const body = await readFile(path.join(/*turbopackIgnore: true*/ templatesDir, def.file), "utf8");
+    const versions = await db.template.findMany({ where: { key: def.key }, orderBy: { version: "desc" } });
+    if (versions.length) {
+      // Unveränderte Standardvorlagen (nie von jemandem bearbeitet) auf die neue Ausgangsfassung heben;
+      // selbst bearbeitete Vorlagen bleiben unangetastet.
+      const untouched = versions.every((v) => !v.createdById);
+      const latest = versions[0]!;
+      if (untouched && latest.body !== body) {
+        await db.$transaction([
+          db.template.updateMany({ where: { key: def.key }, data: { active: false } }),
+          db.template.create({ data: { key: def.key, name: def.name, body, version: latest.version + 1, active: true } }),
+        ]);
+        created.push(`${def.key} (aktualisiert)`);
+      }
+      continue;
+    }
     await db.template.create({ data: { key: def.key, name: def.name, body, version: 1, active: true } });
     created.push(def.key);
   }

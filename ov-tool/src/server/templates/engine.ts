@@ -103,13 +103,39 @@ export function renderHtml(template: string, context: object): string {
   return htmlEngine.hb.compile(template, htmlEngine.compileOptions)(context);
 }
 
-export type RenderedMail = { subject: string; text: string; html: string };
+/** text = Klartext ohne Auszeichnung; raw = mit **fett**-Markierungen (zum Bearbeiten im Einladungsformular). */
+export type RenderedMail = { subject: string; text: string; html: string; raw: string };
 
 export function renderMailTemplate(source: string, context: object): RenderedMail {
   const { meta, body } = parseFrontMatter(source);
   const subject = renderText(meta.betreff ?? "", context).replace(/\s+/g, " ").trim();
-  const text = tidyText(renderText(body, context));
-  return { subject, text, html: textToHtml(text) };
+  const raw = tidyText(renderText(body, context));
+  return { subject, text: stripMarkup(raw), html: textToHtml(raw), raw };
+}
+
+/** **fett** im Klartext: Sternchen entfernen. */
+export function stripMarkup(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, "$1");
+}
+
+const TOP_LINE = /^(\t| {4})?(TOP\s+\S+)(?:\t| {2,})(.*)$/;
+
+/** Tagesordnung (Zeilen „TOP 1<Tab>Titel“, Unterpunkte mit führendem Tab) als ausgerichtete Tabelle. */
+function agendaTableHtml(lines: string[]): string {
+  const rows = lines
+    .map((l) => {
+      const m = TOP_LINE.exec(l)!;
+      const sub = !!m[1];
+      return `<tr><td style="padding:2px 16px 2px ${sub ? "28px" : "0"};white-space:nowrap;vertical-align:top;font-weight:700;color:#2d3c4b">${escapeHtml(m[2]!)}</td><td style="padding:2px 0;vertical-align:top">${inlineHtml(m[3]!)}</td></tr>`;
+    })
+    .join("");
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 1em;border-collapse:collapse;font-size:15px">${rows}</table>`;
+}
+
+function inlineHtml(s: string): string {
+  return escapeHtml(s)
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#2d3c4b">$1</strong>')
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#2d3c4b">$1</a>');
 }
 
 /** Überzählige Leerzeilen und Leerzeichen am Zeilenende entfernen. */
@@ -134,10 +160,11 @@ export function textToHtml(text: string): string {
     .trim()
     .split(/\n{2,}/)
     .map((p) => {
-      const html = escapeHtml(p)
-        .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#2d3c4b">$1</a>')
-        .replace(/\n/g, "<br>")
-        .replace(/^( {4})/gm, "&nbsp;&nbsp;&nbsp;&nbsp;");
+      const lines = p.split("\n");
+      if (lines.every((l) => TOP_LINE.test(l))) return agendaTableHtml(lines);
+      const html = lines
+        .map((l) => inlineHtml(l).replace(/^(\t| {4})/, "&nbsp;&nbsp;&nbsp;&nbsp;").replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;"))
+        .join("<br>");
       return `<p style="margin:0 0 1em">${html}</p>`;
     })
     .join("\n");

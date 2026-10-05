@@ -63,3 +63,19 @@ describe("Vorlagen-Engine", () => {
     ]);
   });
 });
+
+describe("Mail-Auszeichnung", () => {
+  it("setzt **fett** in HTML um und entfernt die Sternchen im Klartext", async () => {
+    const { textToHtml, stripMarkup } = await import("./engine");
+    expect(textToHtml("Termin:\n**Dienstag, 13. Oktober 2026, 19 Uhr**")).toContain("<strong");
+    expect(stripMarkup("**Dienstag, 19 Uhr**\n**Ort**")).toBe("Dienstag, 19 Uhr\nOrt");
+  });
+
+  it("stellt die Tagesordnung als ausgerichtete Tabelle dar, Unterpunkte eingerückt", async () => {
+    const { textToHtml } = await import("./engine");
+    const html = textToHtml("TOP 1\tBegrüßung\n\tTOP 1.1\tBericht Kreisverband\nTOP 2\tSonstiges");
+    expect(html).toContain("<table");
+    expect(html).toMatch(/TOP 1<\/td><td[^>]*>Begrüßung/);
+    expect(html).toMatch(/padding:2px 16px 2px 28px[^>]*>TOP 1\.1/);
+  });
+});

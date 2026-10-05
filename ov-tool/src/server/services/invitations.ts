@@ -16,7 +16,7 @@ import { invitationAttachments } from "./attachments";
 
 /** Obergrenze für Anhänge je Einladungsmail (viele Postfächer lehnen über ~20 MB ab). */
 const MAX_MAIL_ATTACHMENT_BYTES = 12 * 1024 * 1024;
-import { textToHtml } from "@/server/templates/engine";
+import { stripMarkup, textToHtml } from "@/server/templates/engine";
 import { ensureAttendances, getMeeting, isMeetingLocked, type MeetingWithAgenda } from "./meetings";
 import { getSettings } from "./settings";
 import { checkInvitation, latestInvitationDay } from "./statute";
@@ -44,9 +44,11 @@ export function rsvpText(link: string, docs = 0) {
 
 /** HTML-Mail: drei Knöpfe (Zusage/Vielleicht/Absage) im CDU-Design, darunter der Link für eine Nachricht. */
 export function rsvpButtonsHtml(link: string, docs = 0) {
+  // „Bulletproof“-Knöpfe: Farbe und Abstand an der Tabellenzelle, damit alle Mailprogramme sie gleich groß darstellen.
+  // CDU-CI: Rhöndorf-Blau (Zusage), Cadenabbia-Türkis (Vielleicht), weiß mit Rhöndorf-Rahmen (Absage).
   const btn = (href: string, label: string, bg: string, fg: string) =>
-    `<td style="padding:4px"><a href="${href}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:${bg};color:${fg};font-weight:700;text-decoration:none;font-family:Inter,Arial,sans-serif;font-size:15px">${label}</a></td>`;
-  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:8px 0 4px"><tr>${btn(`${link}?antwort=ja`, "✓ Ich komme", "#2d3c4b", "#ffffff")}${btn(`${link}?antwort=vielleicht`, "? Vielleicht", "#ffa600", "#1b191d")}${btn(`${link}?antwort=nein`, "✗ Ich kann nicht", "#ffffff;border:2px solid #2d3c4b", "#2d3c4b")}</tr></table><p style="margin:0 0 1em;font-size:13px;color:#2d3c4b">Rückmeldung mit Nachricht an den Vorstand${docs ? ` und Sitzungsunterlagen (${docs})` : ""}: <a href="${link}" style="color:#2d3c4b">${link}</a></p>`;
+    `<td style="padding:0 8px 8px 0"><table role="presentation" cellspacing="0" cellpadding="0"><tr><td align="center" bgcolor="${bg}" style="background:${bg};border:2px solid #2d3c4b;border-radius:6px;width:150px"><a href="${href}" style="display:block;padding:11px 12px;color:${fg};font-weight:700;text-decoration:none;font-family:Inter,Arial,sans-serif;font-size:15px;line-height:20px;text-align:center">${label}</a></td></tr></table></td>`;
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:8px 0 4px"><tr>${btn(`${link}?antwort=ja`, "Ich komme", "#2d3c4b", "#ffffff")}${btn(`${link}?antwort=vielleicht`, "Vielleicht", "#52b7c1", "#2d3c4b")}${btn(`${link}?antwort=nein`, "Ich kann nicht", "#ffffff", "#2d3c4b")}</tr></table><p style="margin:0 0 1em;font-size:13px;color:#2d3c4b">Rückmeldung mit Nachricht an den Vorstand${docs ? ` und Sitzungsunterlagen (${docs})` : ""}: <a href="${link}" style="color:#2d3c4b">${link}</a></p>`;
 }
 
 function mailKey(meeting: MeetingWithAgenda) {
@@ -99,7 +101,7 @@ export async function invitationPreview(actor: Actor, meetingId: string) {
     locked: isMeetingLocked(meeting),
     deadline: await invitationDeadline(meeting),
     subject: mail.subject,
-    text: mail.text,
+    text: mail.raw,
     recipients,
     sender: ctx.absender,
   };
@@ -177,7 +179,7 @@ export async function sendInvitation(
   const mailVersion = (await renderMail(mailKey(preview.meeting), {})).version;
   for (const a of recipients) {
     const link = rsvpUrl(a.responseToken);
-    const text = v.text.replaceAll(RSVP_MARKER, rsvpText(link, docs.length));
+    const text = stripMarkup(v.text).replaceAll(RSVP_MARKER, rsvpText(link, docs.length));
     const html = textToHtml(v.text).replaceAll(RSVP_MARKER, `</p>${rsvpButtonsHtml(link, docs.length)}<p style="margin:0 0 1em">`).replace(/<p style="margin:0 0 1em">(<br>)*<\/p>/g, "");
     const mail = {
       to: a.user.email,
