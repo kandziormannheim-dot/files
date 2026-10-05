@@ -80,6 +80,8 @@ export const KNOWN_PLACEHOLDERS: readonly string[] = [
   "beschluesse[].ergebnisText",
 
   "aufgaben",
+  "anlagen",
+  "anlagen[].name",
   "aufgaben[].nr",
   "aufgaben[].titel",
   "aufgaben[].verantwortlich",

@@ -75,6 +75,7 @@ umlaufbeschluesse[]   nummer, betreff, ergebnisText
 umlauf.*              betreff, text, begruendung, frist, link, nummer, stimmberechtigt, erforderlich, ja, nein, enthaltung, widerspruch, ohneRueckmeldung, angenommen, ergebnisText, protokoll
 beschluesse[]         top, gegenstand, ergebnisText
 aufgaben[]            nr, titel, verantwortlich, frist
+anlagen[]             name (Anlagen zum Protokoll, z. B. Sitzungspräsentation)
 
 empfaenger.name, empfaenger.anrede (nur Mails an Einzelpersonen)
 anmeldung.link, anmeldung.gueltigMinuten   (Anmeldelink)

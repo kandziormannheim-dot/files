@@ -77,8 +77,13 @@ export async function minutesContext(minutes: Minutes, meeting: MinutesMeeting) 
   });
 
   const circs = await circulationsToReport(meeting);
+  const anlagen = (
+    await db.attachment.findMany({ where: { ownerType: "Meeting", ownerId: meeting.id, inMinutes: true }, orderBy: { createdAt: "asc" }, select: { fileName: true } })
+  ).map((a) => ({ name: a.fileName }));
+
   return {
     ov: await ovContext(),
+    anlagen,
     sitzung: await meetingContext(meeting),
     tagesordnung: numbered.map((i) => ({ nummer: i.number, titel: i.title, ebene: i.level, status: i.status })),
     protokoll: {

@@ -8,6 +8,8 @@ import { audit } from "@/server/audit";
 import { db } from "@/server/db";
 import { NotFoundError, UserError } from "@/server/errors";
 import { queueMail } from "@/server/mail/outbox";
+import { readStoredFile } from "@/server/files";
+import { minutesAttachments } from "./presentation";
 import { renderMail } from "@/server/mail/render";
 import { appUrl } from "@/server/ov";
 import { startCirculationRecord } from "./circulations";
@@ -62,7 +64,15 @@ export async function sendMinutes(actor: Actor, minutesId: string, formData: For
     aufgaben: ctx.aufgaben,
     absender: await senderContext(actor.id),
   });
-  const attachments = [{ filename, content: pdf, contentType: "application/pdf" }];
+  // Anlagen zum Protokoll (z. B. Sitzungspräsentation) mitschicken, solange die Mail klein genug bleibt
+  const extra: { filename: string; content: Buffer; contentType: string }[] = [];
+  let total = pdf.length;
+  for (const a of await minutesAttachments(meeting.id)) {
+    if (total + a.size > 12 * 1024 * 1024) break;
+    extra.push({ filename: a.fileName, content: await readStoredFile(a.filePath), contentType: a.mimeType });
+    total += a.size;
+  }
+  const attachments = [{ filename, content: pdf, contentType: "application/pdf" }, ...extra];
   for (const u of users) await queueMail({ to: u.email, subject: mail.subject, text: mail.text, html: mail.html, attachments });
 
   if (v.approvalMode === "UMLAUF") {

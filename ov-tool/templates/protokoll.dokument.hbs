@@ -65,6 +65,13 @@
 
 <p><strong>Ende der Sitzung:</strong> {{uhrzeit sitzung.geschlossenUm}} Uhr</p>
 
+{{#if anlagen.length}}
+<p><strong>Anlagen:</strong></p>
+<ol class="anlagen">
+{{#each anlagen}}<li>{{name}}</li>{{/each}}
+</ol>
+{{/if}}
+
 <div class="unterschriften">
 {{#each protokoll.unterzeichner}}
   <div>

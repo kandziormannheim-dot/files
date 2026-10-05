@@ -399,6 +399,8 @@ model AgendaItem {
   carriedOverTo      AgendaItem[]     @relation("CarryOver")
   /// abgesetzter/vertagter TOP soll nicht mehr als Vorschlag erscheinen
   carryOverDismissed Boolean          @default(false)
+  /// Vermerke der Sitzungsleitung (erscheinen in den Notizen der Präsentation, nicht in Einladung/Protokoll)
+  leaderNotes        String           @default("")
   createdAt          DateTime         @default(now())
 
   tasks       Task[]
@@ -856,6 +858,8 @@ model Attachment {
   uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   /// Sitzungsunterlagen: mit der Einladung versenden und auf der Rückmeldeseite anbieten
   inInvitation Boolean  @default(false)
+  /// als Anlage mit dem Protokoll versenden (z. B. Sitzungspräsentation)
+  inMinutes    Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   @@index([ownerType, ownerId])

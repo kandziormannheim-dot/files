@@ -18,6 +18,7 @@ import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { agendaSuggestions, ensureAttendances, getMeeting, isMeetingLocked, numberedAgenda } from "@/server/services/meetings";
 import { listTasks } from "@/server/services/tasks";
+import { canLeadMeeting } from "@/server/services/presentation";
 import { canManageMeetingFiles, listAttachments, previousMinutesFor } from "@/server/services/attachments";
 import {
   acceptProposalAction,
@@ -111,6 +112,11 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
         {meeting.status !== "ABGESAGT" ? (
           <Button asChild variant="outline">
             <Link href={`/meetings/${id}/minutes`}>Protokoll</Link>
+          </Button>
+        ) : null}
+        {meeting.status !== "ABGESAGT" && canLeadMeeting(user) ? (
+          <Button asChild variant="outline">
+            <Link href={`/meetings/${id}/presentation`}>Präsentation</Link>
           </Button>
         ) : null}
       </div>

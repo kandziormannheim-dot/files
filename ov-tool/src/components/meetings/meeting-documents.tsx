@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/dates";
 
-type Doc = { id: string; fileName: string; mimeType: string; size: number; createdAt: Date; inInvitation: boolean; uploadedBy: { name: string } | null };
+type Doc = { id: string; fileName: string; mimeType: string; size: number; createdAt: Date; inInvitation: boolean; inMinutes?: boolean; uploadedBy: { name: string } | null };
 
 const kb = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`);
 
@@ -41,7 +41,7 @@ export function MeetingDocuments({
               <span className="truncate">{d.fileName}</span>
             </a>
             <span className="flex flex-wrap items-center gap-2 text-xs text-rhoendorf-60">
-              {d.inInvitation ? <Badge>mit Einladung</Badge> : <Badge variant="secondary">nur intern</Badge>}
+              {d.inMinutes ? <Badge variant="warning">Anlage Protokoll</Badge> : d.inInvitation ? <Badge>mit Einladung</Badge> : <Badge variant="secondary">nur intern</Badge>}
               {kb(d.size)} · {formatDate(d.createdAt)}
               {d.uploadedBy ? ` · ${d.uploadedBy.name}` : ""}
               {canManage ? (

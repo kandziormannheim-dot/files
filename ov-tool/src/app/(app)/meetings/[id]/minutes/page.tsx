@@ -196,6 +196,11 @@ export default async function MinutesPage({
               </Link>
             ))}
           </nav>
+        {canEdit ? (
+          <Button asChild variant="outline">
+            <Link href={`/meetings/${id}/presentation`}>Präsentation</Link>
+          </Button>
+        ) : null}
         {canEdit && minutes.status === "ENTWURF" ? (
           <Button asChild variant="outline">
             <Link href={`/meetings/${id}/transcripts`}>Aus Transkript</Link>
