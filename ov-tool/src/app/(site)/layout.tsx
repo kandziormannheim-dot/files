@@ -3,6 +3,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { getSettings } from "@/server/services/settings";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: { default: "CDU Seckenheim-Friedrichsfeld", template: "%s · CDU Seckenheim-Friedrichsfeld" },
   robots: { index: true, follow: true },

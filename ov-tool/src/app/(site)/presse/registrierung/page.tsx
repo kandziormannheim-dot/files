@@ -3,6 +3,7 @@ import { getSettings } from "@/server/services/settings";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = { title: "Presseverteiler" };
+export const dynamic = "force-dynamic";
 
 export default async function PressRegisterPage() {
   const settings = await getSettings();
