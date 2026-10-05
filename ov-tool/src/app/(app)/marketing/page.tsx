@@ -31,9 +31,9 @@ export default async function MarketingPage() {
       {posts.length === 0 ? (
         <p className="text-sm text-neutral-600">Noch keine Beiträge.</p>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {posts.map((p) => (
-            <Link key={p.id} href={`/marketing/${p.id}`}>
+            <Link key={p.id} href={`/marketing/${p.id}`} className="min-w-0">
               <Card className="transition hover:border-akzent">
                 <CardContent className="flex flex-col gap-1 pt-4 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">

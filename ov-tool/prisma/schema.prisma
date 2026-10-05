@@ -83,6 +83,8 @@ model User {
   emailChangeTokens   EmailChangeToken[]
   marketingCreated    MarketingPost[] @relation("MarketingCreatedBy")
   marketingApproved   MarketingPost[] @relation("MarketingApprovedBy")
+  inventoryCreated    InventoryItem[] @relation("InventoryCreatedBy")
+  inventoryLoans      InventoryLoan[]
 
   @@index([active, sortOrder])
 }
@@ -160,6 +162,7 @@ model AuditLog {
 // ---------------------------------------------------------------------------
 
 enum LinkCategory {
+  ZUSAMMENARBEIT
   PARTEI
   OV_WEBSEITE
   SOCIAL_MEDIA
@@ -910,4 +913,54 @@ model MarketingPost {
   updatedAt    DateTime        @updatedAt
 
   @@index([status, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Inventar: Materialien des OV (Schirm, Stehtisch, Pavillon …) mit Barcode OVMASF01234.20
+// ---------------------------------------------------------------------------
+
+model InventoryItem {
+  id           String          @id @default(cuid())
+  /// laufende Nummer (fünfstellig im Code)
+  number       Int             @unique
+  /// Anschaffungsjahr (vierstellig; im Code die letzten zwei Ziffern)
+  acquiredYear Int
+  /// Barcode-Inhalt, z. B. OVMASF01234.20 – unveränderlich nach Vergabe
+  code         String          @unique
+  name         String
+  description  String          @default("")
+  category     String          @default("")
+  location     String          @default("")
+  quantity     Int             @default(1)
+  condition    String          @default("gut")
+  photoPath    String?
+  /// aktuell verliehen an (leer = im Lager); Verlauf in InventoryLoan
+  lentTo       String?
+  lentAt       DateTime?
+  lentDueAt    DateTime?
+  notes        String          @default("")
+  /// ausgemustert (bleibt für die Historie erhalten, Nummer wird nicht neu vergeben)
+  retiredAt    DateTime?
+  createdById  String?
+  createdBy    User?           @relation("InventoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  loans        InventoryLoan[]
+
+  @@index([retiredAt, name])
+}
+
+model InventoryLoan {
+  id          String        @id @default(cuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  borrower    String
+  lentAt      DateTime      @default(now())
+  dueAt       DateTime?
+  returnedAt  DateTime?
+  note        String        @default("")
+  createdById String?
+  createdBy   User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([itemId, lentAt])
 }
