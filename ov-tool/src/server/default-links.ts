@@ -4,11 +4,16 @@ import type { LinkCategory, PrismaClient } from "@prisma/client";
  * Standard-Links für den Link-Hub. Werden beim Start einmal je Version ergänzt (nur fehlende Adressen),
  * damit gelöschte Links nicht bei jedem Neustart zurückkommen. Keine Zugangsdaten – Anmeldung immer selbst.
  */
-export const DEFAULT_LINKS_VERSION = "1";
+export const DEFAULT_LINKS_VERSION = "2";
 
 type DefaultLink = { title: string; url: string; category: LinkCategory; description?: string; accessNote?: string };
 
 export const DEFAULT_LINKS: DefaultLink[] = [
+  // Zusammenarbeit in der Nextcloud des OV (gleicher Login wie im Tool)
+  { title: "CDU-Cloud – Dateien", url: "https://cloud.cdu-sf.de/apps/files/", category: "ZUSAMMENARBEIT", description: "Gemeinsame Ablage des Vorstands", accessNote: "Cloud-Konto des OV" },
+  { title: "CDU-Cloud – Talk (Chat & Video)", url: "https://cloud.cdu-sf.de/apps/spreed/", category: "ZUSAMMENARBEIT", accessNote: "Cloud-Konto des OV" },
+  { title: "CDU-Cloud – Kalender", url: "https://cloud.cdu-sf.de/apps/calendar/", category: "ZUSAMMENARBEIT", description: "Tipp: Sitzungskalender aus dem Profil hier abonnieren", accessNote: "Cloud-Konto des OV" },
+  { title: "CDU-Cloud – Deck (Kanban)", url: "https://cloud.cdu-sf.de/apps/deck/", category: "ZUSAMMENARBEIT", accessNote: "Cloud-Konto des OV" },
   // Partei / CDU-Dienste
   { title: "CDUplus", url: "https://www.cduplus.cdu.de", category: "PARTEI", description: "Mitgliedernetz der CDU", accessNote: "Anmeldung mit eigenem CDUplus-Konto (SSO)" },
   { title: "CDUplus – Seite 1", url: "https://www.cduplus.cdu.de/page/aff408fb-0389-475b-8ecd-f70f712548b1", category: "PARTEI", accessNote: "Anmeldung mit eigenem CDUplus-Konto" },

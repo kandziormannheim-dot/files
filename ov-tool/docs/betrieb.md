@@ -103,6 +103,25 @@ Benutzer → Profil → Anwendungspasswörter ein Passwort „OV-Tool“ erzeuge
 Social-Media-Beiträge werden kopiert/geteilt oder in der Meta Business Suite eingeplant; direktes Posten bräuchte eine
 freigegebene Meta-App und ist nicht eingebaut.
 
+## 6b. Gemeinsamer Login und Zusammenarbeit mit der CDU-Cloud (Nextcloud)
+
+1. In der Nextcloud (cloud.cdu-sf.de) als Admin: Verwaltungseinstellungen → Sicherheit → „OAuth 2.0-Clients“ →
+   Name „OV-Management“, Weiterleitungs-URL `https://management.cdu-sf.de/api/auth/callback/nextcloud` → Hinzufügen.
+2. Client-ID und Geheimnis in die `.env` auf dem Server: `NEXTCLOUD_URL=https://cloud.cdu-sf.de`,
+   `NEXTCLOUD_CLIENT_ID=…`, `NEXTCLOUD_CLIENT_SECRET=…`, danach `docker compose up -d`.
+3. Auf der Anmeldeseite erscheint „Mit CDU-Cloud anmelden“. Zugelassen wird nur, wessen E-Mail-Adresse im Cloud-Profil
+   mit einer aktiven Person im Tool übereinstimmt; neue Personen legt weiterhin der Admin an.
+4. Optional: In der Nextcloud die App „Externe Seiten“ (External sites) aktivieren und `https://management.cdu-sf.de`
+   als Eintrag anlegen – das Tool erscheint dann als Menüpunkt in der Cloud. Die App erlaubt per
+   `Content-Security-Policy: frame-ancestors` nur die Einbettung in die eigene Cloud.
+
+## 6c. Inventar
+
+Codes nach dem Muster `OVMASF01234.20` (laufende Nummer, Anschaffungsjahr). Etiketten: Inventar → „Etiketten“,
+Bogen A4 mit 3 × 8 Etiketten à 70 × 37 mm (z. B. Avery Zweckform 3474), Druck in tatsächlicher Größe.
+Jedes Etikett trägt einen Code-128-Barcode (Handscanner, Android-Kamera) und einen QR-Code (iPhone-Kamera öffnet den Eintrag).
+Fotos werden beim Hochladen verkleinert und ohne Metadaten (GPS) gespeichert.
+
 ## 7. Variante: Plesk
 
 Auf einem Plesk-Server gehören Ports 80/443 und die Zertifikate Plesk. Die App läuft trotzdem in Docker (app, db,

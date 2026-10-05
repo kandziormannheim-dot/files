@@ -4,6 +4,7 @@ import type { EmailConfig } from "next-auth/providers";
 import { db } from "@/server/db";
 import { sendMail } from "@/server/mail/transport";
 import { renderMail } from "@/server/mail/render";
+import { nextcloudProvider } from "./nextcloud";
 
 const LINK_MINUTES = 15;
 
@@ -26,19 +27,23 @@ const emailProvider: EmailConfig = {
   },
 };
 
+const cloud = nextcloudProvider();
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
   trustHost: true,
   session: { strategy: "database", maxAge: 14 * 24 * 60 * 60, updateAge: 24 * 60 * 60 },
-  providers: [emailProvider],
+  providers: cloud ? [emailProvider, cloud] : [emailProvider],
   pages: { signIn: "/login", verifyRequest: "/login/check", error: "/login/error" },
   callbacks: {
-    async signIn({ user, email }) {
+    async signIn({ user, email, account }) {
       const address = user.email?.toLowerCase();
       const known = address ? await db.user.findUnique({ where: { email: address } }) : null;
       const allowed = !!known && known.active && known.loginEnabled;
       // Unbekannte Adressen bekommen dieselbe Rückmeldung wie bekannte, aber keinen Link.
       if (email?.verificationRequest) return allowed ? true : "/login/check";
+      // Cloud-Login: nur, wenn die E-Mail-Adresse im Cloud-Profil zu einer Person im Tool passt
+      if (account?.provider === "nextcloud" && !allowed) return "/login/error?error=CloudUnknown";
       return allowed;
     },
     session({ session, user }) {

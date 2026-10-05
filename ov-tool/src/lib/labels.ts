@@ -2,6 +2,7 @@
 import type { ActionStatus, ActionType, District, LinkCategory, TopicEventType, TopicStatus } from "@prisma/client";
 
 export const LINK_CATEGORY_LABELS: Record<LinkCategory, string> = {
+  ZUSAMMENARBEIT: "Zusammenarbeit (CDU-Cloud)",
   PARTEI: "Partei",
   OV_WEBSEITE: "OV-Webseite",
   SOCIAL_MEDIA: "Social Media",
@@ -11,6 +12,7 @@ export const LINK_CATEGORY_LABELS: Record<LinkCategory, string> = {
 };
 
 export const LINK_CATEGORY_ORDER: LinkCategory[] = [
+  "ZUSAMMENARBEIT",
   "PARTEI",
   "OV_WEBSEITE",
   "SOCIAL_MEDIA",

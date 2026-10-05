@@ -67,7 +67,7 @@ docker/                # Dockerfiles, Caddyfile, whisper-Konfiguration
 
 ## Muster im Code
 
-- **Rechte:** `src/server/auth/permissions.ts` (Fähigkeiten je Rolle, `assertCan`). Jeder Service ruft `assertCan(actor, …)` auf; Seiten nutzen `requirePageCapability`, Server Actions `requireUser()` und übergeben den Nutzer an den Service.
+- **Rechte:** `src/server/auth/permissions.ts` (Fähigkeiten je Rolle, `assertCan`); im Rechtemanagement (Einstellungen → Rechte) je Rolle anpassbar, gespeichert in Setting `permissions.roles` (`role-permissions.ts`). Neue Fähigkeiten auch in `CAPABILITY_GROUPS` beschriften (Test prüft das). Jeder Service ruft `assertCan(actor, …)` auf; Seiten nutzen `requirePageCapability`, Server Actions `requireUser()` und übergeben den Nutzer an den Service.
 - **Server Actions** liegen als `actions.ts` neben der Seite, rufen nur Services auf und laufen über `runAction` (`src/server/action.ts`) → einheitliche Feld- und Fehlermeldungen für `ActionForm` (`src/components/form.tsx`).
 - **Audit:** `audit(tx, actor, "objekt.aktion", "Typ", id, diff)` aus `src/server/audit.ts`, in derselben Transaktion.
 - **Mails:** nur über Vorlagen (`src/server/templates/engine.ts`, `renderMailTemplate`) und `sendMail`. Ohne `SMTP_HOST` landen Mails im Server-Log.
@@ -92,6 +92,8 @@ docker/                # Dockerfiles, Caddyfile, whisper-Konfiguration
 12. **Veröffentlichung nach außen** (WordPress, Social Media) nur nach Freigabe im Tool (`marketing.publish`) und mit Audit-Eintrag; externe Zugangsdaten nur als Umgebungsvariablen.
 
 ## Konventionen
+
+- **Corporate Design (CDU-Manual 2023):** Cadenabbia-Türkis `#52b7c1` als Fläche/Akzent, Rhöndorf-Blau `#2d3c4b` für Text, Überschriften und Bedienelemente, Union-Rot/-Gold nur unterstützend. Überschriften Inter Extrabold, Sublines IBM Plex Serif (`font-serif`). Tokens in `src/app/globals.css` (`cadenabbia`, `rhoendorf`, `union-*`). Logo nur als Datei `public/brand/cdu-logo.svg` auf weißem Grund.
 
 - Code, Bezeichner, Dateinamen: Englisch. Oberfläche, E-Mails, Vorlagen, Fehlermeldungen für Nutzer: **Deutsch**, neutral formuliert. Anrede und Tonalität in E-Mails werden ausschließlich über die Vorlagen gesteuert, nicht im Code festgelegt.
 - Datumsformat `TT.MM.JJJJ`, Uhrzeit `HH:MM`, Zeitzone `Europe/Berlin` (in der DB UTC).
@@ -121,6 +123,7 @@ CHROMIUM_PATH=           # PDF-Erzeugung; im Container /usr/bin/chromium
 ENCRYPTION_KEY=          # für Bürgerkontaktdaten
 WP_SF_URL= / WP_SF_USER= / WP_SF_APP_PASSWORD=     # Marketing: WordPress-REST cdu-sf.de
 WP_BBR_URL= / WP_BBR_USER= / WP_BBR_APP_PASSWORD=  # dito bbr.cdu-sf.de
+NEXTCLOUD_URL= / NEXTCLOUD_CLIENT_ID= / NEXTCLOUD_CLIENT_SECRET=  # gemeinsamer Login über cloud.cdu-sf.de (OAuth 2.0)
 SEED_ADMIN_EMAIL=        # Seed: erster Admin
 SEED_ADMIN_NAME=
 SEED_ADMIN_FUNCTION=

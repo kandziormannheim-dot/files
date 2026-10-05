@@ -33,3 +33,10 @@ export async function requestLoginLink(_prev: ActionState, formData: FormData): 
 export async function logout() {
   await signOut({ redirectTo: "/login" });
 }
+
+/** Anmeldung über die CDU-Cloud (Nextcloud) – leitet zur Cloud weiter. */
+export async function loginWithCloud(formData: FormData) {
+  const from = String(formData.get("from") ?? "");
+  const redirectTo = from.startsWith("/") && !from.startsWith("//") ? from : "/";
+  await signIn("nextcloud", { redirectTo });
+}
