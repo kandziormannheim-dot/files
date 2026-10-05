@@ -5,6 +5,7 @@ import { cache } from "react";
 import { db } from "@/server/db";
 import { auth } from "./auth";
 import { assertCan, can, type Capability } from "./permissions";
+import { loadRolePermissions } from "./role-permissions";
 
 export { assertCan };
 
@@ -12,6 +13,7 @@ export type CurrentUser = User;
 
 /** Angemeldeter, aktiver Nutzer – je Request nur einmal aus der DB gelesen. */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+  await loadRolePermissions();
   const session = await auth();
   const id = session?.user?.id;
   if (!id) return null;

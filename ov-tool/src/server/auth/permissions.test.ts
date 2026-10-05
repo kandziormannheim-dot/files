@@ -42,3 +42,23 @@ describe("Rollenrechte (SPEC.md Abschnitt 2)", () => {
     expect(canEditOwned("ADMIN", "task.editAll", "u1", [])).toBe(true);
   });
 });
+
+describe("Rechtemanagement", () => {
+  it("jedes Recht ist im Rechtemanagement beschriftet", async () => {
+    const { CAPABILITIES, CAPABILITY_GROUPS } = await import("./permissions");
+    const labelled = new Set(CAPABILITY_GROUPS.flatMap((g) => g.items.map((i) => i.cap)));
+    expect(CAPABILITIES.filter((c) => !labelled.has(c))).toEqual([]);
+  });
+
+  it("übernimmt gespeicherte Rechte, Admin bleibt vollständig, read bleibt erhalten", async () => {
+    const { applyRoleCapabilities, can } = await import("./permissions");
+    applyRoleCapabilities({ VORSTAND: ["invitation.send", "unbekannt"], ADMIN: [] });
+    expect(can("VORSTAND", "invitation.send")).toBe(true);
+    expect(can("VORSTAND", "task.create")).toBe(false);
+    expect(can("VORSTAND", "read")).toBe(true);
+    expect(can("ADMIN", "users.manage")).toBe(true);
+    expect(can("SCHRIFTFUEHRER", "minutes.edit")).toBe(true);
+    applyRoleCapabilities(null);
+    expect(can("VORSTAND", "task.create")).toBe(true);
+  });
+});
