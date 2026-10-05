@@ -9,6 +9,8 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { meetingTitle } from "@/lib/meetings";
 import { requirePageCapability } from "@/server/auth/session";
 import { DocumentPreview } from "@/components/document-preview";
+import { MeetingDocuments } from "@/components/meetings/meeting-documents";
+import { canManageMeetingFiles, listAttachments, previousMinutesFor } from "@/server/services/attachments";
 import { invitationPreview, invitationPreviewHtml } from "@/server/services/invitations";
 import { sendInvitationAction } from "./actions";
 import { InvitationForm } from "./invitation-form";
@@ -18,7 +20,12 @@ export const metadata: Metadata = { title: "Einladung" };
 export default async function InvitationPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requirePageCapability("invitation.send");
   const { id } = await params;
-  const [p, previewHtml] = await Promise.all([invitationPreview(user, id), invitationPreviewHtml(user, id)]);
+  const [p, previewHtml, docs, prev] = await Promise.all([
+    invitationPreview(user, id),
+    invitationPreviewHtml(user, id),
+    listAttachments("Meeting", id),
+    previousMinutesFor(id),
+  ]);
   const newCount = p.recipients.filter((r) => !r.invitedAt).length;
   const { meeting, deadline } = p;
 
@@ -37,6 +44,23 @@ export default async function InvitationPage({ params }: { params: Promise<{ id:
       </div>
 
       <DocumentPreview html={previewHtml} title="Einladung (Briefbogen)" pdfHref={`/api/meetings/${id}/invitation-pdf`} />
+
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle>Unterlagen zur Einladung</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MeetingDocuments
+            meetingId={id}
+            docs={docs}
+            canManage={canManageMeetingFiles(user) && !p.locked}
+            previousMinutes={prev ? { date: prev.meeting.startsAt, status: prev.status } : null}
+          />
+          <p className="mt-3 text-xs text-rhoendorf-60">
+            Markierte Unterlagen gehen als Anhang mit (zusammen bis 12 MB) und stehen allen Eingeladenen auf ihrer Rückmeldeseite zum Download bereit.
+          </p>
+        </CardContent>
+      </Card>
 
       {meeting.invitationSentAt ? (
         <Alert variant="success" className="mb-4">

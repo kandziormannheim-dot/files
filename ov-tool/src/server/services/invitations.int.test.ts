@@ -5,10 +5,12 @@ import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
 import { captureMailsForTests } from "@/server/mail/transport";
 import { invitationPreview, RSVP_MARKER, sendInvitation } from "./invitations";
+import { addMeetingFiles, readAttachmentByResponseToken, setInInvitation } from "./attachments";
 import { createMeeting } from "./meetings";
 
 vi.mock("@/server/pdf/render", () => ({
   renderDocumentPdf: vi.fn(async () => ({ pdf: Buffer.from("%PDF-test"), html: "", version: 3 })),
+  renderDocumentPreview: vi.fn(async () => "<html></html>"),
 }));
 
 const inDays = (d: number) => toDateTimeInput(new Date(Date.now() + d * 86_400_000));
@@ -77,5 +79,37 @@ describe.skipIf(!hasTestDb)("Einladungsversand (DB)", () => {
     await invitationPreview(admin, meeting.id); // legt die Teilnahme an
     await sendInvitation(admin, meeting.id, form({ subject: p.subject, text: p.text, scope: "new" }));
     expect(outbox).toHaveLength(4);
+  });
+
+  it("verschickt freigegebene Unterlagen mit und bietet sie über den Rückmelde-Link an", async () => {
+    const outbox = captureMailsForTests();
+    const { admin, meeting } = await setup(14);
+    const fd = new FormData();
+    fd.append("file", new File([new Uint8Array(Buffer.from("%PDF-1.4 Protokoll"))], "Protokoll-2026-09-01.pdf", { type: "application/pdf" }));
+    fd.append("file", new File(["Intern"], "notizen.txt", { type: "text/plain" }));
+    fd.set("inInvitation", "on");
+    expect(await addMeetingFiles(admin, meeting.id, fd)).toBe(2);
+    const docs = await db.attachment.findMany({ where: { ownerType: "Meeting", ownerId: meeting.id }, orderBy: { fileName: "asc" } });
+    await setInInvitation(admin, docs.find((d) => d.fileName === "notizen.txt")!.id, false);
+    const p = await invitationPreview(admin, meeting.id);
+    await sendInvitation(admin, meeting.id, form({ subject: p.subject, text: p.text }));
+    const names = outbox[0]!.attachments!.map((a) => a.filename);
+    expect(names).toContain("Protokoll-2026-09-01.pdf");
+    expect(names).not.toContain("notizen.txt");
+    expect(outbox[0]!.text).toContain("Sitzungsunterlagen (1)");
+    const att = await db.attendance.findFirstOrThrow({ where: { meetingId: meeting.id } });
+    const pdf = docs.find((d) => d.fileName.startsWith("Protokoll"))!;
+    const txt = docs.find((d) => d.fileName === "notizen.txt")!;
+    expect((await readAttachmentByResponseToken(att.responseToken, pdf.id))?.attachment.fileName).toBe(pdf.fileName);
+    expect(await readAttachmentByResponseToken(att.responseToken, txt.id)).toBeNull();
+    expect(await readAttachmentByResponseToken("y".repeat(30), pdf.id)).toBeNull();
+  });
+
+  it("Vorstand ohne Sitzungsrechte darf keine Unterlagen hochladen", async () => {
+    const { meeting } = await setup(14);
+    const v = await makeUser({ role: "VORSTAND" });
+    const fd = new FormData();
+    fd.append("file", new File([new Uint8Array(Buffer.from("%PDF-1.4"))], "x.pdf"));
+    await expect(addMeetingFiles(v, meeting.id, fd)).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

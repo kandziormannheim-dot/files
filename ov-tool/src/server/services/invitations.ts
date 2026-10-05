@@ -9,7 +9,12 @@ import { UserError } from "@/server/errors";
 import { queueMail } from "@/server/mail/outbox";
 import { renderMail } from "@/server/mail/render";
 import { appUrl } from "@/server/ov";
+import { readStoredFile } from "@/server/files";
 import { renderDocumentPdf, renderDocumentPreview } from "@/server/pdf/render";
+import { invitationAttachments } from "./attachments";
+
+/** Obergrenze für Anhänge je Einladungsmail (viele Postfächer lehnen über ~20 MB ab). */
+const MAX_MAIL_ATTACHMENT_BYTES = 12 * 1024 * 1024;
 import { textToHtml } from "@/server/templates/engine";
 import { ensureAttendances, getMeeting, isMeetingLocked, type MeetingWithAgenda } from "./meetings";
 import { getSettings } from "./settings";
@@ -26,20 +31,21 @@ export function rsvpUrl(token: string) {
 }
 
 /** Klartext: Link zur Rückmeldeseite plus Direktlinks je Antwort. */
-export function rsvpText(link: string) {
+export function rsvpText(link: string, docs = 0) {
   return [
     link,
     `Zusage: ${link}?antwort=ja`,
     `Vielleicht: ${link}?antwort=vielleicht`,
     `Absage: ${link}?antwort=nein`,
+    ...(docs ? [`Sitzungsunterlagen (${docs}) stehen dort ebenfalls zum Download bereit.`] : []),
   ].join("\n");
 }
 
 /** HTML-Mail: drei Knöpfe (Zusage/Vielleicht/Absage) im CDU-Design, darunter der Link für eine Nachricht. */
-export function rsvpButtonsHtml(link: string) {
+export function rsvpButtonsHtml(link: string, docs = 0) {
   const btn = (href: string, label: string, bg: string, fg: string) =>
     `<td style="padding:4px"><a href="${href}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:${bg};color:${fg};font-weight:700;text-decoration:none;font-family:Inter,Arial,sans-serif;font-size:15px">${label}</a></td>`;
-  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:8px 0 4px"><tr>${btn(`${link}?antwort=ja`, "✓ Ich komme", "#2d3c4b", "#ffffff")}${btn(`${link}?antwort=vielleicht`, "? Vielleicht", "#ffa600", "#1b191d")}${btn(`${link}?antwort=nein`, "✗ Ich kann nicht", "#ffffff;border:2px solid #2d3c4b", "#2d3c4b")}</tr></table><p style="margin:0 0 1em;font-size:13px;color:#2d3c4b">Rückmeldung mit Nachricht an den Vorstand: <a href="${link}" style="color:#2d3c4b">${link}</a></p>`;
+  return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:8px 0 4px"><tr>${btn(`${link}?antwort=ja`, "✓ Ich komme", "#2d3c4b", "#ffffff")}${btn(`${link}?antwort=vielleicht`, "? Vielleicht", "#ffa600", "#1b191d")}${btn(`${link}?antwort=nein`, "✗ Ich kann nicht", "#ffffff;border:2px solid #2d3c4b", "#2d3c4b")}</tr></table><p style="margin:0 0 1em;font-size:13px;color:#2d3c4b">Rückmeldung mit Nachricht an den Vorstand${docs ? ` und Sitzungsunterlagen (${docs})` : ""}: <a href="${link}" style="color:#2d3c4b">${link}</a></p>`;
 }
 
 function mailKey(meeting: MeetingWithAgenda) {
@@ -136,18 +142,27 @@ export async function sendInvitation(actor: Actor, meetingId: string, formData: 
   if (!recipients.length) throw new UserError("Keine Empfänger.");
 
   const { pdf, version, filename } = await invitationPdf(actor, meetingId);
+  // Unterlagen (z. B. letztes Protokoll) anhängen, solange die Mail klein genug bleibt; sonst nur über die Rückmeldeseite
+  const docs = await invitationAttachments(meetingId);
+  const docFiles: { filename: string; content: Buffer; contentType: string }[] = [];
+  let total = pdf.length;
+  for (const d of docs) {
+    if (total + d.size > MAX_MAIL_ATTACHMENT_BYTES) break;
+    docFiles.push({ filename: d.fileName, content: await readStoredFile(d.filePath), contentType: d.mimeType });
+    total += d.size;
+  }
   const now = new Date();
   const mailVersion = (await renderMail(mailKey(preview.meeting), {})).version;
   for (const a of recipients) {
     const link = rsvpUrl(a.responseToken);
-    const text = v.text.replaceAll(RSVP_MARKER, rsvpText(link));
-    const html = textToHtml(v.text).replaceAll(RSVP_MARKER, `</p>${rsvpButtonsHtml(link)}<p style="margin:0 0 1em">`).replace(/<p style="margin:0 0 1em">(<br>)*<\/p>/g, "");
+    const text = v.text.replaceAll(RSVP_MARKER, rsvpText(link, docs.length));
+    const html = textToHtml(v.text).replaceAll(RSVP_MARKER, `</p>${rsvpButtonsHtml(link, docs.length)}<p style="margin:0 0 1em">`).replace(/<p style="margin:0 0 1em">(<br>)*<\/p>/g, "");
     await queueMail({
       to: a.user.email,
       subject: v.subject,
       text,
       html,
-      attachments: [{ filename, content: pdf, contentType: "application/pdf" }],
+      attachments: [{ filename, content: pdf, contentType: "application/pdf" }, ...docFiles],
     });
   }
   await db.$transaction(async (tx) => {
@@ -168,6 +183,8 @@ export async function sendInvitation(actor: Actor, meetingId: string, formData: 
       timely: preview.check.ok ? preview.check.timely : null,
       documentTemplateVersion: version,
       mailTemplateVersion: mailVersion,
+      documents: docs.map((d) => d.fileName),
+      documentsAttached: docFiles.length,
     });
   });
   return recipients.length;

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AgendaEditor, type EditorItem } from "@/components/meetings/agenda-editor";
 import { CancelMeetingDialog } from "@/components/meetings/cancel-dialog";
 import { MeetingStatusBadge, RsvpBadge } from "@/components/meetings/meeting-badges";
+import { MeetingDocuments } from "@/components/meetings/meeting-documents";
 import { RsvpButtons } from "@/components/meetings/rsvp-buttons";
 import { ActionForm, SubmitButton } from "@/components/form";
 import { PageHeader } from "@/components/page-header";
@@ -17,6 +18,7 @@ import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { agendaSuggestions, ensureAttendances, getMeeting, isMeetingLocked, numberedAgenda } from "@/server/services/meetings";
 import { listTasks } from "@/server/services/tasks";
+import { canManageMeetingFiles, listAttachments, previousMinutesFor } from "@/server/services/attachments";
 import {
   acceptProposalAction,
   cancelMeetingAction,
@@ -48,9 +50,10 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
     meeting.attendances
       .filter((a) => a.response === r)
       .sort((a, b) => a.sortSnapshot - b.sortSnapshot || a.nameSnapshot.localeCompare(b.nameSnapshot));
-  const [suggestions, tasks] = await Promise.all([
+  const [suggestions, tasks, documents] = await Promise.all([
     editable ? agendaSuggestions(id) : null,
     listTasks(user, { view: "all" }).then((t) => t.filter((x) => x.meetingId === id)),
+    meetingDocs(user, id),
   ]);
 
   return (
@@ -190,6 +193,14 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
           ) : null}
           <Card>
             <CardHeader>
+              <CardTitle>Unterlagen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MeetingDocuments meetingId={id} {...documents} canManage={documents.canManage && !isMeetingLocked(meeting)} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle>Rückmeldungen</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3 text-sm">
@@ -225,4 +236,9 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
       </div>
     </>
   );
+}
+
+async function meetingDocs(user: { role: import("@prisma/client").Role }, meetingId: string) {
+  const [docs, prev] = await Promise.all([listAttachments("Meeting", meetingId), previousMinutesFor(meetingId)]);
+  return { docs, canManage: canManageMeetingFiles(user), previousMinutes: prev ? { date: prev.meeting.startsAt, status: prev.status } : null };
 }

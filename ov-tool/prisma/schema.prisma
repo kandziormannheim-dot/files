@@ -845,7 +845,7 @@ model TopicEvent {
 
 model Attachment {
   id           String   @id @default(cuid())
-  /// "Action" | "Topic" | "TopicEvent" | "Task"
+  /// "Action" | "Topic" | "TopicEvent" | "Task" | "Meeting"
   ownerType    String
   ownerId      String
   filePath     String
@@ -854,6 +854,8 @@ model Attachment {
   size         Int
   uploadedById String?
   uploadedBy   User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  /// Sitzungsunterlagen: mit der Einladung versenden und auf der Rückmeldeseite anbieten
+  inInvitation Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   @@index([ownerType, ownerId])

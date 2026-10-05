@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { CalendarPlus, Clock, MapPin, Video } from "lucide-react";
+import { CalendarPlus, Clock, FileText, MapPin, Video } from "lucide-react";
 import { RsvpButtons } from "@/components/meetings/rsvp-buttons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { numberAgenda } from "@/lib/agenda";
 import { formatDate, formatDateLong, formatTimeShort } from "@/lib/dates";
 import { RSVP_LABELS, isRsvpOpen, meetingTitle } from "@/lib/meetings";
+import { invitationAttachments } from "@/server/services/attachments";
 import { getAttendanceByToken } from "@/server/services/meetings";
 import { respondByTokenAction } from "./actions";
 
@@ -37,6 +38,7 @@ export default async function RsvpPage({ params, searchParams }: { params: Promi
   const m = att.meeting;
   const open = isRsvpOpen(m);
   const agenda = numberAgenda(m.agendaItems);
+  const docs = await invitationAttachments(m.id);
   return (
     <div className="flex flex-col gap-4">
       <Card className="overflow-hidden">
@@ -95,6 +97,25 @@ export default async function RsvpPage({ params, searchParams }: { params: Promi
           )}
         </CardContent>
       </Card>
+
+      {docs.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Unterlagen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-col gap-2 text-sm">
+              {docs.map((d) => (
+                <li key={d.id}>
+                  <a href={`/api/rsvp/${token}/files/${d.id}`} target="_blank" rel="noopener" className="flex items-center gap-2 font-medium text-rhoendorf underline decoration-cadenabbia underline-offset-2">
+                    <FileText className="size-4 shrink-0 text-cadenabbia" aria-hidden /> {d.fileName}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {agenda.length ? (
         <Card>
