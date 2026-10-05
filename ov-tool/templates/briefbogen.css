@@ -68,3 +68,6 @@ table.kopf th { width: 40mm; background: var(--akzent-hell); }
 .unterschriften { display: grid; grid-template-columns: 1fr 1fr; gap: 12mm; margin-top: 16mm; page-break-inside: avoid; }
 .unterschriften .linie { border-top: 0.75pt solid var(--text); padding-top: 1mm; margin-top: 12mm; }
 .version { font-size: 8pt; color: #666; }
+
+/* Mehrzeilige Freitexte (Beschluss, Antrag, Anschrift) */
+.anschrift p, p.mehrzeilig { white-space: pre-line; }

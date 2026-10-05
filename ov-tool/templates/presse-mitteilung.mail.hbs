@@ -1,0 +1,20 @@
+---
+betreff: "Pressemitteilung: {{pm.titel}}"
+---
+PRESSEMITTEILUNG der {{ov.nameLang}}
+
+**{{pm.titel}}**
+{{#if pm.untertitel}}{{pm.untertitel}}
+{{/if}}
+{{pm.datum}}
+
+{{pm.text}}
+
+Online und als Druckfassung: {{pm.link}}
+{{#if pressekontakt}}
+
+Pressekontakt:
+{{pressekontakt}}
+{{/if}}
+
+Sie erhalten diese Mail, weil Sie im Presseverteiler der {{ov.nameLang}} eingetragen sind. Abmelden: {{abmeldeLink}}

@@ -14,6 +14,7 @@ import { canManageMeetingFiles, listAttachments, previousMinutesFor } from "@/se
 import { invitationPreview, invitationPreviewHtml } from "@/server/services/invitations";
 import { sendInvitationAction } from "./actions";
 import { InvitationForm } from "./invitation-form";
+import { StatuteRef } from "@/components/statute-ref";
 
 export const metadata: Metadata = { title: "Einladung" };
 
@@ -68,7 +69,7 @@ export default async function InvitationPage({ params }: { params: Promise<{ id:
         </Alert>
       ) : (
         <Alert variant={deadline.daysLeft < 0 ? "destructive" : deadline.daysLeft <= 2 ? "warning" : "default"} className="mb-4">
-          <AlertTitle>Ladungsfrist {deadline.noticeDays} Tage (LV-Satzung § 50 Abs. 3)</AlertTitle>
+          <AlertTitle>Ladungsfrist {deadline.noticeDays} Tage (<StatuteRef cite="LV-Satzung § 50 Abs. 3">LV-Satzung § 50 Abs. 3</StatuteRef>)</AlertTitle>
           <AlertDescription>
             {meeting.isRepeatAfterNoQuorum
               ? "Erneute Einladung nach Beschlussunfähigkeit – Form und Frist sind nicht bindend (LV § 52 Abs. 3)."

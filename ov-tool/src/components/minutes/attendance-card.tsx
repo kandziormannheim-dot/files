@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { QuorumState } from "@/server/services/minutes";
+import { StatuteRef } from "@/components/statute-ref";
 
 export type AttendanceRow = { id: string; name: string; funktion: string; voting: string; response: string; presence: Presence | null };
 
@@ -100,7 +101,7 @@ export function AttendanceCard({
             <strong>{determined.reached || isRepeat ? "beschlussfähig" : "nicht beschlussfähig"}</strong>.
           </p>
         ) : (
-          <p className="text-sm text-neutral-600">Vor Eintritt in die Tagesordnung stellt der Vorsitzende die Beschlussfähigkeit fest (Statut § 40 Abs. 2).</p>
+          <p className="text-sm text-neutral-600">Vor Eintritt in die Tagesordnung stellt der Vorsitzende die Beschlussfähigkeit fest (<StatuteRef cite="Statut § 40 Abs. 2">Statut § 40 Abs. 2</StatuteRef>).</p>
         )}
         <ActionForm action={determineQuorumAction.bind(null, meetingId, minutesId)} className="flex flex-wrap items-end gap-2" showErrorInline={false}>
           <Field label="Festgestellt durch" name="determinedBy" className="min-w-0 flex-1">
@@ -114,7 +115,7 @@ export function AttendanceCard({
         {suspended ? (
           <Alert variant="warning">
             <AlertDescription className="flex flex-col gap-2">
-              Die Sitzung wurde wegen Beschlussunfähigkeit aufgehoben (LV-Satzung § 52 Abs. 3). Eine Wiedereröffnung ist nur möglich,
+              Die Sitzung wurde wegen Beschlussunfähigkeit aufgehoben (<StatuteRef cite="LV-Satzung § 52 Abs. 3">LV-Satzung § 52 Abs. 3</StatuteRef>). Eine Wiedereröffnung ist nur möglich,
               wenn die Beschlussfähigkeit inzwischen erreicht ist.
               {canManage ? (
                 <ActionForm action={reopenAction.bind(null, meetingId, minutesId)} showErrorInline={false}>
@@ -144,7 +145,7 @@ function SuspendDialog({ meetingId, minutesId, defaultLocation }: { meetingId: s
           <DialogTitle>Sitzung aufheben</DialogTitle>
           <DialogDescription>
             Der Vorsitzende muss die Sitzung sofort aufheben und neu einladen. Die neue Sitzung ist in jedem Fall beschlussfähig; Form und
-            Frist sind nicht bindend (LV-Satzung § 52 Abs. 3). Die Tagesordnung wird übernommen.
+            Frist sind nicht bindend (<StatuteRef cite="LV-Satzung § 52 Abs. 3">LV-Satzung § 52 Abs. 3</StatuteRef>). Die Tagesordnung wird übernommen.
           </DialogDescription>
         </DialogHeader>
         <ActionForm action={suspendAction.bind(null, meetingId, minutesId)} className="flex flex-col gap-3">

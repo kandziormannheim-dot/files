@@ -37,6 +37,12 @@ export const SETTING_DEFAULTS = {
   "retention.citizenContactMonths": "6",
   "topic.categories": "Verkehr\nSchule\nBauen\nSicherheit\nVereine\nSonstiges",
   "briefbogen.path": "",
+  /** Datum der letzten Vorstandswahl (JJJJ-MM-TT), falls nicht im Tool erfasst – Wahlperiode LV § 56 */
+  "election.lastDate": "",
+  /** Öffentliche Seiten (Landing Pages, Presseportal) */
+  "public.imprintUrl": "https://www.cdu-sf.de/impressum/",
+  "public.privacyUrl": "https://www.cdu-sf.de/datenschutz/",
+  "press.contact": "",
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;
@@ -57,6 +63,7 @@ export type AppSettings = {
   retention: { transcriptDays: number; citizenContactMonths: number };
   topicCategories: string[];
   briefbogenPath: string;
+  publicSite: { imprintUrl: string; privacyUrl: string; pressContact: string };
 };
 
 const int = (v: string, fallback: number) => (Number.isFinite(Number(v)) ? Math.floor(Number(v)) : fallback);
@@ -96,6 +103,7 @@ export function toAppSettings(raw: Record<string, string>): AppSettings {
       .map((s) => s.trim())
       .filter(Boolean),
     briefbogenPath: v("briefbogen.path"),
+    publicSite: { imprintUrl: v("public.imprintUrl"), privacyUrl: v("public.privacyUrl"), pressContact: v("press.contact") },
   };
 }
 
@@ -143,6 +151,10 @@ const settingsSchema = z
     "retention.transcriptDays": intField(1, 3650),
     "retention.citizenContactMonths": intField(1, 120),
     "topic.categories": optionalText(2000),
+    "election.lastDate": z.preprocess((v) => (v === "" ? undefined : v), z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()),
+    "public.imprintUrl": optionalText(300),
+    "public.privacyUrl": optionalText(300),
+    "press.contact": optionalText(1000),
   })
   .partial();
 

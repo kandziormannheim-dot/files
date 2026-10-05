@@ -86,6 +86,12 @@ transkript.*          sitzung, link (Entwurf aus Transkript fertig)
 frist.letzterTag, frist.link   (Hinweis Ladungsfrist)
 aufgabe.*             titel, frist, ueberfaellig, herkunft, link, von (Aufgaben-Erinnerung, Zuweisung)
 aktion.*, schichten[] (Helferaufruf)
+beschluss.*           nummer, gremium, gegenstand, datum, verfahren, top, topTitel, ergebnisText, stimmen, beschlussfaehigkeit, wortlaut, begruendung, ausgestelltAm
+eingabe.*             titel, empfaenger, datum, text, begruendung (Antrag aus einem Beschluss an den Kreisverband)
+seite.titel, seite.link   (Landing Page)
+bestaetigung.*        link, loeschfristTage, datenschutz (Double-Opt-in Newsletter/Presseverteiler)
+pm.*                  titel, untertitel, datum, text, link (Pressemitteilung)
+pressekontakt, abmeldeLink   (Versand an den Presseverteiler)
 ```
 
 ## Dateien
@@ -115,6 +121,12 @@ aktion.*, schichten[] (Helferaufruf)
 | `zugang-einladung.mail.hbs` | `zugang.einladung` | Hinweis an neue Nutzer, dass ein Zugang besteht |
 | `email-bestaetigung.mail.hbs` | `email.bestaetigung` | Bestätigungslink an die neue Adresse, wenn jemand seine E-Mail-Adresse ändert |
 | `email-geaendert.mail.hbs` | `email.geaendert` | Hinweis an die bisherige Adresse nach erfolgter Änderung |
+| `beschluss.dokument.hbs` | `beschluss.dokument` | Beschlussauszug als PDF im Briefbogen |
+| `antrag.dokument.hbs` | `antrag.dokument` | Antrag aus einem Beschluss, z. B. an den Kreisverband (PDF) |
+| `antrag-versand.mail.hbs` | `antrag.versand` | Begleit-Mail beim Einreichen eines Antrags (Antrag + Beschluss als PDF-Anhang) |
+| `landing-bestaetigung.mail.hbs` | `landing.bestaetigung` | Double-Opt-in, wenn auf einer Landing Page der Newsletter angekreuzt wurde |
+| `presse-bestaetigung.mail.hbs` | `presse.bestaetigung` | Double-Opt-in für die Registrierung im Presseverteiler |
+| `presse-mitteilung.mail.hbs` | `presse.mitteilung` | Pressemitteilung, Einzelversand an den Presseverteiler (mit Abmeldelink) |
 | `briefbogen.css` | – | Layout für alle Dokument-Vorlagen |
 | `assets/briefbogen.png` | – | Briefbogen als Seitenhintergrund (A4, 1414×2000 px) – in den Einstellungen austauschbar |
 | (Unterschrift) | – | nicht im Repo; jeder Unterzeichner lädt sein Unterschriftsbild in der App selbst hoch |

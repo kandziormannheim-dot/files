@@ -27,6 +27,12 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { key: "anmeldung.mail", file: "anmeldung.mail.hbs", kind: "mail", name: "Anmeldelink", usage: "Login per Magic Link" },
   { key: "zugang.einladung", file: "zugang-einladung.mail.hbs", kind: "mail", name: "Zugang eingerichtet", usage: "Nutzer angelegt" },
   { key: "email.bestaetigung", file: "email-bestaetigung.mail.hbs", kind: "mail", name: "Neue E-Mail-Adresse bestätigen", usage: "an die neue Adresse, wenn jemand seine E-Mail-Adresse ändert" },
+  { key: "beschluss.dokument", file: "beschluss.dokument.hbs", kind: "dokument", name: "Beschluss (PDF)", usage: "Beschlussauszug im Briefbogen" },
+  { key: "antrag.dokument", file: "antrag.dokument.hbs", kind: "dokument", name: "Antrag an den Kreisverband (PDF)", usage: "Antrag aus einem Beschluss" },
+  { key: "antrag.versand", file: "antrag-versand.mail.hbs", kind: "mail", name: "Antrag einreichen (E-Mail)", usage: "Begleit-Mail an die Kreisgeschäftsstelle mit Antrag und Beschluss als PDF" },
+  { key: "landing.bestaetigung", file: "landing-bestaetigung.mail.hbs", kind: "mail", name: "Landing Page: Newsletter bestätigen", usage: "Double-Opt-in, wenn auf einer Landing Page der Newsletter angekreuzt wurde" },
+  { key: "presse.bestaetigung", file: "presse-bestaetigung.mail.hbs", kind: "mail", name: "Presseverteiler: Registrierung bestätigen", usage: "Double-Opt-in für Pressevertreter" },
+  { key: "presse.mitteilung", file: "presse-mitteilung.mail.hbs", kind: "mail", name: "Pressemitteilung (Versand)", usage: "Einzelversand an den Presseverteiler" },
   { key: "email.geaendert", file: "email-geaendert.mail.hbs", kind: "mail", name: "E-Mail-Adresse geändert", usage: "Hinweis an die alte Adresse nach der Änderung" },
 ];
 

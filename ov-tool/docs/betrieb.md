@@ -130,6 +130,14 @@ Bogen A4 mit 3 × 8 Etiketten à 70 × 37 mm (z. B. Avery Zweckform 3474), Druck
 Jedes Etikett trägt einen Code-128-Barcode (Handscanner, Android-Kamera) und einen QR-Code (iPhone-Kamera öffnet den Eintrag).
 Fotos werden beim Hochladen verkleinert und ohne Metadaten (GPS) gespeichert.
 
+## 6d. Satzung, Wahlen, Presse, Landing Pages, Beschlüsse
+
+- **Satzung** (`/satzung`): Volltexte aus `src/data/statutes.json` (Statut CDU Deutschlands Stand 21.02.2026 mit GO, FBO, PGO, DSO, BFAO, PartG; Satzung/Verfahrens-/Finanzordnung CDU BW Stand 27.04.2024). Neue Fassung: PDFs laden, `pdftotext -layout` und `python3 scripts/statute/parse.py statut.txt bw.txt > src/data/statutes.json` (Zeilenbereiche im Skript prüfen), Tests laufen lassen. Suche läuft im Browser und offline (Service Worker `public/sw.js`). Der Frage-Antwort-Assistent braucht `ANTHROPIC_API_KEY`.
+- **Wahlen** (`/elections`): Stimmzettel drucken, Auszählung nach LV-Satzung § 57, Niederschrift nach § 51 Abs. 2. Die Auszählung speichert ohne Netz auf dem Gerät und überträgt später. Keine Mitgliederlisten, keine elektronische Stimmabgabe.
+- **Presse** (`/press` intern, `/presse` öffentlich): Freigabe durch Recht `press.publish`, Einzelversand an aktive Verteiler-Kontakte. Pressekontakt, Impressum- und Datenschutz-Link unter Einstellungen → Allgemein.
+- **Landing Pages** (`/landing`, öffentlich `/p/<kurzname>`): erst nach Freigabe online; Einträge verschlüsselt, wenn `ENCRYPTION_KEY` gesetzt ist; automatische Löschung im nächtlichen Retention-Job.
+- **Beschlüsse** (`/resolutions`): PDF je Beschluss; „Als Antrag an den Kreisverband“ sendet Antrag + Beschluss als PDF an die E-Mail der Kreisgeschäftsstelle (Einstellungen → Allgemein, Vorbelegung).
+
 ## 7. Variante: Plesk
 
 Auf einem Plesk-Server gehören Ports 80/443 und die Zertifikate Plesk. Die App läuft trotzdem in Docker (app, db,

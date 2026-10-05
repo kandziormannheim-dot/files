@@ -106,6 +106,52 @@ export default async function DashboardPage() {
         </div>
         <Card>
           <CardHeader className="flex-row items-center justify-between">
+            <CardTitle>Fristenradar</CardTitle>
+            {more("/deadlines")}
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-col gap-2 text-sm">
+              {d.radar.map((r, i) => (
+                <li key={`${r.href}-${i}`}>
+                  <Link href={r.href} className="flex flex-wrap items-center justify-between gap-2 hover:underline">
+                    <span className="min-w-0">
+                      <span className="font-medium">{formatDate(r.date)}</span> · {r.title}
+                    </span>
+                    <Badge variant={r.level === "destructive" ? "destructive" : r.level === "warning" ? "warning" : "secondary"}>
+                      {r.daysLeft < 0 ? "überschritten" : r.daysLeft === 0 ? "heute" : `in ${r.daysLeft} T.`} · {r.source}
+                    </Badge>
+                  </Link>
+                </li>
+              ))}
+              {d.radar.length === 0 ? <li className="text-neutral-600">Keine Fristen in den nächsten 60 Tagen.</li> : null}
+            </ul>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Kennzahlen {d.figures.year}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+              {[
+                ["Sitzungen", d.figures.meetings],
+                ["Beschlüsse", d.figures.resolutions],
+                ["Aufgaben erledigt", d.figures.taskRate == null ? "–" : `${d.figures.taskRate} %`],
+                ["Pressemitteilungen", d.figures.releases],
+                ["Presseresonanz", d.figures.clippings],
+                ["Offene Themen", d.figures.topicsOpen],
+                ...(d.figures.submissions != null ? [["Anmeldungen (Landing Pages)", d.figures.submissions]] : []),
+              ].map(([label, value]) => (
+                <div key={String(label)} className="rounded-md bg-cadenabbia-10 p-3">
+                  <dt className="text-xs text-neutral-600">{label}</dt>
+                  <dd className="text-2xl font-extrabold text-rhoendorf">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Zuletzt geänderte Themen</CardTitle>
             {more("/topics")}
           </CardHeader>

@@ -83,9 +83,9 @@ model User {
   attachments         Attachment[]
   templates           Template[]
   emailChangeTokens   EmailChangeToken[]
-  marketingCreated    MarketingPost[] @relation("MarketingCreatedBy")
-  marketingApproved   MarketingPost[] @relation("MarketingApprovedBy")
-  inventoryCreated    InventoryItem[] @relation("InventoryCreatedBy")
+  marketingCreated    MarketingPost[]     @relation("MarketingCreatedBy")
+  marketingApproved   MarketingPost[]     @relation("MarketingApprovedBy")
+  inventoryCreated    InventoryItem[]     @relation("InventoryCreatedBy")
   inventoryLoans      InventoryLoan[]
 
   @@index([active, sortOrder])
@@ -584,7 +584,8 @@ model Resolution {
   votesAbstain  Int?
   createdAt     DateTime         @default(now())
 
-  tasks Task[]
+  tasks   Task[]
+  motions Motion[]
 
   @@index([meetingId])
 }
@@ -974,4 +975,326 @@ model InventoryLoan {
   createdBy   User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([itemId, lentAt])
+}
+
+// ---------------------------------------------------------------------------
+// Wahlmanagement (Vorstandswahlen in der Mitgliederversammlung, LV-Satzung § 57) – ohne Mitgliederlisten:
+// erfasst werden nur Zahlen (anwesende Stimmberechtigte, Stimmzettel) und die Bewerber.
+// ---------------------------------------------------------------------------
+
+enum ElectionStatus {
+  PLANUNG
+  LAUFEND
+  ABGESCHLOSSEN
+}
+
+enum ElectionMode {
+  /// eine Person je Wahlgang (§ 57 Abs. 2)
+  EINZEL
+  /// mehrere Personen in einem Wahlgang, z. B. Beisitzer (§ 57 Abs. 3)
+  SAMMEL
+}
+
+model Election {
+  id                String             @id @default(cuid())
+  title             String
+  date              DateTime
+  location          String             @default("")
+  status            ElectionStatus     @default(PLANUNG)
+  /// Zahl der anwesenden Stimmberechtigten laut Anwesenheitsliste der Kreisgeschäftsstelle
+  presentEligible   Int?
+  chair             String             @default("")
+  countingCommittee String             @default("")
+  notes             String             @default("")
+  createdById       String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  positions         ElectionPosition[]
+
+  @@index([date])
+}
+
+model ElectionPosition {
+  id         String              @id @default(cuid())
+  electionId String
+  election   Election            @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  title      String
+  mode       ElectionMode        @default(EINZEL)
+  seats      Int                 @default(1)
+  sortOrder  Int                 @default(0)
+  candidates ElectionCandidate[]
+  rounds     ElectionRound[]
+
+  @@index([electionId, sortOrder])
+}
+
+model ElectionCandidate {
+  id         String           @id @default(cuid())
+  positionId String
+  position   ElectionPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  name       String
+  note       String           @default("")
+  withdrawn  Boolean          @default(false)
+  /// Annahme der Wahl erklärt (null = noch offen)
+  accepted   Boolean?
+  createdAt  DateTime         @default(now())
+
+  @@index([positionId])
+}
+
+enum ElectionStage {
+  WAHLGANG
+  STICHWAHL
+  LOS
+}
+
+model ElectionRound {
+  id           String           @id @default(cuid())
+  positionId   String
+  position     ElectionPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  /// laufende Nummer innerhalb des Amts
+  sequence     Int
+  stage        ElectionStage
+  /// Wahlgang 1/2 bzw. Nummer der Stichwahl
+  round        Int
+  /// zur Wahl stehende Bewerber (IDs)
+  candidateIds String[]
+  ballotsCast  Int              @default(0)
+  invalid      Int              @default(0)
+  abstentions  Int              @default(0)
+  noVotes      Int              @default(0)
+  /// { candidateId: Stimmen }
+  votes        Json             @default("{}")
+  resultKind   String
+  resultText   String
+  elected      String[]
+  createdById  String?
+  createdAt    DateTime         @default(now())
+
+  @@unique([positionId, sequence])
+}
+
+// ---------------------------------------------------------------------------
+// Meinungsbild im Vorstand – ausdrücklich nicht bindend (keine Beschlüsse, keine Wahlen)
+// ---------------------------------------------------------------------------
+
+model Poll {
+  id          String     @id @default(cuid())
+  question    String
+  description String     @default("")
+  options     String[]
+  multiple    Boolean    @default(false)
+  anonymous   Boolean    @default(false)
+  closesAt    DateTime?
+  closedAt    DateTime?
+  createdById String?
+  createdAt   DateTime   @default(now())
+  votes       PollVote[]
+
+  @@index([createdAt])
+}
+
+model PollVote {
+  id        String   @id @default(cuid())
+  pollId    String
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  userId    String
+  choices   Int[]
+  createdAt DateTime @default(now())
+
+  @@unique([pollId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Landing Pages unter /p/<kurzname>
+// ---------------------------------------------------------------------------
+
+enum LandingKind {
+  VERANSTALTUNG
+  KAMPAGNE
+  UMFRAGE
+  UNTERSTUETZER
+  PERSON
+  LINKS
+}
+
+enum LandingStatus {
+  ENTWURF
+  FREIGEGEBEN
+  ARCHIVIERT
+}
+
+model LandingPage {
+  id               String              @id @default(cuid())
+  slug             String              @unique
+  kind             LandingKind
+  status           LandingStatus       @default(ENTWURF)
+  title            String
+  subtitle         String              @default("")
+  /// Absätze (Leerzeile = neuer Absatz), Zwischenüberschriften mit "## "
+  body             String              @default("")
+  eventAt          DateTime?
+  eventLocation    String              @default("")
+  /// [{ label, url }] für Linkseiten und weiterführende Links
+  links            Json                @default("[]")
+  formEnabled      Boolean             @default(false)
+  formTitle        String              @default("")
+  askPhone         Boolean             @default(false)
+  askMessage       Boolean             @default(false)
+  messageLabel     String              @default("")
+  consentText      String              @default("")
+  newsletterOption Boolean             @default(false)
+  expiresAt        DateTime?
+  /// Einträge werden nach dieser Frist automatisch gelöscht
+  retentionDays    Int                 @default(90)
+  views            Int                 @default(0)
+  approvedById     String?
+  approvedAt       DateTime?
+  createdById      String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  submissions      LandingSubmission[]
+
+  @@index([status])
+}
+
+model LandingSubmission {
+  id          String      @id @default(cuid())
+  pageId      String
+  page        LandingPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  /// JSON { name, email, phone, message }; verschlüsselt, wenn ENCRYPTION_KEY gesetzt ist
+  payload     String
+  encrypted   Boolean     @default(false)
+  newsletter  Boolean     @default(false)
+  /// Double-Opt-in für den Newsletter: nur Hash des Tokens
+  confirmHash String?     @unique
+  confirmedAt DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@index([pageId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Presseportal (öffentlich unter /presse) und Presseverteiler
+// ---------------------------------------------------------------------------
+
+enum PressStatus {
+  ENTWURF
+  FREIGEGEBEN
+  VEROEFFENTLICHT
+}
+
+model PressRelease {
+  id           String          @id @default(cuid())
+  slug         String          @unique
+  status       PressStatus     @default(ENTWURF)
+  title        String
+  subtitle     String          @default("")
+  body         String          @default("")
+  quoteGiver   String          @default("")
+  /// frühestens dann im Portal und im Versand
+  embargoUntil DateTime?
+  approvedById String?
+  approvedAt   DateTime?
+  publishedAt  DateTime?
+  sentAt       DateTime?
+  sentCount    Int             @default(0)
+  createdById  String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  clippings    PressClipping[]
+
+  @@index([status, publishedAt])
+}
+
+enum PressContactStatus {
+  /// Registrierung, E-Mail noch nicht bestätigt
+  UNBESTAETIGT
+  /// bestätigt, wartet auf Freigabe durch den OV
+  WARTET
+  AKTIV
+  ABGEMELDET
+}
+
+model PressContact {
+  id               String             @id @default(cuid())
+  name             String
+  medium           String
+  role             String             @default("")
+  email            String             @unique
+  phone            String             @default("")
+  topics           String             @default("")
+  status           PressContactStatus @default(UNBESTAETIGT)
+  /// Hash des Bestätigungs-Tokens (Double-Opt-in)
+  confirmHash      String?            @unique
+  /// Abmeldelink in jeder Mail
+  unsubscribeToken String             @unique @default(cuid())
+  confirmedAt      DateTime?
+  approvedAt       DateTime?
+  createdAt        DateTime           @default(now())
+
+  @@index([status])
+}
+
+model PressClipping {
+  id          String        @id @default(cuid())
+  title       String
+  medium      String
+  publishedOn DateTime
+  url         String        @default("")
+  note        String        @default("")
+  releaseId   String?
+  release     PressRelease? @relation(fields: [releaseId], references: [id], onDelete: SetNull)
+  createdById String?
+  createdAt   DateTime      @default(now())
+
+  @@index([publishedOn])
+}
+
+// ---------------------------------------------------------------------------
+// Fristenradar: externe Fristen (z. B. Antragsschluss Kreisparteitag)
+// ---------------------------------------------------------------------------
+
+model Deadline {
+  id          String   @id @default(cuid())
+  title       String
+  dueAt       DateTime
+  warnDays    Int      @default(14)
+  note        String   @default("")
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@index([dueAt])
+}
+
+// ---------------------------------------------------------------------------
+// Anträge aus Beschlüssen des Ortsverbands (z. B. an den Kreisverband)
+// ---------------------------------------------------------------------------
+
+enum MotionStatus {
+  ENTWURF
+  EINGEREICHT
+}
+
+model Motion {
+  id             String       @id @default(cuid())
+  resolutionId   String
+  resolution     Resolution   @relation(fields: [resolutionId], references: [id], onDelete: Cascade)
+  title          String
+  /// Zielgremium, z. B. „Kreisvorstand der CDU Mannheim“ oder „Kreisparteitag“
+  recipientName  String
+  recipientEmail String
+  /// Antragstext („Der Kreisverband möge beschließen: …“)
+  body           String
+  reason         String       @default("")
+  status         MotionStatus @default(ENTWURF)
+  sentAt         DateTime?
+  sentById       String?
+  /// Kopie an diese Adresse (z. B. Vorsitzender)
+  ccEmail        String       @default("")
+  createdById    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([resolutionId])
 }

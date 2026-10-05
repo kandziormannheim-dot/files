@@ -9,6 +9,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionState } from "@/lib/action-state";
 import { toDateInput, toDateTimeInput } from "@/lib/dates";
+import { StatuteRef } from "@/components/statute-ref";
 
 export function MeetingForm({
   action,
@@ -71,7 +72,7 @@ export function MeetingForm({
       <div className="flex flex-col gap-2 sm:col-span-2">
         <label className="flex items-center gap-2 text-sm">
           <Checkbox name="urgent" checked={urgent} onChange={(e) => setUrgent(e.target.checked)} />
-          eilbedürftig – Ladungsfrist von {noticeDays} Tagen darf unterschritten werden (LV-Satzung § 50 Abs. 3)
+          eilbedürftig – Ladungsfrist von {noticeDays} Tagen darf unterschritten werden (<StatuteRef cite="LV-Satzung § 50 Abs. 3">LV-Satzung § 50 Abs. 3</StatuteRef>)
         </label>
         {urgent ? (
           <Field label="Begründung (erscheint im Protokoll unter Formalia)" name="urgencyReason">

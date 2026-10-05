@@ -5,6 +5,8 @@ import { meetingTitle } from "@/lib/meetings";
 import { can } from "@/server/auth/permissions";
 import { db } from "@/server/db";
 import { evaluate } from "./circulations";
+import { deadlineRadar, yearFigures } from "./deadlines";
+import { electionPeriodStatus } from "./elections";
 import { invitationDeadline } from "./invitations";
 import { meetingRhythmData, rsvpCounts } from "./meetings";
 import { getSettings } from "./settings";
@@ -102,7 +104,39 @@ export async function dashboardData(user: Pick<User, "id" | "role"> & { isBbr?: 
     }
   }
 
+  if (can(user.role, "meeting.manage") || can(user.role, "election.manage")) {
+    const period = await electionPeriodStatus(now);
+    if (period?.warn) {
+      notices.push({
+        level: period.overdue ? "destructive" : "warning",
+        text: `Vorstandswahl fällig – spätestens bis ${formatDate(period.dueBy)} (LV-Satzung § 56 Abs. 1). Mitgliederversammlung planen.`,
+        href: "/elections",
+      });
+    }
+  }
+  const openPolls = await db.poll.findMany({
+    where: { closedAt: null, OR: [{ closesAt: null }, { closesAt: { gt: now } }], votes: { none: { userId: user.id } } },
+    select: { id: true, question: true },
+    take: 3,
+  });
+  for (const p of openPolls) notices.push({ level: "default", text: `Meinungsbild: „${p.question}“ – Ihre Antwort fehlt noch.`, href: `/elections/polls/${p.id}` });
+  if (can(user.role, "press.publish")) {
+    const n = await db.pressRelease.count({ where: { status: "ENTWURF", body: { not: "" } } });
+    if (n) notices.push({ level: "default", text: `${n} Pressemitteilung${n === 1 ? "" : "en"} im Entwurf – zur Freigabe prüfen.`, href: "/press" });
+  }
+  if (can(user.role, "press.contacts")) {
+    const n = await db.pressContact.count({ where: { status: "WARTET" } });
+    if (n) notices.push({ level: "warning", text: `${n} Registrierung${n === 1 ? "" : "en"} für den Presseverteiler warten auf Freigabe.`, href: "/press/contacts" });
+  }
+  if (can(user.role, "landing.publish")) {
+    const n = await db.landingPage.count({ where: { status: "ENTWURF", updatedAt: { gt: new Date(now.getTime() - 30 * 86_400_000) } } });
+    if (n) notices.push({ level: "default", text: `${n} Landing Page${n === 1 ? "" : "s"} im Entwurf – Freigabe prüfen.`, href: "/landing" });
+  }
+  const [radar, figures] = await Promise.all([deadlineRadar(user, now), yearFigures(user, now)]);
+
   return {
+    radar: radar.slice(0, 10),
+    figures,
     notices,
     tasks: tasks.slice(0, 8),
     taskCount: tasks.length,

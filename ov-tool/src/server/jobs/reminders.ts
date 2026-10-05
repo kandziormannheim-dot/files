@@ -14,6 +14,7 @@ import { autoSendPendingToOffice } from "@/server/services/minutes-workflow";
 import { getSettingsUncached } from "@/server/services/settings";
 import { latestInvitationDay } from "@/server/services/statute";
 import { meetingContext, senderContext } from "@/server/services/template-context";
+import { enforceLandingRetention } from "@/server/services/landing";
 import { originText, taskInclude } from "@/server/services/tasks";
 
 // Hintergrundaufgaben (Paket 2.1). Jede Funktion ist idempotent (Merker in der DB) und bekommt „jetzt“ übergeben,
@@ -185,7 +186,8 @@ export async function enforceRetention(now = new Date()) {
     await audit(db, null, "topic.contactRetention", "Topic", t.id);
     contacts += 1;
   }
-  return { audio, texts, contacts };
+  const landing = await enforceLandingRetention(now);
+  return { audio, texts, contacts, landing };
 }
 
 export async function runOfficeAutoSend() {

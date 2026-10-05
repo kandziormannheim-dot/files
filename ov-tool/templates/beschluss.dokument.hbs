@@ -1,0 +1,30 @@
+<h1>Beschluss Nr. {{beschluss.nummer}}</h1>
+<p class="untertitel">{{beschluss.gremium}}</p>
+
+<table class="kopf">
+  <tr><th>Gegenstand</th><td>{{beschluss.gegenstand}}</td></tr>
+  <tr><th>Gefasst am</th><td>{{datumLang beschluss.datum}}</td></tr>
+  <tr><th>Verfahren</th><td>{{beschluss.verfahren}}</td></tr>
+  {{#if beschluss.top}}<tr><th>Tagesordnung</th><td>TOP {{beschluss.top}}{{#if beschluss.topTitel}} – {{beschluss.topTitel}}{{/if}}</td></tr>{{/if}}
+  <tr><th>Ergebnis</th><td><strong>{{beschluss.ergebnisText}}</strong></td></tr>
+  {{#if beschluss.stimmen}}<tr><th>Abstimmung</th><td>{{beschluss.stimmen}}</td></tr>{{/if}}
+  {{#if beschluss.beschlussfaehigkeit}}<tr><th>Beschlussfähigkeit</th><td>{{beschluss.beschlussfaehigkeit}}</td></tr>{{/if}}
+</table>
+
+{{#if beschluss.wortlaut}}
+<h2>Wortlaut</h2>
+<p class="hervorgehoben mehrzeilig">{{beschluss.wortlaut}}</p>
+{{/if}}
+{{#if beschluss.begruendung}}
+<h2>Begründung</h2>
+<p class="mehrzeilig">{{beschluss.begruendung}}</p>
+{{/if}}
+
+<p>Die Richtigkeit des Beschlusses wird bestätigt.</p>
+<p class="ort-datum">{{ov.ort}}, {{datum beschluss.ausgestelltAm}}</p>
+
+<div class="unterschrift">
+  {{#if absender.unterschrift}}<img src="{{absender.unterschrift}}" alt="">{{/if}}
+  <p class="name">{{absender.name}}</p>
+  <p>{{absender.funktion}}</p>
+</div>

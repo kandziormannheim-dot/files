@@ -27,6 +27,7 @@ import {
   respondAction,
   takeOverCarryOverAction,
 } from "../actions";
+import { StatuteRef } from "@/components/statute-ref";
 
 export const metadata: Metadata = { title: "Sitzung" };
 
@@ -75,7 +76,7 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
       {meeting.isRepeatAfterNoQuorum ? (
         <Alert className="mb-4">
           <AlertDescription>
-            Erneute Sitzung nach Beschlussunfähigkeit – in jedem Fall beschlussfähig (LV-Satzung § 52 Abs. 3).
+            Erneute Sitzung nach Beschlussunfähigkeit – in jedem Fall beschlussfähig (<StatuteRef cite="LV-Satzung § 52 Abs. 3">LV-Satzung § 52 Abs. 3</StatuteRef>).
           </AlertDescription>
         </Alert>
       ) : null}

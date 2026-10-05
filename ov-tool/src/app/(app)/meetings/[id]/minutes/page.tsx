@@ -31,6 +31,7 @@ import { getSettings } from "@/server/services/settings";
 import { listActiveUsers } from "@/server/services/users";
 import { newVersionAction, sendMinutesAction, sendToOfficeAction, startMinutesAction } from "./actions";
 import { NewVersionForm, SendMinutesForm } from "./workflow-panel";
+import { StatuteRef } from "@/components/statute-ref";
 
 export const metadata: Metadata = { title: "Protokoll" };
 
@@ -245,7 +246,7 @@ export default async function MinutesPage({
           {minutes.status === "ENTWURF" ? (
             <Card>
               <CardHeader>
-                <CardTitle>Prüfliste (LV-Satzung § 51)</CardTitle>
+                <CardTitle>Prüfliste (<StatuteRef cite="LV-Satzung § 51">LV-Satzung § 51</StatuteRef>)</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 <ul className="flex flex-col gap-1 text-sm">
@@ -282,7 +283,7 @@ export default async function MinutesPage({
                 <CardTitle>Kreisgeschäftsstelle</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-2 text-sm">
-                <p>Die Niederschrift ist der zuständigen Geschäftsstelle zu übersenden (LV-Satzung § 51 Abs. 3).</p>
+                <p>Die Niederschrift ist der zuständigen Geschäftsstelle zu übersenden (<StatuteRef cite="LV-Satzung § 51 Abs. 3">LV-Satzung § 51 Abs. 3</StatuteRef>).</p>
                 {settings.office.email ? (
                   <ActionForm action={sendToOfficeAction.bind(null, id, minutes.id)}>
                     <SubmitButton variant={minutes.sentToOfficeAt ? "outline" : "default"}>

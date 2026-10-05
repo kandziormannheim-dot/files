@@ -10,6 +10,7 @@ import { can } from "@/server/auth/permissions";
 import { requireUser } from "@/server/auth/session";
 import { listMeetings, meetingRhythmData } from "@/server/services/meetings";
 import { meetingRhythm } from "@/server/services/statute";
+import { StatuteRef } from "@/components/statute-ref";
 
 export const metadata: Metadata = { title: "Sitzungen" };
 
@@ -42,7 +43,7 @@ export default async function MeetingsPage() {
         <Alert variant={rhythm.overdue ? "destructive" : "warning"} className="mb-6">
           <AlertTitle>{rhythm.overdue ? "Sitzungsrhythmus überschritten" : "Nächste Sitzung planen"}</AlertTitle>
           <AlertDescription>
-            Der Vorstand tagt mindestens alle zwei Monate (LV-Satzung § 37 Abs. 3 i. V. m. § 31 Abs. 3). Letzte Sitzung:{" "}
+            Der Vorstand tagt mindestens alle zwei Monate (<StatuteRef cite="LV-Satzung § 37 Abs. 3">LV-Satzung § 37 Abs. 3 i. V. m. § 31 Abs. 3</StatuteRef>). Letzte Sitzung:{" "}
             {formatDate(rhythmData.last!.startsAt)} – spätestens bis {formatDate(rhythm.dueBy)} sollte die nächste stattfinden.
           </AlertDescription>
         </Alert>

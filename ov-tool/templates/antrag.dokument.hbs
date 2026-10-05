@@ -1,0 +1,27 @@
+<div class="anschrift">
+  <p>{{eingabe.empfaenger}}</p>
+</div>
+
+<p class="ort-datum">{{ov.ort}}, {{datum eingabe.datum}}</p>
+
+<p class="betreff">Antrag der {{ov.nameLang}}: {{eingabe.titel}}</p>
+
+<p><strong>Antragsteller:</strong> Vorstand der {{ov.nameLang}}, gemäß Beschluss Nr. {{beschluss.nummer}} vom {{datum beschluss.datum}} ({{beschluss.verfahren}}, {{beschluss.ergebnisText}}).</p>
+
+<h2>Antrag</h2>
+<p class="mehrzeilig">{{eingabe.text}}</p>
+
+{{#if eingabe.begruendung}}
+<h2>Begründung</h2>
+<p class="mehrzeilig">{{eingabe.begruendung}}</p>
+{{/if}}
+
+<p>Der zugrunde liegende Beschluss ist als Anlage beigefügt.</p>
+
+<p>Mit freundlichen Grüßen</p>
+
+<div class="unterschrift">
+  {{#if absender.unterschrift}}<img src="{{absender.unterschrift}}" alt="">{{/if}}
+  <p class="name">{{absender.name}}</p>
+  <p>{{absender.funktion}}</p>
+</div>

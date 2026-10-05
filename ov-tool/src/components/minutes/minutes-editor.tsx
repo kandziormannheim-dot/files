@@ -1,7 +1,7 @@
 "use client";
 
 import type { AgendaItemStatus } from "@prisma/client";
-import { ListPlus, Trash2 } from "lucide-react";
+import { FileCheck, ListPlus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useTransition } from "react";
 import { toast } from "sonner";
@@ -265,6 +265,11 @@ function TopCard({ d, t }: { d: EditorData; t: EditorTop }) {
                   <strong>{r.number}</strong> {r.subject} – {r.label}
                 </span>
                 <span className="flex gap-1">
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href={`/resolutions/${r.id}`}>
+                      <FileCheck /> PDF / Antrag
+                    </Link>
+                  </Button>
                   <Button asChild size="sm" variant="ghost">
                     <Link href={`/tasks/new?meetingId=${d.meetingId}&agendaItemId=${t.id}&resolutionId=${r.id}&titel=${encodeURIComponent(r.subject)}`}>
                       <ListPlus /> Aufgabe

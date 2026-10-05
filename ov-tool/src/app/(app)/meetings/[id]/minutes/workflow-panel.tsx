@@ -5,6 +5,7 @@ import { ActionForm, Field, SubmitButton } from "@/components/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionState } from "@/lib/action-state";
+import { StatuteRef } from "@/components/statute-ref";
 
 type FormAction = (s: ActionState, f: FormData) => Promise<ActionState>;
 
@@ -27,7 +28,7 @@ export function SendMinutesForm({ action, canCirculate, complete }: { action: Fo
             checked={mode === "UMLAUF"}
             onChange={() => setMode("UMLAUF")}
           />
-          im Umlaufverfahren (Statut § 42 Abs. 3) – startet sofort{canCirculate ? "" : " (nur Admin)"}
+          im Umlaufverfahren (<StatuteRef cite="Statut § 42 Abs. 3">Statut § 42 Abs. 3</StatuteRef>) – startet sofort{canCirculate ? "" : " (nur Admin)"}
         </label>
       </fieldset>
       {mode === "UMLAUF" ? (

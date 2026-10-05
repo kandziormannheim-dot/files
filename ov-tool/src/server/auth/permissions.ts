@@ -31,6 +31,16 @@ export const CAPABILITIES = [
   "marketing.publish", // freigeben, alle bearbeiten, an WordPress senden
   "inventory.edit", // Inventar anlegen, bearbeiten, verleihen
   "inventory.manage", // ausmustern, löschen
+  "statute.ask", // Frage-Antwort-Assistent zur Satzung (Claude)
+  "poll.create", // Meinungsbilder (nicht bindend) anlegen
+  "election.manage", // Vorstandswahlen vorbereiten, Stimmzettel, Auszählung erfassen
+  "landing.edit", // Landing Pages entwerfen
+  "landing.publish", // Landing Pages freigeben, Einträge einsehen und exportieren
+  "press.create", // Pressemitteilungen entwerfen, Pressespiegel pflegen
+  "press.publish", // Pressemitteilungen freigeben, veröffentlichen, versenden
+  "press.contacts", // Presseverteiler verwalten (Registrierungen freigeben)
+  "deadline.manage", // externe Fristen im Fristenradar pflegen
+  "motion.send", // Beschlüsse als Antrag (z. B. an den Kreisverband) einreichen
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
@@ -46,6 +56,10 @@ const VORSTAND: Capability[] = [
   "link.create",
   "marketing.create",
   "inventory.edit",
+  "statute.ask",
+  "poll.create",
+  "landing.edit",
+  "press.create",
 ];
 const SCHRIFTFUEHRER: Capability[] = [...VORSTAND, "minutes.edit", "minutes.send", "transcript.upload"];
 
@@ -111,6 +125,7 @@ export const CAPABILITY_GROUPS: { title: string; items: { cap: Capability; label
       { cap: "minutes.send", label: "Protokolle versenden" },
       { cap: "transcript.upload", label: "Transkripte/Aufnahmen hochladen" },
       { cap: "circulation.manage", label: "Umlaufverfahren starten" },
+      { cap: "motion.send", label: "Beschlüsse als Antrag an den Kreisverband einreichen" },
     ],
   },
   {
@@ -130,6 +145,20 @@ export const CAPABILITY_GROUPS: { title: string; items: { cap: Capability; label
     items: [
       { cap: "marketing.create", label: "Beiträge und Blogartikel entwerfen" },
       { cap: "marketing.publish", label: "Beiträge freigeben und veröffentlichen" },
+      { cap: "landing.edit", label: "Landing Pages entwerfen" },
+      { cap: "landing.publish", label: "Landing Pages freigeben, Einträge einsehen" },
+      { cap: "press.create", label: "Pressemitteilungen entwerfen, Pressespiegel pflegen" },
+      { cap: "press.publish", label: "Pressemitteilungen freigeben und versenden" },
+      { cap: "press.contacts", label: "Presseverteiler verwalten" },
+    ],
+  },
+  {
+    title: "Satzung, Wahlen & Abstimmungen",
+    items: [
+      { cap: "statute.ask", label: "Satzungs-Assistent fragen (KI)", hint: "Suche ist für alle frei" },
+      { cap: "poll.create", label: "Meinungsbilder anlegen", hint: "nicht bindend" },
+      { cap: "election.manage", label: "Vorstandswahlen vorbereiten und auszählen" },
+      { cap: "deadline.manage", label: "Externe Fristen pflegen" },
     ],
   },
   {

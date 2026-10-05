@@ -4,6 +4,7 @@ import nodemailer, { type Transporter } from "nodemailer";
 export type MailAttachment = { filename: string; content: Buffer; contentType?: string };
 export type OutgoingMail = {
   to: string | string[];
+  cc?: string;
   subject: string;
   text: string;
   html?: string;

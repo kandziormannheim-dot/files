@@ -101,4 +101,11 @@ export const KNOWN_PLACEHOLDERS: readonly string[] = [
   "antrag.*",
   "transkript.*",
   "frist.*",
+  "beschluss.*",
+  "eingabe.*",
+  "seite.*",
+  "bestaetigung.*",
+  "pm.*",
+  "pressekontakt",
+  "abmeldeLink",
 ];

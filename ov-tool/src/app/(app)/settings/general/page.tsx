@@ -108,6 +108,22 @@ export default async function GeneralSettingsPage() {
         </Card>
         <Card>
           <CardHeader>
+            <CardTitle>Wahlen und öffentliche Seiten</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Field label="Letzte Vorstandswahl" name="election.lastDate" hint="Nur nötig, solange keine Wahl im Tool abgeschlossen ist (Wahlperiode LV-Satzung § 56 Abs. 1).">
+              <Input id="election.lastDate" name="election.lastDate" type="date" defaultValue={s["election.lastDate"]} />
+            </Field>
+            <div />
+            {text("public.imprintUrl", "Impressum (Link)", "auf Landing Pages und im Presseportal")}
+            {text("public.privacyUrl", "Datenschutzerklärung (Link)", "auf Landing Pages und im Presseportal")}
+            <Field label="Pressekontakt (öffentlich)" name="press.contact" hint="erscheint im Presseportal und unter jeder Pressemitteilung" className="sm:col-span-2">
+              <Textarea id="press.contact" name="press.contact" defaultValue={s["press.contact"]} rows={3} placeholder={"Martin Kandzior, Vorsitzender\npresse@cdu-sf.de · 0621 …"} />
+            </Field>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
             <CardTitle>Erinnerungen, Geschäftsstelle, Löschfristen</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">

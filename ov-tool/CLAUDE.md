@@ -74,6 +74,8 @@ docker/                # Dockerfiles, Caddyfile, whisper-Konfiguration
 - **Datum/Zeit:** ausschließlich über `src/lib/dates.ts` (Europe/Berlin).
 - **Vorlagen:** aktive Fassung über `getTemplateSource(key)` (DB, versioniert; Rückfall auf `templates/`). Kontext für Sitzungen/Absender aus `src/server/services/template-context.ts`. Neue Platzhalter in `src/server/templates/placeholders.ts` und `templates/README.md` eintragen – der Test `placeholders.test.ts` prüft alle Standardvorlagen.
 - **PDF:** `renderDocumentPdf(key, kontext, titel)` in `src/server/pdf/render.ts` (Briefbogen, eingebettete Inter, keine externen Verbindungen).
+- **Satzungstexte:** `src/data/statutes.json` + Suche `src/lib/statute-search.ts` (Client und Server); Fundstellen im UI mit `<StatuteRef cite="LV-Satzung § 50 Abs. 3">` verlinken. Wahlablauf rein in `src/lib/election-flow.ts`, Regeln in `statute.ts`.
+- **Öffentliche Seiten** (Landing Pages `/p/…`, Presseportal `/presse`) liegen in der Routengruppe `(site)` – ohne Login, ohne Tracker, Formulare mit Honigtopf, Rate-Limit und Double-Opt-in per Knopfdruck.
 - **Dateien:** `src/server/files.ts` (relativ zu `FILE_STORAGE_PATH`, Pfad-Traversal-geschützt); Dateityp über `sniffType` prüfen.
 
 ## Verbindliche Regeln
