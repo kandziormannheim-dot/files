@@ -7,6 +7,7 @@ import { audit } from "@/server/audit";
 import { db } from "@/server/db";
 import { UserError } from "@/server/errors";
 import { queueMail } from "@/server/mail/outbox";
+import { sendMail } from "@/server/mail/transport";
 import { renderMail } from "@/server/mail/render";
 import { appUrl } from "@/server/ov";
 import { readStoredFile } from "@/server/files";
@@ -127,7 +128,20 @@ const sendSchema = z.object({
   scope: z.enum(["all", "new"]).default("all"),
 });
 
-export async function sendInvitation(actor: Actor, meetingId: string, formData: FormData) {
+/**
+ * Testversand: genau die Mail, die die Eingeladenen bekämen (Text, Knöpfe, Anhänge), nur an die eigene Adresse.
+ * Ändert weder Status noch „eingeladen am“; der Rückmelde-Link ist der eigene (ein Klick speichert die eigene Antwort).
+ */
+export async function sendInvitationTest(actor: Actor & { email: string; name: string }, meetingId: string, formData: FormData) {
+  return sendInvitation(actor, meetingId, formData, { testTo: actor });
+}
+
+export async function sendInvitation(
+  actor: Actor,
+  meetingId: string,
+  formData: FormData,
+  opts: { testTo?: { id: string; email: string; name: string } } = {},
+) {
   assertCan(actor, "invitation.send");
   const v = sendSchema.parse(formToObject(formData));
   if (!v.text.includes(RSVP_MARKER)) {
@@ -135,10 +149,18 @@ export async function sendInvitation(actor: Actor, meetingId: string, formData: 
   }
   const preview = await invitationPreview(actor, meetingId);
   if (preview.locked) throw new UserError("Die Sitzung ist abgesagt oder aufgehoben.");
-  if (!preview.check.ok) throw new UserError(preview.check.reason);
-  const recipients = preview.meeting.attendances.filter(
-    (a) => a.user.active && (v.scope === "all" || !a.invitedAt),
-  );
+  const test = opts.testTo;
+  if (!test && !preview.check.ok) throw new UserError(preview.check.reason);
+  const recipients = test
+    ? [
+        preview.meeting.attendances.find((a) => a.userId === test.id) ?? {
+          id: "",
+          responseToken: "test-ohne-teilnahme-0000000000",
+          invitedAt: null,
+          user: { email: test.email, name: test.name, active: true },
+        },
+      ].map((a) => ({ ...a, user: { ...a.user, email: test.email } }))
+    : preview.meeting.attendances.filter((a) => a.user.active && (v.scope === "all" || !a.invitedAt));
   if (!recipients.length) throw new UserError("Keine Empfänger.");
 
   const { pdf, version, filename } = await invitationPdf(actor, meetingId);
@@ -157,13 +179,20 @@ export async function sendInvitation(actor: Actor, meetingId: string, formData: 
     const link = rsvpUrl(a.responseToken);
     const text = v.text.replaceAll(RSVP_MARKER, rsvpText(link, docs.length));
     const html = textToHtml(v.text).replaceAll(RSVP_MARKER, `</p>${rsvpButtonsHtml(link, docs.length)}<p style="margin:0 0 1em">`).replace(/<p style="margin:0 0 1em">(<br>)*<\/p>/g, "");
-    await queueMail({
+    const mail = {
       to: a.user.email,
-      subject: v.subject,
-      text,
-      html,
+      subject: test ? `[TEST] ${v.subject}` : v.subject,
+      text: test ? `*** TESTVERSAND – nur an dich, nicht an den Vorstand verschickt ***\n\n${text}` : text,
+      html: test ? html.replace(/(<body[^>]*>)/, `$1<p style="margin:0 0 1em;padding:8px 12px;background:#ffa600;color:#1b191d;font-weight:700;border-radius:6px">TESTVERSAND – nur an dich, nicht an den Vorstand verschickt</p>`) : html,
       attachments: [{ filename, content: pdf, contentType: "application/pdf" }, ...docFiles],
-    });
+    };
+    // Testmail sofort senden, damit Fehler direkt sichtbar werden
+    if (test) await sendMail(mail);
+    else await queueMail(mail);
+  }
+  if (test) {
+    await audit(db, actor, "invitation.test", "Meeting", meetingId, { to: test.email, documentsAttached: docFiles.length });
+    return 1;
   }
   await db.$transaction(async (tx) => {
     await tx.attendance.updateMany({ where: { id: { in: recipients.map((r) => r.id) } }, data: { invitedAt: now } });

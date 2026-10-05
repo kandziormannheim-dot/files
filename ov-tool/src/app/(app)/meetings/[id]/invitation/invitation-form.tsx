@@ -14,6 +14,8 @@ export function InvitationForm({
   newCount,
   alreadySent,
   disabled,
+  testDisabled = false,
+  myEmail,
 }: {
   action: (s: ActionState, f: FormData) => Promise<ActionState>;
   subject: string;
@@ -22,6 +24,8 @@ export function InvitationForm({
   newCount: number;
   alreadySent: boolean;
   disabled: boolean;
+  testDisabled?: boolean;
+  myEmail: string;
 }) {
   return (
     <ActionForm action={action} className="flex flex-col gap-4">
@@ -45,9 +49,17 @@ export function InvitationForm({
       ) : (
         <input type="hidden" name="scope" value="all" />
       )}
-      <SubmitButton className="self-start" disabled={disabled} pendingText="Wird versendet …">
-        {alreadySent ? "Einladung senden" : `Einladung an ${total} Empfänger senden`}
-      </SubmitButton>
+      <div className="flex flex-wrap items-center gap-2">
+        <SubmitButton name="intent" value="test" variant="outline" disabled={testDisabled} pendingText="Wird gesendet …">
+          Testmail an mich
+        </SubmitButton>
+        <SubmitButton name="intent" value="send" disabled={disabled} pendingText="Wird versendet …">
+          {alreadySent ? "Einladung senden" : `Einladung an ${total} Empfänger senden`}
+        </SubmitButton>
+      </div>
+      <p className="text-xs text-rhoendorf-60">
+        „Testmail an mich“ schickt genau diese Einladung mit Knöpfen und Anhängen nur an {myEmail} – ohne Status oder Empfänger zu ändern.
+      </p>
     </ActionForm>
   );
 }

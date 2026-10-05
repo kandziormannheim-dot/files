@@ -103,6 +103,8 @@ export default async function InvitationPage({ params }: { params: Promise<{ id:
           newCount={newCount}
           alreadySent={!!meeting.invitationSentAt}
           disabled={!p.check.ok || p.locked}
+          testDisabled={p.locked}
+          myEmail={user.email}
         />
         <Card>
           <CardHeader>

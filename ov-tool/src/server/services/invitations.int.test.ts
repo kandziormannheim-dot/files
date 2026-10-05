@@ -4,7 +4,7 @@ import { toDateTimeInput } from "@/lib/dates";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
 import { captureMailsForTests } from "@/server/mail/transport";
-import { invitationPreview, RSVP_MARKER, sendInvitation } from "./invitations";
+import { invitationPreview, RSVP_MARKER, sendInvitation, sendInvitationTest } from "./invitations";
 import { addMeetingFiles, readAttachmentByResponseToken, setInInvitation } from "./attachments";
 import { createMeeting } from "./meetings";
 
@@ -111,5 +111,29 @@ describe.skipIf(!hasTestDb)("Einladungsversand (DB)", () => {
     const fd = new FormData();
     fd.append("file", new File([new Uint8Array(Buffer.from("%PDF-1.4"))], "x.pdf"));
     await expect(addMeetingFiles(v, meeting.id, fd)).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("Testmail geht nur an mich und ändert nichts am Versandstatus", async () => {
+    const outbox = captureMailsForTests();
+    const { admin, meeting } = await setup(14);
+    const p = await invitationPreview(admin, meeting.id);
+    await sendInvitationTest(admin, meeting.id, form({ subject: p.subject, text: p.text }));
+    expect(outbox).toHaveLength(1);
+    expect(outbox[0]!.to).toBe(admin.email);
+    expect(outbox[0]!.subject).toMatch(/^\[TEST\] /);
+    expect(outbox[0]!.text).toMatch(/\/rsvp\/[\w-]+\?antwort=ja/);
+    expect(outbox[0]!.attachments?.[0]?.contentType).toBe("application/pdf");
+    const after = await db.meeting.findUniqueOrThrow({ where: { id: meeting.id } });
+    expect(after.status).toBe("GEPLANT");
+    expect(after.invitationSentAt).toBeNull();
+    expect(await db.attendance.count({ where: { meetingId: meeting.id, invitedAt: { not: null } } })).toBe(0);
+  });
+
+  it("Testmail ist auch bei unterschrittener Ladungsfrist möglich", async () => {
+    const outbox = captureMailsForTests();
+    const { admin, meeting } = await setup(3);
+    const p = await invitationPreview(admin, meeting.id);
+    await sendInvitationTest(admin, meeting.id, form({ subject: p.subject, text: p.text }));
+    expect(outbox).toHaveLength(1);
   });
 });
