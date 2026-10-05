@@ -4,9 +4,9 @@ import type { LinkCategory, PrismaClient } from "@prisma/client";
  * Standard-Links für den Link-Hub. Werden beim Start einmal je Version ergänzt (nur fehlende Adressen),
  * damit gelöschte Links nicht bei jedem Neustart zurückkommen. Keine Zugangsdaten – Anmeldung immer selbst.
  */
-export const DEFAULT_LINKS_VERSION = "2";
+export const DEFAULT_LINKS_VERSION = "3";
 
-type DefaultLink = { title: string; url: string; category: LinkCategory; description?: string; accessNote?: string };
+type DefaultLink = { title: string; url: string; category: LinkCategory; description?: string; accessNote?: string; bbrOnly?: boolean };
 
 export const DEFAULT_LINKS: DefaultLink[] = [
   // Zusammenarbeit in der Nextcloud des OV (gleicher Login wie im Tool)
@@ -34,6 +34,9 @@ export const DEFAULT_LINKS: DefaultLink[] = [
   { title: "Meta Business Suite (Beiträge planen)", url: "https://business.facebook.com/latest/content_calendar", category: "SOCIAL_MEDIA", description: "Facebook/Instagram-Beiträge planen und veröffentlichen", accessNote: "Seitenrolle bei Facebook nötig" },
   { title: "Instagram (KV Mannheim)", url: "https://www.instagram.com/cdumannheim/", category: "SOCIAL_MEDIA" },
   { title: "Brevo (Newsletter)", url: "https://app.brevo.com/", category: "SOCIAL_MEDIA", description: "Newsletter-Versand", accessNote: "eigenes Brevo-Konto" },
+  // Nur für die CDU-Bezirksbeiräte
+  { title: "BBR-Anliegen Seckenheim/Friedrichsfeld", url: "https://bbr-anliegen.cdu-sf.de/", category: "VERWALTUNG", description: "Anliegen und Anfragen für den Bezirksbeirat erfassen und bearbeiten", accessNote: "nur CDU-Bezirksbeiräte, Anmeldung mit cloud.cdu-sf.de", bbrOnly: true },
+  { title: "Website Bezirksbeiräte – Unsere Bezirksbeiräte", url: "https://bbr.cdu-sf.de/unsere-bezirksbeiraete", category: "OV_WEBSEITE" },
   // Verwaltung / Presse
   { title: "Bürgerinfo Stadt Mannheim (öffentlich)", url: "https://buergerinfo.mannheim.de/buergerinfo/", category: "VERWALTUNG", description: "Sitzungen, Tagesordnungen, Vorlagen" },
   { title: "Bürgerinfo Mandatsträgerbereich", url: "https://buergerinfo.mannheim.de/rima/ri/ylogon.asp", category: "VERWALTUNG", accessNote: "nur BBR-Mitglieder mit eigenem Login" },
@@ -53,7 +56,7 @@ export async function seedDefaultLinks(db: PrismaClient): Promise<number> {
     if (existing.has(norm(l.url))) continue;
     const pos = (maxPos.get(l.category) ?? 0) + 1;
     maxPos.set(l.category, pos);
-    await db.link.create({ data: { title: l.title, url: l.url, category: l.category, description: l.description ?? "", accessNote: l.accessNote ?? "", position: pos } });
+    await db.link.create({ data: { title: l.title, url: l.url, category: l.category, description: l.description ?? "", accessNote: l.accessNote ?? "", bbrOnly: l.bbrOnly ?? false, position: pos } });
     added++;
   }
   await db.setting.upsert({ where: { key: "links.defaultsVersion" }, update: { value: DEFAULT_LINKS_VERSION }, create: { key: "links.defaultsVersion", value: DEFAULT_LINKS_VERSION } });

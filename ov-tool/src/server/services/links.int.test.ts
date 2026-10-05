@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { form, hasTestDb, makeUser, resetDb } from "../../../tests/db";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
-import { createLink, deleteLink, reorderLinks, updateLink } from "./links";
+import { createLink, deleteLink, listLinks, reorderLinks, updateLink } from "./links";
 
 describe.skipIf(!hasTestDb)("Link-Hub (DB)", () => {
   beforeEach(resetDb);
@@ -52,5 +52,20 @@ describe.skipIf(!hasTestDb)("Link-Hub (DB)", () => {
     await reorderLinks(admin, "PRESSE", [l2.id, l1.id]);
     const order = await db.link.findMany({ where: { category: "PRESSE" }, orderBy: { position: "asc" } });
     expect(order.map((l) => l.title)).toEqual(["2", "1"]);
+  });
+});
+
+describe.skipIf(!hasTestDb)("BBR-Links (DB)", () => {
+  beforeEach(resetDb);
+
+  it("zeigt BBR-Links nur Bezirksbeiräten und Admins", async () => {
+    const admin = await makeUser({ role: "ADMIN" });
+    const bbr = await makeUser({ role: "VORSTAND", isBbr: true });
+    const other = await makeUser({ role: "VORSTAND" });
+    await db.link.create({ data: { title: "BBR-Anliegen", url: "https://bbr-anliegen.cdu-sf.de/", bbrOnly: true } });
+    await db.link.create({ data: { title: "Website", url: "https://cdu-sf.de" } });
+    expect((await listLinks(admin)).map((l) => l.title).sort()).toEqual(["BBR-Anliegen", "Website"]);
+    expect((await listLinks(bbr)).length).toBe(2);
+    expect((await listLinks(other)).map((l) => l.title)).toEqual(["Website"]);
   });
 });

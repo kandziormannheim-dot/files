@@ -35,6 +35,9 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/settings", label: "Einstellungen", icon: Settings, adminOnly: true },
 ];
 
+/** Externer Bereich nur für die CDU-Bezirksbeiräte (eigene Anmeldung über cloud.cdu-sf.de). */
+export const BBR_ANLIEGEN_URL = "https://bbr-anliegen.cdu-sf.de/";
+
 export function visibleNavItems(isAdmin: boolean): NavItem[] {
   return NAV_ITEMS.filter((item) => isAdmin || !item.adminOnly);
 }

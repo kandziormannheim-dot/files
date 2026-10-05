@@ -14,7 +14,7 @@ import { listTasks } from "./tasks";
 export type Notice = { level: "warning" | "destructive" | "default"; text: string; href: string };
 
 /** Alles für die Übersicht (SPEC.md 3.1) in einem Aufruf. */
-export async function dashboardData(user: Pick<User, "id" | "role">) {
+export async function dashboardData(user: Pick<User, "id" | "role"> & { isBbr?: boolean }) {
   const now = new Date();
   const [tasks, rhythmData, nextMeetings, actions, topics, links, myVotes, settings] = await Promise.all([
     listTasks(user, { view: "mine" }),
@@ -32,7 +32,7 @@ export async function dashboardData(user: Pick<User, "id" | "role">) {
       include: { shifts: { include: { signups: { select: { userId: true } } } } },
     }),
     db.topic.findMany({ orderBy: { updatedAt: "desc" }, take: 5, select: { id: true, title: true, status: true, updatedAt: true, forNextMeeting: true } }),
-    db.link.findMany({ orderBy: [{ category: "asc" }, { position: "asc" }], take: 8 }),
+    db.link.findMany({ where: user.role === "ADMIN" || user.isBbr ? {} : { bbrOnly: false }, orderBy: [{ category: "asc" }, { position: "asc" }], take: 8 }),
     db.circulationVote.findMany({
       where: { userId: user.id, vote: null, circulation: { status: "LAUFEND", deadline: { gt: now } } },
       include: { circulation: { select: { id: true, number: true, subject: true, deadline: true } } },

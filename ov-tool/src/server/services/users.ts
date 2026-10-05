@@ -24,6 +24,7 @@ const userSchema = z.object({
   sortOrder: optionalInt,
   loginEnabled: checkbox,
   active: checkbox,
+  isBbr: checkbox,
 });
 
 /** Aktive Personen in der Reihenfolge der Anwesenheitslisten. */

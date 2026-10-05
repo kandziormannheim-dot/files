@@ -65,6 +65,10 @@ export function UserForm({ action, user }: Props) {
           <Checkbox name="loginEnabled" defaultChecked={user?.loginEnabled ?? true} />
           Login erlaubt (bei Gästen optional)
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox name="isBbr" defaultChecked={user?.isBbr ?? false} />
+          CDU-Bezirksbeirat (Zugang zu BBR-Anliegen und BBR-Links)
+        </label>
         {isNew ? (
           <label className="flex items-center gap-2 text-sm">
             <Checkbox name="sendInvite" defaultChecked />

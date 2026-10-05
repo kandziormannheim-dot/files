@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, ExternalLink, Landmark } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { isActive, visibleNavItems } from "./nav-items";
+import { BBR_ANLIEGEN_URL, isActive, visibleNavItems } from "./nav-items";
 
-type Props = { isAdmin: boolean };
+type Props = { isAdmin: boolean; isBbr?: boolean };
 
 /** Seitenleiste ab Tablet-Breite. */
-export function SideNav({ isAdmin }: Props) {
+export function SideNav({ isAdmin, isBbr = false }: Props) {
   const pathname = usePathname();
   return (
     <nav aria-label="Hauptnavigation" className="flex flex-col gap-1">
@@ -32,6 +32,18 @@ export function SideNav({ isAdmin }: Props) {
           </Link>
         );
       })}
+      {isBbr ? (
+        <a
+          href={BBR_ANLIEGEN_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex items-center gap-3 rounded-md border-l-4 border-transparent px-3 py-2 text-sm font-medium text-rhoendorf/80 hover:bg-cadenabbia-10 hover:text-rhoendorf"
+        >
+          <Landmark className="size-4 shrink-0" aria-hidden />
+          BBR-Anliegen
+          <ExternalLink className="ml-auto size-3.5 opacity-60" aria-hidden />
+        </a>
+      ) : null}
     </nav>
   );
 }

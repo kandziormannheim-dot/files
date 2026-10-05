@@ -1,13 +1,18 @@
 import "server-only";
 import { LinkCategory, type User } from "@prisma/client";
 import { looksLikeCredential, urlContainsCredentials } from "@/lib/credentials";
-import { formToObject, optionalText, requiredText, z } from "@/lib/validation";
+import { checkbox, formToObject, optionalText, requiredText, z } from "@/lib/validation";
 import { assertCan, canEditOwned } from "@/server/auth/permissions";
 import { audit, changes } from "@/server/audit";
 import { db } from "@/server/db";
 import { ForbiddenError, NotFoundError, UserError } from "@/server/errors";
 
-type Actor = Pick<User, "id" | "role">;
+type Actor = Pick<User, "id" | "role"> & { isBbr?: boolean };
+
+/** BBR-Links sehen nur Bezirksbeiräte und Admins. */
+export function linkVisibility(actor: Actor) {
+  return actor.role === "ADMIN" || actor.isBbr ? {} : { bbrOnly: false };
+}
 
 const linkSchema = z.object({
   title: requiredText(200),
@@ -19,6 +24,7 @@ const linkSchema = z.object({
   description: optionalText(1000),
   accessNote: optionalText(500),
   editorialNote: optionalText(1000),
+  bbrOnly: checkbox,
 });
 
 function parseLink(formData: FormData) {
@@ -41,13 +47,13 @@ function parseLink(formData: FormData) {
 
 export function listLinks(actor: Actor) {
   assertCan(actor, "read");
-  return db.link.findMany({ orderBy: [{ category: "asc" }, { position: "asc" }, { title: "asc" }] });
+  return db.link.findMany({ where: linkVisibility(actor), orderBy: [{ category: "asc" }, { position: "asc" }, { title: "asc" }] });
 }
 
 export async function getLink(actor: Actor, id: string) {
   assertCan(actor, "read");
   const link = await db.link.findUnique({ where: { id } });
-  if (!link) throw new NotFoundError("Link nicht gefunden.");
+  if (!link || (link.bbrOnly && !(actor.role === "ADMIN" || actor.isBbr))) throw new NotFoundError("Link nicht gefunden.");
   return link;
 }
 

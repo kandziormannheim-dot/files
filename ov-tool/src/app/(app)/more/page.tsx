@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { UserRound } from "lucide-react";
-import { visibleNavItems } from "@/components/layout/nav-items";
+import { Landmark, UserRound } from "lucide-react";
+import { BBR_ANLIEGEN_URL, visibleNavItems } from "@/components/layout/nav-items";
 import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/server/auth/session";
 
@@ -23,6 +23,16 @@ export default async function MorePage() {
           </li>
         ))}
       </ul>
+      {user.isBbr ? (
+        <a
+          href={BBR_ANLIEGEN_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 flex items-center gap-3 rounded-lg border bg-white p-4 text-sm font-medium hover:border-akzent"
+        >
+          <Landmark className="size-5 text-akzent-dunkel" aria-hidden /> BBR-Anliegen (nur Bezirksbeiräte)
+        </a>
+      ) : null}
     </>
   );
 }

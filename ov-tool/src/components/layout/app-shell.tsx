@@ -6,10 +6,11 @@ import { UserMenu } from "./user-menu";
 type Props = {
   children: ReactNode;
   isAdmin: boolean;
+  isBbr?: boolean;
   user: { name: string; email: string };
 };
 
-export function AppShell({ children, isAdmin, user }: Props) {
+export function AppShell({ children, isAdmin, isBbr = false, user }: Props) {
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[14rem_1fr]">
       <header className="flex items-center justify-between gap-2 border-b-4 border-cadenabbia bg-white px-4 py-2 md:hidden">
@@ -23,7 +24,7 @@ export function AppShell({ children, isAdmin, user }: Props) {
           <p className="mb-5 px-2 font-serif text-xs text-rhoendorf-60">
             OV-Management
           </p>
-          <SideNav isAdmin={isAdmin} />
+          <SideNav isAdmin={isAdmin} isBbr={isBbr} />
           <div className="mt-auto pt-6">
             <UserMenu {...user} isAdmin={isAdmin} />
           </div>

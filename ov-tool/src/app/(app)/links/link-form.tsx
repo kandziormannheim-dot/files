@@ -43,6 +43,9 @@ export function LinkForm({
       >
         <Input id="accessNote" name="accessNote" defaultValue={link?.accessNote} />
       </Field>
+      <label className="flex items-center gap-2 text-sm sm:col-span-2">
+        <input type="checkbox" name="bbrOnly" defaultChecked={link?.bbrOnly ?? false} /> Nur für CDU-Bezirksbeiräte sichtbar
+      </label>
       <Field
         label="Redaktionsnotiz"
         name="editorialNote"

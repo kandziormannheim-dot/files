@@ -53,6 +53,8 @@ model User {
   /// Telefonnummer (selbst gepflegt); in der Vorstandsliste nur mit Zustimmung sichtbar
   phone              String?
   showPhoneInBoard   Boolean     @default(false)
+  /// Mitglied der CDU-Bezirksbeiräte (Seckenheim/Friedrichsfeld) – sieht BBR-Bereiche, z. B. BBR-Anliegen
+  isBbr              Boolean     @default(false)
   icsToken           String      @unique @default(cuid())
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
@@ -181,6 +183,8 @@ model Link {
   accessNote    String       @default("")
   /// Redaktionsnotiz für Social-Media-Kanäle (wer betreut, Posting-Rhythmus)
   editorialNote String       @default("")
+  /// nur für Bezirksbeiräte sichtbar (User.isBbr)
+  bbrOnly       Boolean      @default(false)
   position      Int          @default(0)
   createdById   String?
   createdBy     User?        @relation("LinkCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
