@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { requirePageCapability } from "@/server/auth/session";
 import { getRawSettings } from "@/server/services/settings";
 import { listActiveUsers } from "@/server/services/users";
-import { resetBriefbogenAction, updateSettingsAction, uploadBriefbogenAction } from "../actions";
+import { resetBriefbogenAction, sendTestMailAction, updateSettingsAction, uploadBriefbogenAction } from "../actions";
 
 export const metadata: Metadata = { title: "Allgemeine Einstellungen" };
 
@@ -43,6 +43,22 @@ export default async function GeneralSettingsPage() {
   return (
     <>
       <PageHeader title="Allgemeine Einstellungen" />
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Mailversand</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            Absender: <strong>{process.env.MAIL_FROM || "nicht gesetzt"}</strong>
+            {process.env.SMTP_HOST ? ` · Server ${process.env.SMTP_HOST}` : " · kein SMTP-Server – Mails landen nur im Log"}
+          </p>
+          <ActionForm action={sendTestMailAction}>
+            <SubmitButton variant="outline" size="sm" pendingText="Wird gesendet …">
+              Testmail an mich senden
+            </SubmitButton>
+          </ActionForm>
+        </CardContent>
+      </Card>
       <ActionForm action={updateSettingsAction} className="flex flex-col gap-6">
         <Card>
           <CardHeader>

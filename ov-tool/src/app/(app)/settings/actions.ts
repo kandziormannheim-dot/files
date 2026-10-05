@@ -64,3 +64,22 @@ export async function resetTemplateAction(key: string, _prev: ActionState): Prom
 export async function previewTemplateAction(key: string, body: string): Promise<TemplatePreview> {
   return previewTemplate(await requireUser(), key, body);
 }
+
+/** Testmail an die eigene Adresse – prüft SMTP-Zugang und Zustellung. */
+export async function sendTestMailAction(_prev: ActionState): Promise<ActionState> {
+  return runAction(async () => {
+    const user = await requireUser();
+    const { assertCan } = await import("@/server/auth/permissions");
+    assertCan(user, "settings.manage");
+    const { sendMail } = await import("@/server/mail/transport");
+    await sendMail({
+      to: user.email,
+      subject: "Testmail aus dem OV-Management",
+      text: `Hallo ${user.name},\n\ndiese Testmail bestätigt, dass der Mailversand des OV-Managements funktioniert.\n\nAbsender: ${process.env.MAIL_FROM ?? "(nicht gesetzt)"}\nServer: ${process.env.SMTP_HOST ?? "(kein SMTP – nur Log)"}\n`,
+    });
+    const { audit } = await import("@/server/audit");
+    const { db } = await import("@/server/db");
+    await audit(db, user, "mail.test", "User", user.id, { to: user.email });
+    return `Testmail an ${user.email} gesendet. Falls sie nicht ankommt: Spam-Ordner prüfen.`;
+  });
+}
