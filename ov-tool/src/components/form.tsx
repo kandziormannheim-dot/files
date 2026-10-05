@@ -13,6 +13,30 @@ const FormStateContext = createContext<ActionState>(null);
 
 type FormAction = (state: ActionState, formData: FormData) => Promise<ActionState>;
 
+/**
+ * Nach einem Update auf dem Server kennt dieser die Server Actions einer noch offenen, alten Seite nicht mehr
+ * („Failed to find Server Action“). Statt eines stummen Fehlers lädt die Seite dann einmal neu.
+ */
+export function isStaleDeployError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /Server Action .*(was not found|not found on the server)|failed-to-find-server-action|Failed to find Server Action/i.test(msg);
+}
+
+function withStaleDeployGuard(action: FormAction): FormAction {
+  return async (state, formData) => {
+    try {
+      return await action(state, formData);
+    } catch (err) {
+      if (isStaleDeployError(err)) {
+        window.location.reload();
+        return { ok: false, error: "Die Anwendung wurde aktualisiert – die Seite wird neu geladen. Bitte danach erneut absenden." };
+      }
+      console.error(err);
+      return { ok: false, error: "Verbindung zum Server fehlgeschlagen. Bitte erneut versuchen." };
+    }
+  };
+}
+
 /** Formular für Server Actions mit Feldfehlern, Fehlermeldung und Erfolgshinweis. */
 export function ActionForm({
   action,
@@ -31,7 +55,7 @@ export function ActionForm({
   onSuccess?: (state: NonNullable<ActionState>) => void;
   id?: string;
 }) {
-  const [state, formAction] = useActionState(action, null);
+  const [state, formAction] = useActionState(withStaleDeployGuard(action), null);
   const formRef = useRef<HTMLFormElement>(null);
   const onSuccessRef = useRef(onSuccess);
   useEffect(() => {
