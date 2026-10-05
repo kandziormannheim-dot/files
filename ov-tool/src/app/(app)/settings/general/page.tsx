@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageCapability } from "@/server/auth/session";
+import { mailFrom, mailReplyTo, mailRoute } from "@/server/mail/transport";
 import { getRawSettings } from "@/server/services/settings";
 import { listActiveUsers } from "@/server/services/users";
 import { resetBriefbogenAction, sendTestMailAction, updateSettingsAction, uploadBriefbogenAction } from "../actions";
@@ -16,6 +17,7 @@ export const metadata: Metadata = { title: "Allgemeine Einstellungen" };
 export default async function GeneralSettingsPage() {
   const user = await requirePageCapability("settings.manage");
   const [s, users] = await Promise.all([getRawSettings(user), listActiveUsers()]);
+  const route = mailRoute();
   const num = (name: keyof typeof s, label: string, hint?: string, min = 0) => (
     <Field label={label} name={name} hint={hint}>
       <Input id={name} name={name} type="number" min={min} defaultValue={s[name]} required />
@@ -49,8 +51,16 @@ export default async function GeneralSettingsPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
           <p>
-            Absender: <strong>{process.env.MAIL_FROM || "nicht gesetzt"}</strong>
-            {process.env.SMTP_HOST ? ` · Server ${process.env.SMTP_HOST}` : " · kein SMTP-Server – Mails landen nur im Log"}
+            Absender: <strong>{mailFrom()}</strong>
+            {mailReplyTo() ? <> · Antworten an <strong>{mailReplyTo()}</strong></> : null}
+            <br />
+            <span className="text-rhoendorf-60">
+              {route.via === "brevo"
+                ? "Versand über Brevo (smtp-relay.brevo.com) – Domain cdu-sf.de ist bei Brevo authentifiziert."
+                : route.via === "smtp"
+                  ? `Versand über ${route.host}`
+                  : "Kein Mailserver – Mails landen nur im Log."}
+            </span>
           </p>
           <ActionForm action={sendTestMailAction}>
             <SubmitButton variant="outline" size="sm" pendingText="Wird gesendet …">

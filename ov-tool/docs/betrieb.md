@@ -94,6 +94,14 @@ dann anmelden, eine Sitzung öffnen und ein Protokoll-PDF erzeugen.
 - Löschfristen setzt der Hintergrundjob durch (Einstellungen → Löschfristen).
 - Logs: `docker compose logs app`. Mails ohne `SMTP_HOST` landen im Log statt im Postfach.
 
+## 5a. Mailversand über Brevo (Absender info@cdu-sf.de)
+
+Die Domain cdu-sf.de ist bei Brevo authentifiziert (DKIM `brevo1/brevo2._domainkey`, DMARC). Mails mit Absender
+info@cdu-sf.de deshalb über Brevo verschicken, nicht über den eigenen Server (dessen IP steht nicht im SPF von cdu-sf.de).
+Brevo → Einstellungen → SMTP & API → „SMTP-Schlüssel erzeugen“; Login und Schlüssel in die `.env`:
+`BREVO_SMTP_LOGIN=…`, `BREVO_SMTP_KEY=…`, danach `docker compose up -d`. Brevo hat Vorrang vor `SMTP_*`.
+Kontrolle: Einstellungen → Allgemein → „Testmail an mich senden“. Ohne Brevo gilt `MAIL_FROM`, Antworten über `MAIL_REPLY_TO`.
+
 ## 6a. Marketing: WordPress-Anbindung
 
 Blogartikel werden nach Freigabe über die WordPress-REST-API übertragen (als Entwurf oder direkt veröffentlicht).
