@@ -76,6 +76,14 @@ describe("Mail-Auszeichnung", () => {
     const html = textToHtml("TOP 1\tBegrüßung\n\tTOP 1.1\tBericht Kreisverband\nTOP 2\tSonstiges");
     expect(html).toContain("<table");
     expect(html).toMatch(/TOP 1<\/td><td[^>]*>Begrüßung/);
-    expect(html).toMatch(/padding:2px 16px 2px 28px[^>]*>TOP 1\.1/);
+    expect(html).toMatch(/padding:3px 12px 3px 16px[^>]*>TOP 1\.1/);
+  });
+
+  it("erkennt die Tagesordnung auch mit Windows-Zeilenumbrüchen aus dem Formular", async () => {
+    const { textToHtml, stripMarkup } = await import("./engine");
+    const html = textToHtml("Folgende Tagesordnung:\r\n\r\nTOP 1\tBegrüßung\r\nTOP 10\tRückblick\r\n\r\nGruß");
+    expect(html).toContain("<table");
+    expect(html).toMatch(/TOP 10<\/td><td[^>]*>Rückblick/);
+    expect(stripMarkup("a\r\nb")).toBe("a\nb");
   });
 });

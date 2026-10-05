@@ -115,7 +115,11 @@ export function renderMailTemplate(source: string, context: object): RenderedMai
 
 /** **fett** im Klartext: Sternchen entfernen. */
 export function stripMarkup(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, "$1");
+  return normalizeNewlines(text).replace(/\*\*(.+?)\*\*/g, "$1");
+}
+
+export function normalizeNewlines(text: string): string {
+  return text.replace(/\r\n?/g, "\n");
 }
 
 const TOP_LINE = /^(\t| {4})?(TOP\s+\S+)(?:\t| {2,})(.*)$/;
@@ -126,7 +130,7 @@ function agendaTableHtml(lines: string[]): string {
     .map((l) => {
       const m = TOP_LINE.exec(l)!;
       const sub = !!m[1];
-      return `<tr><td style="padding:2px 16px 2px ${sub ? "28px" : "0"};white-space:nowrap;vertical-align:top;font-weight:700;color:#2d3c4b">${escapeHtml(m[2]!)}</td><td style="padding:2px 0;vertical-align:top">${inlineHtml(m[3]!)}</td></tr>`;
+      return `<tr><td style="width:${sub ? 56 : 72}px;padding:3px 12px 3px ${sub ? "16px" : "0"};white-space:nowrap;vertical-align:top;font-weight:700;color:#2d3c4b">${escapeHtml(m[2]!)}</td><td style="padding:3px 0;vertical-align:top">${inlineHtml(m[3]!)}</td></tr>`;
     })
     .join("");
   return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 1em;border-collapse:collapse;font-size:15px">${rows}</table>`;
@@ -156,7 +160,8 @@ export function escapeHtml(s: string): string {
 
 /** Klartext-Mail → einfache HTML-Mail (Absätze, Zeilenumbrüche, klickbare Links). */
 export function textToHtml(text: string): string {
-  const paragraphs = text
+  // Formulare liefern Zeilenumbrüche als CRLF – vereinheitlichen, sonst greifen Absatz- und TOP-Erkennung nicht
+  const paragraphs = normalizeNewlines(text)
     .trim()
     .split(/\n{2,}/)
     .map((p) => {

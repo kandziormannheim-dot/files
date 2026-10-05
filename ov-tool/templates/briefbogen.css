@@ -42,8 +42,10 @@ p { margin: 0 0 2.5mm; }
 .bitte { font-weight: 700; margin-top: 6mm; }
 
 .tagesordnung { list-style: none; padding: 0; margin: 3mm 0; }
-.tagesordnung li { margin: 1mm 0; display: grid; grid-template-columns: 18mm 1fr; }
-.tagesordnung li.ebene-1 { padding-left: 8mm; grid-template-columns: 20mm 1fr; }
+.tagesordnung li { margin: 1.2mm 0; display: grid; grid-template-columns: 20mm 1fr; }
+.tagesordnung li > span:first-child { font-weight: 700; color: #2d3c4b; white-space: nowrap; }
+.tagesordnung li.ebene-1 { padding-left: 6mm; grid-template-columns: 20mm 1fr; }
+.tagesordnung li.ebene-1 > span:first-child { font-weight: 600; }
 
 .unterschrift img { height: 12mm; margin: 4mm 0 1mm; }
 .unterschrift .name { font-weight: 700; margin: 0; }
