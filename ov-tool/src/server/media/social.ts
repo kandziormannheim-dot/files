@@ -27,8 +27,10 @@ export type Branding = {
   accountName: string;
   /** kleine Marke oben, z. B. „Bezirksbeirat Seckenheim“ */
   kicker: string;
-  /** eigenes Logo (Dateiablage), sonst das CDU-Logo */
+  /** hochgeladenes Logo (Dateiablage) */
   logoPath?: string | null;
+  /** mitgeliefertes Kanal-Logo in public/brand (z. B. logo-ov.png), sonst das CDU-Logo */
+  defaultLogo?: string | null;
   /** Zeilen der Kurzfassung für die Kachel */
   lines: string[];
 };
@@ -37,13 +39,19 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 const MIME: Record<string, string> = { ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
 
-async function logoDataUri(logoPath?: string | null): Promise<string> {
-  if (logoPath && (await storedFileExists(logoPath))) {
-    const mime = MIME[path.extname(logoPath).toLowerCase()] ?? "image/png";
-    return `data:${mime};base64,${(await readStoredFile(logoPath)).toString("base64")}`;
+/** Logo als Data-URI; `named` = Kanal-Logo mit Namenszeile (dann entfällt der Kanalname als Text). */
+async function logoDataUri(b: Pick<Branding, "logoPath" | "defaultLogo">): Promise<{ uri: string; named: boolean }> {
+  if (b.logoPath && (await storedFileExists(b.logoPath))) {
+    const mime = MIME[path.extname(b.logoPath).toLowerCase()] ?? "image/png";
+    return { uri: `data:${mime};base64,${(await readStoredFile(b.logoPath)).toString("base64")}`, named: true };
   }
-  const svg = await readFile(path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "brand", "cdu-logo.svg"));
-  return `data:image/svg+xml;base64,${svg.toString("base64")}`;
+  const brandDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "brand");
+  if (b.defaultLogo && /^[\w-]+\.(png|svg)$/.test(b.defaultLogo)) {
+    const data = await readFile(path.join(/*turbopackIgnore: true*/ brandDir, b.defaultLogo)).catch(() => null);
+    if (data) return { uri: `data:${MIME[path.extname(b.defaultLogo)] ?? "image/png"};base64,${data.toString("base64")}`, named: true };
+  }
+  const svg = await readFile(path.join(/*turbopackIgnore: true*/ brandDir, "cdu-logo.svg"));
+  return { uri: `data:image/svg+xml;base64,${svg.toString("base64")}`, named: false };
 }
 
 /** Schriftgröße so wählen, dass ein Text ungefähr in die Fläche passt (grobe Zeichenbreite Inter Extrabold ≈ 0,58 em). */
@@ -73,7 +81,7 @@ ${extraCss}</style></head><body>${body}</body></html>`;
 
 export async function imageHtml(c: Creative, b: Branding): Promise<string> {
   const { width, height } = IMAGE_SIZE;
-  const logo = await logoDataUri(b.logoPath);
+  const { uri: logo, named } = await logoDataUri(b);
   const hSize = fitFontSize(c.headline, width - 160, 4, 92, 56);
   const lines = b.lines.slice(0, 4);
   const lineSize = fitFontSize(lines.join(" "), width - 160, 7, 34, 24);
@@ -90,9 +98,9 @@ export async function imageHtml(c: Creative, b: Branding): Promise<string> {
       ${lines.map((l) => `<li style="display:flex;gap:20px;font-size:${lineSize}px;line-height:1.3;font-weight:500"><span style="flex:none;width:10px;margin-top:${Math.round(lineSize * 0.3)}px;height:${Math.round(lineSize * 0.75)}px;background:${TUERKIS}"></span><span>${esc(l)}</span></li>`).join("")}
     </ul>
   </div>
-  <div style="flex:none;height:150px;padding:0 80px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-top:2px solid #e3e8ea">
-    <div class="logo-chip"><img src="${logo}" alt="" style="height:78px;max-width:330px;object-fit:contain"></div>
-    <p style="font-weight:800;font-size:28px;text-align:right;max-width:560px;line-height:1.2">${esc(b.accountName)}</p>
+  <div style="flex:none;height:${named ? 186 : 150}px;padding:0 80px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-top:2px solid #e3e8ea">
+    <div class="logo-chip"><img src="${logo}" alt="" style="height:${named ? 140 : 78}px;max-width:${named ? 460 : 330}px;object-fit:contain"></div>
+    ${named ? "" : `<p style="font-weight:800;font-size:28px;text-align:right;max-width:560px;line-height:1.2">${esc(b.accountName)}</p>`}
   </div>
 </div>`;
   return page(width, height, body);
@@ -108,11 +116,11 @@ export async function renderSocialImage(c: Creative, b: Branding): Promise<Buffe
 
 export async function videoFramesHtml(c: Creative, b: Branding): Promise<string[]> {
   const { width, height } = VIDEO_SIZE;
-  const logo = await logoDataUri(b.logoPath);
+  const { uri: logo, named } = await logoDataUri(b);
   const footer = (bg: string, color: string) => `
-<div style="position:absolute;left:0;right:0;bottom:0;height:230px;background:${bg};display:flex;align-items:center;justify-content:space-between;padding:0 80px">
-  <div class="logo-chip" style="padding:14px 18px;border-radius:8px"><img src="${logo}" alt="" style="height:84px;max-width:330px;object-fit:contain"></div>
-  <p style="color:${color};font-weight:800;font-size:32px;line-height:1.2;text-align:right;max-width:520px">${esc(b.accountName)}</p>
+<div style="position:absolute;left:0;right:0;bottom:0;height:260px;background:${bg};display:flex;align-items:center;justify-content:${named ? "center" : "space-between"};padding:0 80px">
+  <div class="logo-chip" style="padding:${named ? "0" : "14px 18px"};border-radius:8px;overflow:hidden"><img src="${logo}" alt="" style="height:${named ? 170 : 84}px;max-width:${named ? 520 : 330}px;object-fit:contain"></div>
+  ${named ? "" : `<p style="color:${color};font-weight:800;font-size:32px;line-height:1.2;text-align:right;max-width:520px">${esc(b.accountName)}</p>`}
 </div>`;
 
   const title = `
@@ -139,8 +147,8 @@ export async function videoFramesHtml(c: Creative, b: Branding): Promise<string[
   <div style="margin:60px auto 0;width:200px;height:20px;background:${TUERKIS}"></div>
 </div>
 <div style="position:absolute;left:0;right:0;bottom:0;height:520px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:36px">
-  <img src="${logo}" alt="" style="height:150px;max-width:640px;object-fit:contain">
-  <p style="font-weight:800;font-size:40px;text-align:center;padding:0 80px">${esc(b.accountName)}</p>
+  <img src="${logo}" alt="" style="height:${named ? 340 : 150}px;max-width:${named ? 920 : 640}px;object-fit:contain">
+  ${named ? "" : `<p style="font-weight:800;font-size:40px;text-align:center;padding:0 80px">${esc(b.accountName)}</p>`}
 </div>`;
 
   return Promise.all([title, ...scenes, outro].map((body) => page(width, height, body)));

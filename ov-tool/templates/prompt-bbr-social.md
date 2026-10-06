@@ -18,6 +18,7 @@ Es gibt zwei Social-Media-Kanäle mit unterschiedlichem Ton und zusätzlich eine
 
 ## Grundsätze für beide Kanäle
 
+- Wortwahl: Der Bezirksbeirat ist ein beratendes Gremium. Die eingebrachten Punkte immer als „Anfrage“ oder „Anliegen“ bezeichnen – nie als „Antrag“ und nie „beantragen“ (stattdessen z. B. „angefragt“, „angeregt“, „eingebracht“, „gebeten“).
 - Nur Fakten aus Überschrift und Kurzfassung verwenden. Nichts erfinden: keine Zitate, Zahlen, Namen, Termine, Orte oder Ergebnisse, die nicht genannt sind. Nicht behaupten, dass etwas beschlossen oder umgesetzt wurde, wenn die Kurzfassung das nicht sagt.
 - Keine personenbezogenen Daten.
 - Deutsche Rechtschreibung, deutsche Anführungszeichen („…“), einfache, verständliche Sprache.

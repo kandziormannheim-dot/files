@@ -111,8 +111,12 @@ export default async function BbrSocialPage() {
                 return (
                   <div key={acc} className="flex flex-col gap-2">
                     <p className="font-medium">
-                      {acc === "BBR" ? "BBR-Kanal" : "OV-Kanal"}: {current ? "eigenes Logo" : "CDU-Logo"}
+                      {acc === "BBR" ? "BBR-Kanal" : "OV-Kanal"}: {current ? "hochgeladenes Logo" : "Standardlogo"}
                     </p>
+                    {current ? null : (
+                      // eslint-disable-next-line @next/next/no-img-element -- statische Datei
+                      <img src={acc === "BBR" ? "/brand/logo-bbr.png" : "/brand/logo-ov.png"} alt="" className="h-12 w-auto self-start rounded border" />
+                    )}
                     <ActionForm action={uploadLogoAction.bind(null, acc)} className="flex flex-wrap items-center gap-2" resetOnSuccess>
                       <Input type="file" name="logo" accept=".svg,.png,image/svg+xml,image/png" className="max-w-56" aria-label={`Logo ${acc}`} />
                       <SubmitButton size="sm" variant="outline" pendingText="…">
@@ -122,14 +126,14 @@ export default async function BbrSocialPage() {
                     {current ? (
                       <ActionForm action={resetLogoAction.bind(null, acc)}>
                         <SubmitButton size="sm" variant="ghost" pendingText="…">
-                          Zurück zum CDU-Logo
+                          Zurück zum Standardlogo
                         </SubmitButton>
                       </ActionForm>
                     ) : null}
                   </div>
                 );
               })}
-              <p className="text-xs text-neutral-600">SVG oder PNG, auf weißem Grund (CD-Manual). Gilt für neu erzeugte Kacheln und Videos.</p>
+              <p className="text-xs text-neutral-600">Nur zum Ersetzen nötig: SVG oder PNG auf weißem Grund. Gilt für neu erzeugte Kacheln und Videos.</p>
             </CardContent>
           </Card>
         ) : null}

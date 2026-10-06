@@ -151,8 +151,8 @@ export async function branding(account: SocialAccount, bezirk: string | null): P
   const s = await getSettingsUncached();
   const ort = bezirk ?? "Seckenheim/Friedrichsfeld";
   return account === "BBR"
-    ? { accountName: bbrAccountName(bezirk), kicker: `Bezirksbeirat ${ort}`, logoPath: s.social.logoBbr || null }
-    : { accountName: `CDU ${s.ov.name}`, kicker: `CDU vor Ort · ${ort}`, logoPath: s.social.logoOv || null };
+    ? { accountName: bbrAccountName(bezirk), kicker: `Bezirksbeirat ${ort}`, logoPath: s.social.logoBbr || null, defaultLogo: "logo-bbr.png" }
+    : { accountName: `CDU ${s.ov.name}`, kicker: `CDU vor Ort · ${ort}`, logoPath: s.social.logoOv || null, defaultLogo: "logo-ov.png" };
 }
 
 /** Bildkachel und Video rendern und ablegen; Fehler werden zurückgegeben, nicht geworfen. */
