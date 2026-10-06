@@ -24,7 +24,9 @@ export default async function MarketingPage() {
         />
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
-            <Link href="/marketing/bbr">BBR-Anliegen → Social Media &amp; Blog</Link>
+            <Link href="/marketing/bbr">
+              BBR-Anliegen → Social Media &amp; Blog
+            </Link>
           </Button>
           {can(user.role, "marketing.create") ? (
             <Button asChild>
@@ -36,25 +38,61 @@ export default async function MarketingPage() {
       {posts.length === 0 ? (
         <p className="text-sm text-neutral-600">Noch keine Beiträge.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
-          {posts.map((p) => (
-            <Link key={p.id} href={`/marketing/${p.id}`} className="min-w-0">
-              <Card className="transition hover:border-akzent">
-                <CardContent className="flex flex-col gap-1 pt-4 text-sm sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{p.title || "(ohne Titel)"}</p>
-                    <p className="text-neutral-600">
-                      {p.kind === "BLOG" ? `Blog · ${p.site === "BBR" ? "bbr.cdu-sf.de" : "cdu-sf.de"}` : `Social${p.account ? ` · ${p.account === "BBR" ? "BBR-Kanal" : "OV-Kanal"}` : ""} · ${p.channels.map((c) => CHANNELS[c as Channel] ?? c).join(", ") || "–"}`}
-                      {" · "}
-                      {p.createdBy?.name ?? "–"}, {formatDate(p.updatedAt)}
-                      {p.plannedFor ? ` · geplant ${formatDate(p.plannedFor)}` : ""}
-                    </p>
-                  </div>
-                  <Badge variant={MARKETING_STATUS[p.status].variant}>{MARKETING_STATUS[p.status].label}</Badge>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        <div className="flex flex-col gap-6">
+          {[
+            {
+              title: "Blogartikel",
+              items: posts.filter((p) => p.kind === "BLOG"),
+            },
+            {
+              title: "Social Media",
+              items: posts.filter((p) => p.kind === "SOCIAL"),
+            },
+          ]
+            .filter((g) => g.items.length)
+            .map((group) => (
+              <section key={group.title}>
+                <h2 className="mb-2 text-base font-bold">
+                  {group.title}{" "}
+                  <span className="font-normal text-neutral-500">
+                    ({group.items.length})
+                  </span>
+                </h2>
+                <div className="grid grid-cols-1 gap-3">
+                  {group.items.map((p) => (
+                    <Link
+                      key={p.id}
+                      href={`/marketing/${p.id}`}
+                      className="min-w-0"
+                    >
+                      <Card className="transition hover:border-akzent">
+                        <CardContent className="flex flex-col gap-1 pt-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">
+                              {p.title || "(ohne Titel)"}
+                            </p>
+                            <p className="text-neutral-600">
+                              {p.kind === "BLOG"
+                                ? `Blog · ${p.site === "BBR" ? "bbr.cdu-sf.de" : "cdu-sf.de"}`
+                                : `Social${p.account ? ` · ${p.account === "BBR" ? "BBR-Kanal" : "OV-Kanal"}` : ""} · ${p.channels.map((c) => CHANNELS[c as Channel] ?? c).join(", ") || "–"}`}
+                              {" · "}
+                              {p.createdBy?.name ?? "–"},{" "}
+                              {formatDate(p.updatedAt)}
+                              {p.plannedFor
+                                ? ` · geplant ${formatDate(p.plannedFor)}`
+                                : ""}
+                            </p>
+                          </div>
+                          <Badge variant={MARKETING_STATUS[p.status].variant}>
+                            {MARKETING_STATUS[p.status].label}
+                          </Badge>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ))}
         </div>
       )}
     </>

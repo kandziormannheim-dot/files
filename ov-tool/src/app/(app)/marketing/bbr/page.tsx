@@ -39,6 +39,12 @@ const STATUS_VARIANT: Record<string, "secondary" | "warning" | "success" | "dest
   FEHLER: "destructive",
 };
 
+/** Reihenfolge der Formate: Blog vor Social, Social BBR vor OV. */
+function sortFormats<T extends { kind: string; account: string | null }>(posts: T[]): T[] {
+  const rank = (p: T) => (p.kind === "BLOG" ? 0 : p.account === "BBR" ? 1 : 2);
+  return [...posts].sort((a, b) => rank(a) - rank(b));
+}
+
 export default async function BbrSocialPage() {
   const user = await requirePageCapability("read");
   const publisher = can(user.role, "marketing.publish");
@@ -179,7 +185,7 @@ export default async function BbrSocialPage() {
                 ) : null}
                 {c.posts.length ? (
                   <div className="flex flex-wrap gap-2">
-                    {c.posts.map((p) => (
+                    {sortFormats(c.posts).map((p) => (
                       <Link key={p.id} href={`/marketing/${p.id}`} className="flex items-center gap-2 rounded-md border px-3 py-1.5 hover:border-akzent">
                         <span className="font-medium">
                           {p.kind === "BLOG" ? `Blog ${p.site === "SF" ? "cdu-sf.de" : "bbr.cdu-sf.de"}` : p.account === "OV" ? "OV-Kanal" : "BBR-Kanal"}
@@ -195,19 +201,21 @@ export default async function BbrSocialPage() {
                     <summary className="cursor-pointer font-medium">{c.posts.length ? "Beiträge neu erstellen" : "Beiträge erstellen"}</summary>
                     <ActionForm action={generateAction.bind(null, c.id)} className="mt-3 flex flex-col gap-3">
                       <div className="flex flex-wrap gap-x-5 gap-y-2">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <label className="flex items-center gap-2">
+                            <input type="checkbox" name="blog" defaultChecked /> Blogartikel im Ton für
+                          </label>
+                          <NativeSelect name="blogSite" defaultValue="BBR" aria-label="Ton des Blogartikels (Webseite)" className="w-auto">
+                            <option value="BBR">bbr.cdu-sf.de</option>
+                            <option value="SF">cdu-sf.de</option>
+                          </NativeSelect>
+                        </span>
                         <label className="flex items-center gap-2">
-                          <input type="checkbox" name="bbr" defaultChecked /> BBR-Kanal (sachlich)
+                          <input type="checkbox" name="bbr" defaultChecked /> Social: BBR-Kanal (sachlich)
                         </label>
                         <label className="flex items-center gap-2">
-                          <input type="checkbox" name="ov" defaultChecked /> OV-Kanal (politisch)
+                          <input type="checkbox" name="ov" defaultChecked /> Social: OV-Kanal (politisch)
                         </label>
-                        <label className="flex items-center gap-2">
-                          <input type="checkbox" name="blog" defaultChecked /> Blogartikel im Ton für
-                        </label>
-                        <NativeSelect name="blogSite" defaultValue="BBR" aria-label="Ton des Blogartikels (Webseite)" className="w-auto">
-                          <option value="BBR">bbr.cdu-sf.de</option>
-                          <option value="SF">cdu-sf.de</option>
-                        </NativeSelect>
                       </div>
                       {c.posts.some((p) => p.status === "ENTWURF") ? (
                         <p className="text-xs text-amber-800">Vorhandene Entwürfe der gewählten Beiträge werden ersetzt.</p>
