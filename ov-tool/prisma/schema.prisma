@@ -1303,3 +1303,68 @@ model Motion {
 
   @@index([resolutionId])
 }
+
+// ---------------------------------------------------------------------------
+// Auslagenerstattung: Belege hochladen, Erstattungsart wählen, PDF an die Kreisgeschäftsstelle
+// ---------------------------------------------------------------------------
+
+enum ExpensePayout {
+  /// Verzicht auf Erstattung zugunsten einer Zuwendungsbestätigung (Aufwandsspende)
+  SPENDE
+  UEBERWEISUNG
+  BAR
+}
+
+enum ExpenseStatus {
+  ENTWURF
+  /// zur Freigabe eingereicht
+  EINGEREICHT
+  /// freigegeben und an die Kreisgeschäftsstelle gesendet
+  VERSENDET
+  ERLEDIGT
+  ABGELEHNT
+}
+
+model ExpenseClaim {
+  id            String        @id @default(cuid())
+  /// laufende Nummer je Jahr, z. B. A-2026-03
+  number        String        @unique
+  claimantId    String
+  claimantName  String
+  title         String
+  occasion      String        @default("")
+  payout        ExpensePayout
+  /// Bankverbindung bzw. Anschrift (JSON), verschlüsselt, wenn ENCRYPTION_KEY gesetzt ist; nach Ablauf der Frist gelöscht
+  personalData  String        @default("")
+  personalEnc   Boolean       @default(false)
+  status        ExpenseStatus @default(ENTWURF)
+  note          String        @default("")
+  submittedAt   DateTime?
+  approvedById  String?
+  approvedAt    DateTime?
+  sentAt        DateTime?
+  sentTo        String        @default("")
+  doneAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         ExpenseItem[]
+
+  @@index([claimantId, createdAt])
+  @@index([status])
+}
+
+model ExpenseItem {
+  id           String       @id @default(cuid())
+  claimId      String
+  claim        ExpenseClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  date         DateTime
+  description  String
+  /// Betrag in Cent
+  amountCents  Int
+  receiptPath  String?
+  receiptName  String       @default("")
+  receiptMime  String       @default("")
+  createdAt    DateTime     @default(now())
+
+  @@index([claimId, date])
+}

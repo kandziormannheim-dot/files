@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Receipt,
   FileCheck,
   Boxes,
   Globe,
@@ -34,6 +35,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/actions", label: "Aktionen", icon: Megaphone },
   { href: "/topics", label: "Themen", icon: MapPin, secondary: true },
   { href: "/marketing", label: "Marketing", icon: Newspaper },
+  { href: "/expenses", label: "Auslagen", icon: Receipt, secondary: true },
   { href: "/resolutions", label: "Beschlüsse", icon: FileCheck, secondary: true },
   { href: "/press", label: "Presse", icon: Mic, secondary: true },
   { href: "/landing", label: "Landing Pages", icon: Globe, secondary: true },

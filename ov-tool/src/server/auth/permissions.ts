@@ -41,6 +41,8 @@ export const CAPABILITIES = [
   "press.contacts", // Presseverteiler verwalten (Registrierungen freigeben)
   "deadline.manage", // externe Fristen im Fristenradar pflegen
   "motion.send", // Beschlüsse als Antrag (z. B. an den Kreisverband) einreichen
+  "expense.create", // eigene Auslagenerstattungen anlegen und einreichen
+  "expense.approve", // Auslagen freigeben, an die Kreisgeschäftsstelle senden, alle einsehen
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
@@ -60,6 +62,7 @@ const VORSTAND: Capability[] = [
   "poll.create",
   "landing.edit",
   "press.create",
+  "expense.create",
 ];
 const SCHRIFTFUEHRER: Capability[] = [...VORSTAND, "minutes.edit", "minutes.send", "transcript.upload"];
 
@@ -168,6 +171,13 @@ export const CAPABILITY_GROUPS: { title: string; items: { cap: Capability; label
       { cap: "inventory.manage", label: "Inventar ausmustern" },
       { cap: "link.create", label: "Links anlegen (eigene bearbeiten)" },
       { cap: "link.manage", label: "Alle Links bearbeiten und sortieren" },
+    ],
+  },
+  {
+    title: "Finanzen",
+    items: [
+      { cap: "expense.create", label: "Auslagenerstattung beantragen (eigene)" },
+      { cap: "expense.approve", label: "Auslagen freigeben und an die Kreisgeschäftsstelle senden", hint: "sieht alle Anträge inkl. Bankverbindung" },
     ],
   },
   {

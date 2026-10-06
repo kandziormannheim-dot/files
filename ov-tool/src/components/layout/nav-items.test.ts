@@ -10,6 +10,7 @@ describe("Hauptnavigation", () => {
       "Aktionen",
       "Themen",
       "Marketing",
+      "Auslagen",
       "Beschlüsse",
       "Presse",
       "Landing Pages",

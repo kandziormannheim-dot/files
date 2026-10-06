@@ -1,0 +1,51 @@
+<h1>Antrag auf Auslagenerstattung</h1>
+<p class="untertitel">{{ov.nameLang}} · Nr. {{auslage.nummer}}</p>
+
+<table class="kopf">
+  <tr><th>Antragsteller/in</th><td>{{auslage.antragsteller}}</td></tr>
+  <tr><th>Gegenstand</th><td>{{auslage.titel}}</td></tr>
+  {{#if auslage.anlass}}<tr><th>Anlass</th><td>{{auslage.anlass}}</td></tr>{{/if}}
+  <tr><th>Datum des Antrags</th><td>{{datum auslage.erstellt}}</td></tr>
+  <tr><th>Erstattungsart</th><td><strong>{{auslage.erstattungsart}}</strong></td></tr>
+</table>
+
+<h2>Positionen</h2>
+<table>
+  <thead><tr><th>Nr.</th><th>Belegdatum</th><th>Beschreibung</th><th>Beleg</th><th style="text-align:right">Betrag</th></tr></thead>
+  <tbody>
+  {{#each auslage.positionen}}<tr><td>{{nr}}</td><td>{{belegdatum}}</td><td>{{beschreibung}}</td><td>{{beleg}}</td><td style="text-align:right">{{betrag}}</td></tr>{{/each}}
+  <tr><td colspan="4"><strong>Summe</strong></td><td style="text-align:right"><strong>{{auslage.summe}}</strong></td></tr>
+  </tbody>
+</table>
+
+{{#if auslage.ueberweisung}}
+<h2>Bankverbindung</h2>
+<table class="kopf">
+  <tr><th>Kontoinhaber/in</th><td>{{auslage.kontoinhaber}}</td></tr>
+  <tr><th>IBAN</th><td>{{auslage.iban}}</td></tr>
+</table>
+{{/if}}
+{{#if auslage.bar}}
+<p>Die Erstattung erfolgt in bar gegen Quittung.</p>
+{{/if}}
+{{#if auslage.spende}}
+<h2>Verzicht auf Erstattung – Aufwandsspende</h2>
+<p>Ich verzichte auf die Erstattung des oben genannten Betrags von <strong>{{auslage.summe}}</strong> und bitte um Ausstellung einer Zuwendungsbestätigung (Aufwandsspende, § 10b Abs. 3 Satz 5 EStG) an folgende Anschrift:</p>
+<p class="hervorgehoben mehrzeilig">{{auslage.antragsteller}}
+{{auslage.anschrift}}</p>
+{{/if}}
+
+{{#if auslage.bemerkung}}<p class="mehrzeilig"><strong>Bemerkung:</strong> {{auslage.bemerkung}}</p>{{/if}}
+
+<p>Die Belege sind diesem Antrag als Anlage beigefügt. Ich versichere, dass die Auslagen im Auftrag der {{ov.nameLang}} entstanden sind und nicht anderweitig erstattet werden.</p>
+
+<div class="unterschriften">
+  <div>
+    <p>{{ov.ort}}, {{datum auslage.erstellt}}</p>
+    <p class="linie"><strong>{{auslage.antragsteller}}</strong><br>Antragsteller/in</p>
+  </div>
+  <div>
+    <p>{{ov.ort}}, {{#if auslage.freigabeAm}}{{auslage.freigabeAm}}{{else}}________________{{/if}}</p>
+    <p class="linie"><strong>{{#if auslage.freigabeDurch}}{{auslage.freigabeDurch}}{{else}}&nbsp;{{/if}}</strong><br>sachlich und rechnerisch richtig, Freigabe</p>
+  </div>
+</div>
