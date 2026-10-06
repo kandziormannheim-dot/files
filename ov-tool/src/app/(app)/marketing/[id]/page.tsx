@@ -1,3 +1,4 @@
+import { InlineBold } from "@/components/inline-bold";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -176,7 +177,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
               </CardHeader>
               <CardContent className="text-sm">
                 <p className="font-medium">{post.bbrConcern.title}</p>
-                <p className="mt-1 whitespace-pre-wrap text-neutral-700">{post.bbrConcern.kurzfassung}</p>
+                <p className="mt-1 whitespace-pre-wrap text-neutral-700"><InlineBold text={post.bbrConcern.kurzfassung} /></p>
               </CardContent>
             </Card>
           ) : null}

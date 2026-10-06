@@ -21,6 +21,7 @@ Es gibt zwei Social-Media-Kanäle mit unterschiedlichem Ton und zusätzlich eine
 - Wortwahl: Der Bezirksbeirat ist ein beratendes Gremium. Die eingebrachten Punkte immer als „Anfrage“ oder „Anliegen“ bezeichnen – nie als „Antrag“ und nie „beantragen“ (stattdessen z. B. „angefragt“, „angeregt“, „eingebracht“, „gebeten“).
 - Nur Fakten aus Überschrift und Kurzfassung verwenden. Nichts erfinden: keine Zitate, Zahlen, Namen, Termine, Orte oder Ergebnisse, die nicht genannt sind. Nicht behaupten, dass etwas beschlossen oder umgesetzt wurde, wenn die Kurzfassung das nicht sagt.
 - Keine personenbezogenen Daten.
+- Kein Markdown in den Social-Media-Texten: keine Sternchen (**…**), keine Rauten-Überschriften – Facebook, Instagram und Co. zeigen sie als Zeichen an. Die Kurzfassung kann solche Auszeichnungen enthalten (z. B. „**Anliegen:**“); übernimm nur den Inhalt.
 - Deutsche Rechtschreibung, deutsche Anführungszeichen („…“), einfache, verständliche Sprache.
 - Höchstens zwei bis drei passende Emojis je Text, sparsam.
 - Hashtags nur im Feld „hashtags“ (3–6, z. B. #Seckenheim oder #Friedrichsfeld, #Bezirksbeirat, #CDUMannheim), nicht im Text.

@@ -76,3 +76,25 @@ export function kurzfassungLines(kurzfassung: string): string[] {
 export function bbrAccountName(bezirk: string | null | undefined): string {
   return bezirk ? `CDU-Gruppe im BBR ${bezirk}` : "CDU-Gruppe im BBR Seckenheim/Friedrichsfeld";
 }
+
+/** Einfacher Markdown-Fettdruck (**…** bzw. __…__) als Abschnitte, z. B. „**Anliegen:** Text“. */
+export function boldSegments(text: string): { text: string; bold: boolean }[] {
+  const out: { text: string; bold: boolean }[] = [];
+  const re = /(\*\*|__)(.+?)\1/g;
+  let last = 0;
+  for (const m of text.matchAll(re)) {
+    if (m.index! > last) out.push({ text: text.slice(last, m.index), bold: false });
+    out.push({ text: m[2]!, bold: true });
+    last = m.index! + m[0].length;
+  }
+  if (last < text.length) out.push({ text: text.slice(last), bold: false });
+  return out.filter((s) => s.text);
+}
+
+/** Markdown-Auszeichnung entfernen (für Videotafeln, einfache Texte). */
+export function stripMarkdown(text: string): string {
+  return boldSegments(text)
+    .map((s) => s.text)
+    .join("")
+    .replace(/(^|\s)[*_]+(?=\S)|(?<=\S)[*_]+(?=\s|$)/g, "$1");
+}

@@ -50,3 +50,15 @@ describe("BBR-Karten auslesen", () => {
     expect(bbrAccountName(null)).toContain("Seckenheim/Friedrichsfeld");
   });
 });
+
+describe("Fettdruck in der Kurzfassung", () => {
+  it("zerlegt **…** in Abschnitte und entfernt Auszeichnung", async () => {
+    const { boldSegments, stripMarkdown } = await import("./bbr-card");
+    expect(boldSegments("**Anliegen:** In den Quartieren")).toEqual([
+      { text: "Anliegen:", bold: true },
+      { text: " In den Quartieren", bold: false },
+    ]);
+    expect(boldSegments("ohne")).toEqual([{ text: "ohne", bold: false }]);
+    expect(stripMarkdown("**Ziel:** Seckenheim __fair__ fördern")).toBe("Ziel: Seckenheim fair fördern");
+  });
+});

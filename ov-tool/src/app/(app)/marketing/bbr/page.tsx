@@ -1,3 +1,4 @@
+import { InlineBold } from "@/components/inline-bold";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ConfirmSubmit } from "@/components/confirm-submit";
@@ -171,7 +172,7 @@ export default async function BbrSocialPage() {
                     <Badge variant={STATUS_VARIANT[c.genStatus] ?? "secondary"}>{GEN_STATUS[c.genStatus] ?? c.genStatus}</Badge>
                   </div>
                 </div>
-                <p className="whitespace-pre-wrap rounded-md bg-neutral-50 p-3">{c.kurzfassung}</p>
+                <p className="whitespace-pre-wrap rounded-md bg-neutral-50 p-3"><InlineBold text={c.kurzfassung} /></p>
                 {c.genError ? <p className="text-red-700">Fehler: {c.genError}</p> : null}
                 {c.genStatus === "GEAENDERT" ? (
                   <p className="text-amber-800">Die Kurzfassung wurde nach dem Erstellen der Beiträge geändert. Bei Bedarf neu erstellen.</p>

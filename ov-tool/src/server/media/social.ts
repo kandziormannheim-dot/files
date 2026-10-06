@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { boldSegments } from "@/lib/bbr-card";
 import { readStoredFile, storedFileExists } from "@/server/files";
 import { fontFaceCss, htmlToPng } from "@/server/pdf/render";
 
@@ -36,6 +37,13 @@ export type Branding = {
 };
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** Zeile mit **Fettdruck** als HTML (escaped). */
+export function boldHtml(text: string): string {
+  return boldSegments(text)
+    .map((seg) => (seg.bold ? `<strong style="font-weight:800">${esc(seg.text)}</strong>` : esc(seg.text)))
+    .join("");
+}
 
 const MIME: Record<string, string> = { ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
 
@@ -95,7 +103,7 @@ export async function imageHtml(c: Creative, b: Branding): Promise<string> {
   </div>
   <div style="flex:none;background:#fff;padding:56px 80px 48px">
     <ul style="list-style:none;display:flex;flex-direction:column;gap:18px">
-      ${lines.map((l) => `<li style="display:flex;gap:20px;font-size:${lineSize}px;line-height:1.3;font-weight:500"><span style="flex:none;width:10px;margin-top:${Math.round(lineSize * 0.3)}px;height:${Math.round(lineSize * 0.75)}px;background:${TUERKIS}"></span><span>${esc(l)}</span></li>`).join("")}
+      ${lines.map((l) => `<li style="display:flex;gap:20px;font-size:${lineSize}px;line-height:1.3;font-weight:500"><span style="flex:none;width:10px;margin-top:${Math.round(lineSize * 0.3)}px;height:${Math.round(lineSize * 0.75)}px;background:${TUERKIS}"></span><span>${boldHtml(l)}</span></li>`).join("")}
     </ul>
   </div>
   <div style="flex:none;height:${named ? 186 : 150}px;padding:0 80px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-top:2px solid #e3e8ea">

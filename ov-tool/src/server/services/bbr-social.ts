@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { BbrConcern, MarketingPost, Prisma, User } from "@prisma/client";
 import { z as z4 } from "zod/v4";
-import { bbrAccountName, BEZIRKE, kurzfassungKey, kurzfassungLines } from "@/lib/bbr-card";
+import { bbrAccountName, BEZIRKE, kurzfassungKey, kurzfassungLines, stripMarkdown } from "@/lib/bbr-card";
 import { checkbox, formToObject, z } from "@/lib/validation";
 import { assertCan } from "@/server/auth/permissions";
 import { audit } from "@/server/audit";
@@ -98,7 +98,8 @@ export async function generateSocialDraft(c: ConcernInput, blogSite: BlogSite, c
 }
 
 /** Entwurf ohne KI (kein ANTHROPIC_API_KEY): Kurzfassung als Text, Zeilen als Videotafeln. */
-export function fallbackDraft(c: ConcernInput, blogSite: BlogSite = "BBR"): SocialDraft {
+export function fallbackDraft(input: ConcernInput, blogSite: BlogSite = "BBR"): SocialDraft {
+  const c = { ...input, kurzfassung: stripMarkdown(input.kurzfassung) };
   const lines = kurzfassungLines(c.kurzfassung);
   const ort = c.bezirk ?? "Seckenheim/Friedrichsfeld";
   const tags = `#${(c.bezirk ?? "Seckenheim").replace(/[^A-Za-zÄÖÜäöüß]/g, "")} #Bezirksbeirat #CDUMannheim`;
@@ -138,12 +139,12 @@ export function fallbackDraft(c: ConcernInput, blogSite: BlogSite = "BBR"): Soci
 }
 
 function clampCreative(v: SocialVariant, fallbackLines: string[]): Creative {
-  const scenes = v.scenes.map((s) => s.trim()).filter(Boolean);
+  const scenes = v.scenes.map((s) => stripMarkdown(s).trim()).filter(Boolean);
   return {
-    headline: v.headline.trim().slice(0, 80),
-    subline: v.subline.trim().slice(0, 120),
-    scenes: (scenes.length ? scenes : fallbackLines).slice(0, 4).map((s) => s.slice(0, 140)),
-    outro: v.outro.trim().slice(0, 70),
+    headline: stripMarkdown(v.headline).trim().slice(0, 80),
+    subline: stripMarkdown(v.subline).trim().slice(0, 120),
+    scenes: (scenes.length ? scenes : fallbackLines.map(stripMarkdown)).slice(0, 4).map((s) => s.slice(0, 140)),
+    outro: stripMarkdown(v.outro).trim().slice(0, 70),
   };
 }
 
