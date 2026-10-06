@@ -64,7 +64,7 @@ tagesordnung[]        nummer („1“, „1.1“), titel, ebene (0|1), status (O
 protokoll.protokollfuehrung  Name
 protokoll.version, protokoll.aenderungshinweis
 protokoll.formalia.eroeffnung / wiedereroeffnung / tagesordnung / letztesProtokoll  (Freitext)
-protokoll.abschnitte[]       topNummer, topTitel, punkte[] (text, unterpunkte[]), ergebnis? (art: BESCHLUSS|ERGEBNIS, text)
+protokoll.abschnitte[]       topNummer, topTitel, punkte[] (text, unterpunkte[]), ergebnis? (art: BESCHLUSS|ERGEBNIS, text), notiz, anlagen[] (nummer, name)
 protokoll.unterzeichner[]    name, funktion
 
 anwesenheit[]         name, funktion, status (ANWESEND|ANWESEND_DIGITAL|ENTSCHULDIGT|NICHT_ANWESEND)
@@ -75,7 +75,7 @@ umlaufbeschluesse[]   nummer, betreff, ergebnisText
 umlauf.*              betreff, text, begruendung, frist, link, nummer, stimmberechtigt, erforderlich, ja, nein, enthaltung, widerspruch, ohneRueckmeldung, angenommen, ergebnisText, protokoll
 beschluesse[]         top, gegenstand, ergebnisText
 aufgaben[]            nr, titel, verantwortlich, frist
-anlagen[]             name (Anlagen zum Protokoll, z. B. Sitzungspräsentation)
+anlagen[]             nummer, name, top (Anlagen zum Protokoll: Anhänge der TOPs, Sitzungspräsentation; PDF/Bilder werden ans Protokoll-PDF angehängt)
 
 empfaenger.name, empfaenger.anrede (nur Mails an Einzelpersonen)
 anmeldung.link, anmeldung.gueltigMinuten   (Anmeldelink)

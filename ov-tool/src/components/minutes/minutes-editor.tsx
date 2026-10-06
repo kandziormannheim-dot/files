@@ -28,6 +28,7 @@ import type { QuorumState } from "@/server/services/minutes";
 import { AttendanceCard, type AttendanceRow } from "./attendance-card";
 import { AutoSaveForm } from "./autosave-form";
 import { ResolutionDialog } from "./resolution-dialog";
+import { TopExtras, type TopFile } from "@/components/meetings/top-extras";
 
 export type EditorTop = {
   id: string;
@@ -42,6 +43,8 @@ export type EditorTop = {
   outcomeText: string;
   resolutions: { id: string; number: string; subject: string; label: string }[];
   tasks: { id: string; title: string; who: string; due: string }[];
+  note: string;
+  files: TopFile[];
 };
 
 export type EditorData = {
@@ -63,6 +66,7 @@ export type EditorData = {
   isRepeat: boolean;
   suspended: boolean;
   canManage: boolean;
+  canEditExtras: boolean;
   defaultLocation: string;
   tops: EditorTop[];
   users: { id: string; name: string }[];
@@ -256,6 +260,8 @@ function TopCard({ d, t }: { d: EditorData; t: EditorTop }) {
             <Input name="outcomeText" defaultValue={t.outcomeText} placeholder="Text der Ergebniszeile (fett im Protokoll)" aria-label="Ergebniszeile" />
           </div>
         </AutoSaveForm>
+
+        <TopExtras meetingId={d.meetingId} agendaItemId={t.id} label={`TOP ${t.number}`} note={t.note} files={t.files} canEdit={d.canEditExtras} compact />
 
         {t.resolutions.length ? (
           <ul className="flex flex-col gap-1 text-sm">

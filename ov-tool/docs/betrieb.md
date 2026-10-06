@@ -136,6 +136,7 @@ Fotos werden beim Hochladen verkleinert und ohne Metadaten (GPS) gespeichert.
 - **Wahlen** (`/elections`): Stimmzettel drucken, Auszählung nach LV-Satzung § 57, Niederschrift nach § 51 Abs. 2. Die Auszählung speichert ohne Netz auf dem Gerät und überträgt später. Keine Mitgliederlisten, keine elektronische Stimmabgabe.
 - **Presse** (`/press` intern, `/presse` öffentlich): Freigabe durch Recht `press.publish`, Einzelversand an aktive Verteiler-Kontakte. Pressekontakt, Impressum- und Datenschutz-Link unter Einstellungen → Allgemein.
 - **Landing Pages** (`/landing`, öffentlich `/p/<kurzname>`): erst nach Freigabe online; Einträge verschlüsselt, wenn `ENCRYPTION_KEY` gesetzt ist; automatische Löschung im nächtlichen Retention-Job.
+- **Notizen und Anlagen je TOP** (Sitzung → „Notizen und Anlagen zu den TOPs“, auch im Protokoll-Editor): Notiz steht im Protokoll unter dem TOP, Anhänge werden als „Anlage n“ nummeriert; PDF und Bilder werden ans Protokoll-PDF angehängt (pdf-lib), andere Formate gehen beim Versand als eigene Datei mit. Nach dem Versand gesperrt (neue Version).
 - **Beschlüsse** (`/resolutions`): PDF je Beschluss; „Als Antrag an den Kreisverband“ sendet Antrag + Beschluss als PDF an die E-Mail der Kreisgeschäftsstelle (Einstellungen → Allgemein, Vorbelegung).
 
 ## 7. Variante: Plesk

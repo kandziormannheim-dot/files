@@ -110,6 +110,8 @@ export async function buildMinutesDocx(ctx: MinutesContext): Promise<Buffer> {
       children.push(p(`– ${pt.text}`, { indent: 720, after: 40 }));
       for (const u of pt.unterpunkte) children.push(p(`· ${u}`, { indent: 1080, after: 40 }));
     }
+    if (a.notiz) children.push(p(`Notiz: ${a.notiz}`, { indent: 720, after: 40 }));
+    if (a.anlagen.length) children.push(p(a.anlagen.map((x) => `Anlage ${x.nummer}: ${x.name}`).join("; "), { indent: 720, after: 40 }));
     if (a.ergebnis) children.push(p(`${a.ergebnis.art === "BESCHLUSS" ? "Beschluss:" : "Ergebnis:"} ${a.ergebnis.text}`, { bold: true, indent: 720 }));
   }
 
@@ -124,6 +126,10 @@ export async function buildMinutesDocx(ctx: MinutesContext): Promise<Buffer> {
     );
   }
   children.push(p(""));
+  if (ctx.anlagen.length) {
+    children.push(labeled("Anlagen", ""));
+    for (const x of ctx.anlagen) children.push(p(`Anlage ${x.nummer}: ${x.name}${x.top ? ` (zu TOP ${x.top})` : ""}`, { indent: 360, after: 40 }));
+  }
   children.push(labeled("Ende der Sitzung", `${formatTime(s.geschlossenUm)} Uhr`));
   children.push(p("", { after: 600 }));
   children.push(

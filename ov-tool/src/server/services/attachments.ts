@@ -172,3 +172,74 @@ export async function attachPreviousMinutes(actor: Pick<User, "id" | "role">, me
     return { attachment: a, status: prev.status };
   });
 }
+
+// ---------------------------------------------------------------------------
+// Notizen und Anhänge zu einzelnen TOPs – erscheinen im Protokoll, Anhänge als Anlage am Ende
+// ---------------------------------------------------------------------------
+
+/** Nach dem Versand ist das Protokoll gesperrt (CLAUDE.md Regel 9) – Änderungen nur über eine neue Version. */
+async function assertMinutesOpen(meetingId: string) {
+  const locked = await db.minutes.findFirst({ where: { meetingId, isCurrent: true, status: { in: ["VERSENDET", "GENEHMIGT"] } }, select: { id: true } });
+  if (locked) throw new UserError("Das Protokoll ist bereits versendet. Notizen und Anlagen bitte über eine neue Protokollversion ändern.");
+}
+
+function canEditTopExtras(actor: Pick<User, "role">) {
+  return canManageMeetingFiles(actor);
+}
+
+async function loadAgendaItem(agendaItemId: string) {
+  const item = await db.agendaItem.findUnique({ where: { id: agendaItemId }, select: { id: true, meetingId: true, title: true } });
+  if (!item) throw new NotFoundError("Tagesordnungspunkt nicht gefunden.");
+  return item;
+}
+
+export async function saveAgendaItemNote(actor: Pick<User, "id" | "role">, agendaItemId: string, note: string) {
+  if (!canEditTopExtras(actor)) throw new ForbiddenError();
+  const text = note.replace(/\r\n/g, "\n").trim();
+  if (text.length > 5000) throw new UserError("Die Notiz ist zu lang (höchstens 5000 Zeichen).");
+  const item = await loadAgendaItem(agendaItemId);
+  await assertMinutesOpen(item.meetingId);
+  await db.$transaction(async (tx) => {
+    const before = await tx.agendaItem.findUniqueOrThrow({ where: { id: agendaItemId }, select: { minutesNote: true } });
+    if (before.minutesNote === text) return;
+    await tx.agendaItem.update({ where: { id: agendaItemId }, data: { minutesNote: text } });
+    await audit(tx, actor, "agendaItem.note", "AgendaItem", agendaItemId, { minutesNote: [before.minutesNote, text] });
+  });
+  return item;
+}
+
+/** Dateien zu einem TOP: Anlage zum Protokoll; optional auch mit der Einladung versenden. */
+export async function addAgendaItemFiles(actor: Pick<User, "id" | "role">, agendaItemId: string, formData: FormData) {
+  if (!canEditTopExtras(actor)) throw new ForbiddenError();
+  const item = await loadAgendaItem(agendaItemId);
+  await assertMinutesOpen(item.meetingId);
+  const files = formData.getAll("file").filter((f): f is File => f instanceof File && f.size > 0);
+  if (!files.length) throw new UserError("Bitte mindestens eine Datei auswählen.");
+  if (files.length > 10) throw new UserError("Höchstens 10 Dateien auf einmal.");
+  const inInvitation = formData.get("inInvitation") === "on";
+  for (const f of files) {
+    const a = await addAttachment(actor, "Meeting", item.meetingId, f, { inInvitation });
+    await db.attachment.update({ where: { id: a.id }, data: { agendaItemId, inMinutes: true } });
+  }
+  return { count: files.length, meetingId: item.meetingId };
+}
+
+export async function deleteAgendaItemFile(actor: Pick<User, "id" | "role">, id: string) {
+  const a = await db.attachment.findUnique({ where: { id }, select: { ownerId: true, agendaItemId: true } });
+  if (!a?.agendaItemId) throw new NotFoundError("Anlage nicht gefunden.");
+  await assertMinutesOpen(a.ownerId);
+  await deleteAttachment(actor, id);
+  return a.ownerId;
+}
+
+/** Notizen und Anlagen je TOP einer Sitzung. */
+export async function agendaItemExtras(meetingId: string) {
+  const [items, files] = await Promise.all([
+    db.agendaItem.findMany({ where: { meetingId }, select: { id: true, minutesNote: true } }),
+    db.attachment.findMany({ where: { ownerType: "Meeting", ownerId: meetingId, agendaItemId: { not: null } }, orderBy: { createdAt: "asc" }, select: { id: true, fileName: true, mimeType: true, size: true, inInvitation: true, agendaItemId: true } }),
+  ]);
+  const map: Record<string, { note: string; files: typeof files }> = {};
+  for (const i of items) map[i.id] = { note: i.minutesNote, files: [] };
+  for (const f of files) map[f.agendaItemId!]?.files.push(f);
+  return map;
+}

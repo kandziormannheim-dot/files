@@ -39,6 +39,8 @@
     <li>{{text}}{{#if unterpunkte.length}}<ul>{{#each unterpunkte}}<li>{{this}}</li>{{/each}}</ul>{{/if}}</li>
   {{/each}}
   </ul>
+  {{#if notiz}}<p class="notiz mehrzeilig"><strong>Notiz:</strong> {{notiz}}</p>{{/if}}
+  {{#if anlagen.length}}<p class="top-anlagen">{{#each anlagen}}Anlage {{nummer}}: {{name}}{{#unless @last}}; {{/unless}}{{/each}}</p>{{/if}}
   {{#if ergebnis}}<p class="ergebnis">{{#eq ergebnis.art "BESCHLUSS"}}Beschluss:{{else}}Ergebnis:{{/eq}} {{ergebnis.text}}</p>{{/if}}
 </section>
 {{/each}}
@@ -68,7 +70,7 @@
 {{#if anlagen.length}}
 <p><strong>Anlagen:</strong></p>
 <ol class="anlagen">
-{{#each anlagen}}<li>{{name}}</li>{{/each}}
+{{#each anlagen}}<li>Anlage {{nummer}}: {{name}}{{#if top}} (zu TOP {{top}}){{/if}}</li>{{/each}}
 </ol>
 {{/if}}
 

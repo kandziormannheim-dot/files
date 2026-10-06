@@ -64,6 +64,8 @@ export function sampleContext(appUrl: string) {
           topTitel: "Planung Infostand Weihnachtsmarkt",
           punkte: [{ text: "Planung: Infostand am 12.12. von 10 bis 14 Uhr.", unterpunkte: ["Material: Flyer, Kugelschreiber"] }],
           ergebnis: { art: "BESCHLUSS", text: "Der Infostand wird einstimmig beschlossen." },
+          notiz: "Standplatz mit dem Marktamt abgestimmt.",
+          anlagen: [{ nummer: 1, name: "Lageplan-Weihnachtsmarkt.pdf" }],
         },
       ],
       unterzeichner: [

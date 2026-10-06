@@ -39,7 +39,7 @@ export async function sendMinutes(actor: Actor, minutesId: string, formData: For
   await assertSendable(minutes, meeting);
   if (v.approvalMode === "UMLAUF") assertCan(actor, "circulation.manage");
 
-  const { pdf, version, filename } = await renderMinutesPdf(minutesId);
+  const { pdf, version, filename, mergedAnnexIds } = await renderMinutesPdf(minutesId);
   const ctx = await minutesContext(minutes, meeting);
   const now = new Date();
   await db.$transaction(async (tx) => {
@@ -68,6 +68,7 @@ export async function sendMinutes(actor: Actor, minutesId: string, formData: For
   const extra: { filename: string; content: Buffer; contentType: string }[] = [];
   let total = pdf.length;
   for (const a of await minutesAttachments(meeting.id)) {
+    if (mergedAnnexIds.includes(a.id)) continue; // bereits im Protokoll-PDF angehängt
     if (total + a.size > 12 * 1024 * 1024) break;
     extra.push({ filename: a.fileName, content: await readStoredFile(a.filePath), contentType: a.mimeType });
     total += a.size;

@@ -32,6 +32,7 @@ import { listActiveUsers } from "@/server/services/users";
 import { newVersionAction, sendMinutesAction, sendToOfficeAction, startMinutesAction } from "./actions";
 import { NewVersionForm, SendMinutesForm } from "./workflow-panel";
 import { StatuteRef } from "@/components/statute-ref";
+import { agendaItemExtras, canManageMeetingFiles } from "@/server/services/attachments";
 
 export const metadata: Metadata = { title: "Protokoll" };
 
@@ -80,7 +81,7 @@ export default async function MinutesPage({
 
   let editorData: EditorData | null = null;
   if (editing) {
-    const [quorum, users] = await Promise.all([liveQuorum(meeting.id), listActiveUsers()]);
+    const [quorum, users, extras] = await Promise.all([liveQuorum(meeting.id), listActiveUsers(), agendaItemExtras(meeting.id)]);
     const numbered = numberAgenda(meeting.agendaItems);
     editorData = {
       meetingId: meeting.id,
@@ -112,6 +113,7 @@ export default async function MinutesPage({
       isRepeat: meeting.isRepeatAfterNoQuorum,
       suspended: meeting.status === "AUFGEHOBEN",
       canManage: can(user.role, "meeting.manage"),
+      canEditExtras: canManageMeetingFiles(user),
       defaultLocation: meeting.location,
       users: users.map((u) => ({ id: u.id, name: u.name })),
       uncertainties: Array.isArray(minutes.aiUncertainties) ? (minutes.aiUncertainties as unknown[]).map(String) : [],
@@ -132,6 +134,8 @@ export default async function MinutesPage({
               }
             : null,
           pointsText: serializePoints(asPoints(section?.points)),
+          note: extras[item.id]?.note ?? "",
+          files: extras[item.id]?.files ?? [],
           outcomeType: section?.outcomeType ?? "",
           outcomeText: section?.outcomeText ?? "",
           resolutions: meeting.resolutions

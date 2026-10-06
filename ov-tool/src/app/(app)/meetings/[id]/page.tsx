@@ -19,7 +19,8 @@ import { db } from "@/server/db";
 import { agendaSuggestions, ensureAttendances, getMeeting, isMeetingLocked, numberedAgenda } from "@/server/services/meetings";
 import { listTasks } from "@/server/services/tasks";
 import { canLeadMeeting } from "@/server/services/presentation";
-import { canManageMeetingFiles, listAttachments, previousMinutesFor } from "@/server/services/attachments";
+import { agendaItemExtras, canManageMeetingFiles, listAttachments, previousMinutesFor } from "@/server/services/attachments";
+import { TopExtras } from "@/components/meetings/top-extras";
 import {
   acceptProposalAction,
   cancelMeetingAction,
@@ -52,11 +53,14 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
     meeting.attendances
       .filter((a) => a.response === r)
       .sort((a, b) => a.sortSnapshot - b.sortSnapshot || a.nameSnapshot.localeCompare(b.nameSnapshot));
-  const [suggestions, tasks, documents] = await Promise.all([
+  const [suggestions, tasks, documents, extras, sentMinutes] = await Promise.all([
     editable ? agendaSuggestions(id) : null,
     listTasks(user, { view: "all" }).then((t) => t.filter((x) => x.meetingId === id)),
     meetingDocs(user, id),
+    agendaItemExtras(id),
+    db.minutes.findFirst({ where: { meetingId: id, isCurrent: true, status: { in: ["VERSENDET", "GENEHMIGT"] } }, select: { id: true } }),
   ]);
+  const canEditExtras = documents.canManage && meeting.status !== "ABGESAGT" && !sentMinutes;
 
   return (
     <>
@@ -128,6 +132,30 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
             <h2 className="mb-2 font-semibold">Tagesordnung</h2>
             <AgendaEditor meetingId={id} items={tree} editable={editable} canDelete={meeting.status === "GEPLANT"} />
           </section>
+
+          {numbered.length && (canEditExtras || numbered.some((i) => extras[i.id]?.note || extras[i.id]?.files.length)) ? (
+            <section>
+              <h2 className="mb-1 font-semibold">Notizen und Anlagen zu den TOPs</h2>
+              <p className="mb-3 text-xs text-rhoendorf-60">
+                Notizen erscheinen im Protokoll unter dem jeweiligen TOP. Anhänge werden dort als „Anlage n“ genannt und am Ende ans Protokoll angehängt (PDF und Bilder
+                direkt im Protokoll-PDF, andere Dateien als eigener Anhang beim Versand).
+                {sentMinutes ? " Das Protokoll ist versendet – Änderungen nur über eine neue Protokollversion." : ""}
+              </p>
+              <div className="flex flex-col gap-3">
+                {numbered.map((item) => (
+                  <TopExtras
+                    key={item.id}
+                    meetingId={id}
+                    agendaItemId={item.id}
+                    label={`TOP ${item.number} · ${item.title}`}
+                    note={extras[item.id]?.note ?? ""}
+                    files={extras[item.id]?.files ?? []}
+                    canEdit={canEditExtras}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           {suggestions && (suggestions.proposals.length || suggestions.carryOvers.length) ? (
             <Card>
@@ -246,6 +274,8 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
 }
 
 async function meetingDocs(user: { role: import("@prisma/client").Role }, meetingId: string) {
-  const [docs, prev] = await Promise.all([listAttachments("Meeting", meetingId), previousMinutesFor(meetingId)]);
+  const [all, prev] = await Promise.all([listAttachments("Meeting", meetingId), previousMinutesFor(meetingId)]);
+  // Anhänge einzelner TOPs stehen beim jeweiligen TOP
+  const docs = all.filter((d) => !d.agendaItemId);
   return { docs, canManage: canManageMeetingFiles(user), previousMinutes: prev ? { date: prev.meeting.startsAt, status: prev.status } : null };
 }

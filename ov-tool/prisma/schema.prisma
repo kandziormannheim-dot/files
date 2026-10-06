@@ -401,6 +401,8 @@ model AgendaItem {
   carryOverDismissed Boolean          @default(false)
   /// Vermerke der Sitzungsleitung (erscheinen in den Notizen der Präsentation, nicht in Einladung/Protokoll)
   leaderNotes        String           @default("")
+  /// Notiz zum TOP – erscheint im Protokoll unter diesem TOP
+  minutesNote        String           @default("")
   createdAt          DateTime         @default(now())
 
   tasks       Task[]
@@ -861,9 +863,12 @@ model Attachment {
   inInvitation Boolean  @default(false)
   /// als Anlage mit dem Protokoll versenden (z. B. Sitzungspräsentation)
   inMinutes    Boolean  @default(false)
+  /// Anhang zu einem TOP (bei ownerType "Meeting"); wird im Protokoll unter dem TOP genannt und als Anlage angehängt
+  agendaItemId String?
   createdAt    DateTime @default(now())
 
   @@index([ownerType, ownerId])
+  @@index([agendaItemId])
 }
 
 /// Versionierte Vorlagen (Paket 1.6); je Schlüssel ist genau eine Version aktiv

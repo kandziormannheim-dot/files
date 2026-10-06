@@ -71,3 +71,8 @@ table.kopf th { width: 40mm; background: var(--akzent-hell); }
 
 /* Mehrzeilige Freitexte (Beschluss, Antrag, Anschrift) */
 .anschrift p, p.mehrzeilig { white-space: pre-line; }
+
+/* Notizen und Anlagen je TOP im Protokoll */
+p.notiz { margin: 2mm 0 1mm 8mm; }
+p.top-anlagen { margin: 1mm 0 1mm 8mm; font-size: 9pt; color: #2d3c4b; }
+ol.anlagen { list-style: none; padding-left: 0; }
