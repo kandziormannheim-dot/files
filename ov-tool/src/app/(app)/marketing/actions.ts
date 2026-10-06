@@ -14,6 +14,7 @@ import {
   sendToWordpress,
   updatePost,
 } from "@/server/services/marketing";
+import { publishToMeta } from "@/server/services/meta";
 
 export async function createPostAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   let id = "";
@@ -81,4 +82,18 @@ export async function deletePostAction(id: string, _prev: ActionState): Promise<
     redirect("/marketing");
   }
   return result;
+}
+
+export async function publishMetaAction(
+  id: string,
+  network: "facebook" | "instagram",
+  format: "image" | "video",
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  return runAction(async () => {
+    const pub = await publishToMeta(await requireUser(), id, network, format, { withBlogLink: formData.get("withBlogLink") === "on" });
+    refresh(id);
+    return `Veröffentlicht auf ${network === "facebook" ? "Facebook" : "Instagram"}.${pub.permalink ? ` ${pub.permalink}` : ""}`;
+  });
 }

@@ -15,6 +15,7 @@ import { requirePageCapability } from "@/server/auth/session";
 import { aiConfigured } from "@/server/services/ai-draft";
 import { GEN_STATUS, listConcerns, parseLastSync } from "@/server/services/bbr-social";
 import { deckConfigured } from "@/server/services/deck";
+import { metaStatus } from "@/server/services/meta";
 import { getSettings } from "@/server/services/settings";
 import { MARKETING_STATUS } from "../labels";
 import {
@@ -78,6 +79,16 @@ export default async function BbrSocialPage() {
               ) : (
                 <Badge variant="warning">ohne KI – Kurzfassung wird übernommen (ANTHROPIC_API_KEY fehlt)</Badge>
               )}
+            </p>
+            <p>
+              Direkt veröffentlichen:{" "}
+              {metaStatus().map((m) => (
+                <span key={m.account} className="mr-2">
+                  {m.account === "OV" ? "OV" : "BBR"}{" "}
+                  <Badge variant={m.facebook ? "success" : "secondary"}>Facebook {m.facebook ? "✓" : "–"}</Badge>{" "}
+                  <Badge variant={m.instagram ? "success" : "secondary"}>Instagram {m.instagram ? "✓" : "–"}</Badge>
+                </span>
+              ))}
             </p>
             {lastSync ? (
               <p className={lastSync.ok ? "text-neutral-600" : "text-red-700"}>

@@ -14,8 +14,11 @@ import { requireUser } from "@/server/auth/session";
 import { NotFoundError } from "@/server/errors";
 import { CHANNELS, canEditPost, getPost, wordpressSites } from "@/server/services/marketing";
 import { blogToHtml } from "@/server/services/wordpress";
+import { ConfirmSubmit } from "@/components/confirm-submit";
+import { metaConfig, publishedBlogLink, type MetaAccount } from "@/server/services/meta";
 import {
   approvePostAction,
+  publishMetaAction,
   deletePostAction,
   markPublishedAction,
   revokePostAction,
@@ -49,6 +52,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const hashtags = post.hashtags.trim();
   const withTags = (t: string) => [t.trim(), hashtags].filter(Boolean).join("\n\n");
   const mediaBase = `/api/marketing/${post.id}/media`;
+  const meta = post.kind === "SOCIAL" && (post.account === "OV" || post.account === "BBR") ? metaConfig(post.account as MetaAccount) : null;
+  const blogLink = meta ? await publishedBlogLink(post.bbrConcernId) : null;
+  const published = (network: string, format: string) => post.publications.some((p) => p.network === network && p.format === format);
   const outdated = post.bbrConcern && post.sourceKey && post.bbrConcern.sourceKey !== post.sourceKey;
 
   return (
@@ -280,12 +286,76 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                 <p>Freigegeben am {formatDateTime(post.approvedAt)} Uhr.</p>
               ) : null}
 
+              {meta && post.status !== "ENTWURF" && publisher ? (
+                <div className="flex flex-col gap-2 rounded-md border p-3">
+                  <p className="font-medium">Direkt veröffentlichen ({post.account === "OV" ? "Seite des Ortsverbands" : "Seite der BBR-Gruppe"})</p>
+                  {!meta.facebook && !meta.instagram ? (
+                    <p className="text-neutral-600">Für diesen Kanal sind noch keine Facebook-/Instagram-Zugänge hinterlegt.</p>
+                  ) : null}
+                  {meta.facebook ? (
+                    <ActionForm action={publishMetaAction.bind(null, post.id, "facebook", "image")} className="flex flex-wrap items-center gap-3">
+                      {blogLink ? (
+                        <label className="flex items-center gap-2 text-xs">
+                          <input type="checkbox" name="withBlogLink" defaultChecked /> Link zum Blogartikel anhängen
+                        </label>
+                      ) : null}
+                      <ConfirmSubmit size="sm" disabled={published("facebook", "image") || !post.imagePath} confirm="Kachel mit Text jetzt auf Facebook veröffentlichen?" pendingText="Wird veröffentlicht …">
+                        {published("facebook", "image") ? "Facebook: Kachel veröffentlicht" : "Facebook: Kachel posten"}
+                      </ConfirmSubmit>
+                    </ActionForm>
+                  ) : null}
+                  {meta.facebook && post.videoPath ? (
+                    <ActionForm action={publishMetaAction.bind(null, post.id, "facebook", "video")}>
+                      <ConfirmSubmit size="sm" variant="outline" disabled={published("facebook", "video")} confirm="Video mit Text jetzt auf Facebook veröffentlichen?" pendingText="Wird hochgeladen …">
+                        {published("facebook", "video") ? "Facebook: Video veröffentlicht" : "Facebook: Video posten"}
+                      </ConfirmSubmit>
+                    </ActionForm>
+                  ) : null}
+                  {meta.instagram ? (
+                    <div className="flex flex-wrap gap-2">
+                      {post.imagePath ? (
+                        <ActionForm action={publishMetaAction.bind(null, post.id, "instagram", "image")}>
+                          <ConfirmSubmit size="sm" variant="outline" disabled={published("instagram", "image")} confirm="Kachel jetzt auf Instagram veröffentlichen?" pendingText="Wird veröffentlicht …">
+                            {published("instagram", "image") ? "Instagram: Kachel veröffentlicht" : "Instagram: Kachel posten"}
+                          </ConfirmSubmit>
+                        </ActionForm>
+                      ) : null}
+                      {post.videoPath ? (
+                        <ActionForm action={publishMetaAction.bind(null, post.id, "instagram", "video")}>
+                          <ConfirmSubmit size="sm" variant="outline" disabled={published("instagram", "video")} confirm="Video jetzt als Reel auf Instagram veröffentlichen? Das kann bis zu drei Minuten dauern." pendingText="Instagram verarbeitet das Video …">
+                            {published("instagram", "video") ? "Instagram: Reel veröffentlicht" : "Instagram: Reel posten"}
+                          </ConfirmSubmit>
+                        </ActionForm>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {post.publications.length ? (
+                    <ul className="mt-1 flex flex-col gap-1 text-xs text-neutral-700">
+                      {post.publications.map((p) => (
+                        <li key={p.id}>
+                          {p.network === "facebook" ? "Facebook" : "Instagram"} ({p.format === "image" ? "Kachel" : "Video"}) am {formatDateTime(p.createdAt)} Uhr
+                          {p.createdBy ? ` von ${p.createdBy.name}` : ""}
+                          {p.permalink ? (
+                            <>
+                              {" · "}
+                              <a href={p.permalink} target="_blank" rel="noopener noreferrer" className="underline">
+                                ansehen
+                              </a>
+                            </>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
+
               {post.kind === "SOCIAL" && post.status !== "ENTWURF" ? (
                 <>
                   <ShareTools text={socialText} />
                   <p className="text-xs text-neutral-600">
-                    Direktes automatisches Posten braucht die Meta-API mit Seitenfreigabe; bis dahin über Kopieren/Teilen oder die Meta
-                    Business Suite einplanen.
+                    Alternativ: Text kopieren bzw. teilen oder in der Meta Business Suite einplanen (TikTok, X und andere Kanäle über
+                    „Teilen …“ auf dem Handy).
                   </p>
                 </>
               ) : null}

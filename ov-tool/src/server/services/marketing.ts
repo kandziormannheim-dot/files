@@ -38,6 +38,7 @@ export async function getPost(actor: Actor, id: string) {
       createdBy: { select: { name: true } },
       approvedBy: { select: { name: true } },
       bbrConcern: { select: { id: true, title: true, bezirk: true, kurzfassung: true, sourceKey: true } },
+      publications: { orderBy: { createdAt: "asc" }, include: { createdBy: { select: { name: true } } } },
     },
   });
   if (!post) throw new NotFoundError("Beitrag nicht gefunden.");

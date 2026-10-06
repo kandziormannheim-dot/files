@@ -89,6 +89,7 @@ model User {
   inventoryLoans      InventoryLoan[]
 
   @@index([active, sortOrder])
+  socialPublications SocialPublication[] @relation("SocialPublicationBy")
 }
 
 /// Bestätigung einer neuen E-Mail-Adresse: nur der Hash des Tokens wird gespeichert, einmal verwendbar.
@@ -947,8 +948,28 @@ model MarketingPost {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
+  publications SocialPublication[]
+
   @@index([status, createdAt])
   @@index([bbrConcernId])
+}
+
+/// Direkt veröffentlichte Beiträge (Facebook-Seite, Instagram) – Nachweis mit Link
+model SocialPublication {
+  id          String        @id @default(cuid())
+  postId      String
+  post        MarketingPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  /// facebook | instagram
+  network     String
+  /// image | video
+  format      String
+  externalId  String
+  permalink   String?
+  createdById String?
+  createdBy   User?         @relation("SocialPublicationBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime      @default(now())
+
+  @@index([postId])
 }
 
 /// Anliegen aus dem Tool „BBR-Anliegen“ (Nextcloud Deck). Gespeichert werden nur Überschrift, Bezirk und die
