@@ -275,8 +275,15 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             <CardContent className="flex flex-col gap-3 text-sm">
               {post.status === "ENTWURF" ? (
                 publisher ? (
-                  <ActionForm action={approvePostAction.bind(null, post.id)}>
-                    <SubmitButton pendingText="…">Freigeben</SubmitButton>
+                  <ActionForm action={approvePostAction.bind(null, post.id)} className="flex flex-col gap-2">
+                    <SubmitButton pendingText="…" className="self-start">
+                      Freigeben
+                    </SubmitButton>
+                    <p className="text-xs text-neutral-600">
+                      {post.kind === "BLOG"
+                        ? `Nach der Freigabe erscheinen hier „Als Entwurf an WordPress“ und „Direkt veröffentlichen“ (${site?.label}).`
+                        : "Nach der Freigabe erscheinen hier Teilen, Herunterladen und – sobald eingerichtet – Facebook/Instagram."}
+                    </p>
                   </ActionForm>
                 ) : (
                   <p className="text-neutral-600">Wartet auf Freigabe durch den Admin.</p>
