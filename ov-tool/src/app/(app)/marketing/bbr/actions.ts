@@ -7,9 +7,9 @@ import { requireUser } from "@/server/auth/session";
 import {
   createTestConcern,
   deleteTestConcern,
-  regenerateConcern,
   resetSocialLogo,
   setConcernIgnored,
+  startGeneration,
   syncNow,
   updateCreative,
   uploadSocialLogo,
@@ -25,15 +25,15 @@ export async function syncNowAction(): Promise<ActionState> {
   return runAction(async () => {
     const r = await syncNow(await requireUser());
     refresh();
-    return `${r.found} Anliegen mit Kurzfassung gefunden, ${r.created} neu, ${r.changed} geändert, ${r.generated} Entwürfe erstellt.`;
+    return `${r.found} Anliegen mit Kurzfassung gefunden, ${r.created} neu, ${r.changed} geändert.`;
   });
 }
 
-export async function regenerateAction(id: string): Promise<ActionState> {
+export async function generateAction(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   return runAction(async () => {
-    await regenerateConcern(await requireUser(), id);
+    await startGeneration(await requireUser(), id, formData);
     refresh();
-    return "Entwürfe werden neu erstellt – das dauert etwa eine Minute.";
+    return "Die Beiträge werden erstellt – das dauert etwa eine Minute. Danach die Seite neu laden.";
   });
 }
 
@@ -48,7 +48,7 @@ export async function createTestAction(_prev: ActionState, formData: FormData): 
   return runAction(async () => {
     await createTestConcern(await requireUser(), formData);
     refresh();
-    return "Test-Anliegen angelegt. Die Entwürfe entstehen im Hintergrund (etwa eine Minute), danach Seite neu laden.";
+    return "Test-Anliegen angelegt. Jetzt beim Anliegen „Beiträge erstellen“ wählen.";
   });
 }
 

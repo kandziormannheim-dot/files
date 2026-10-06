@@ -920,6 +920,8 @@ model MarketingPost {
   wpPostId     Int?
   wpLink       String?
   wpStatus     String?
+  /// Beitragsbild in WordPress (Mediathek-ID der hochgeladenen Kachel)
+  wpMediaId    Int?
   publishedAt  DateTime?
   approvedAt   DateTime?
   approvedById String?

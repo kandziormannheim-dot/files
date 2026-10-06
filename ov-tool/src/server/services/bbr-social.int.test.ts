@@ -2,8 +2,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { form, hasTestDb, makeUser, resetDb } from "../../../tests/db";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
-import { createTestConcern, deleteTestConcern, generateForConcern, regenerateConcern, runBbrSync, updateCreative } from "./bbr-social";
-import { approvePost, updatePost } from "./marketing";
+import { createTestConcern, deleteTestConcern, generateForConcern, startGeneration, syncNow, updateCreative } from "./bbr-social";
+import { approvePost, sendToWordpress, updatePost } from "./marketing";
 
 // Kachel und Video ohne Chromium/ffmpeg simulieren
 vi.mock("@/server/media/social", () => ({
@@ -51,66 +51,91 @@ describe.skipIf(!hasTestDb)("BBR-Anliegen → Social Media (DB)", () => {
   });
   beforeEach(resetDb);
 
-  it("erzeugt zu neuen Kurzfassungen Entwürfe für BBR- und OV-Kanal und überschreibt Bearbeitetes nie", async () => {
+  it("übernimmt Anliegen nur auf Knopfdruck und erstellt Social-Beiträge und Blogartikel erst auf Anforderung", async () => {
     const admin = await makeUser({ role: "ADMIN" });
+    const vorstand = await makeUser({ role: "VORSTAND" });
     const fetch1 = deckFetch([card(11, KURZ), card(12, ""), card(13, KURZ, { archived: true })]);
-    const r1 = await runBbrSync(fetch1);
-    expect(r1).toMatchObject({ found: 1, created: 1, generated: 1 });
+    await expect(syncNow(vorstand, fetch1)).rejects.toBeInstanceOf(ForbiddenError);
+    expect(await syncNow(admin, fetch1)).toMatchObject({ found: 1, created: 1 });
 
-    const concern = await db.bbrConcern.findUniqueOrThrow({ where: { deckCardId: 11 }, include: { posts: true } });
-    expect(concern).toMatchObject({ bezirk: "Seckenheim", genStatus: "FERTIG", stack: "Eingereicht" });
-    expect(concern.kurzfassung).toBe(KURZ);
-    expect(concern.posts.map((p) => p.account).sort()).toEqual(["BBR", "OV"]);
-    for (const p of concern.posts) {
+    const concern = await db.bbrConcern.findUniqueOrThrow({ where: { deckCardId: 11 } });
+    expect(concern).toMatchObject({ bezirk: "Seckenheim", genStatus: "NEU", stack: "Eingereicht", kurzfassung: KURZ });
+    expect(await db.marketingPost.count()).toBe(0); // keine Automatik
+    const sync = JSON.parse((await db.setting.findUniqueOrThrow({ where: { key: "bbr.lastSync" } })).value);
+    expect(sync.ok).toBe(true);
+
+    await expect(startGeneration(admin, concern.id, form({}))).rejects.toThrow();
+    await startGeneration(admin, concern.id, form({ bbr: true, ov: true, blog: true, blogSite: "BBR" }));
+    const posts = await db.marketingPost.findMany({ where: { bbrConcernId: concern.id } });
+    expect(posts.map((p) => `${p.kind}:${p.account ?? p.site}`).sort()).toEqual(["BLOG:BBR", "SOCIAL:BBR", "SOCIAL:OV"]);
+    const blog = posts.find((p) => p.kind === "BLOG")!;
+    expect(blog.body).toContain("## ");
+    expect(blog.imagePath).toBeTruthy();
+    expect(blog.videoPath).toBeNull();
+    for (const p of posts) {
       expect(p.status).toBe("ENTWURF");
-      expect(p.imagePath).toBeTruthy();
-      expect(p.videoPath).toBeTruthy();
-      // nie Hinweisgeber oder Erläuterung
+      expect(p.createdById).toBe(admin.id);
       const all = JSON.stringify(p);
       expect(all).not.toContain("Erika");
       expect(all).not.toContain("Interne Erläuterung");
     }
-    const sync = JSON.parse((await db.setting.findUniqueOrThrow({ where: { key: "bbr.lastSync" } })).value);
-    expect(sync.ok).toBe(true);
+    expect((await db.bbrConcern.findUniqueOrThrow({ where: { id: concern.id } })).genStatus).toBe("FERTIG");
 
-    // unverändert → nichts Neues
-    expect(await runBbrSync(fetch1)).toMatchObject({ created: 0, changed: 0, generated: 0 });
-
-    // Kurzfassung geändert → unbearbeitete Entwürfe werden ersetzt (gleiche IDs)
-    const ids = concern.posts.map((p) => p.id).sort();
-    await runBbrSync(deckFetch([card(11, `${KURZ}\nNeue Zeile.`)]));
-    const after = await db.marketingPost.findMany({ where: { bbrConcernId: concern.id } });
-    expect(after.map((p) => p.id).sort()).toEqual(ids);
-    expect(after.every((p) => p.body.includes("Neue Zeile"))).toBe(true);
-
-    // OV-Entwurf von Hand bearbeiten → bleibt bei der nächsten Änderung erhalten
-    const ov = after.find((p) => p.account === "OV")!;
-    await updatePost(admin, ov.id, form({ title: ov.title, body: "Von Hand geschrieben.", hashtags: "", "channels[]": ["facebook"] }));
-    await runBbrSync(deckFetch([card(11, "Ganz neue Kurzfassung mit drei Zeilen.\nZweite.\nDritte.")]));
-    expect((await db.marketingPost.findUniqueOrThrow({ where: { id: ov.id } })).body).toBe("Von Hand geschrieben.");
+    // Kurzfassung geändert → nur Hinweis, nichts wird automatisch neu erstellt
+    await syncNow(admin, deckFetch([card(11, `${KURZ}\nNeue Zeile.`)]));
     expect((await db.bbrConcern.findUniqueOrThrow({ where: { id: concern.id } })).genStatus).toBe("GEAENDERT");
-    const bbr = await db.marketingPost.findFirstOrThrow({ where: { bbrConcernId: concern.id, account: "BBR" } });
-    expect(bbr.body).toContain("Ganz neue Kurzfassung");
+    expect((await db.marketingPost.findUniqueOrThrow({ where: { id: blog.id } })).body).not.toContain("Neue Zeile");
 
-    // freigegeben + „Neu erstellen“ → zusätzlicher Entwurf, Freigegebenes bleibt
+    // nur Blog neu, für cdu-sf.de: Entwurf wird ersetzt (gleiche ID), Social bleibt
+    const ov = posts.find((p) => p.account === "OV")!;
+    await updatePost(admin, ov.id, form({ title: ov.title, body: "Von Hand geschrieben.", hashtags: "", "channels[]": ["facebook"] }));
+    await startGeneration(admin, concern.id, form({ blog: true, blogSite: "SF" }));
+    const blog2 = await db.marketingPost.findUniqueOrThrow({ where: { id: blog.id } });
+    expect(blog2.site).toBe("SF");
+    expect(blog2.body).toContain("Neue Zeile");
+    expect((await db.marketingPost.findUniqueOrThrow({ where: { id: ov.id } })).body).toBe("Von Hand geschrieben.");
+
+    // freigegeben + neu erstellen → zusätzlicher Entwurf, Freigegebenes bleibt
     await approvePost(admin, ov.id);
-    await regenerateConcern(admin, concern.id);
+    await startGeneration(admin, concern.id, form({ ov: true }));
     const ovPosts = await db.marketingPost.findMany({ where: { bbrConcernId: concern.id, account: "OV" }, orderBy: { createdAt: "asc" } });
     expect(ovPosts.map((p) => p.status)).toEqual(["FREIGEGEBEN", "ENTWURF"]);
+
+    // Blog an WordPress: Kachel als Beitragsbild
+    process.env.WP_SF_URL = "https://wp.example.org";
+    process.env.WP_SF_USER = "redaktion";
+    process.env.WP_SF_APP_PASSWORD = "nur-test";
+    try {
+      await approvePost(admin, blog.id);
+      const wp = vi.fn(async (url: string | URL | Request) =>
+        String(url).endsWith("/media") ? Response.json({ id: 55 }) : Response.json({ id: 9, link: "https://wp.example.org/?p=9", status: "draft" }),
+      );
+      await sendToWordpress(admin, blog.id, "draft", wp as unknown as typeof fetch);
+      const [, postInit] = wp.mock.calls[1] as unknown as [string, RequestInit];
+      expect(JSON.parse(String(postInit.body))).toMatchObject({ featured_media: 55, status: "draft" });
+      expect((await db.marketingPost.findUniqueOrThrow({ where: { id: blog.id } })).wpMediaId).toBe(55);
+      await sendToWordpress(admin, blog.id, "draft", wp as unknown as typeof fetch);
+      expect(wp.mock.calls.filter(([u]) => String(u).endsWith("/media"))).toHaveLength(1); // Bild nur einmal hochladen
+    } finally {
+      delete process.env.WP_SF_URL;
+      delete process.env.WP_SF_USER;
+      delete process.env.WP_SF_APP_PASSWORD;
+    }
   }, 60_000);
 
-  it("meldet abgelehnte Zugangsdaten und erzeugt trotzdem offene Test-Anliegen", async () => {
+  it("meldet abgelehnte Zugangsdaten; Test-Anliegen lassen sich anlegen, bearbeiten und löschen", async () => {
     const admin = await makeUser({ role: "ADMIN" });
     const vorstand = await makeUser({ role: "VORSTAND" });
     const denied = vi.fn(async () => new Response("", { status: 401 })) as unknown as typeof fetch;
-    await runBbrSync(denied);
+    await expect(syncNow(admin, denied)).rejects.toThrow(/abgelehnt/);
     const sync = JSON.parse((await db.setting.findUniqueOrThrow({ where: { key: "bbr.lastSync" } })).value);
     expect(sync).toMatchObject({ ok: false });
-    expect(sync.message).toMatch(/abgelehnt/);
 
     await expect(createTestConcern(vorstand, form({ title: "Testanliegen", bezirk: "Friedrichsfeld", kurzfassung: KURZ }))).rejects.toBeInstanceOf(ForbiddenError);
     const c = await createTestConcern(admin, form({ title: "Testanliegen Spielplatz", bezirk: "Friedrichsfeld", kurzfassung: KURZ }));
     expect(c.deckCardId).toBeLessThan(0);
+    expect(await db.marketingPost.count()).toBe(0);
+    await startGeneration(admin, c.id, form({ bbr: true, ov: true }));
     const posts = await db.marketingPost.findMany({ where: { bbrConcernId: c.id } });
     expect(posts).toHaveLength(2);
     expect(posts.find((p) => p.account === "BBR")!.title).toContain("BBR");
@@ -143,14 +168,19 @@ describe.skipIf(!hasTestDb)("BBR-Anliegen → Social Media (DB)", () => {
       outro: "Ende",
       hashtags: "#Seckenheim",
     });
-    const parse = vi.fn(async () => ({ stop_reason: "end_turn", parsed_output: { bbr: v("Sachlich"), ov: v("Politisch") } }));
+    const parse = vi.fn(async () => ({
+      stop_reason: "end_turn",
+      parsed_output: { bbr: v("Sachlich"), ov: v("Politisch"), blog: { title: "Blogtitel", body: "Einleitung.\n\n## Worum es geht\n\nText." } },
+    }));
     const client = { beta: { messages: { parse } } } as never;
-    const r = await generateForConcern(c.id, { client });
+    const r = await generateForConcern(c.id, { client, targets: { bbr: true, ov: true, blog: "SF" } });
     expect(r?.aiUsed).toBe(true);
     const sent = (parse.mock.calls[0] as unknown as [{ messages: { content: string }[] }])[0].messages[0]!.content;
     expect(sent).toContain("<kurzfassung>");
+    expect(sent).toContain("cdu-sf.de (CDU-Ortsverband)");
     const posts = await db.marketingPost.findMany({ where: { bbrConcernId: c.id } });
     expect(posts.find((p) => p.account === "BBR")!.body).toBe("Sachlich Facebook");
     expect(posts.find((p) => p.account === "OV")!.variants).toMatchObject({ x: "Politisch X" });
+    expect(posts.find((p) => p.kind === "BLOG")).toMatchObject({ title: "Blogtitel", site: "SF" });
   });
 });

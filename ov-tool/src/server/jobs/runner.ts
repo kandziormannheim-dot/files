@@ -4,7 +4,6 @@ import { registerMailQueue } from "@/server/mail/outbox";
 import "./definitions";
 import { jobHandlers, setJobSender } from "./queue";
 import { sendMail, type OutgoingMail } from "@/server/mail/transport";
-import { runBbrSync } from "@/server/services/bbr-social";
 import {
   enforceRetention,
   runOfficeAutoSend,
@@ -35,8 +34,6 @@ const SCHEDULES: { queue: string; cron: string; run: () => Promise<unknown> }[] 
   { queue: "circulation-deadline", cron: "15 * * * *", run: () => sendCirculationDeadlineNotices() },
   { queue: "retention", cron: "30 3 * * *", run: () => enforceRetention() },
   { queue: "office-autosend", cron: "45 * * * *", run: () => runOfficeAutoSend() },
-  // BBR-Anliegen: Deck-Board lesen und zu neuen Kurzfassungen sofort Social-Media-Entwürfe erzeugen
-  { queue: "bbr-sync", cron: "*/10 * * * *", run: () => runBbrSync() },
 ];
 
 export async function startJobs() {

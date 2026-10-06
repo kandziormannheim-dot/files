@@ -178,14 +178,14 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           {creative || post.imagePath || post.videoPath ? (
             <Card>
               <CardHeader>
-                <CardTitle>Bildkachel &amp; Kurzvideo</CardTitle>
+                <CardTitle>{post.kind === "BLOG" ? "Beitragsbild" : "Bildkachel & Kurzvideo"}</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-4 text-sm">
                 {post.mediaError ? <p className="text-red-700">{post.mediaError}</p> : null}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {post.imagePath ? (
                     <div className="flex flex-col gap-2">
-                      <p className="font-medium">Kachel 1080×1350 (Facebook, Instagram)</p>
+                      <p className="font-medium">{post.kind === "BLOG" ? "Wird beim Senden an WordPress als Beitragsbild hochgeladen" : "Kachel 1080×1350 (Facebook, Instagram)"}</p>
                       {/* eslint-disable-next-line @next/next/no-img-element -- geschützte Datei */}
                       <img src={`${mediaBase}/image`} alt="Bildkachel" className="w-full rounded-md border" />
                       <MediaShare src={`${mediaBase}/image`} fileName="kachel.png" mime="image/png" text={withTags(post.body)} label="Kachel" />
@@ -207,7 +207,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                 </div>
                 {creative && editable ? (
                   <details>
-                    <summary className="cursor-pointer font-medium">Schlagzeile und Videotafeln ändern</summary>
+                    <summary className="cursor-pointer font-medium">{post.kind === "BLOG" ? "Text im Beitragsbild ändern" : "Schlagzeile und Videotafeln ändern"}</summary>
                     <ActionForm action={updateCreativeAction.bind(null, post.id)} className="mt-3 flex flex-col gap-3">
                       <Field label="Schlagzeile (max. 80 Zeichen)" name="headline">
                         <Input id="headline" name="headline" defaultValue={creative.headline} maxLength={80} />

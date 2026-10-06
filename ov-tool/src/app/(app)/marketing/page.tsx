@@ -24,7 +24,7 @@ export default async function MarketingPage() {
         />
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
-            <Link href="/marketing/bbr">BBR-Anliegen → Social Media</Link>
+            <Link href="/marketing/bbr">BBR-Anliegen → Social Media &amp; Blog</Link>
           </Button>
           {can(user.role, "marketing.create") ? (
             <Button asChild>

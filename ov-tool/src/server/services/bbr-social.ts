@@ -4,7 +4,7 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { BbrConcern, MarketingPost, Prisma, User } from "@prisma/client";
 import { z as z4 } from "zod/v4";
 import { bbrAccountName, BEZIRKE, kurzfassungKey, kurzfassungLines } from "@/lib/bbr-card";
-import { formToObject, z } from "@/lib/validation";
+import { checkbox, formToObject, z } from "@/lib/validation";
 import { assertCan } from "@/server/auth/permissions";
 import { audit } from "@/server/audit";
 import { db } from "@/server/db";
@@ -19,19 +19,20 @@ import { aiConfigured, draftModel } from "./ai-draft";
 import { deckConfigured, fetchDeckCards, type DeckCard } from "./deck";
 import { getSettingsUncached } from "./settings";
 
-// BBR-Anliegen → Social Media (automatisch):
-// 1. Alle 10 Minuten werden die Karten des Deck-Boards „BBR Seckenheim“ gelesen (nur Überschrift, Bezirk, Kurzfassung).
-// 2. Für jede neue oder geänderte Kurzfassung entstehen sofort je ein Entwurf für den BBR-Kanal (sachlich) und den
-//    OV-Kanal (politisch) – Texte für Facebook, Instagram, X, TikTok, dazu Bildkachel und Kurzvideo im CDU-CI.
-// 3. Veröffentlicht wird erst nach Freigabe im Tool (CLAUDE.md Regel 12). Von Hand bearbeitete oder freigegebene
-//    Beiträge werden nie automatisch überschrieben.
+// BBR-Anliegen → Social Media und Blog (auf Knopfdruck, keine Automatik):
+// 1. „Anliegen abrufen“ liest die Karten des Deck-Boards „BBR Seckenheim“ (nur Überschrift, Bezirk, Kurzfassung).
+// 2. „Beiträge erstellen“ erzeugt zu einem Anliegen die gewählten Entwürfe: BBR-Kanal (sachlich), OV-Kanal
+//    (politisch) – je Texte für Facebook, Instagram, X, TikTok mit Bildkachel und Kurzvideo im CDU-CI – und
+//    einen Blogartikel für cdu-sf.de oder bbr.cdu-sf.de.
+// 3. Veröffentlicht wird erst nach Freigabe im Tool (CLAUDE.md Regel 12). Freigegebene oder veröffentlichte
+//    Beiträge werden nie überschrieben; dann entsteht ein zusätzlicher Entwurf.
 
 type Actor = Pick<User, "id" | "role">;
 export type SocialAccount = "BBR" | "OV";
 export const SOCIAL_ACCOUNTS: SocialAccount[] = ["BBR", "OV"];
 
 export const GEN_STATUS: Record<string, string> = {
-  OFFEN: "wartet",
+  NEU: "noch keine Beiträge",
   LAEUFT: "wird erstellt",
   FERTIG: "Entwürfe erstellt",
   GEAENDERT: "Kurzfassung geändert",
@@ -54,33 +55,39 @@ const variantSchema = z4.object({
   outro: z4.string(),
   hashtags: z4.string(),
 });
-export const socialDraftSchema = z4.object({ bbr: variantSchema, ov: variantSchema });
+const blogSchema = z4.object({ title: z4.string(), body: z4.string() });
+export const socialDraftSchema = z4.object({ bbr: variantSchema, ov: variantSchema, blog: blogSchema });
 export type SocialVariant = z4.infer<typeof variantSchema>;
 export type SocialDraft = z4.infer<typeof socialDraftSchema>;
 
 type ConcernInput = Pick<BbrConcern, "title" | "bezirk" | "kurzfassung">;
 
-export function buildSocialMessage(c: ConcernInput) {
+export type BlogSite = "SF" | "BBR";
+export type GenerateTargets = { bbr: boolean; ov: boolean; blog: BlogSite | null };
+export const ALL_TARGETS: GenerateTargets = { bbr: true, ov: true, blog: "BBR" };
+
+export function buildSocialMessage(c: ConcernInput, blogSite: BlogSite = "BBR") {
   return [
     `<bezirk>${c.bezirk ?? "Seckenheim/Friedrichsfeld"}</bezirk>`,
+    `<blogseite>${blogSite === "BBR" ? "bbr.cdu-sf.de (CDU-Gruppe im Bezirksbeirat)" : "cdu-sf.de (CDU-Ortsverband)"}</blogseite>`,
     `<ueberschrift>${c.title}</ueberschrift>`,
     "<kurzfassung>",
     c.kurzfassung,
     "</kurzfassung>",
     "",
-    "Erstelle die Entwürfe für beide Kanäle (bbr, ov) nach den Vorgaben als JSON.",
+    "Erstelle die Entwürfe für beide Kanäle (bbr, ov) und den Blogartikel (blog) nach den Vorgaben als JSON.",
   ].join("\n");
 }
 
-export async function generateSocialDraft(c: ConcernInput, client = new Anthropic()): Promise<SocialDraft> {
+export async function generateSocialDraft(c: ConcernInput, blogSite: BlogSite, client = new Anthropic()): Promise<SocialDraft> {
   const { source } = await getTemplateSource("prompt.bbr-social");
   const system = renderText(source, { ov: await ovContext() });
   const response = await client.beta.messages.parse(
     {
       model: draftModel(),
-      max_tokens: 6000,
+      max_tokens: 10000,
       system,
-      messages: [{ role: "user", content: buildSocialMessage(c) }],
+      messages: [{ role: "user", content: buildSocialMessage(c, blogSite) }],
       output_config: { effort: "medium", format: betaZodOutputFormat(socialDraftSchema) },
     },
     { timeout: 3 * 60_000 },
@@ -91,7 +98,7 @@ export async function generateSocialDraft(c: ConcernInput, client = new Anthropi
 }
 
 /** Entwurf ohne KI (kein ANTHROPIC_API_KEY): Kurzfassung als Text, Zeilen als Videotafeln. */
-export function fallbackDraft(c: ConcernInput): SocialDraft {
+export function fallbackDraft(c: ConcernInput, blogSite: BlogSite = "BBR"): SocialDraft {
   const lines = kurzfassungLines(c.kurzfassung);
   const ort = c.bezirk ?? "Seckenheim/Friedrichsfeld";
   const tags = `#${(c.bezirk ?? "Seckenheim").replace(/[^A-Za-zÄÖÜäöüß]/g, "")} #Bezirksbeirat #CDUMannheim`;
@@ -115,6 +122,18 @@ export function fallbackDraft(c: ConcernInput): SocialDraft {
       subline: "Wir kümmern uns vor Ort",
       outro: "Gemeinsam für unseren Stadtteil",
     },
+    blog: {
+      title: c.title.slice(0, 90),
+      body: [
+        blogSite === "BBR"
+          ? `Die CDU-Gruppe im Bezirksbeirat ${ort} hat ein Anliegen eingebracht: ${c.title}.`
+          : `Unsere Vertreter im Bezirksbeirat ${ort} haben ein Anliegen eingebracht: ${c.title}.`,
+        "## Worum es geht",
+        ...lines,
+        "## Ihre Meinung",
+        `Hinweise und Anregungen aus ${ort} nehmen wir gerne auf.`,
+      ].join("\n\n"),
+    },
   };
 }
 
@@ -137,7 +156,7 @@ export async function branding(account: SocialAccount, bezirk: string | null): P
 }
 
 /** Bildkachel und Video rendern und ablegen; Fehler werden zurückgegeben, nicht geworfen. */
-export async function renderMedia(creative: Creative, brand: Branding) {
+export async function renderMedia(creative: Creative, brand: Branding, opts: { video?: boolean } = {}) {
   const result: { imagePath: string | null; videoPath: string | null; mediaError: string | null } = { imagePath: null, videoPath: null, mediaError: null };
   const errors: string[] = [];
   try {
@@ -147,7 +166,7 @@ export async function renderMedia(creative: Creative, brand: Branding) {
     errors.push(`Kachel: ${(err as Error).message}`.slice(0, 300));
   }
   try {
-    result.videoPath = await saveFile("social", "video.mp4", await renderSocialVideo(creative, brand));
+    if (opts.video !== false) result.videoPath = await saveFile("social", "video.mp4", await renderSocialVideo(creative, brand));
   } catch (err) {
     console.error("[bbr-social] Video:", err);
     errors.push(`Video: ${(err as Error).message}`.slice(0, 300));
@@ -156,74 +175,118 @@ export async function renderMedia(creative: Creative, brand: Branding) {
   return result;
 }
 
-/** Beitrag gilt als unverändert, solange er nach der Erzeugung nicht gespeichert wurde (Speichern leert generatedAt). */
-export function untouched(p: Pick<MarketingPost, "status" | "generatedAt">) {
-  return p.status === "ENTWURF" && !!p.generatedAt;
+/** Bestehenden Entwurf ersetzen; freigegebene/veröffentlichte Beiträge bleiben, dann neuer Entwurf. */
+function replaceable(p: MarketingPost | undefined) {
+  return p && p.status === "ENTWURF" ? p : null;
+}
+
+async function savePost(
+  concern: BbrConcern,
+  existing: MarketingPost | undefined,
+  data: Prisma.MarketingPostUncheckedCreateInput,
+  actor: Actor | null,
+  meta: Record<string, unknown>,
+) {
+  const replace = replaceable(existing);
+  const post = await db.$transaction(async (tx) => {
+    const p = replace
+      ? await tx.marketingPost.update({ where: { id: replace.id }, data })
+      : await tx.marketingPost.create({ data: { ...data, createdById: actor?.id ?? null } });
+    await audit(tx, actor, replace ? "marketing.regenerate" : "marketing.create", "MarketingPost", p.id, { source: "bbr", concern: concern.id, ...meta });
+    return p;
+  });
+  if (replace) {
+    if (replace.imagePath !== post.imagePath) await deleteStoredFile(replace.imagePath);
+    if (replace.videoPath !== post.videoPath) await deleteStoredFile(replace.videoPath);
+  }
+  return post;
 }
 
 /**
- * Entwürfe zu einem Anliegen erzeugen. Ohne `force` werden nur unveränderte Entwürfe ersetzt; mit `force`
- * auch bearbeitete Entwürfe. Freigegebene oder veröffentlichte Beiträge bleiben immer unangetastet –
- * dann entsteht ein zusätzlicher Entwurf.
+ * Entwürfe zu einem Anliegen erzeugen (nur auf Knopfdruck). Vorhandene Entwürfe der gewählten Ziele werden ersetzt,
+ * freigegebene oder veröffentlichte Beiträge bleiben unangetastet – dann entsteht ein zusätzlicher Entwurf.
  */
-export async function generateForConcern(concernId: string, opts: { force?: boolean; actor?: Actor | null; client?: Anthropic } = {}) {
+export async function generateForConcern(
+  concernId: string,
+  opts: { targets?: GenerateTargets; actor?: Actor | null; client?: Anthropic } = {},
+) {
+  const targets = opts.targets ?? ALL_TARGETS;
+  const actor = opts.actor ?? null;
   const concern = await db.bbrConcern.findUnique({ where: { id: concernId }, include: { posts: { orderBy: { createdAt: "desc" } } } });
-  if (!concern || concern.ignored) return null;
+  if (!concern) return null;
   try {
     const aiUsed = aiConfigured() || !!opts.client;
-    const draft = aiUsed ? await generateSocialDraft(concern, opts.client) : fallbackDraft(concern);
+    const blogSite = targets.blog ?? "BBR";
+    const draft = aiUsed ? await generateSocialDraft(concern, blogSite, opts.client) : fallbackDraft(concern, blogSite);
     const lines = kurzfassungLines(concern.kurzfassung);
-    let blocked = 0;
+    const brief = `${concern.title}\n\n${concern.kurzfassung}`;
     const postIds: string[] = [];
+
     for (const account of SOCIAL_ACCOUNTS) {
+      if (account === "BBR" ? !targets.bbr : !targets.ov) continue;
       const v = account === "BBR" ? draft.bbr : draft.ov;
-      const existing = concern.posts.find((p) => p.account === account);
-      const replace = existing && existing.status === "ENTWURF" && (opts.force || untouched(existing)) ? existing : null;
-      if (existing && !replace && existing.sourceKey === concern.sourceKey && !opts.force) continue;
-      if (existing && !replace && !opts.force) {
-        blocked++;
-        continue;
-      }
+      const existing = concern.posts.find((p) => p.kind === "SOCIAL" && p.account === account);
       const creative = clampCreative(v, lines);
       const media = await renderMedia(creative, { ...(await branding(account, concern.bezirk)), lines });
-      const data = {
-        kind: "SOCIAL" as const,
-        account,
-        bbrConcernId: concern.id,
-        title: `${account === "BBR" ? "BBR" : "OV"}: ${v.title}`.slice(0, 200),
-        body: v.facebook.trim(),
-        hashtags: v.hashtags.trim(),
-        brief: `${concern.title}\n\n${concern.kurzfassung}`,
-        channels: ["facebook"],
-        variants: { instagram: v.instagram.trim(), x: v.x.trim(), tiktok: v.tiktok.trim() } as Prisma.InputJsonValue,
-        creative: creative as unknown as Prisma.InputJsonValue,
-        sourceKey: concern.sourceKey,
-        generatedAt: new Date(),
-        ...media,
-      };
-      const post = await db.$transaction(async (tx) => {
-        const p = replace
-          ? await tx.marketingPost.update({ where: { id: replace.id }, data })
-          : await tx.marketingPost.create({ data: { ...data, createdById: opts.actor?.id ?? null } });
-        await audit(tx, opts.actor ?? null, replace ? "marketing.regenerate" : "marketing.create", "MarketingPost", p.id, {
-          source: "bbr",
-          concern: concern.id,
+      const post = await savePost(
+        concern,
+        existing,
+        {
+          kind: "SOCIAL",
           account,
-          aiUsed,
-        });
-        return p;
-      });
-      if (replace) {
-        await deleteStoredFile(replace.imagePath);
-        await deleteStoredFile(replace.videoPath);
-      }
+          bbrConcernId: concern.id,
+          title: `${account}: ${v.title}`.slice(0, 200),
+          body: v.facebook.trim(),
+          hashtags: v.hashtags.trim(),
+          brief,
+          channels: ["facebook"],
+          variants: { instagram: v.instagram.trim(), x: v.x.trim(), tiktok: v.tiktok.trim() },
+          creative: creative as unknown as Prisma.InputJsonValue,
+          sourceKey: concern.sourceKey,
+          generatedAt: new Date(),
+          ...media,
+        },
+        actor,
+        { account, aiUsed },
+      );
       postIds.push(post.id);
     }
-    await db.bbrConcern.update({
-      where: { id: concern.id },
-      data: { genStatus: blocked ? "GEAENDERT" : "FERTIG", genError: null, generatedAt: new Date() },
-    });
-    return { postIds, blocked, aiUsed };
+
+    if (targets.blog) {
+      const existing = concern.posts.find((p) => p.kind === "BLOG");
+      // Beitragsbild: Kachel im Design des Kanals, der zur Webseite gehört
+      const account: SocialAccount = targets.blog === "BBR" ? "BBR" : "OV";
+      const creative = clampCreative(account === "BBR" ? draft.bbr : draft.ov, lines);
+      const media = await renderMedia(creative, { ...(await branding(account, concern.bezirk)), lines }, { video: false });
+      const post = await savePost(
+        concern,
+        existing,
+        {
+          kind: "BLOG",
+          site: targets.blog,
+          account: null,
+          bbrConcernId: concern.id,
+          title: draft.blog.title.trim().slice(0, 200),
+          body: draft.blog.body.trim(),
+          hashtags: "",
+          brief,
+          channels: [],
+          creative: creative as unknown as Prisma.InputJsonValue,
+          sourceKey: concern.sourceKey,
+          generatedAt: new Date(),
+          imagePath: media.imagePath,
+          videoPath: null,
+          mediaError: media.mediaError,
+          ...(existing && replaceable(existing) ? {} : { wpPostId: null, wpLink: null, wpStatus: null, wpMediaId: null }),
+        },
+        actor,
+        { blog: targets.blog, aiUsed },
+      );
+      postIds.push(post.id);
+    }
+
+    await db.bbrConcern.update({ where: { id: concern.id }, data: { genStatus: "FERTIG", genError: null, generatedAt: new Date() } });
+    return { postIds, aiUsed };
   } catch (err) {
     console.error("[bbr-social] Erzeugung fehlgeschlagen:", err);
     await db.bbrConcern.update({ where: { id: concern.id }, data: { genStatus: "FEHLER", genError: String((err as Error).message).slice(0, 500) } });
@@ -235,13 +298,13 @@ export async function generateForConcern(concernId: string, opts: { force?: bool
 // Abgleich mit dem Deck-Board
 // ---------------------------------------------------------------------------
 
-/** Karten übernehmen; neue oder geänderte Kurzfassungen werden zur Erzeugung vorgemerkt. */
+/** Karten übernehmen; geänderte Kurzfassungen mit vorhandenen Beiträgen werden markiert. */
 export async function upsertConcerns(cards: DeckCard[]) {
   let created = 0;
   let changed = 0;
   for (const card of cards) {
     const sourceKey = kurzfassungKey(card.title, card.kurzfassung, card.bezirk);
-    const before = await db.bbrConcern.findUnique({ where: { deckCardId: card.cardId } });
+    const before = await db.bbrConcern.findUnique({ where: { deckCardId: card.cardId }, include: { _count: { select: { posts: true } } } });
     const base = {
       boardId: card.boardId,
       stack: card.stack,
@@ -253,10 +316,10 @@ export async function upsertConcerns(cards: DeckCard[]) {
       cardModifiedAt: card.modifiedAt,
     };
     if (!before) {
-      await db.bbrConcern.create({ data: { deckCardId: card.cardId, ...base, genStatus: "OFFEN" } });
+      await db.bbrConcern.create({ data: { deckCardId: card.cardId, ...base, genStatus: "NEU" } });
       created++;
     } else if (before.sourceKey !== sourceKey) {
-      await db.bbrConcern.update({ where: { id: before.id }, data: { ...base, genStatus: "OFFEN", genError: null } });
+      await db.bbrConcern.update({ where: { id: before.id }, data: { ...base, genStatus: before._count.posts ? "GEAENDERT" : "NEU", genError: null } });
       changed++;
     } else if (before.stack !== card.stack || before.cardUrl !== card.url) {
       await db.bbrConcern.update({ where: { id: before.id }, data: { stack: card.stack, cardUrl: card.url } });
@@ -279,29 +342,19 @@ export function parseLastSync(raw: string): { at: string; ok: boolean; message: 
   }
 }
 
-/** Geplanter Lauf (alle 10 Minuten): Deck lesen, dann offene Anliegen nacheinander erzeugen. */
-export async function runBbrSync(fetchImpl: typeof fetch = fetch, maxGenerate = 4) {
-  let sync = { found: 0, created: 0, changed: 0 };
-  if (deckConfigured()) {
-    try {
-      const s = await getSettingsUncached();
-      const cards = await fetchDeckCards(s.social.deckBoards, fetchImpl);
-      sync = { found: cards.length, ...(await upsertConcerns(cards)) };
-      await writeLastSync({ at: new Date().toISOString(), ok: true, message: `${cards.length} Anliegen mit Kurzfassung, ${sync.created} neu, ${sync.changed} geändert` });
-    } catch (err) {
-      await writeLastSync({ at: new Date().toISOString(), ok: false, message: String((err as Error).message).slice(0, 300) });
-    }
+/** Deck lesen und Anliegen übernehmen (ohne Beiträge zu erzeugen). */
+export async function importFromDeck(fetchImpl: typeof fetch = fetch) {
+  const s = await getSettingsUncached();
+  try {
+    const cards = await fetchDeckCards(s.social.deckBoards, fetchImpl);
+    const result = { found: cards.length, ...(await upsertConcerns(cards)) };
+    await writeLastSync({ at: new Date().toISOString(), ok: true, message: `${cards.length} Anliegen mit Kurzfassung, ${result.created} neu, ${result.changed} geändert` });
+    return result;
+  } catch (err) {
+    const message = String((err as Error).message).slice(0, 300);
+    await writeLastSync({ at: new Date().toISOString(), ok: false, message });
+    throw new UserError(message);
   }
-  // hängengebliebene Läufe (Absturz/Neustart) wieder freigeben
-  await db.bbrConcern.updateMany({ where: { genStatus: "LAEUFT", updatedAt: { lt: new Date(Date.now() - 30 * 60_000) } }, data: { genStatus: "OFFEN" } });
-  const pending = await db.bbrConcern.findMany({ where: { genStatus: "OFFEN", ignored: false }, orderBy: { createdAt: "asc" }, take: maxGenerate });
-  let generated = 0;
-  for (const c of pending) {
-    // atomar beanspruchen, damit parallele Läufe nichts doppelt erzeugen
-    const claimed = await db.bbrConcern.updateMany({ where: { id: c.id, genStatus: "OFFEN" }, data: { genStatus: "LAEUFT" } });
-    if (claimed.count === 1 && (await generateForConcern(c.id))) generated++;
-  }
-  return { ...sync, generated };
 }
 
 // ---------------------------------------------------------------------------
@@ -312,33 +365,42 @@ export function listConcerns(actor: Actor) {
   assertCan(actor, "read");
   return db.bbrConcern.findMany({
     orderBy: [{ ignored: "asc" }, { createdAt: "desc" }],
-    include: { posts: { select: { id: true, account: true, status: true, imagePath: true, videoPath: true, mediaError: true }, orderBy: { createdAt: "asc" } } },
+    include: {
+      posts: {
+        select: { id: true, kind: true, account: true, site: true, status: true, wpLink: true, mediaError: true, sourceKey: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
     take: 200,
   });
 }
 
-/** Sofort abrufen (statt auf den 10-Minuten-Takt zu warten). */
-export async function syncNow(actor: Actor) {
+/** „Anliegen abrufen“ */
+export async function syncNow(actor: Actor, fetchImpl: typeof fetch = fetch) {
   assertCan(actor, "marketing.publish");
   if (!deckConfigured()) throw new UserError("Der Nextcloud-Zugang ist noch nicht eingerichtet (Umgebungsvariablen NEXTCLOUD_…).");
-  const result = await runBbrSync(fetch, 2);
+  const result = await importFromDeck(fetchImpl);
   await audit(db, actor, "bbr.sync", "BbrConcern", null, result);
-  const s = parseLastSync((await getSettingsUncached()).social.lastSync);
-  if (s && !s.ok) throw new UserError(s.message);
-  // weitere offene Anliegen im Hintergrund
-  void enqueue("bbr-generate-pending", {}).catch(() => undefined);
   return result;
 }
 
-export async function regenerateConcern(actor: Actor, id: string) {
+const targetsSchema = z
+  .object({ bbr: checkbox, ov: checkbox, blog: checkbox, blogSite: z.enum(["SF", "BBR"]).default("BBR") })
+  .refine((t) => t.bbr || t.ov || t.blog, { error: "Bitte mindestens einen Beitrag auswählen.", path: ["bbr"] });
+
+/** „Beiträge erstellen“: läuft im Hintergrund (KI, Kachel, Video – etwa eine Minute). */
+export async function startGeneration(actor: Actor, id: string, formData: FormData) {
   assertCan(actor, "marketing.publish");
+  const t = targetsSchema.parse(formToObject(formData));
   const c = await db.bbrConcern.findUnique({ where: { id } });
   if (!c) throw new NotFoundError("Anliegen nicht gefunden.");
+  if (c.genStatus === "LAEUFT" && c.updatedAt.getTime() > Date.now() - 10 * 60_000) throw new UserError("Die Beiträge werden gerade erstellt.");
+  const targets: GenerateTargets = { bbr: t.bbr, ov: t.ov, blog: t.blog ? t.blogSite : null };
   await db.$transaction(async (tx) => {
     await tx.bbrConcern.update({ where: { id }, data: { genStatus: "LAEUFT", genError: null, ignored: false } });
-    await audit(tx, actor, "bbr.regenerate", "BbrConcern", id);
+    await audit(tx, actor, "bbr.generate", "BbrConcern", id, targets);
   });
-  await enqueue("bbr-generate", { concernId: id, force: true, actorId: actor.id });
+  await enqueue("bbr-generate", { concernId: id, targets, actorId: actor.id });
 }
 
 export async function setConcernIgnored(actor: Actor, id: string, ignored: boolean) {
@@ -371,13 +433,12 @@ export async function createTestConcern(actor: Actor, formData: FormData) {
         sourceKey: kurzfassungKey(input.title, input.kurzfassung, input.bezirk),
         stack: "Test",
         test: true,
-        genStatus: "LAEUFT",
+        genStatus: "NEU",
       },
     });
     await audit(tx, actor, "bbr.test", "BbrConcern", c.id, { title: c.title });
     return c;
   });
-  await enqueue("bbr-generate", { concernId: concern.id, actorId: actor.id });
   return concern;
 }
 
@@ -427,10 +488,10 @@ export async function updateCreative(actor: Actor, postId: string, formData: For
     outro: input.outro,
   };
   if (creative.scenes.length === 0) throw new UserError("Bitte mindestens eine Videotafel angeben.");
-  const account = (post.account === "OV" ? "OV" : "BBR") as SocialAccount;
+  const account: SocialAccount = post.account === "OV" || (post.kind === "BLOG" && post.site === "SF") ? "OV" : "BBR";
   const bezirk = post.bbrConcern?.bezirk ?? null;
   const lines = post.bbrConcern ? kurzfassungLines(post.bbrConcern.kurzfassung) : creative.scenes;
-  const media = await renderMedia(creative, { ...(await branding(account, bezirk)), lines });
+  const media = await renderMedia(creative, { ...(await branding(account, bezirk)), lines }, { video: post.kind === "SOCIAL" });
   await db.$transaction(async (tx) => {
     await tx.marketingPost.update({
       where: { id: postId },
@@ -438,6 +499,7 @@ export async function updateCreative(actor: Actor, postId: string, formData: For
         creative: creative as unknown as Prisma.InputJsonValue,
         ...media,
         generatedAt: null,
+        wpMediaId: null,
         ...(post.status === "FREIGEGEBEN" ? { status: "ENTWURF" as const, approvedAt: null, approvedById: null } : {}),
       },
     });

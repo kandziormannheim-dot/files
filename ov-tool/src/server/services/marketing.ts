@@ -9,6 +9,7 @@ import { assertCan, can } from "@/server/auth/permissions";
 import { audit, changes } from "@/server/audit";
 import { db } from "@/server/db";
 import { ForbiddenError, NotFoundError, UserError } from "@/server/errors";
+import { readStoredFile, storedFileExists } from "@/server/files";
 import { ovContext } from "@/server/ov";
 import { renderText } from "@/server/templates/engine";
 import { getTemplateSource } from "@/server/templates/store";
@@ -222,11 +223,25 @@ export async function sendToWordpress(actor: Actor, id: string, mode: "draft" | 
   if (post.status !== "FREIGEGEBEN") throw new UserError("Bitte den Artikel zuerst freigeben.");
   const site = wordpressSite((post.site ?? "SF") as WordpressSiteKey);
   if (!site) throw new UserError("Für diese Webseite sind keine WordPress-Zugangsdaten hinterlegt (Umgebungsvariablen WP_…).");
+  const authorization = `Basic ${Buffer.from(`${site.user}:${site.appPassword}`).toString("base64")}`;
+  // Beitragsbild: Kachel einmalig in die Mediathek laden (bei erneutem Senden wiederverwenden)
+  let mediaId = post.wpMediaId;
+  if (!mediaId && post.imagePath && (await storedFileExists(post.imagePath))) {
+    const img = await readStoredFile(post.imagePath);
+    const slug = post.title.toLowerCase().replace(/[^a-z0-9äöüß]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "beitrag";
+    const up = await fetchImpl(`${site.url}/wp-json/wp/v2/media`, {
+      method: "POST",
+      headers: { Authorization: authorization, "Content-Type": "image/png", "Content-Disposition": `attachment; filename="${slug}.png"` },
+      body: new Uint8Array(img),
+    });
+    if (!up.ok) throw new UserError(`WordPress hat das Beitragsbild abgelehnt (HTTP ${up.status}).`);
+    mediaId = ((await up.json()) as { id: number }).id;
+  }
   const endpoint = post.wpPostId ? `${site.url}/wp-json/wp/v2/posts/${post.wpPostId}` : `${site.url}/wp-json/wp/v2/posts`;
   const res = await fetchImpl(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Basic ${Buffer.from(`${site.user}:${site.appPassword}`).toString("base64")}` },
-    body: JSON.stringify({ title: post.title, content: blogToHtml(post.body), status: mode }),
+    headers: { "Content-Type": "application/json", Authorization: authorization },
+    body: JSON.stringify({ title: post.title, content: blogToHtml(post.body), status: mode, ...(mediaId ? { featured_media: mediaId } : {}) }),
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -240,10 +255,11 @@ export async function sendToWordpress(actor: Actor, id: string, mode: "draft" | 
         wpPostId: wp.id,
         wpLink: wp.link,
         wpStatus: wp.status,
+        wpMediaId: mediaId,
         ...(wp.status === "publish" ? { status: "VEROEFFENTLICHT" as const, publishedAt: new Date() } : {}),
       },
     });
-    await audit(tx, actor, "marketing.wordpress", "MarketingPost", id, { site: site.key, wpId: wp.id, status: wp.status });
+    await audit(tx, actor, "marketing.wordpress", "MarketingPost", id, { site: site.key, wpId: wp.id, status: wp.status, mediaId });
   });
   return wp;
 }

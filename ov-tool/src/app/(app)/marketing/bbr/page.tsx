@@ -21,16 +21,16 @@ import {
   createTestAction,
   deleteTestAction,
   ignoreAction,
-  regenerateAction,
+  generateAction,
   resetLogoAction,
   syncNowAction,
   uploadLogoAction,
 } from "./actions";
 
-export const metadata: Metadata = { title: "BBR-Anliegen → Social Media" };
+export const metadata: Metadata = { title: "BBR-Anliegen → Social Media & Blog" };
 
 const STATUS_VARIANT: Record<string, "secondary" | "warning" | "success" | "destructive"> = {
-  OFFEN: "secondary",
+  NEU: "secondary",
   LAEUFT: "secondary",
   FERTIG: "success",
   GEAENDERT: "warning",
@@ -52,8 +52,8 @@ export default async function BbrSocialPage() {
         </Link>
       </div>
       <PageHeader
-        title="BBR-Anliegen → Social Media"
-        description="Aus jeder neuen Kurzfassung im Tool „BBR-Anliegen“ entstehen automatisch Entwürfe für den BBR-Kanal (sachlich) und den OV-Kanal (politisch): Texte für Facebook, Instagram, X und TikTok, Bildkachel und Kurzvideo im CDU-Design. Veröffentlicht wird erst nach Freigabe."
+        title="BBR-Anliegen → Social Media & Blog"
+        description="Aus der Kurzfassung eines BBR-Anliegens per Knopfdruck Entwürfe erstellen: BBR-Kanal (sachlich) und OV-Kanal (politisch) mit Texten für Facebook, Instagram, X und TikTok, Bildkachel und Kurzvideo im CDU-Design, dazu ein Blogartikel für cdu-sf.de oder bbr.cdu-sf.de. Veröffentlicht wird erst nach Freigabe."
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -69,7 +69,7 @@ export default async function BbrSocialPage() {
               ) : (
                 <Badge variant="warning">noch nicht eingerichtet</Badge>
               )}{" "}
-              · Board: <strong>{settings.social.deckBoards.split("\n").filter(Boolean).join(", ") || "alle sichtbaren"}</strong> · Abruf alle 10 Minuten
+              · Board: <strong>{settings.social.deckBoards.split("\n").filter(Boolean).join(", ") || "alle sichtbaren"}</strong> · Abruf nur per Knopfdruck
             </p>
             <p>
               Texte:{" "}
@@ -87,13 +87,13 @@ export default async function BbrSocialPage() {
               <p className="text-neutral-600">Noch kein Abruf.</p>
             )}
             <p className="text-xs text-neutral-600">
-              Übernommen werden nur Überschrift, Bezirk und Kurzfassung – nie Hinweisgeber oder Erläuterung. Von Hand bearbeitete oder
-              freigegebene Beiträge werden nicht automatisch überschrieben.
+              Übernommen werden nur Überschrift, Bezirk und Kurzfassung – nie Hinweisgeber oder Erläuterung.
+              „Beiträge erstellen“ ersetzt vorhandene Entwürfe; freigegebene oder veröffentlichte Beiträge bleiben erhalten.
             </p>
             {publisher && deck ? (
               <ActionForm action={syncNowAction}>
                 <SubmitButton size="sm" pendingText="Wird abgerufen …">
-                  Jetzt abrufen
+                  Anliegen abrufen
                 </SubmitButton>
               </ActionForm>
             ) : null}
@@ -159,16 +159,15 @@ export default async function BbrSocialPage() {
                 <p className="whitespace-pre-wrap rounded-md bg-neutral-50 p-3">{c.kurzfassung}</p>
                 {c.genError ? <p className="text-red-700">Fehler: {c.genError}</p> : null}
                 {c.genStatus === "GEAENDERT" ? (
-                  <p className="text-amber-800">
-                    Die Kurzfassung wurde geändert, die Entwürfe sind aber schon bearbeitet oder freigegeben. „Neu erstellen“ überschreibt
-                    Entwürfe; freigegebene Beiträge bleiben erhalten, es entsteht ein zusätzlicher Entwurf.
-                  </p>
+                  <p className="text-amber-800">Die Kurzfassung wurde nach dem Erstellen der Beiträge geändert. Bei Bedarf neu erstellen.</p>
                 ) : null}
                 {c.posts.length ? (
                   <div className="flex flex-wrap gap-2">
                     {c.posts.map((p) => (
                       <Link key={p.id} href={`/marketing/${p.id}`} className="flex items-center gap-2 rounded-md border px-3 py-1.5 hover:border-akzent">
-                        <span className="font-medium">{p.account === "OV" ? "OV-Kanal" : "BBR-Kanal"}</span>
+                        <span className="font-medium">
+                          {p.kind === "BLOG" ? `Blog ${p.site === "SF" ? "cdu-sf.de" : "bbr.cdu-sf.de"}` : p.account === "OV" ? "OV-Kanal" : "BBR-Kanal"}
+                        </span>
                         <Badge variant={MARKETING_STATUS[p.status].variant}>{MARKETING_STATUS[p.status].label}</Badge>
                         {p.mediaError ? <span className="text-xs text-red-700">Medien unvollständig</span> : null}
                       </Link>
@@ -176,12 +175,35 @@ export default async function BbrSocialPage() {
                   </div>
                 ) : null}
                 {publisher ? (
-                  <div className="flex flex-wrap gap-2">
-                    <ActionForm action={regenerateAction.bind(null, c.id)}>
-                      <SubmitButton size="sm" variant="outline" pendingText="…">
-                        Neu erstellen
+                  <details open={c.posts.length === 0 && c.genStatus !== "LAEUFT"} className="rounded-md border p-3">
+                    <summary className="cursor-pointer font-medium">{c.posts.length ? "Beiträge neu erstellen" : "Beiträge erstellen"}</summary>
+                    <ActionForm action={generateAction.bind(null, c.id)} className="mt-3 flex flex-col gap-3">
+                      <div className="flex flex-wrap gap-x-5 gap-y-2">
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" name="bbr" defaultChecked /> BBR-Kanal (sachlich)
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" name="ov" defaultChecked /> OV-Kanal (politisch)
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" name="blog" defaultChecked /> Blogartikel für
+                        </label>
+                        <NativeSelect name="blogSite" defaultValue="BBR" aria-label="Webseite für den Blogartikel" className="w-auto">
+                          <option value="BBR">bbr.cdu-sf.de</option>
+                          <option value="SF">cdu-sf.de</option>
+                        </NativeSelect>
+                      </div>
+                      {c.posts.some((p) => p.status === "ENTWURF") ? (
+                        <p className="text-xs text-amber-800">Vorhandene Entwürfe der gewählten Beiträge werden ersetzt.</p>
+                      ) : null}
+                      <SubmitButton size="sm" className="self-start" pendingText="…" disabled={c.genStatus === "LAEUFT"}>
+                        {c.genStatus === "LAEUFT" ? "Wird erstellt …" : "Erstellen"}
                       </SubmitButton>
                     </ActionForm>
+                  </details>
+                ) : null}
+                {publisher ? (
+                  <div className="flex flex-wrap gap-2">
                     <ActionForm action={ignoreAction.bind(null, c.id, !c.ignored)}>
                       <SubmitButton size="sm" variant="ghost" pendingText="…">
                         {c.ignored ? "Wieder berücksichtigen" : "Ignorieren"}

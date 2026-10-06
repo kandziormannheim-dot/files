@@ -140,12 +140,12 @@ Fotos werden beim Hochladen verkleinert und ohne Metadaten (GPS) gespeichert.
 - **Auslagen** (`/expenses`): Belege als Foto (ohne EXIF/GPS, WebP) oder PDF, Name, Anschrift und E-Mail des Mitglieds werden je Antrag erfasst; Erstattung als Überweisung (IBAN mit Prüfziffer), bar oder Spendenbescheinigung (Aufwandsspende). Anschrift, E-Mail und Bankdaten verschlüsselt, 12 Monate nach Versand gelöscht. Freigabe (`expense.approve`) sendet Antrag + Belege als ein PDF an die E-Mail der Kreisgeschäftsstelle, Kopie (Cc) an das Mitglied.
 - **Beschlüsse** (`/resolutions`): PDF je Beschluss; „Als Antrag an den Kreisverband“ sendet Antrag + Beschluss als PDF an die E-Mail der Kreisgeschäftsstelle (Einstellungen → Allgemein, Vorbelegung).
 
-## 6e. BBR-Anliegen → Social Media
+## 6e. BBR-Anliegen → Social Media & Blog
 
 - Quelle: Nextcloud-Deck-Board „BBR Seckenheim“ (Tool bbr-anliegen.cdu-sf.de). Dienstnutzer `ov-tool` mit **lesender** Freigabe des Boards und eigenem App-Passwort. Umgebungsvariablen `NEXTCLOUD_URL`, `NEXTCLOUD_DECK_USER`, `NEXTCLOUD_DECK_APP_PASSWORD` (nur in der Server-`.env`, nie im Chat oder Repo). Board-Name als Einstellung `bbr.deckBoards` (Standard „BBR Seckenheim“).
-- Ablauf: Job `bbr-sync` alle 10 Minuten (oder „Jetzt abrufen“ unter Marketing → BBR-Anliegen). Übernommen werden nur Kartentitel, Bezirk und Kurzfassung – nie Hinweisgeber oder Erläuterung. Zu jeder neuen/geänderten Kurzfassung entstehen je ein Entwurf für BBR-Kanal (sachlich) und OV-Kanal (politisch): Facebook-Text, Instagram, X, TikTok, Bildkachel 1080×1350 und Video 1080×1920 (Chromium + ffmpeg im Container).
+- **Keine Automatik:** „Anliegen abrufen“ (Marketing → BBR-Anliegen) übernimmt nur Kartentitel, Bezirk und Kurzfassung – nie Hinweisgeber oder Erläuterung. „Beiträge erstellen“ je Anliegen erzeugt die gewählten Entwürfe: BBR-Kanal (sachlich) und OV-Kanal (politisch) mit Facebook-, Instagram-, X- und TikTok-Text, Bildkachel 1080×1350 und Video 1080×1920 (Chromium + ffmpeg im Container), sowie einen Blogartikel für bbr.cdu-sf.de oder cdu-sf.de mit Kachel als Beitragsbild.
 - Texte über Claude (`ANTHROPIC_API_KEY`, Prompt `prompt.bbr-social` unter Vorlagen anpassbar); ohne Schlüssel wird die Kurzfassung übernommen.
-- Von Hand gespeicherte oder freigegebene Beiträge werden nie automatisch überschrieben. Veröffentlicht wird erst nach Freigabe (`marketing.publish`), derzeit über Teilen/Herunterladen; direkte Facebook-Veröffentlichung folgt mit der Meta-API.
+- Erneutes Erstellen ersetzt Entwürfe; freigegebene/veröffentlichte Beiträge bleiben, dann entsteht ein zusätzlicher Entwurf. Veröffentlicht wird erst nach Freigabe (`marketing.publish`): Blog per WordPress-REST (`WP_SF_*`/`WP_BBR_*`, Beitragsbild wird mit hochgeladen), Social Media derzeit über Teilen/Herunterladen.
 
 ## 7. Variante: Plesk
 
