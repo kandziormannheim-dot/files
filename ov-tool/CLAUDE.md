@@ -80,7 +80,7 @@ docker/                # Dockerfiles, Caddyfile, whisper-Konfiguration
 
 ## Verbindliche Regeln
 
-1. **Keine Mitgliederdaten.** Es gibt kein Mitglieder-Modell. Keine Felder für Mitgliedsnummern, Adressen oder Beiträge anlegen.
+1. **Keine Mitgliederdaten.** Es gibt kein Mitglieder-Modell. Keine Felder für Mitgliedsnummern, Adressen oder Beiträge anlegen. Einzige Ausnahme (Entscheidung des Vorsitzenden, 06.10.2026): Die Auslagenerstattung speichert je Antrag Name, Anschrift, E-Mail und ggf. IBAN des erstatteten Mitglieds – verschlüsselt, Löschung 12 Monate nach Versand, kein Mitgliederverzeichnis.
 2. **Rechte serverseitig prüfen** in jeder Server Action / Route (`requireRole(...)`). UI-Ausblendung allein reicht nie.
 3. **Jede schreibende Aktion ins Audit-Log** (über den zentralen Service-Layer, nicht in Komponenten).
 4. **Eingaben mit zod validieren**, an der Servergrenze.

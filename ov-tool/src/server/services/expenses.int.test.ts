@@ -33,8 +33,8 @@ describe.skipIf(!hasTestDb)("Auslagenerstattung (DB)", () => {
     const other = await makeUser({ role: "VORSTAND" });
     await db.setting.create({ data: { key: "office.email", value: "kgs@example.org" } });
 
-    await expect(createClaim(v, form({ title: "Infostand", payout: "UEBERWEISUNG", iban: "DE89370400440532013001" }))).rejects.toThrow(/IBAN/);
-    const claim = await createClaim(v, form({ title: "Infostand", payout: "UEBERWEISUNG", iban: "DE89 3704 0044 0532 0130 00" }));
+    await expect(createClaim(v, form({ memberName: "Max Muster", title: "Infostand", payout: "UEBERWEISUNG", iban: "DE89370400440532013001" }))).rejects.toThrow(/IBAN/);
+    const claim = await createClaim(v, form({ memberName: "Eva Mitglied", memberEmail: "eva@example.org", address: "Musterweg 2\n68239 Mannheim", title: "Infostand", payout: "UEBERWEISUNG", iban: "DE89 3704 0044 0532 0130 00" }));
     expect(claim.number).toMatch(/^A-\d{4}-01$/);
     expect(claim.personalData).not.toContain("DE89"); // verschlüsselt (Test-ENCRYPTION_KEY) oder zumindest nicht im Klartext-Feld sichtbar, wenn gesetzt
 
@@ -50,6 +50,8 @@ describe.skipIf(!hasTestDb)("Auslagenerstattung (DB)", () => {
     const full = await getClaim(v, claim.id);
     expect(full.total).toBe(6240);
     expect(full.personal.iban).toBe("DE89370400440532013000");
+    expect(full.claimantName).toBe("Eva Mitglied");
+    expect(full.personal.address).toContain("Musterweg");
     expect(full.items[0]!.receiptMime).toBe("image/webp");
     await expect(getClaim(other, claim.id)).rejects.toBeInstanceOf(ForbiddenError);
     expect((await listClaims(other)).length).toBe(0);
@@ -58,9 +60,10 @@ describe.skipIf(!hasTestDb)("Auslagenerstattung (DB)", () => {
     await submitClaim(v, claim.id);
     await expect(approveAndSend(v as typeof v, claim.id)).rejects.toBeInstanceOf(ForbiddenError);
     const res = await approveAndSend(admin, claim.id);
-    expect(res).toMatchObject({ to: "kgs@example.org", total: 6240 });
+    expect(res).toMatchObject({ to: "kgs@example.org", cc: "eva@example.org", total: 6240 });
     const mail = outbox.at(-1)!;
     expect(mail.to).toBe("kgs@example.org");
+    expect(mail.cc).toBe("eva@example.org");
     expect(mail.attachments?.[0]?.filename).toBe(`Auslagenerstattung-${claim.number}.pdf`);
     const out = await PDFDocument.load(mail.attachments![0]!.content);
     expect(out.getPageCount()).toBe(3); // Antrag + Foto + PDF-Beleg
@@ -75,10 +78,10 @@ describe.skipIf(!hasTestDb)("Auslagenerstattung (DB)", () => {
 
   it("verlangt für die Spendenbescheinigung eine Anschrift", async () => {
     const v = await makeUser({ role: "VORSTAND" });
-    await expect(createClaim(v, form({ title: "Fahrt", payout: "SPENDE" }))).rejects.toThrow(/Anschrift/);
-    const c = await createClaim(v, form({ title: "Fahrt", payout: "SPENDE", address: "Musterstraße 1\n68239 Mannheim" }));
+    await expect(createClaim(v, form({ memberName: "Eva", title: "Fahrt", payout: "SPENDE" }))).rejects.toThrow(/Anschrift/);
+    const c = await createClaim(v, form({ memberName: "Eva", title: "Fahrt", payout: "SPENDE", address: "Musterstraße 1\n68239 Mannheim" }));
     expect((await getClaim(v, c.id)).personal.address).toContain("Musterstraße");
     const lese = await makeUser({ role: "LESEZUGRIFF" });
-    await expect(createClaim(lese, form({ title: "x", payout: "BAR" }))).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(createClaim(lese, form({ memberName: "x", title: "x", payout: "BAR" }))).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

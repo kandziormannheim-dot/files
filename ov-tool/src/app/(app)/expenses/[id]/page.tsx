@@ -161,7 +161,7 @@ export default async function ExpensePage({ params }: { params: Promise<{ id: st
                     <Send className="size-4" /> Freigeben und an die Kreisgeschäftsstelle senden
                   </ConfirmSubmit>
                   {settings.office.email ? (
-                    <span className="text-xs text-neutral-600">An {settings.office.email}; Kopie an Antragsteller/in und Sie.</span>
+                    <span className="text-xs text-neutral-600">An {settings.office.email}{claim.personal.email ? `; Kopie an ${claim.personal.email}` : " – keine E-Mail des Mitglieds hinterlegt, daher ohne Kopie"}.</span>
                   ) : (
                     <span className="text-xs text-union-rot">Keine E-Mail der Kreisgeschäftsstelle hinterlegt (Einstellungen → Allgemein).</span>
                   )}
@@ -202,6 +202,8 @@ export default async function ExpensePage({ params }: { params: Promise<{ id: st
                 defaultHolder={claim.claimantName}
                 isNew={false}
                 values={{
+                  memberName: claim.claimantName,
+                  memberEmail: claim.personal.email ?? "",
                   title: claim.title,
                   occasion: claim.occasion,
                   payout: claim.payout,
@@ -213,6 +215,12 @@ export default async function ExpensePage({ params }: { params: Promise<{ id: st
               />
             ) : (
               <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+                {claim.personal.email ? (
+                  <>
+                    <dt className="text-neutral-600">E-Mail</dt>
+                    <dd>{claim.personal.email}</dd>
+                  </>
+                ) : null}
                 <dt className="text-neutral-600">Anlass</dt>
                 <dd>{claim.occasion || "–"}</dd>
                 <dt className="text-neutral-600">Erstattung</dt>

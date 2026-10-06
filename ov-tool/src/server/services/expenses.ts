@@ -38,7 +38,8 @@ export const STATUS_LABELS = {
   ABGELEHNT: "abgelehnt",
 } as const;
 
-export type PersonalData = { accountHolder?: string; iban?: string; address?: string };
+/** Daten des Mitglieds, für das die Auslage erstattet wird (verschlüsselt, Löschfrist). */
+export type PersonalData = { accountHolder?: string; iban?: string; address?: string; email?: string };
 
 /** Bankverbindung und Anschrift werden nach dieser Frist (ab Versand) gelöscht. */
 export const PERSONAL_DATA_MONTHS = 12;
@@ -89,6 +90,11 @@ async function nextNumber(tx: Prisma.TransactionClient, year: number) {
 }
 
 const claimSchema = z.object({
+  memberName: requiredText(200),
+  memberEmail: z.preprocess(
+    (v) => (typeof v === "string" ? (v.trim() === "" ? undefined : v.trim().toLowerCase()) : v),
+    z.email({ error: "Bitte eine gültige E-Mail-Adresse angeben." }).optional(),
+  ),
   title: requiredText(200),
   occasion: optionalText(1000),
   payout: z.enum(ExpensePayout),
@@ -98,29 +104,29 @@ const claimSchema = z.object({
   note: optionalText(2000),
 });
 
-function personalFromInput(input: z.infer<typeof claimSchema>, claimantName: string): PersonalData {
+function personalFromInput(input: z.infer<typeof claimSchema>, keepIban?: string): PersonalData {
+  const base: PersonalData = { address: input.address?.trim() || undefined, email: input.memberEmail };
+  if (input.payout === "SPENDE" && (!base.address || base.address.length < 8)) {
+    throw new UserError("Für die Spendenbescheinigung wird die vollständige Anschrift des Mitglieds benötigt.");
+  }
   if (input.payout === "UEBERWEISUNG") {
-    const iban = normalizeIban(input.iban ?? "");
+    const iban = input.iban ? normalizeIban(input.iban) : (keepIban ?? null);
     if (!iban) throw new UserError("Bitte eine gültige IBAN angeben (Prüfziffer stimmt nicht).");
-    return { accountHolder: input.accountHolder || claimantName, iban };
+    return { ...base, accountHolder: input.accountHolder || input.memberName, iban };
   }
-  if (input.payout === "SPENDE") {
-    if (!input.address || input.address.trim().length < 8) throw new UserError("Für die Spendenbescheinigung wird die vollständige Anschrift benötigt.");
-    return { address: input.address.trim() };
-  }
-  return {};
+  return base;
 }
 
 export async function createClaim(actor: Actor & { name: string }, formData: FormData) {
   assertCan(actor, "expense.create");
   const input = claimSchema.parse(formToObject(formData));
-  const personal = personalFromInput(input, actor.name);
+  const personal = personalFromInput(input);
   return db.$transaction(async (tx) => {
     const claim = await tx.expenseClaim.create({
       data: {
         number: await nextNumber(tx, new Date().getFullYear()),
         claimantId: actor.id,
-        claimantName: actor.name,
+        claimantName: input.memberName,
         title: input.title,
         occasion: input.occasion ?? "",
         payout: input.payout,
@@ -148,13 +154,11 @@ export async function updateClaim(actor: Actor, id: string, formData: FormData) 
   const claim = await loadEditable(actor, id);
   const input = claimSchema.parse(formToObject(formData));
   // leere IBAN bei bestehender Überweisung = unverändert lassen
-  const old = readPersonal(claim);
-  const keepIban = input.payout === "UEBERWEISUNG" && !input.iban && old.iban;
-  const personal = keepIban ? { accountHolder: input.accountHolder || old.accountHolder, iban: old.iban } : personalFromInput(input, claim.claimantName);
+  const personal = personalFromInput(input, readPersonal(claim).iban);
   await db.$transaction(async (tx) => {
     await tx.expenseClaim.update({
       where: { id },
-      data: { title: input.title, occasion: input.occasion ?? "", payout: input.payout, note: input.note ?? "", ...writePersonal(personal) },
+      data: { claimantName: input.memberName, title: input.title, occasion: input.occasion ?? "", payout: input.payout, note: input.note ?? "", ...writePersonal(personal) },
     });
     await audit(tx, actor, "expense.update", "ExpenseClaim", id, { payout: input.payout });
   });
@@ -307,9 +311,9 @@ export async function approveAndSend(actor: Actor & { name: string; email: strin
   assertComplete(before);
   await db.expenseClaim.update({ where: { id }, data: { approvedById: actor.id, approvedAt: new Date() } });
   const { pdf, fileName, claim } = await claimPdf(actor, id);
-  const claimant = await db.user.findUnique({ where: { id: claim.claimantId }, select: { email: true } });
   const mail = await renderMail("auslagen.versand", { ...(await claimContext(claim, { name: actor.name })), absender: await senderContext(actor.id) });
-  const cc = [...new Set([claimant?.email, actor.email].filter((x): x is string => !!x && x !== settings.office.email))];
+  // Kopie an das Mitglied, für das die Auslage erstattet wird
+  const cc = claim.personal.email && claim.personal.email !== settings.office.email ? [claim.personal.email] : [];
   await sendMail({
     to: settings.office.email,
     ...(cc.length ? { cc: cc.join(", ") } : {}),
@@ -321,9 +325,9 @@ export async function approveAndSend(actor: Actor & { name: string; email: strin
   });
   await db.$transaction(async (tx) => {
     await tx.expenseClaim.update({ where: { id }, data: { status: "VERSENDET", sentAt: new Date(), sentTo: settings.office.email } });
-    await audit(tx, actor, "expense.send", "ExpenseClaim", id, { to: settings.office.email, total: claim.total, payout: claim.payout });
+    await audit(tx, actor, "expense.send", "ExpenseClaim", id, { to: settings.office.email, ccMember: cc.length > 0, total: claim.total, payout: claim.payout });
   });
-  return { to: settings.office.email, total: claim.total };
+  return { to: settings.office.email, cc: cc[0] ?? null, total: claim.total };
 }
 
 export async function setClaimOutcome(actor: Actor, id: string, outcome: "ERLEDIGT" | "ABGELEHNT", note?: string) {

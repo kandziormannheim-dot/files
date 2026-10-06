@@ -66,9 +66,9 @@ export async function withdrawClaimAction(id: string, _prev: ActionState): Promi
 
 export async function approveAndSendAction(id: string, _prev: ActionState): Promise<ActionState> {
   return runAction(async () => {
-    const { to, total } = await approveAndSend(await requireUser(), id);
+    const { to, cc, total } = await approveAndSend(await requireUser(), id);
     refresh(id);
-    return `Freigegeben und an ${to} gesendet (${formatEuro(total)}).`;
+    return `Freigegeben und an ${to} gesendet${cc ? `, Kopie an ${cc}` : ""} (${formatEuro(total)}).`;
   });
 }
 

@@ -11,10 +11,10 @@ export default async function NewExpensePage() {
   const user = await requirePageCapability("expense.create");
   return (
     <>
-      <PageHeader title="Neue Auslagenerstattung" description="Im nächsten Schritt erfassen Sie die einzelnen Belege." />
+      <PageHeader title="Neue Auslagenerstattung" description="Name, Anschrift und E-Mail des Mitglieds eintragen – im nächsten Schritt folgen die Belege." />
       <Card className="max-w-2xl">
         <CardContent className="pt-6">
-          <ClaimForm action={createClaimAction} defaultHolder={user.name} isNew />
+          <ClaimForm action={createClaimAction} defaultHolder={user.name} defaultEmail={user.email} isNew />
         </CardContent>
       </Card>
     </>

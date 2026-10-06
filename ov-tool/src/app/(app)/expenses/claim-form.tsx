@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionState } from "@/lib/action-state";
 
-type Values = { title: string; occasion: string; payout: "SPENDE" | "UEBERWEISUNG" | "BAR"; accountHolder: string; ibanMasked: string; address: string; note: string };
+type Values = { memberName: string; memberEmail: string; title: string; occasion: string; payout: "SPENDE" | "UEBERWEISUNG" | "BAR"; accountHolder: string; ibanMasked: string; address: string; note: string };
 
 const OPTIONS: { value: Values["payout"]; label: string; hint: string }[] = [
   { value: "UEBERWEISUNG", label: "Überweisung", hint: "auf mein Konto" },
@@ -14,10 +14,37 @@ const OPTIONS: { value: Values["payout"]; label: string; hint: string }[] = [
   { value: "SPENDE", label: "Spendenbescheinigung", hint: "Verzicht auf Erstattung (Aufwandsspende)" },
 ];
 
-export function ClaimForm({ action, values, defaultHolder, isNew }: { action: (s: ActionState, f: FormData) => Promise<ActionState>; values?: Values; defaultHolder: string; isNew: boolean }) {
+export function ClaimForm({
+  action,
+  values,
+  defaultHolder,
+  defaultEmail = "",
+  isNew,
+}: {
+  action: (s: ActionState, f: FormData) => Promise<ActionState>;
+  values?: Values;
+  defaultHolder: string;
+  defaultEmail?: string;
+  isNew: boolean;
+}) {
   const [payout, setPayout] = useState<Values["payout"]>(values?.payout ?? "UEBERWEISUNG");
   return (
     <ActionForm action={action} className="flex flex-col gap-4">
+      <div className={isNew ? "grid gap-3 sm:grid-cols-2" : "flex flex-col gap-3"}>
+        <Field label="Name des Mitglieds" name="memberName">
+          <Input id="memberName" name="memberName" required defaultValue={values?.memberName ?? defaultHolder} />
+        </Field>
+        <Field label="E-Mail des Mitglieds" name="memberEmail" hint="erhält die Mail an die Kreisgeschäftsstelle in Kopie">
+          <Input id="memberEmail" name="memberEmail" type="email" defaultValue={values?.memberEmail ?? defaultEmail} />
+        </Field>
+      </div>
+      <Field
+        label={payout === "SPENDE" ? "Anschrift des Mitglieds (für die Spendenbescheinigung)" : "Anschrift des Mitglieds (optional)"}
+        name="address"
+        hint={payout === "SPENDE" ? "Straße, Hausnummer, PLZ, Ort. Voraussetzung ist ein Anspruch auf Erstattung, auf den freiwillig verzichtet wird – die Prüfung erfolgt durch die Kreisgeschäftsstelle." : "Straße, Hausnummer, PLZ, Ort – wird verschlüsselt gespeichert und 12 Monate nach Versand gelöscht."}
+      >
+        <Textarea id="address" name="address" rows={3} required={payout === "SPENDE"} defaultValue={values?.address} autoComplete="off" />
+      </Field>
       <Field label="Wofür?" name="title">
         <Input id="title" name="title" required defaultValue={values?.title} placeholder="z. B. Material Infostand Weihnachtsmarkt" />
       </Field>
@@ -41,17 +68,12 @@ export function ClaimForm({ action, values, defaultHolder, isNew }: { action: (s
       {payout === "UEBERWEISUNG" ? (
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Kontoinhaber/in" name="accountHolder">
-            <Input id="accountHolder" name="accountHolder" defaultValue={values?.accountHolder || defaultHolder} autoComplete="name" />
+            <Input id="accountHolder" name="accountHolder" defaultValue={values?.accountHolder || values?.memberName || defaultHolder} placeholder="wie Mitglied" autoComplete="name" />
           </Field>
           <Field label="IBAN" name="iban" hint={values?.ibanMasked ? `Gespeichert: ${values.ibanMasked} – leer lassen, um sie zu behalten` : "wird verschlüsselt gespeichert und nach 12 Monaten gelöscht"}>
             <Input id="iban" name="iban" inputMode="text" autoComplete="off" placeholder="DE.." required={!values?.ibanMasked} />
           </Field>
         </div>
-      ) : null}
-      {payout === "SPENDE" ? (
-        <Field label="Anschrift für die Spendenbescheinigung" name="address" hint="Straße, Hausnummer, PLZ, Ort. Voraussetzung ist ein Anspruch auf Erstattung, auf den freiwillig verzichtet wird – die Prüfung erfolgt durch die Kreisgeschäftsstelle.">
-          <Textarea id="address" name="address" rows={3} required defaultValue={values?.address} autoComplete="street-address" />
-        </Field>
       ) : null}
       <Field label="Bemerkung (optional)" name="note">
         <Textarea id="note" name="note" rows={2} defaultValue={values?.note} />

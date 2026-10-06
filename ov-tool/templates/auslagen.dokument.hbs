@@ -2,7 +2,8 @@
 <p class="untertitel">{{ov.nameLang}} · Nr. {{auslage.nummer}}</p>
 
 <table class="kopf">
-  <tr><th>Antragsteller/in</th><td>{{auslage.antragsteller}}</td></tr>
+  <tr><th>Mitglied</th><td>{{auslage.antragsteller}}</td></tr>
+  {{#if auslage.anschrift}}{{#unless auslage.spende}}<tr><th>Anschrift</th><td class="mehrzeilig">{{auslage.anschrift}}</td></tr>{{/unless}}{{/if}}
   <tr><th>Gegenstand</th><td>{{auslage.titel}}</td></tr>
   {{#if auslage.anlass}}<tr><th>Anlass</th><td>{{auslage.anlass}}</td></tr>{{/if}}
   <tr><th>Datum des Antrags</th><td>{{datum auslage.erstellt}}</td></tr>
@@ -42,7 +43,7 @@
 <div class="unterschriften">
   <div>
     <p>{{ov.ort}}, {{datum auslage.erstellt}}</p>
-    <p class="linie"><strong>{{auslage.antragsteller}}</strong><br>Antragsteller/in</p>
+    <p class="linie"><strong>{{auslage.antragsteller}}</strong><br>Mitglied</p>
   </div>
   <div>
     <p>{{ov.ort}}, {{#if auslage.freigabeAm}}{{auslage.freigabeAm}}{{else}}________________{{/if}}</p>
