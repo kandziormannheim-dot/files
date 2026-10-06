@@ -112,6 +112,8 @@ pressekontakt, abmeldeLink   (Versand an den Presseverteiler)
 | `absage-sitzung.mail.hbs` | `sitzung.absage` | Sitzung abgesagt |
 | `aufgaben-erinnerung.mail.hbs` | `aufgabe.erinnerung` | Frist naht / überschritten |
 | `helferaufruf.mail.hbs` | `aktion.helferaufruf` | Aktion veröffentlicht |
+| `prompt-marketing.md` | `prompt.marketing` | Systemprompt für Social-Media- und Blog-Entwürfe |
+| `prompt-bbr-social.md` | `prompt.bbr-social` | Systemprompt für die automatischen Beiträge aus BBR-Kurzfassungen (Ton je Kanal: BBR sachlich, OV politisch) |
 | `prompt-protokollentwurf.md` | `prompt.protokoll` | Systemprompt für den Claude-Entwurf aus Transkripten |
 | `aufgabe-zugewiesen.mail.hbs` | `aufgabe.zugewiesen` | Neue Aufgabe zugewiesen (an neu Verantwortliche) |
 | `antrag-einberufung.mail.hbs` | `antrag.einberufung` | an Admins, sobald fünf Mitglieder einen Antrag auf Einberufung tragen (LV § 31 Abs. 3) |

@@ -15,9 +15,9 @@ RUN npm install --prefix /opt/prisma-cli --no-save --no-audit --no-fund prisma@$
 
 FROM node:22-bookworm-slim AS run
 WORKDIR /app
-# Chromium für die PDF-Erzeugung (Einladungen, Protokolle), tini für sauberes Beenden
+# Chromium für PDF und Social-Kacheln, ffmpeg für Kurzvideos, tini für sauberes Beenden
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates chromium fonts-dejavu-core tini \
+  && apt-get install -y --no-install-recommends openssl ca-certificates chromium fonts-dejavu-core tini ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0 \
     CHROMIUM_PATH=/usr/bin/chromium FILE_STORAGE_PATH=/data/files

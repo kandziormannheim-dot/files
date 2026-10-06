@@ -126,6 +126,8 @@ ENCRYPTION_KEY=          # für Bürgerkontaktdaten
 WP_SF_URL= / WP_SF_USER= / WP_SF_APP_PASSWORD=     # Marketing: WordPress-REST cdu-sf.de
 WP_BBR_URL= / WP_BBR_USER= / WP_BBR_APP_PASSWORD=  # dito bbr.cdu-sf.de
 NEXTCLOUD_URL= / NEXTCLOUD_CLIENT_ID= / NEXTCLOUD_CLIENT_SECRET=  # gemeinsamer Login über cloud.cdu-sf.de (OAuth 2.0)
+NEXTCLOUD_DECK_USER= / NEXTCLOUD_DECK_APP_PASSWORD=  # BBR-Anliegen: Lesezugriff aufs Deck-Board „BBR Seckenheim“
+FFMPEG_PATH=             # Kurzvideos (leer = ffmpeg aus PATH)
 SEED_ADMIN_EMAIL=        # Seed: erster Admin
 SEED_ADMIN_NAME=
 SEED_ADMIN_FUNCTION=

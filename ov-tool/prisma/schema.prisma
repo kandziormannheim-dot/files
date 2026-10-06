@@ -926,10 +926,55 @@ model MarketingPost {
   approvedBy   User?           @relation("MarketingApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   createdById  String?
   createdBy    User?           @relation("MarketingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  /// Social-Kanal: OV (Ortsverband) oder BBR (CDU-Gruppe im Bezirksbeirat); leer = allgemein
+  account      String?
+  /// automatisch aus einem BBR-Anliegen (Kurzfassung) erzeugt
+  bbrConcernId String?
+  bbrConcern   BbrConcern?     @relation(fields: [bbrConcernId], references: [id], onDelete: SetNull)
+  /// Kurzfassungs-Stand, aus dem der Beitrag erzeugt wurde, und Zeitpunkt der Erzeugung (spätere Änderung = von Hand bearbeitet)
+  sourceKey    String?
+  generatedAt  DateTime?
+  /// Texte für weitere Kanäle: { instagram, x, tiktok }
+  variants     Json?
+  /// Inhalte für Kachel und Video: { headline, subline, scenes[], outro }
+  creative     Json?
+  imagePath    String?
+  videoPath    String?
+  /// Fehlermeldung der letzten Kachel-/Video-Erzeugung
+  mediaError   String?
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
   @@index([status, createdAt])
+  @@index([bbrConcernId])
+}
+
+/// Anliegen aus dem Tool „BBR-Anliegen“ (Nextcloud Deck). Gespeichert werden nur Überschrift, Bezirk und die
+/// zur Veröffentlichung bestimmte Kurzfassung – keine Hinweisgeber, keine Erläuterung.
+model BbrConcern {
+  id             String          @id @default(cuid())
+  /// Deck-Karten-ID; Test-Anliegen ohne Deck erhalten negative IDs
+  deckCardId     Int             @unique
+  boardId        Int             @default(0)
+  stack          String          @default("")
+  title          String
+  bezirk         String?
+  kurzfassung    String
+  /// Vergleichswert der Kurzfassung (bbr-card.ts kurzfassungKey)
+  sourceKey      String
+  cardUrl        String?
+  cardModifiedAt DateTime?
+  /// OFFEN = Beiträge werden erzeugt, FERTIG, FEHLER, GEAENDERT = Kurzfassung geändert, Beiträge bereits bearbeitet
+  genStatus      String          @default("OFFEN")
+  genError       String?
+  generatedAt    DateTime?
+  ignored        Boolean         @default(false)
+  test           Boolean         @default(false)
+  posts          MarketingPost[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([genStatus])
 }
 
 // ---------------------------------------------------------------------------

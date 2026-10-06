@@ -37,7 +37,7 @@ async function getBrowser(): Promise<Browser> {
   return browserPromise;
 }
 
-async function fontFaceCss(): Promise<string> {
+export async function fontFaceCss(): Promise<string> {
   const dir = path.join(/*turbopackIgnore: true*/ TEMPLATES_DIR, "assets", "fonts");
   const face = async (file: string, style: string, range: string) => {
     const data = (await readFile(path.join(/*turbopackIgnore: true*/ dir, file))).toString("base64");
@@ -92,6 +92,20 @@ export async function htmlToPdf(html: string): Promise<Buffer> {
     await page.setContent(html, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
     return await page.pdf({ format: "A4", printBackground: true, preferCSSPageSize: true });
+  } finally {
+    await page.close();
+  }
+}
+
+/** HTML → PNG in fester Pixelgröße (Social-Media-Kacheln, Videotafeln). Keine Netzwerkzugriffe. */
+export async function htmlToPng(html: string, width: number, height: number): Promise<Buffer> {
+  const browser = await getBrowser();
+  const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
+  try {
+    await page.route("**/*", (route) => (route.request().url().startsWith("data:") ? route.continue() : route.abort()));
+    await page.setContent(html, { waitUntil: "load" });
+    await page.evaluate(() => document.fonts.ready);
+    return await page.screenshot({ type: "png", clip: { x: 0, y: 0, width, height } });
   } finally {
     await page.close();
   }

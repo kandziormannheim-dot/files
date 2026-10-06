@@ -22,7 +22,11 @@ import {
   updatePostAction,
   wordpressAction,
 } from "../actions";
+import { bbrAccountName } from "@/lib/bbr-card";
+import { getSettings } from "@/server/services/settings";
 import { MARKETING_STATUS } from "../labels";
+import { updateCreativeAction } from "../bbr/actions";
+import { CopyText, MediaShare } from "./media-share";
 import { ShareTools } from "./share-tools";
 
 export const metadata: Metadata = { title: "Beitrag" };
@@ -39,6 +43,13 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const site = wordpressSites().find((s) => s.key === (post.site ?? "SF"));
   const socialText = [post.body.trim(), post.hashtags.trim()].filter(Boolean).join("\n\n");
   const st = MARKETING_STATUS[post.status];
+  const accountName = post.account === "BBR" ? bbrAccountName(post.bbrConcern?.bezirk) : `CDU ${(await getSettings()).ov.name}`;
+  const variants = (post.variants ?? {}) as { instagram?: string; x?: string; tiktok?: string };
+  const creative = post.creative as { headline: string; subline: string; scenes: string[]; outro: string } | null;
+  const hashtags = post.hashtags.trim();
+  const withTags = (t: string) => [t.trim(), hashtags].filter(Boolean).join("\n\n");
+  const mediaBase = `/api/marketing/${post.id}/media`;
+  const outdated = post.bbrConcern && post.sourceKey && post.bbrConcern.sourceKey !== post.sourceKey;
 
   return (
     <>
@@ -50,7 +61,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader
           title={post.title || "(ohne Titel)"}
-          description={`${post.kind === "BLOG" ? `Blogartikel für ${site?.label}` : "Social-Media-Beitrag"} · angelegt von ${post.createdBy?.name ?? "–"}${post.approvedBy ? ` · freigegeben von ${post.approvedBy.name}` : ""}`}
+          description={`${post.kind === "BLOG" ? `Blogartikel für ${site?.label}` : `Social-Media-Beitrag${post.account ? ` · ${accountName}` : ""}`} · ${post.bbrConcern ? "automatisch aus BBR-Anliegen" : `angelegt von ${post.createdBy?.name ?? "–"}`}${post.approvedBy ? ` · freigegeben von ${post.approvedBy.name}` : ""}`}
         />
         <Badge variant={st.variant}>{st.label}</Badge>
       </div>
@@ -130,13 +141,125 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                 </article>
               ) : (
                 <div className="mx-auto max-w-sm rounded-xl border bg-white p-4 text-sm shadow-sm">
-                  <p className="mb-2 font-semibold">CDU Seckenheim-Friedrichsfeld</p>
+                  <p className="mb-2 font-semibold">{accountName}</p>
+                  {post.imagePath ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- geschützte Datei, kein Bild-Optimierer
+                    <img src={`${mediaBase}/image`} alt="Bildkachel" className="mb-3 w-full rounded-md border" />
+                  ) : null}
                   <p className="whitespace-pre-wrap">{post.body || "–"}</p>
                   {post.hashtags ? <p className="mt-2 text-akzent-dunkel">{post.hashtags}</p> : null}
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {outdated ? (
+            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Die Kurzfassung des BBR-Anliegens wurde seitdem geändert. Unter{" "}
+              <Link href="/marketing/bbr" className="underline">
+                BBR-Anliegen
+              </Link>{" "}
+              lassen sich die Entwürfe neu erstellen.
+            </p>
+          ) : null}
+
+          {post.bbrConcern ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Grundlage: Kurzfassung</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm">
+                <p className="font-medium">{post.bbrConcern.title}</p>
+                <p className="mt-1 whitespace-pre-wrap text-neutral-700">{post.bbrConcern.kurzfassung}</p>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {creative || post.imagePath || post.videoPath ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Bildkachel &amp; Kurzvideo</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4 text-sm">
+                {post.mediaError ? <p className="text-red-700">{post.mediaError}</p> : null}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {post.imagePath ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="font-medium">Kachel 1080×1350 (Facebook, Instagram)</p>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- geschützte Datei */}
+                      <img src={`${mediaBase}/image`} alt="Bildkachel" className="w-full rounded-md border" />
+                      <MediaShare src={`${mediaBase}/image`} fileName="kachel.png" mime="image/png" text={withTags(post.body)} label="Kachel" />
+                    </div>
+                  ) : null}
+                  {post.videoPath ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="font-medium">Video 9:16 (Reels, TikTok, Shorts)</p>
+                      <video src={`${mediaBase}/video`} controls playsInline preload="metadata" className="w-full max-w-64 rounded-md border bg-black" />
+                      <MediaShare
+                        src={`${mediaBase}/video`}
+                        fileName="video.mp4"
+                        mime="video/mp4"
+                        text={withTags(variants.instagram || post.body)}
+                        label="Video"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+                {creative && editable ? (
+                  <details>
+                    <summary className="cursor-pointer font-medium">Schlagzeile und Videotafeln ändern</summary>
+                    <ActionForm action={updateCreativeAction.bind(null, post.id)} className="mt-3 flex flex-col gap-3">
+                      <Field label="Schlagzeile (max. 80 Zeichen)" name="headline">
+                        <Input id="headline" name="headline" defaultValue={creative.headline} maxLength={80} />
+                      </Field>
+                      <Field label="Unterzeile der Kachel" name="subline">
+                        <Input id="subline" name="subline" defaultValue={creative.subline} maxLength={120} />
+                      </Field>
+                      <Field label="Videotafeln (eine je Zeile, höchstens vier)" name="scenes">
+                        <Textarea id="scenes" name="scenes" defaultValue={creative.scenes.join("\n")} rows={4} />
+                      </Field>
+                      <Field label="Abschlusstafel" name="outro">
+                        <Input id="outro" name="outro" defaultValue={creative.outro} maxLength={70} />
+                      </Field>
+                      <SubmitButton className="self-start" variant="outline" pendingText="Wird erzeugt … (ca. 30 Sek.)">
+                        Kachel und Video neu erzeugen
+                      </SubmitButton>
+                    </ActionForm>
+                  </details>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {variants.instagram || variants.x || variants.tiktok ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Texte für weitere Kanäle</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4 text-sm">
+                {(
+                  [
+                    ["Instagram", variants.instagram ? withTags(variants.instagram) : ""],
+                    ["X", variants.x ?? ""],
+                    ["TikTok", variants.tiktok ? withTags(variants.tiktok) : ""],
+                  ] as const
+                )
+                  .filter(([, t]) => t)
+                  .map(([name, t]) => (
+                    <div key={name} className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">
+                          {name} <span className="font-normal text-neutral-500">· {t.length} Zeichen</span>
+                        </p>
+                        {post.status !== "ENTWURF" ? <CopyText text={t} /> : null}
+                      </div>
+                      <p className="whitespace-pre-wrap rounded-md bg-neutral-50 p-3">{t}</p>
+                    </div>
+                  ))}
+                <p className="text-xs text-neutral-600">Kopieren ist nach der Freigabe möglich.</p>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader>

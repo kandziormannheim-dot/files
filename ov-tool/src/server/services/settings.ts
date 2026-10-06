@@ -43,6 +43,11 @@ export const SETTING_DEFAULTS = {
   "public.imprintUrl": "https://www.cdu-sf.de/impressum/",
   "public.privacyUrl": "https://www.cdu-sf.de/datenschutz/",
   "press.contact": "",
+  /** BBR-Anliegen → Social Media: Deck-Board(s) (Titel oder ID, je Zeile), Logos der Kanäle, letzter Abruf */
+  "bbr.deckBoards": "BBR Seckenheim",
+  "bbr.lastSync": "",
+  "social.logoOv": "",
+  "social.logoBbr": "",
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;
@@ -64,6 +69,7 @@ export type AppSettings = {
   topicCategories: string[];
   briefbogenPath: string;
   publicSite: { imprintUrl: string; privacyUrl: string; pressContact: string };
+  social: { deckBoards: string; lastSync: string; logoOv: string; logoBbr: string };
 };
 
 const int = (v: string, fallback: number) => (Number.isFinite(Number(v)) ? Math.floor(Number(v)) : fallback);
@@ -104,6 +110,7 @@ export function toAppSettings(raw: Record<string, string>): AppSettings {
       .filter(Boolean),
     briefbogenPath: v("briefbogen.path"),
     publicSite: { imprintUrl: v("public.imprintUrl"), privacyUrl: v("public.privacyUrl"), pressContact: v("press.contact") },
+    social: { deckBoards: v("bbr.deckBoards"), lastSync: v("bbr.lastSync"), logoOv: v("social.logoOv"), logoBbr: v("social.logoBbr") },
   };
 }
 
@@ -155,6 +162,7 @@ const settingsSchema = z
     "public.imprintUrl": optionalText(300),
     "public.privacyUrl": optionalText(300),
     "press.contact": optionalText(1000),
+    "bbr.deckBoards": optionalText(500),
   })
   .partial();
 

@@ -17,7 +17,7 @@ import { blogToHtml, wordpressSite, wordpressSites, type WordpressSiteKey } from
 
 type Actor = Pick<User, "id" | "role">;
 
-export const CHANNELS = { facebook: "Facebook", instagram: "Instagram", whatsapp: "WhatsApp-Kanal", newsletter: "Newsletter" } as const;
+export const CHANNELS = { facebook: "Facebook", instagram: "Instagram", tiktok: "TikTok", x: "X", whatsapp: "WhatsApp-Kanal", newsletter: "Newsletter" } as const;
 export type Channel = keyof typeof CHANNELS;
 
 export function listPosts(actor: Actor) {
@@ -33,7 +33,11 @@ export async function getPost(actor: Actor, id: string) {
   assertCan(actor, "read");
   const post = await db.marketingPost.findUnique({
     where: { id },
-    include: { createdBy: { select: { name: true } }, approvedBy: { select: { name: true } } },
+    include: {
+      createdBy: { select: { name: true } },
+      approvedBy: { select: { name: true } },
+      bbrConcern: { select: { id: true, title: true, bezirk: true, kurzfassung: true, sourceKey: true } },
+    },
   });
   if (!post) throw new NotFoundError("Beitrag nicht gefunden.");
   return post;
@@ -163,6 +167,8 @@ export async function updatePost(actor: Actor, id: string, formData: FormData) {
     channels: before.kind === "SOCIAL" ? input["channels[]"] : [],
     site: before.kind === "BLOG" ? (input.site ?? before.site ?? "SF") : null,
     plannedFor: input.plannedFor ? parseDateTimeInput(input.plannedFor) : null,
+    // von Hand gespeichert → wird nicht mehr automatisch neu erzeugt (bbr-social.ts untouched)
+    generatedAt: null,
     // Jede inhaltliche Änderung nach der Freigabe hebt die Freigabe auf
     ...(before.status === "FREIGEGEBEN" && (input.title !== before.title || input.body !== before.body)
       ? { status: "ENTWURF" as const, approvedAt: null, approvedById: null }

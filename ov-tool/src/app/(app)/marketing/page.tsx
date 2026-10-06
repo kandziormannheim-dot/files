@@ -22,11 +22,16 @@ export default async function MarketingPage() {
           title="Marketing"
           description="Social-Media-Beiträge und Blogartikel: KI-Entwurf aus Stichpunkten, gemeinsam überarbeiten, freigeben, veröffentlichen."
         />
-        {can(user.role, "marketing.create") ? (
-          <Button asChild>
-            <Link href="/marketing/new">Neuer Beitrag</Link>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href="/marketing/bbr">BBR-Anliegen → Social Media</Link>
           </Button>
-        ) : null}
+          {can(user.role, "marketing.create") ? (
+            <Button asChild>
+              <Link href="/marketing/new">Neuer Beitrag</Link>
+            </Button>
+          ) : null}
+        </div>
       </div>
       {posts.length === 0 ? (
         <p className="text-sm text-neutral-600">Noch keine Beiträge.</p>
@@ -39,7 +44,7 @@ export default async function MarketingPage() {
                   <div className="min-w-0">
                     <p className="truncate font-medium">{p.title || "(ohne Titel)"}</p>
                     <p className="text-neutral-600">
-                      {p.kind === "BLOG" ? `Blog · ${p.site === "BBR" ? "bbr.cdu-sf.de" : "cdu-sf.de"}` : `Social · ${p.channels.map((c) => CHANNELS[c as Channel] ?? c).join(", ") || "–"}`}
+                      {p.kind === "BLOG" ? `Blog · ${p.site === "BBR" ? "bbr.cdu-sf.de" : "cdu-sf.de"}` : `Social${p.account ? ` · ${p.account === "BBR" ? "BBR-Kanal" : "OV-Kanal"}` : ""} · ${p.channels.map((c) => CHANNELS[c as Channel] ?? c).join(", ") || "–"}`}
                       {" · "}
                       {p.createdBy?.name ?? "–"}, {formatDate(p.updatedAt)}
                       {p.plannedFor ? ` · geplant ${formatDate(p.plannedFor)}` : ""}
