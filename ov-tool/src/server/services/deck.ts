@@ -68,7 +68,7 @@ export async function fetchDeckCards(boardFilter: string, fetchImpl: typeof fetc
       if (stack.deletedAt) continue;
       for (const c of stack.cards ?? []) {
         if (c.archived || c.deletedAt) continue;
-        const parsed = parseCardDescription(c.description ?? "", c.title, stack.title, board.title);
+        const parsed = parseCardDescription(c.description ?? "", board.title, stack.title, c.title);
         if (!parsed.kurzfassung) continue;
         cards.push({
           cardId: c.id,

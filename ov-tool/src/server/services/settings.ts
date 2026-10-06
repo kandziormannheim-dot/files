@@ -44,7 +44,7 @@ export const SETTING_DEFAULTS = {
   "public.privacyUrl": "https://www.cdu-sf.de/datenschutz/",
   "press.contact": "",
   /** BBR-Anliegen → Social Media: Deck-Board(s) (Titel oder ID, je Zeile), Logos der Kanäle, letzter Abruf */
-  "bbr.deckBoards": "BBR Seckenheim",
+  "bbr.deckBoards": "BBR Seckenheim\nBBR Friedrichsfeld",
   "bbr.lastSync": "",
   "social.logoOv": "",
   "social.logoBbr": "",

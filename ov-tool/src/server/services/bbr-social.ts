@@ -20,7 +20,7 @@ import { deckConfigured, fetchDeckCards, type DeckCard } from "./deck";
 import { getSettingsUncached } from "./settings";
 
 // BBR-Anliegen → Social Media und Blog (auf Knopfdruck, keine Automatik):
-// 1. „Anliegen abrufen“ liest die Karten des Deck-Boards „BBR Seckenheim“ (nur Überschrift, Bezirk, Kurzfassung).
+// 1. „Anliegen abrufen“ liest die Karten der Deck-Boards „BBR Seckenheim“ und „BBR Friedrichsfeld“ (nur Überschrift, Bezirk, Kurzfassung).
 // 2. „Beiträge erstellen“ erzeugt zu einem Anliegen die gewählten Entwürfe: BBR-Kanal (sachlich), OV-Kanal
 //    (politisch) – je Texte für Facebook, Instagram, X, TikTok mit Bildkachel und Kurzvideo im CDU-CI – und
 //    einen Blogartikel für cdu-sf.de oder bbr.cdu-sf.de.
