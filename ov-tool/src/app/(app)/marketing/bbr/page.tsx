@@ -18,7 +18,7 @@ import { GEN_STATUS, listConcerns, parseLastSync } from "@/server/services/bbr-s
 import { deckConfigured } from "@/server/services/deck";
 import { metaStatus } from "@/server/services/meta";
 import { getSettings } from "@/server/services/settings";
-import { MARKETING_STATUS } from "../labels";
+import { formatLabel, MARKETING_STATUS, sortFormats } from "../labels";
 import {
   createTestAction,
   deleteTestAction,
@@ -39,12 +39,6 @@ const STATUS_VARIANT: Record<string, "secondary" | "warning" | "success" | "dest
   FEHLER: "destructive",
 };
 
-/** Reihenfolge der Formate: Blog vor Social, Social BBR vor OV. */
-function sortFormats<T extends { kind: string; account: string | null }>(posts: T[]): T[] {
-  const rank = (p: T) => (p.kind === "BLOG" ? 0 : p.account === "BBR" ? 1 : 2);
-  return [...posts].sort((a, b) => rank(a) - rank(b));
-}
-
 export default async function BbrSocialPage() {
   const user = await requirePageCapability("read");
   const publisher = can(user.role, "marketing.publish");
@@ -61,7 +55,7 @@ export default async function BbrSocialPage() {
       </div>
       <PageHeader
         title="BBR-Anliegen → Social Media & Blog"
-        description="Aus der Kurzfassung eines BBR-Anliegens per Knopfdruck Entwürfe erstellen: BBR-Kanal (sachlich) und OV-Kanal (politisch) mit Texten für Facebook, Instagram, X und TikTok, Bildkachel und Kurzvideo im CDU-Design, dazu ein Blogartikel für cdu-sf.de oder bbr.cdu-sf.de. Veröffentlicht wird erst nach Freigabe."
+        description="Aus der Kurzfassung eines BBR-Anliegens per Knopfdruck Entwürfe erstellen – Blogartikel (für BBR oder CDU-Ortsverband) und Social-Beiträge für BBR (sachlich) und CDU-Ortsverband (politisch) mit Texten für Facebook und Instagram, Bildkachel und Kurzvideo im CDU-Design. Veröffentlicht wird erst nach Freigabe."
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -129,7 +123,7 @@ export default async function BbrSocialPage() {
                 return (
                   <div key={acc} className="flex flex-col gap-2">
                     <p className="font-medium">
-                      {acc === "BBR" ? "BBR-Kanal" : "OV-Kanal"}: {current ? "hochgeladenes Logo" : "Standardlogo"}
+                      {acc === "BBR" ? "BBR" : "CDU-Ortsverband"}: {current ? "hochgeladenes Logo" : "Standardlogo"}
                     </p>
                     {current ? null : (
                       // eslint-disable-next-line @next/next/no-img-element -- statische Datei
@@ -188,7 +182,7 @@ export default async function BbrSocialPage() {
                     {sortFormats(c.posts).map((p) => (
                       <Link key={p.id} href={`/marketing/${p.id}`} className="flex items-center gap-2 rounded-md border px-3 py-1.5 hover:border-akzent">
                         <span className="font-medium">
-                          {p.kind === "BLOG" ? `Blog ${p.site === "SF" ? "cdu-sf.de" : "bbr.cdu-sf.de"}` : p.account === "OV" ? "OV-Kanal" : "BBR-Kanal"}
+                          {formatLabel(p)}
                         </span>
                         <Badge variant={MARKETING_STATUS[p.status].variant}>{MARKETING_STATUS[p.status].label}</Badge>
                         {p.mediaError ? <span className="text-xs text-red-700">Medien unvollständig</span> : null}
@@ -203,18 +197,18 @@ export default async function BbrSocialPage() {
                       <div className="flex flex-wrap gap-x-5 gap-y-2">
                         <span className="flex flex-wrap items-center gap-2">
                           <label className="flex items-center gap-2">
-                            <input type="checkbox" name="blog" defaultChecked /> Blogartikel im Ton für
+                            <input type="checkbox" name="blog" defaultChecked /> Blog für
                           </label>
-                          <NativeSelect name="blogSite" defaultValue="BBR" aria-label="Ton des Blogartikels (Webseite)" className="w-auto">
-                            <option value="BBR">bbr.cdu-sf.de</option>
-                            <option value="SF">cdu-sf.de</option>
+                          <NativeSelect name="blogSite" defaultValue="BBR" aria-label="Für wen der Blogartikel gedacht ist" className="w-auto">
+                            <option value="BBR">BBR (bbr.cdu-sf.de, sachlich)</option>
+                            <option value="SF">CDU-Ortsverband (cdu-sf.de, politisch)</option>
                           </NativeSelect>
                         </span>
                         <label className="flex items-center gap-2">
-                          <input type="checkbox" name="bbr" defaultChecked /> Social: BBR-Kanal (sachlich)
+                          <input type="checkbox" name="bbr" defaultChecked /> Social · BBR (sachlich)
                         </label>
                         <label className="flex items-center gap-2">
-                          <input type="checkbox" name="ov" defaultChecked /> Social: OV-Kanal (politisch)
+                          <input type="checkbox" name="ov" defaultChecked /> Social · CDU-Ortsverband (politisch)
                         </label>
                       </div>
                       {c.posts.some((p) => p.status === "ENTWURF") ? (

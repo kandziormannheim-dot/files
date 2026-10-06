@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/dates";
 import { can } from "@/server/auth/permissions";
 import { requireUser } from "@/server/auth/session";
 import { CHANNELS, listPosts, type Channel } from "@/server/services/marketing";
-import { MARKETING_STATUS } from "./labels";
+import { formatRank, MARKETING_STATUS } from "./labels";
 
 export const metadata: Metadata = { title: "Marketing" };
 
@@ -40,15 +40,13 @@ export default async function MarketingPage() {
       ) : (
         <div className="flex flex-col gap-6">
           {[
-            {
-              title: "Blogartikel",
-              items: posts.filter((p) => p.kind === "BLOG"),
-            },
-            {
-              title: "Social Media",
-              items: posts.filter((p) => p.kind === "SOCIAL"),
-            },
+            { title: "Blog · BBR", rank: 0 },
+            { title: "Blog · CDU-Ortsverband", rank: 1 },
+            { title: "Social · BBR", rank: 3 },
+            { title: "Social · CDU-Ortsverband", rank: 4 },
+            { title: "Social · allgemein", rank: 5 },
           ]
+            .map((g) => ({ ...g, items: posts.filter((p) => formatRank(p) === g.rank) }))
             .filter((g) => g.items.length)
             .map((group) => (
               <section key={group.title}>
@@ -73,8 +71,10 @@ export default async function MarketingPage() {
                             </p>
                             <p className="text-neutral-600">
                               {p.kind === "BLOG"
-                                ? `Blog · ${p.site === "BBR" ? "bbr.cdu-sf.de" : "cdu-sf.de"}`
-                                : `Social${p.account ? ` · ${p.account === "BBR" ? "BBR-Kanal" : "OV-Kanal"}` : ""} · ${p.channels.map((c) => CHANNELS[c as Channel] ?? c).join(", ") || "–"}`}
+                                ? p.site === "BBR"
+                                  ? "bbr.cdu-sf.de"
+                                  : "cdu-sf.de"
+                                : p.channels.map((c) => CHANNELS[c as Channel] ?? c).join(", ") || "–"}
                               {" · "}
                               {p.createdBy?.name ?? "–"},{" "}
                               {formatDate(p.updatedAt)}
