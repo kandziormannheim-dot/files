@@ -62,7 +62,21 @@ describe.skipIf(!hasTestDb)("Facebook/Instagram veröffentlichen (DB)", () => {
     const vorstand = await makeUser({ role: "VORSTAND" });
     const post = await socialPost(admin.id);
     await db.marketingPost.create({
-      data: { kind: "BLOG", site: "SF", bbrConcernId: post.bbrConcernId, title: "Blog", body: "x", status: "VEROEFFENTLICHT", wpStatus: "publish", wpLink: "https://cdu-sf.de/blog-1", publishedAt: new Date() },
+      data: {
+        kind: "BLOG",
+        site: "SF",
+        bbrConcernId: post.bbrConcernId,
+        title: "Blog",
+        body: "x",
+        status: "VEROEFFENTLICHT",
+        publishedAt: new Date(),
+        wordpress: {
+          create: [
+            { site: "BBR", wpPostId: 2, wpLink: "https://bbr.cdu-sf.de/blog-1", wpStatus: "publish" },
+            { site: "SF", wpPostId: 1, wpLink: "https://cdu-sf.de/blog-1", wpStatus: "publish" },
+          ],
+        },
+      },
     });
 
     const fb = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {

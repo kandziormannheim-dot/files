@@ -44,7 +44,8 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   });
   const editable = canEditPost(user, post);
   const publisher = can(user.role, "marketing.publish");
-  const site = wordpressSites().find((s) => s.key === (post.site ?? "SF"));
+  const wpSites = wordpressSites();
+  const site = wpSites.find((s) => s.key === (post.site ?? "SF"));
   const socialText = [post.body.trim(), post.hashtags.trim()].filter(Boolean).join("\n\n");
   const st = MARKETING_STATUS[post.status];
   const accountName = post.account === "BBR" ? bbrAccountName(post.bbrConcern?.bezirk) : `CDU ${(await getSettings()).ov.name}`;
@@ -54,7 +55,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const withTags = (t: string) => [t.trim(), hashtags].filter(Boolean).join("\n\n");
   const mediaBase = `/api/marketing/${post.id}/media`;
   const meta = post.kind === "SOCIAL" && (post.account === "OV" || post.account === "BBR") ? metaConfig(post.account as MetaAccount) : null;
-  const blogLink = meta ? await publishedBlogLink(post.bbrConcernId) : null;
+  const blogLink = meta ? await publishedBlogLink(post.bbrConcernId, post.account as MetaAccount) : null;
   const published = (network: string, format: string) => post.publications.some((p) => p.network === network && p.format === format);
   const outdated = post.bbrConcern && post.sourceKey && post.bbrConcern.sourceKey !== post.sourceKey;
 
@@ -106,7 +107,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                     </fieldset>
                   </>
                 ) : (
-                  <Field label="Webseite" name="site">
+                  <Field label="Standard-Webseite (Vorauswahl beim Senden)" name="site">
                     <NativeSelect id="site" name="site" defaultValue={post.site ?? "SF"}>
                       <option value="SF">cdu-sf.de</option>
                       <option value="BBR">bbr.cdu-sf.de</option>
@@ -368,36 +369,61 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
                 </>
               ) : null}
 
-              {post.kind === "BLOG" && post.status !== "ENTWURF" ? (
-                site?.configured ? (
-                  post.status === "FREIGEGEBEN" && publisher ? (
-                    <div className="flex flex-wrap gap-2">
-                      <ActionForm action={wordpressAction.bind(null, post.id, "draft")}>
-                        <SubmitButton variant="outline" pendingText="Wird übertragen …">
-                          {post.wpPostId ? "WordPress-Entwurf aktualisieren" : "Als Entwurf an WordPress"}
-                        </SubmitButton>
-                      </ActionForm>
-                      <ActionForm action={wordpressAction.bind(null, post.id, "publish")}>
-                        <SubmitButton pendingText="Wird veröffentlicht …">Direkt veröffentlichen</SubmitButton>
-                      </ActionForm>
-                    </div>
-                  ) : null
+              {post.kind === "BLOG" && post.status !== "ENTWURF" && publisher ? (
+                wpSites.some((s) => s.configured) ? (
+                  <ActionForm action={wordpressAction.bind(null, post.id)} className="flex flex-col gap-3 rounded-md border p-3">
+                    <p className="font-medium">An WordPress senden</p>
+                    <fieldset className="flex flex-wrap gap-x-5 gap-y-2">
+                      <legend className="sr-only">Webseiten</legend>
+                      {wpSites.map((s) => {
+                        const pub = post.wordpress.find((w) => w.site === s.key);
+                        return (
+                          <label key={s.key} className={`flex items-center gap-2 ${s.configured ? "" : "text-neutral-400"}`}>
+                            <input type="checkbox" name="sites" value={s.key} disabled={!s.configured} defaultChecked={s.configured && (pub ? true : s.key === (post.site ?? "SF"))} />
+                            {s.label}
+                            {pub ? <span className="text-xs text-neutral-500">({pub.wpStatus === "publish" ? "veröffentlicht" : "Entwurf"})</span> : null}
+                            {!s.configured ? <span className="text-xs">(kein Zugang)</span> : null}
+                          </label>
+                        );
+                      })}
+                    </fieldset>
+                    <fieldset className="flex flex-wrap gap-x-5 gap-y-2">
+                      <legend className="sr-only">Art</legend>
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="mode" value="draft" defaultChecked /> als Entwurf (in WordPress prüfen)
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="mode" value="publish" /> direkt veröffentlichen
+                      </label>
+                    </fieldset>
+                    <SubmitButton className="self-start" pendingText="Wird übertragen …">
+                      {post.wordpress.length ? "Erneut senden / aktualisieren" : "An WordPress senden"}
+                    </SubmitButton>
+                    <p className="text-xs text-neutral-600">
+                      Ein Häkchen bei beiden Seiten veröffentlicht denselben Artikel auf cdu-sf.de und bbr.cdu-sf.de. Erneutes Senden aktualisiert
+                      den bestehenden WordPress-Beitrag statt einen neuen anzulegen; das Beitragsbild wird je Seite einmal hochgeladen.
+                    </p>
+                  </ActionForm>
                 ) : (
-                  <p className="text-neutral-600">
-                    Für {site?.label} sind noch keine WordPress-Zugangsdaten hinterlegt. Bis dahin: Text kopieren und in WordPress einfügen.
-                  </p>
+                  <p className="text-neutral-600">Für die Webseiten sind noch keine WordPress-Zugangsdaten hinterlegt. Bis dahin: Text kopieren und in WordPress einfügen.</p>
                 )
               ) : null}
 
-              {post.kind === "BLOG" && post.status !== "ENTWURF" ? <ShareTools text={post.title} url={post.wpLink} /> : null}
+              {post.kind === "BLOG" && post.wordpress.length ? (
+                <ul className="flex flex-col gap-1">
+                  {post.wordpress.map((w) => (
+                    <li key={w.id}>
+                      {w.site === "SF" ? "cdu-sf.de" : "bbr.cdu-sf.de"} ({w.wpStatus === "publish" ? "veröffentlicht" : "Entwurf"}):{" "}
+                      <a href={w.wpLink} target="_blank" rel="noopener noreferrer" className="break-all underline">
+                        {w.wpLink}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
 
-              {post.wpLink ? (
-                <p>
-                  WordPress ({post.wpStatus === "publish" ? "veröffentlicht" : "Entwurf"}):{" "}
-                  <a href={post.wpLink} target="_blank" rel="noopener noreferrer" className="underline">
-                    {post.wpLink}
-                  </a>
-                </p>
+              {post.kind === "BLOG" && post.status !== "ENTWURF" ? (
+                <ShareTools text={post.title} url={post.wordpress.find((w) => w.wpStatus === "publish")?.wpLink ?? null} />
               ) : null}
 
               {post.status === "FREIGEGEBEN" && publisher ? (

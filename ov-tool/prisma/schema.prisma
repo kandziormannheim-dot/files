@@ -918,11 +918,6 @@ model MarketingPost {
   /// Blog: Zielseite (SF = cdu-sf.de, BBR = bbr.cdu-sf.de)
   site         String?
   plannedFor   DateTime?
-  wpPostId     Int?
-  wpLink       String?
-  wpStatus     String?
-  /// Beitragsbild in WordPress (Mediathek-ID der hochgeladenen Kachel)
-  wpMediaId    Int?
   publishedAt  DateTime?
   approvedAt   DateTime?
   approvedById String?
@@ -949,9 +944,30 @@ model MarketingPost {
   updatedAt    DateTime        @updatedAt
 
   publications SocialPublication[]
+  /// Blog: Übertragungen je Webseite (cdu-sf.de, bbr.cdu-sf.de)
+  wordpress    WordpressPublication[]
 
   @@index([status, createdAt])
   @@index([bbrConcernId])
+}
+
+/// Blogartikel in WordPress je Webseite (ein Artikel kann auf cdu-sf.de und bbr.cdu-sf.de stehen)
+model WordpressPublication {
+  id        String        @id @default(cuid())
+  postId    String
+  post      MarketingPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  /// SF = cdu-sf.de, BBR = bbr.cdu-sf.de
+  site      String
+  wpPostId  Int
+  wpLink    String
+  /// draft | publish | …
+  wpStatus  String
+  /// Beitragsbild in der Mediathek dieser Seite
+  wpMediaId Int?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([postId, site])
 }
 
 /// Direkt veröffentlichte Beiträge (Facebook-Seite, Instagram) – Nachweis mit Link

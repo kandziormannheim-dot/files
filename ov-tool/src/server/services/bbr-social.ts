@@ -278,7 +278,6 @@ export async function generateForConcern(
           imagePath: media.imagePath,
           videoPath: null,
           mediaError: media.mediaError,
-          ...(existing && replaceable(existing) ? {} : { wpPostId: null, wpLink: null, wpStatus: null, wpMediaId: null }),
         },
         actor,
         { blog: targets.blog, aiUsed },
@@ -368,7 +367,7 @@ export function listConcerns(actor: Actor) {
     orderBy: [{ ignored: "asc" }, { createdAt: "desc" }],
     include: {
       posts: {
-        select: { id: true, kind: true, account: true, site: true, status: true, wpLink: true, mediaError: true, sourceKey: true },
+        select: { id: true, kind: true, account: true, site: true, status: true, mediaError: true, sourceKey: true },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -500,10 +499,11 @@ export async function updateCreative(actor: Actor, postId: string, formData: For
         creative: creative as unknown as Prisma.InputJsonValue,
         ...media,
         generatedAt: null,
-        wpMediaId: null,
         ...(post.status === "FREIGEGEBEN" ? { status: "ENTWURF" as const, approvedAt: null, approvedById: null } : {}),
       },
     });
+    // neues Beitragsbild → beim nächsten Senden je Seite neu hochladen
+    await tx.wordpressPublication.updateMany({ where: { postId }, data: { wpMediaId: null } });
     await audit(tx, actor, "marketing.media", "MarketingPost", postId, { headline: creative.headline });
   });
   await deleteStoredFile(post.imagePath);

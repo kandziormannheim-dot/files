@@ -101,25 +101,53 @@ describe.skipIf(!hasTestDb)("BBR-Anliegen → Social Media (DB)", () => {
     const ovPosts = await db.marketingPost.findMany({ where: { bbrConcernId: concern.id, account: "OV" }, orderBy: { createdAt: "asc" } });
     expect(ovPosts.map((p) => p.status)).toEqual(["FREIGEGEBEN", "ENTWURF"]);
 
-    // Blog an WordPress: Kachel als Beitragsbild
-    process.env.WP_SF_URL = "https://wp.example.org";
-    process.env.WP_SF_USER = "redaktion";
-    process.env.WP_SF_APP_PASSWORD = "nur-test";
+    // Blog an WordPress: wahlweise cdu-sf.de, bbr.cdu-sf.de oder beide; Kachel als Beitragsbild je Seite
+    for (const [k, v] of Object.entries({
+      WP_SF_URL: "https://sf.example.org",
+      WP_SF_USER: "redaktion",
+      WP_SF_APP_PASSWORD: "nur-test",
+      WP_BBR_URL: "https://bbr.example.org",
+      WP_BBR_USER: "redaktion",
+      WP_BBR_APP_PASSWORD: "nur-test",
+    }))
+      vi.stubEnv(k, v);
     try {
       await approvePost(admin, blog.id);
-      const wp = vi.fn(async (url: string | URL | Request) =>
-        String(url).endsWith("/media") ? Response.json({ id: 55 }) : Response.json({ id: 9, link: "https://wp.example.org/?p=9", status: "draft" }),
-      );
-      await sendToWordpress(admin, blog.id, "draft", wp as unknown as typeof fetch);
+      let n = 0;
+      const wp = vi.fn(async (url: string | URL | Request) => {
+        const u = String(url);
+        if (u.endsWith("/media")) return Response.json({ id: u.includes("bbr.") ? 66 : 55 });
+        n++;
+        const host = u.includes("bbr.") ? "bbr" : "sf";
+        const id = u.match(/posts\/(\d+)/)?.[1] ?? String(100 + n);
+        return Response.json({ id: Number(id), link: `https://${host}.example.org/?p=${id}`, status: u.includes("bbr.") ? "publish" : "draft" });
+      });
+      const res = await sendToWordpress(admin, blog.id, ["SF"], "draft", wp as unknown as typeof fetch);
+      expect(res).toMatchObject([{ site: "SF", ok: true, status: "draft" }]);
       const [, postInit] = wp.mock.calls[1] as unknown as [string, RequestInit];
       expect(JSON.parse(String(postInit.body))).toMatchObject({ featured_media: 55, status: "draft" });
-      expect((await db.marketingPost.findUniqueOrThrow({ where: { id: blog.id } })).wpMediaId).toBe(55);
-      await sendToWordpress(admin, blog.id, "draft", wp as unknown as typeof fetch);
-      expect(wp.mock.calls.filter(([u]) => String(u).endsWith("/media"))).toHaveLength(1); // Bild nur einmal hochladen
+
+      // beide Seiten: SF wird aktualisiert (gleiche WP-ID, Bild nicht erneut), BBR neu angelegt
+      const both = await sendToWordpress(admin, blog.id, ["SF", "BBR"], "publish", wp as unknown as typeof fetch);
+      expect(both.map((r) => r.site)).toEqual(["SF", "BBR"]);
+      const pubs = await db.wordpressPublication.findMany({ where: { postId: blog.id }, orderBy: { site: "asc" } });
+      expect(pubs.map((p) => [p.site, p.wpMediaId])).toEqual([
+        ["BBR", 66],
+        ["SF", 55],
+      ]);
+      expect(wp.mock.calls.filter(([u]) => String(u).endsWith("/media"))).toHaveLength(2); // je Seite einmal
+      expect(String(wp.mock.calls[2]![0])).toMatch(/sf\.example\.org\/wp-json\/wp\/v2\/posts\/101$/);
+      expect((await db.marketingPost.findUniqueOrThrow({ where: { id: blog.id } })).status).toBe("VEROEFFENTLICHT");
+      await expect(sendToWordpress(admin, blog.id, [], "draft", wp as unknown as typeof fetch)).rejects.toThrow(/mindestens/);
+
+      // eine Seite scheitert → die andere läuft trotzdem, Fehler wird gemeldet
+      const half = vi.fn(async (url: string | URL | Request) =>
+        String(url).includes("bbr.") ? new Response("kaputt", { status: 500 }) : Response.json({ id: 101, link: "https://sf.example.org/?p=101", status: "publish" }),
+      );
+      const mixed = await sendToWordpress(admin, blog.id, ["SF", "BBR"], "publish", half as unknown as typeof fetch);
+      expect(mixed).toMatchObject([{ site: "SF", ok: true }, { site: "BBR", ok: false }]);
     } finally {
-      delete process.env.WP_SF_URL;
-      delete process.env.WP_SF_USER;
-      delete process.env.WP_SF_APP_PASSWORD;
+      vi.unstubAllEnvs();
     }
   }, 60_000);
 

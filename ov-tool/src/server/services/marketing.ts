@@ -14,7 +14,7 @@ import { ovContext } from "@/server/ov";
 import { renderText } from "@/server/templates/engine";
 import { getTemplateSource } from "@/server/templates/store";
 import { aiConfigured, draftModel } from "./ai-draft";
-import { blogToHtml, wordpressSite, wordpressSites, type WordpressSiteKey } from "./wordpress";
+import { blogToHtml, SITE_LABELS, wordpressSite, wordpressSites, type WordpressSiteKey } from "./wordpress";
 
 type Actor = Pick<User, "id" | "role">;
 
@@ -39,6 +39,7 @@ export async function getPost(actor: Actor, id: string) {
       approvedBy: { select: { name: true } },
       bbrConcern: { select: { id: true, title: true, bezirk: true, kurzfassung: true, sourceKey: true } },
       publications: { orderBy: { createdAt: "asc" }, include: { createdBy: { select: { name: true } } } },
+      wordpress: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!post) throw new NotFoundError("Beitrag nicht gefunden.");
@@ -216,17 +217,22 @@ export async function markPublished(actor: Actor, id: string) {
   });
 }
 
-/** Blogartikel über die WordPress-REST-API übertragen – als Entwurf oder direkt veröffentlicht. */
-export async function sendToWordpress(actor: Actor, id: string, mode: "draft" | "publish", fetchImpl: typeof fetch = fetch) {
-  assertCan(actor, "marketing.publish");
-  const post = await getPost(actor, id);
-  if (post.kind !== "BLOG") throw new UserError("Nur Blogartikel können an WordPress gesendet werden.");
-  if (post.status !== "FREIGEGEBEN") throw new UserError("Bitte den Artikel zuerst freigeben.");
-  const site = wordpressSite((post.site ?? "SF") as WordpressSiteKey);
-  if (!site) throw new UserError("Für diese Webseite sind keine WordPress-Zugangsdaten hinterlegt (Umgebungsvariablen WP_…).");
+export type WordpressResult = { site: WordpressSiteKey; ok: true; status: string; link: string } | { site: WordpressSiteKey; ok: false; error: string };
+
+/** Blogartikel an eine Webseite übertragen (neu oder Aktualisierung desselben WordPress-Beitrags). */
+async function sendToSite(
+  actor: Actor,
+  post: { id: string; title: string; body: string; imagePath: string | null },
+  siteKey: WordpressSiteKey,
+  mode: "draft" | "publish",
+  fetchImpl: typeof fetch,
+): Promise<WordpressResult> {
+  const site = wordpressSite(siteKey);
+  if (!site) return { site: siteKey, ok: false, error: "keine WordPress-Zugangsdaten hinterlegt" };
   const authorization = `Basic ${Buffer.from(`${site.user}:${site.appPassword}`).toString("base64")}`;
-  // Beitragsbild: Kachel einmalig in die Mediathek laden (bei erneutem Senden wiederverwenden)
-  let mediaId = post.wpMediaId;
+  const existing = await db.wordpressPublication.findUnique({ where: { postId_site: { postId: post.id, site: siteKey } } });
+  // Beitragsbild: Kachel einmal je Seite in die Mediathek laden (bei erneutem Senden wiederverwenden)
+  let mediaId = existing?.wpMediaId ?? null;
   if (!mediaId && post.imagePath && (await storedFileExists(post.imagePath))) {
     const img = await readStoredFile(post.imagePath);
     const slug = post.title.toLowerCase().replace(/[^a-z0-9äöüß]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "beitrag";
@@ -235,10 +241,10 @@ export async function sendToWordpress(actor: Actor, id: string, mode: "draft" | 
       headers: { Authorization: authorization, "Content-Type": "image/png", "Content-Disposition": `attachment; filename="${slug}.png"` },
       body: new Uint8Array(img),
     });
-    if (!up.ok) throw new UserError(`WordPress hat das Beitragsbild abgelehnt (HTTP ${up.status}).`);
+    if (!up.ok) return { site: siteKey, ok: false, error: `Beitragsbild abgelehnt (HTTP ${up.status})` };
     mediaId = ((await up.json()) as { id: number }).id;
   }
-  const endpoint = post.wpPostId ? `${site.url}/wp-json/wp/v2/posts/${post.wpPostId}` : `${site.url}/wp-json/wp/v2/posts`;
+  const endpoint = existing ? `${site.url}/wp-json/wp/v2/posts/${existing.wpPostId}` : `${site.url}/wp-json/wp/v2/posts`;
   const res = await fetchImpl(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: authorization },
@@ -246,23 +252,47 @@ export async function sendToWordpress(actor: Actor, id: string, mode: "draft" | 
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
-    throw new UserError(`WordPress hat die Übertragung abgelehnt (HTTP ${res.status}). ${detail.slice(0, 200)}`);
+    return { site: siteKey, ok: false, error: `HTTP ${res.status} ${detail.slice(0, 150)}`.trim() };
   }
   const wp = (await res.json()) as { id: number; link: string; status: string };
   await db.$transaction(async (tx) => {
-    await tx.marketingPost.update({
-      where: { id },
-      data: {
-        wpPostId: wp.id,
-        wpLink: wp.link,
-        wpStatus: wp.status,
-        wpMediaId: mediaId,
-        ...(wp.status === "publish" ? { status: "VEROEFFENTLICHT" as const, publishedAt: new Date() } : {}),
-      },
+    const data = { wpPostId: wp.id, wpLink: wp.link, wpStatus: wp.status, wpMediaId: mediaId };
+    await tx.wordpressPublication.upsert({
+      where: { postId_site: { postId: post.id, site: siteKey } },
+      create: { postId: post.id, site: siteKey, ...data },
+      update: data,
     });
-    await audit(tx, actor, "marketing.wordpress", "MarketingPost", id, { site: site.key, wpId: wp.id, status: wp.status, mediaId });
+    await audit(tx, actor, "marketing.wordpress", "MarketingPost", post.id, { site: siteKey, wpId: wp.id, status: wp.status, mediaId });
   });
-  return wp;
+  return { site: siteKey, ok: true, status: wp.status, link: wp.link };
+}
+
+/**
+ * Blogartikel über die WordPress-REST-API auf eine oder beide Webseiten übertragen – als Entwurf oder direkt
+ * veröffentlicht. Ein Fehler auf einer Seite hält die andere nicht auf.
+ */
+export async function sendToWordpress(
+  actor: Actor,
+  id: string,
+  sites: WordpressSiteKey[],
+  mode: "draft" | "publish",
+  fetchImpl: typeof fetch = fetch,
+): Promise<WordpressResult[]> {
+  assertCan(actor, "marketing.publish");
+  const post = await getPost(actor, id);
+  if (post.kind !== "BLOG") throw new UserError("Nur Blogartikel können an WordPress gesendet werden.");
+  if (post.status === "ENTWURF") throw new UserError("Bitte den Artikel zuerst freigeben.");
+  const unique = [...new Set(sites)].filter((k): k is WordpressSiteKey => k === "SF" || k === "BBR");
+  if (unique.length === 0) throw new UserError("Bitte mindestens eine Webseite auswählen.");
+  const results: WordpressResult[] = [];
+  for (const site of unique) results.push(await sendToSite(actor, post, site, mode, fetchImpl));
+  if (results.some((r) => r.ok && r.status === "publish") && post.status !== "VEROEFFENTLICHT") {
+    await db.marketingPost.update({ where: { id }, data: { status: "VEROEFFENTLICHT", publishedAt: new Date() } });
+  }
+  if (results.every((r) => !r.ok)) {
+    throw new UserError(`WordPress hat die Übertragung abgelehnt: ${results.map((r) => `${SITE_LABELS[r.site]} – ${r.ok ? "" : r.error}`).join("; ")}`);
+  }
+  return results;
 }
 
 export async function deletePost(actor: Actor, id: string) {

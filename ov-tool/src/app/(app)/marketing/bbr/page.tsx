@@ -202,9 +202,9 @@ export default async function BbrSocialPage() {
                           <input type="checkbox" name="ov" defaultChecked /> OV-Kanal (politisch)
                         </label>
                         <label className="flex items-center gap-2">
-                          <input type="checkbox" name="blog" defaultChecked /> Blogartikel für
+                          <input type="checkbox" name="blog" defaultChecked /> Blogartikel im Ton für
                         </label>
-                        <NativeSelect name="blogSite" defaultValue="BBR" aria-label="Webseite für den Blogartikel" className="w-auto">
+                        <NativeSelect name="blogSite" defaultValue="BBR" aria-label="Ton des Blogartikels (Webseite)" className="w-auto">
                           <option value="BBR">bbr.cdu-sf.de</option>
                           <option value="SF">cdu-sf.de</option>
                         </NativeSelect>

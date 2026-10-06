@@ -65,11 +65,16 @@ export async function markPublishedAction(id: string, _prev: ActionState): Promi
   });
 }
 
-export async function wordpressAction(id: string, mode: "draft" | "publish", _prev: ActionState): Promise<ActionState> {
+export async function wordpressAction(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   return runAction(async () => {
-    const wp = await sendToWordpress(await requireUser(), id, mode);
+    const sites = formData.getAll("sites").map(String) as ("SF" | "BBR")[];
+    const mode = formData.get("mode") === "publish" ? "publish" : "draft";
+    const results = await sendToWordpress(await requireUser(), id, sites, mode);
     refresh(id);
-    return wp.status === "publish" ? "Auf der Webseite veröffentlicht." : "Als Entwurf in WordPress gespeichert.";
+    const label = (s: string) => (s === "SF" ? "cdu-sf.de" : "bbr.cdu-sf.de");
+    return results
+      .map((r) => (r.ok ? `${label(r.site)}: ${r.status === "publish" ? "veröffentlicht" : "als Entwurf gespeichert"}` : `${label(r.site)}: fehlgeschlagen (${r.error})`))
+      .join(" · ");
   });
 }
 

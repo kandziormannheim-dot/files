@@ -174,12 +174,9 @@ export async function publishToMeta(
   // Text: Facebook-Text bzw. Instagram-Variante, Hashtags darunter; optional Link zum veröffentlichten Blogartikel
   const variants = (post.variants ?? {}) as { instagram?: string };
   let text = network === "instagram" ? variants.instagram?.trim() || post.body.trim() : post.body.trim();
-  if (opts.withBlogLink && network === "facebook" && post.bbrConcernId) {
-    const blog = await db.marketingPost.findFirst({
-      where: { bbrConcernId: post.bbrConcernId, kind: "BLOG", wpStatus: "publish", wpLink: { not: null } },
-      orderBy: { publishedAt: "desc" },
-    });
-    if (blog?.wpLink) text += `\n\nMehr dazu: ${blog.wpLink}`;
+  if (opts.withBlogLink && network === "facebook") {
+    const link = await publishedBlogLink(post.bbrConcernId, account);
+    if (link) text += `\n\nMehr dazu: ${link}`;
   }
   if (post.hashtags.trim()) text += `\n\n${post.hashtags.trim()}`;
 
@@ -198,13 +195,14 @@ export async function publishToMeta(
   });
 }
 
-/** Ob zum Anliegen ein veröffentlichter Blogartikel existiert (für die Option „Link anhängen“). */
-export async function publishedBlogLink(bbrConcernId: string | null) {
+/** Link zum veröffentlichten Blogartikel des Anliegens – bevorzugt auf der Webseite des Kanals (OV → cdu-sf.de, BBR → bbr.cdu-sf.de). */
+export async function publishedBlogLink(bbrConcernId: string | null, account?: MetaAccount) {
   if (!bbrConcernId) return null;
-  const blog = await db.marketingPost.findFirst({
-    where: { bbrConcernId, kind: "BLOG", wpStatus: "publish", wpLink: { not: null } },
-    orderBy: { publishedAt: "desc" },
-    select: { wpLink: true },
+  const pubs = await db.wordpressPublication.findMany({
+    where: { wpStatus: "publish", post: { bbrConcernId, kind: "BLOG" } },
+    orderBy: { updatedAt: "desc" },
+    select: { site: true, wpLink: true },
   });
-  return blog?.wpLink ?? null;
+  const preferred = account === "OV" ? "SF" : account === "BBR" ? "BBR" : null;
+  return (pubs.find((p) => p.site === preferred) ?? pubs[0])?.wpLink ?? null;
 }
