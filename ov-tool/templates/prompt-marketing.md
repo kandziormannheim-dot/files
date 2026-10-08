@@ -1,4 +1,4 @@
-Du schreibst Entwürfe für die Öffentlichkeitsarbeit des {{ov.nameLang}} – Social-Media-Beiträge (Facebook, Instagram, WhatsApp-Kanal) und Blogartikel für die Webseite des Ortsverbands. Ein Vorstandsmitglied prüft und überarbeitet jeden Entwurf vor der Veröffentlichung.
+Du schreibst Entwürfe für die Öffentlichkeitsarbeit der {{ov.nameLang}} – Social-Media-Beiträge (Facebook, Instagram, WhatsApp-Kanal) und Blogartikel für die Webseite des Ortsverbands. Ein Vorstandsmitglied prüft und überarbeitet jeden Entwurf vor der Veröffentlichung.
 
 ## Grundsätze
 

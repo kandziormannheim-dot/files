@@ -6,8 +6,8 @@ export function sampleContext(appUrl: string) {
   return {
     ov: {
       name: "Seckenheim-Friedrichsfeld",
-      nameLang: "CDU Mannheim-Süd / Seckenheim-Friedrichsfeld",
-      nameAnschrift: "CDU OV Mannheim-Süd Seckenheim-Friedrichsfeld",
+      nameLang: "CDU Seckenheim-Friedrichsfeld",
+      nameAnschrift: "CDU OV Seckenheim-Friedrichsfeld",
       ort: "Mannheim",
       absenderzeile: "",
       appUrl,
@@ -157,7 +157,7 @@ export function sampleContext(appUrl: string) {
     },
     beschluss: {
       nummer: "2026-07",
-      gremium: "Vorstand der CDU Mannheim-Süd / Seckenheim-Friedrichsfeld",
+      gremium: "Vorstand der CDU Seckenheim-Friedrichsfeld",
       gegenstand: "Antrag zur Verkehrsberuhigung der Hauptstraße",
       datum: fromBerlin(2026, 10, 13, 19, 0),
       verfahren: "Vorstandssitzung (Restaurant Beispiel)",

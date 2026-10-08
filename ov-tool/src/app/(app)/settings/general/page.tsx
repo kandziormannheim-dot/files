@@ -77,7 +77,7 @@ export default async function GeneralSettingsPage() {
           <CardContent className="grid gap-4 sm:grid-cols-2">
             {text("ov.name", "Kurzname", "Platzhalter {{ov.name}}")}
             {text("ov.ort", "Ort", "z. B. für „Mannheim, 05.11.2026“")}
-            {text("ov.nameLang", "Langer Name", "„… der CDU Mannheim-Süd / Seckenheim-Friedrichsfeld“")}
+            {text("ov.nameLang", "Langer Name", "„… der CDU Seckenheim-Friedrichsfeld“")}
             {text("ov.nameAnschrift", "Name in der Anschrift", "„An die Vorstandsmitglieder und Gäste des …“")}
             {personSelect("ov.chairUserId", "Vorsitzende/r", "Absender der Einladungen (mit Unterschriftsbild), erster Unterzeichner")}
             {personSelect("ov.deputyUserId", "Stellvertretung", "zweiter Unterzeichner des Protokolls")}

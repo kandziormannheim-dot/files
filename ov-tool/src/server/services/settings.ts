@@ -14,8 +14,8 @@ import { effectiveNoticeDays, type QuorumRule } from "./statute";
 
 export const SETTING_DEFAULTS = {
   "ov.name": "Seckenheim-Friedrichsfeld",
-  "ov.nameLang": "CDU Mannheim-Süd / Seckenheim-Friedrichsfeld",
-  "ov.nameAnschrift": "CDU OV Mannheim-Süd Seckenheim-Friedrichsfeld",
+  "ov.nameLang": "CDU Seckenheim-Friedrichsfeld",
+  "ov.nameAnschrift": "CDU OV Seckenheim-Friedrichsfeld",
   "ov.ort": "Mannheim",
   "ov.absenderzeile": "",
   /** Vorsitzender: Absender der Einladungen, erster Unterzeichner */

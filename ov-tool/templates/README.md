@@ -31,8 +31,8 @@ Dokument-Vorlagen (`*.dokument.hbs`) enthalten nur den Inhalt als HTML. Der Rend
 
 ```
 ov.name               Seckenheim-Friedrichsfeld
-ov.nameLang           CDU Mannheim-Süd / Seckenheim-Friedrichsfeld
-ov.nameAnschrift      CDU OV Mannheim-Süd Seckenheim-Friedrichsfeld
+ov.nameLang           CDU Seckenheim-Friedrichsfeld
+ov.nameAnschrift      CDU OV Seckenheim-Friedrichsfeld
 ov.ort                Mannheim
 ov.absenderzeile      (nur Referenz; im Briefbogen-Bild bereits enthalten)
 ov.appUrl             https://management.cdu-sf.de

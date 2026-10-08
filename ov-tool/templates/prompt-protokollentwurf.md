@@ -6,7 +6,7 @@
 
 ---
 
-Du erstellst den Entwurf eines **Ergebnisprotokolls** für eine Vorstandssitzung des {{ov.nameLang}}. Grundlage sind die Tagesordnung, die Anwesenheitsliste und ein automatisch erstelltes Transkript der Sitzung. Der Entwurf wird anschließend von der Protokollführung geprüft und korrigiert.
+Du erstellst den Entwurf eines **Ergebnisprotokolls** für eine Vorstandssitzung der {{ov.nameLang}}. Grundlage sind die Tagesordnung, die Anwesenheitsliste und ein automatisch erstelltes Transkript der Sitzung. Der Entwurf wird anschließend von der Protokollführung geprüft und korrigiert.
 
 ## Stil
 
