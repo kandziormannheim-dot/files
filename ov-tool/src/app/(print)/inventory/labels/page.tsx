@@ -56,6 +56,13 @@ export default async function LabelsPage({ searchParams }: { searchParams: Promi
         .etikett .qr svg { width: 100%; height: 100%; }
         .etikett .code { grid-column: 1; font-family: ui-monospace, Menlo, monospace; font-size: ${density === "klein" ? 7 : density === "gross" ? 11 : 8}pt; font-weight: 700; letter-spacing: .02em; }
         .etikett .ov { font-size: ${density === "gross" ? 8 : 6}pt; color: #2d3c4b; font-weight: 400; }
+        ${density === "kompakt" ? `
+        .etikett { padding: 2mm 2.5mm; grid-template-columns: 1fr 12mm; grid-template-rows: 12mm auto auto; gap: .8mm 1.5mm; }
+        .etikett .name { grid-column: 1; grid-row: 1; font-size: 7.5pt; line-height: 1.15; max-height: 3.45em; }
+        .etikett .ov { font-size: 5.5pt; }
+        .etikett .qr { grid-column: 2; grid-row: 1; width: 12mm; height: 12mm; align-self: start; }
+        .etikett .bar { grid-column: 1 / -1; grid-row: 2; height: 8mm; }
+        .etikett .code { grid-column: 1 / -1; grid-row: 3; font-size: 7.5pt; text-align: center; }` : ""}
         @media screen { body { background: #e8ecec; } .blatt { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); margin: 16px auto; } .etikett { outline: 1px dashed #ccc; } }
         @media print { .no-print { display: none !important; } body { margin: 0; } }
       `}</style>

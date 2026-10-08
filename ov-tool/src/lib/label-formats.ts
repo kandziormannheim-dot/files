@@ -22,6 +22,18 @@ const A4 = { width: 210, height: 297 };
 
 export const LABEL_FORMATS: LabelFormat[] = [
   {
+    key: "roll-50x30",
+    name: "Etikettendrucker 50 × 30 mm",
+    hint: "Thermo-Etiketten 50 × 30 mm (Rolle)",
+    page: { width: 50, height: 30 },
+    cols: 1,
+    rows: 1,
+    label: { width: 50, height: 30 },
+    margin: { top: 0, left: 0 },
+    gap: { x: 0, y: 0 },
+    roll: true,
+  },
+  {
     key: "a4-3x8-70x37",
     name: "A4-Bogen 3 × 8 · 70 × 37 mm",
     hint: "z. B. Avery Zweckform 3474, randlos",
@@ -123,9 +135,14 @@ export function labelsPerPage(f: LabelFormat) {
   return f.cols * f.rows;
 }
 
-/** Inhaltsstufe nach Etikettengröße: klein = nur Barcode+Code, normal = + Name/QR, groß = + Standort/Kategorie. */
-export function labelDensity(f: LabelFormat): "klein" | "normal" | "gross" {
+/**
+ * Inhaltsstufe nach Etikettengröße: klein = nur Barcode+Code, kompakt = Name+QR oben, Barcode volle Breite darunter
+ * (schmale Etiketten, damit die Striche breit genug für Thermodrucker bleiben), normal = Name, Barcode und QR nebeneinander,
+ * groß = + Standort/Kategorie.
+ */
+export function labelDensity(f: LabelFormat): "klein" | "kompakt" | "normal" | "gross" {
   if (f.label.height < 25 || f.label.width < 45) return "klein";
+  if (f.label.width < 55) return "kompakt";
   if (f.label.height >= 60 && f.label.width >= 90) return "gross";
   return "normal";
 }

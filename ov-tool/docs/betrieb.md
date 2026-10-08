@@ -126,7 +126,7 @@ freigegebene Meta-App und ist nicht eingebaut.
 ## 6c. Inventar
 
 Codes nach dem Muster `OVMASF01234.20` (laufende Nummer, Anschaffungsjahr). Etiketten: Inventar → „Etiketten“ mit wählbarem
-Druckformat (`src/lib/label-formats.ts`): A4-Bögen 3 × 8 (70 × 37/36/35 mm), 3 × 7 (63,5 × 38,1), 5 × 13 (38,1 × 21,2, nur Barcode),
+Druckformat (`src/lib/label-formats.ts`), Standard Etikettendrucker 50 × 30 mm (Name und QR oben, Barcode über die volle Breite); außerdem A4-Bögen 3 × 8 (70 × 37/36/35 mm), 3 × 7 (63,5 × 38,1), 5 × 13 (38,1 × 21,2, nur Barcode),
 2 × 4 (105 × 74, mit Standort/Kategorie) sowie Etikettendrucker 62 × 29 mm (Brother) und 89 × 36 mm (Dymo). Etiketten je Gegenstand,
 freie Plätze überspringen und Versatz in mm einstellbar; das gewählte Format merkt sich der Browser. Druck in tatsächlicher Größe.
 Inventarliste: „PDF-Liste“ bzw. „Inventurliste“ (mit Prüfspalte und Unterschriftszeile) übernimmt die Filter der Übersicht

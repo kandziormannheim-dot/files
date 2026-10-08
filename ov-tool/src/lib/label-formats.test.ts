@@ -13,7 +13,8 @@ describe("Etiketten-Druckformate", () => {
   });
 
   it("wählt Standard, Inhaltsstufe und begrenzt den Versatz", () => {
-    expect(labelFormat("unbekannt").key).toBe("a4-3x8-70x37");
+    expect(labelFormat("unbekannt").key).toBe("roll-50x30");
+    expect(labelDensity(labelFormat("roll-50x30"))).toBe("kompakt");
     expect(labelsPerPage(labelFormat("a4-5x13-38x21"))).toBe(65);
     expect(labelDensity(labelFormat("a4-5x13-38x21"))).toBe("klein");
     expect(labelDensity(labelFormat("a4-3x8-70x37"))).toBe("normal");
