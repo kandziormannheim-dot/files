@@ -1,0 +1,19 @@
+---
+betreff: "Leihprotokoll Rückgabe: {{leihe.gegenstand}} von {{leihe.ausleiher}}"
+---
+Guten Tag,
+
+der folgende Gegenstand der {{ov.nameLang}} wurde zurückgegeben:
+
+**{{leihe.gegenstand}}** ({{leihe.code}})
+Ausgeliehen am {{leihe.abholung}} von {{leihe.ausleiher}}{{#if leihe.organisation}} ({{leihe.organisation}}){{/if}}
+Rückgabe: {{leihe.rueckgabeAm}}, zurückgegeben von {{leihe.zurueckgegebenVon}}, angenommen von {{leihe.angenommenVon}}
+Zustand: {{leihe.zustandRueckgabe}}{{#if leihe.zustandGeaendert}} (bei Ausgabe: {{leihe.zustandAusgabe}}){{/if}}
+{{#if leihe.zubehoerVollstaendig}}Zubehör vollständig: {{leihe.zubehoerVollstaendig}}
+{{/if}}{{#if leihe.bemerkungRueckgabe}}Bemerkung: {{leihe.bemerkungRueckgabe}}
+{{/if}}
+Das Rückgabeprotokoll{{#if leihe.anzahlFotos}} mit {{leihe.anzahlFotos}} Foto(s){{/if}} ist als PDF beigefügt.
+
+Mit freundlichen Grüßen
+{{leihe.angenommenVon}}
+{{ov.nameLang}}

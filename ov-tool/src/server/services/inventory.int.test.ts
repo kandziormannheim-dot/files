@@ -4,7 +4,8 @@ import { form, hasTestDb, makeUser, resetDb } from "../../../tests/db";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
 import { readStoredFile } from "@/server/files";
-import { createItem, findByCode, inventoryListContext, lendItem, listItems, retireItem, returnItem, updateItem } from "./inventory";
+import { createItem, findByCode, inventoryListContext, listItems, retireItem, updateItem } from "./inventory";
+import { lendItem, returnItem } from "./inventory-loans";
 
 const base = { name: "Stehtisch", location: "Garage", condition: "gut", acquiredYear: "2020" };
 
@@ -48,13 +49,13 @@ describe.skipIf(!hasTestDb)("Inventar (DB)", () => {
   it("bucht Verleih und Rückgabe mit Verlauf; Code bleibt beim Bearbeiten fest", async () => {
     const v = await makeUser({ role: "VORSTAND" });
     const item = await createItem(v, form(base));
-    await lendItem(v, item.id, form({ borrower: "FDP Mannheim Süd", dueAt: "2026-10-20" }));
-    await expect(lendItem(v, item.id, form({ borrower: "JU" }))).rejects.toBeInstanceOf(UserError);
+    await lendItem(v, item.id, form({ borrowerName: "Rafaela Muster", organization: "FDP Mannheim Süd", conditionOut: "gut", dueAt: "2099-10-20" }));
+    await expect(lendItem(v, item.id, form({ borrowerName: "JU", conditionOut: "gut" }))).rejects.toBeInstanceOf(UserError);
     expect((await listItems(v, { status: "verliehen" })).map((i) => i.id)).toEqual([item.id]);
-    await returnItem(v, item.id, form({ returnNote: "vollständig" }));
+    await returnItem(v, item.id, form({ conditionIn: "gut", returnNote: "vollständig" }));
     const loan = await db.inventoryLoan.findFirstOrThrow({ where: { itemId: item.id } });
     expect(loan.returnedAt).not.toBeNull();
-    expect(loan.note).toContain("vollständig");
+    expect(loan).toMatchObject({ borrower: "Rafaela Muster (FDP Mannheim Süd)", returnNote: "vollständig" });
     await updateItem(v, item.id, form({ ...base, name: "Stehtisch rund", acquiredYear: "1999" }));
     const after = await db.inventoryItem.findUniqueOrThrow({ where: { id: item.id } });
     expect(after).toMatchObject({ name: "Stehtisch rund", code: "OVMASF00001.20", lentTo: null });
@@ -74,11 +75,11 @@ describe.skipIf(!hasTestDb)("Inventar (DB)", () => {
     const v = await makeUser({ role: "VORSTAND" });
     const a = await createItem(v, form(base));
     await createItem(v, form({ ...base, name: "Pavillon", location: "Keller" }));
-    await lendItem(v, a.id, form({ borrower: "Erika Beispiel", dueAt: "2026-12-01" }));
+    await lendItem(v, a.id, form({ borrowerName: "Erika Beispiel", conditionOut: "gut", dueAt: "2099-12-01" }));
     const all = await inventoryListContext(v, {});
     expect(all.inventar.anzahl).toBe(2);
     expect(all.inventar.positionen.map((p) => p.name)).toEqual(["Pavillon", "Stehtisch"]);
-    expect(all.inventar.positionen[1]).toMatchObject({ verliehenAn: "Erika Beispiel", faellig: "01.12.2026", standort: "Garage" });
+    expect(all.inventar.positionen[1]).toMatchObject({ verliehenAn: "Erika Beispiel", faellig: "01.12.2099", standort: "Garage" });
     const keller = await inventoryListContext(v, { location: "Keller" }, true);
     expect(keller.inventar).toMatchObject({ anzahl: 1, inventur: true, filter: "Standort Keller" });
   });

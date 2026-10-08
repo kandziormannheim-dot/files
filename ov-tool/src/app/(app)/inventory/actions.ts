@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { runAction } from "@/server/action";
 import { requireUser } from "@/server/auth/session";
-import { createItem, lendItem, removePhoto, retireItem, returnItem, updateItem } from "@/server/services/inventory";
+import type { LoanPhase } from "@prisma/client";
+import { createItem, removePhoto, retireItem, updateItem } from "@/server/services/inventory";
+import { addLoanPhotos, lendItem, mailSummary, returnItem, sendLoanProtocol } from "@/server/services/inventory-loans";
 
 const refresh = (id?: string) => {
   revalidatePath("/inventory");
@@ -42,17 +44,17 @@ export async function removePhotoAction(id: string, _prev: ActionState): Promise
 
 export async function lendItemAction(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   return runAction(async () => {
-    await lendItem(await requireUser(), id, formData);
+    const { mail } = await lendItem(await requireUser(), id, formData);
     refresh(id);
-    return "Verleih gebucht.";
+    return `Verleih gebucht. ${mailSummary(mail)}`;
   });
 }
 
 export async function returnItemAction(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   return runAction(async () => {
-    await returnItem(await requireUser(), id, formData);
+    const { mail } = await returnItem(await requireUser(), id, formData);
     refresh(id);
-    return "Rückgabe gebucht.";
+    return `Rückgabe gebucht. ${mailSummary(mail)}`;
   });
 }
 
@@ -61,5 +63,23 @@ export async function retireItemAction(id: string, retire: boolean, _prev: Actio
     await retireItem(await requireUser(), id, retire);
     refresh(id);
     return retire ? "Ausgemustert." : "Wieder im Bestand.";
+  });
+}
+
+const phaseOf = (p: string): LoanPhase => (p === "RUECKGABE" ? "RUECKGABE" : "AUSGABE");
+
+export async function resendProtocolAction(itemId: string, loanId: string, phase: string, _prev: ActionState): Promise<ActionState> {
+  return runAction(async () => {
+    const r = await sendLoanProtocol(await requireUser(), loanId, phaseOf(phase));
+    refresh(itemId);
+    return r.sent ? `Protokoll an ${r.recipients.length} Empfänger gesendet.` : { message: mailSummary(r) };
+  });
+}
+
+export async function addLoanPhotosAction(itemId: string, loanId: string, phase: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await addLoanPhotos(await requireUser(), loanId, phaseOf(phase), formData);
+    refresh(itemId);
+    return "Fotos gespeichert.";
   });
 }

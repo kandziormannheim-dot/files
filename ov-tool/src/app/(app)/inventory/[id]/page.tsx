@@ -2,21 +2,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Package, Printer } from "lucide-react";
-import { ActionForm, Field, SubmitButton } from "@/components/form";
+import { ActionForm, SubmitButton } from "@/components/form";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { can } from "@/server/auth/permissions";
 import { requireUser } from "@/server/auth/session";
 import { code128Svg } from "@/server/barcode";
 import { NotFoundError } from "@/server/errors";
 import { getItem, inventoryFacets } from "@/server/services/inventory";
-import { lendItemAction, removePhotoAction, retireItemAction, returnItemAction, updateItemAction } from "../actions";
+import { removePhotoAction, retireItemAction, updateItemAction } from "../actions";
 import { ItemForm } from "../item-form";
+import { LendForm, LoanHistory, ReturnForm } from "./loan-section";
+import { listActiveUsers } from "@/server/services/users";
 
 export const metadata: Metadata = { title: "Inventar" };
 
@@ -31,6 +32,7 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
   const editor = can(user.role, "inventory.edit");
   const manager = can(user.role, "inventory.manage");
   const facets = editor ? await inventoryFacets(user) : null;
+  const people = editor ? (await listActiveUsers()).map((u) => ({ id: u.id, name: u.name })) : [];
   const overdue = item.lentTo && item.lentDueAt && item.lentDueAt < new Date();
 
   return (
@@ -118,50 +120,22 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
                       <span className={overdue ? "font-semibold text-red-700" : ""}> · Rückgabe bis {formatDate(item.lentDueAt)}</span>
                     ) : null}
                   </p>
-                  {editor ? (
-                    <ActionForm action={returnItemAction.bind(null, item.id)} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                      <Field label="Bemerkung zur Rückgabe (optional)" name="returnNote" className="flex-1">
-                        <Input id="returnNote" name="returnNote" placeholder="z. B. vollständig, sauber" />
-                      </Field>
-                      <SubmitButton pendingText="…">Rückgabe buchen</SubmitButton>
-                    </ActionForm>
-                  ) : null}
+                  {editor ? <ReturnForm item={item} people={people} userId={user.id} /> : null}
                 </>
               ) : item.retiredAt ? (
                 <p className="text-neutral-600">Ausgemustert – kein Verleih.</p>
               ) : editor ? (
-                <ActionForm action={lendItemAction.bind(null, item.id)} className="grid gap-3 sm:grid-cols-2" resetOnSuccess>
-                  <Field label="Verliehen an" name="borrower" className="sm:col-span-2">
-                    <Input id="borrower" name="borrower" required placeholder="z. B. JU Mannheim, FDP Mannheim Süd, Name" />
-                  </Field>
-                  <Field label="Rückgabe bis (optional)" name="dueAt">
-                    <Input id="dueAt" name="dueAt" type="date" />
-                  </Field>
-                  <Field label="Notiz" name="note">
-                    <Input id="note" name="note" placeholder="z. B. für Sommerfest" />
-                  </Field>
-                  <SubmitButton className="justify-self-start" pendingText="…">
-                    Verleih buchen
-                  </SubmitButton>
-                </ActionForm>
+                <LendForm item={item} people={people} userId={user.id} />
               ) : (
                 <p className="text-neutral-600">Im Lager.</p>
               )}
-
-              {item.loans.length ? (
-                <div className="mt-2">
-                  <p className="mb-1 font-medium">Verlauf</p>
-                  <ul className="divide-y rounded-md border">
-                    {item.loans.map((l) => (
-                      <li key={l.id} className="px-3 py-2">
-                        <span className="font-medium">{l.borrower}</span> · {formatDate(l.lentAt)} – {l.returnedAt ? formatDate(l.returnedAt) : "offen"}
-                        {l.createdBy ? <span className="text-neutral-600"> · gebucht von {l.createdBy.name}</span> : null}
-                        {l.note ? <p className="whitespace-pre-wrap text-neutral-600">{l.note}</p> : null}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {editor ? (
+                <p className="text-xs text-neutral-600">
+                  Nach dem Buchen geht das Protokoll als PDF per Mail an die übergebende bzw. annehmende Person, an die ausleihende Person (falls E-Mail angegeben) und an den Verteiler aus den Einstellungen.
+                </p>
               ) : null}
+
+              <LoanHistory item={item} editor={editor} />
             </CardContent>
           </Card>
         </div>
@@ -172,7 +146,7 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
               <CardTitle>Bearbeiten</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <ItemForm action={updateItemAction.bind(null, item.id)} item={item} locations={facets.locations} categories={facets.categories} />
+              <ItemForm key={item.updatedAt.toISOString()} action={updateItemAction.bind(null, item.id)} item={item} locations={facets.locations} categories={facets.categories} />
               <p className="text-xs text-neutral-600">Code, Nummer und Anschaffungsjahr bleiben fest, damit gedruckte Etiketten gültig bleiben.</p>
               <div className="flex flex-wrap gap-2 border-t pt-4">
                 {item.photoPath ? (

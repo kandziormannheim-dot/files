@@ -33,6 +33,8 @@ export const SETTING_DEFAULTS = {
   "circulation.defaultDays": "7",
   "office.email": "",
   "office.autoSend": "false",
+  /** Leihprotokolle (Inventar): zusätzliche Empfänger, eine Adresse je Zeile */
+  "inventory.notifyEmails": "",
   "retention.transcriptDays": "90",
   "retention.citizenContactMonths": "6",
   "topic.categories": "Verkehr\nSchule\nBauen\nSicherheit\nVereine\nSonstiges",
@@ -65,6 +67,7 @@ export type AppSettings = {
   task: { reminderDaysBefore: number; overdueReminder: boolean };
   circulation: { defaultDays: number };
   office: { email: string; autoSend: boolean };
+  inventory: { notifyEmails: string[] };
   retention: { transcriptDays: number; citizenContactMonths: number };
   topicCategories: string[];
   briefbogenPath: string;
@@ -100,6 +103,12 @@ export function toAppSettings(raw: Record<string, string>): AppSettings {
     },
     circulation: { defaultDays: Math.max(1, int(v("circulation.defaultDays"), 7)) },
     office: { email: v("office.email"), autoSend: v("office.autoSend") === "true" },
+    inventory: {
+      notifyEmails: v("inventory.notifyEmails")
+        .split(/[\n,;]/)
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean),
+    },
     retention: {
       transcriptDays: Math.max(1, int(v("retention.transcriptDays"), 90)),
       citizenContactMonths: Math.max(1, int(v("retention.citizenContactMonths"), 6)),
@@ -155,6 +164,13 @@ const settingsSchema = z
     "circulation.defaultDays": intField(1, 60),
     "office.email": z.preprocess((v) => (v === "" ? undefined : v), emailSchema.optional()),
     "office.autoSend": boolField,
+    "inventory.notifyEmails": z.preprocess(
+      (v) => (typeof v === "string" ? v.split(/[\n,;]/).map((e) => e.trim().toLowerCase()).filter(Boolean).join("\n") : v),
+      z
+        .string()
+        .max(1000)
+        .refine((v) => v === "" || v.split("\n").every((e) => emailSchema.safeParse(e).success), { error: "Bitte nur gültige E-Mail-Adressen, eine je Zeile." }),
+    ),
     "retention.transcriptDays": intField(1, 3650),
     "retention.citizenContactMonths": intField(1, 120),
     "topic.categories": optionalText(2000),

@@ -133,6 +133,12 @@ Inventarliste: „PDF-Liste“ bzw. „Inventurliste“ (mit Prüfspalte und Unt
 (Vorlage `inventar.liste`, unter Vorlagen anpassbar).
 Jedes Etikett trägt einen Code-128-Barcode (Handscanner, Android-Kamera) und einen QR-Code (iPhone-Kamera öffnet den Eintrag).
 Fotos werden beim Hochladen verkleinert und ohne Metadaten (GPS) gespeichert.
+Leihprotokoll: Beim Verleih werden Abholdatum, übergebende Person, ausleihende Person, Organisation, optional E-Mail, Zubehör,
+Zustand und Fotos erfasst, bei der Rückgabe Datum, wer zurückbringt und wer annimmt, Zustand (wird als aktueller Zustand übernommen),
+Vollständigkeit des Zubehörs, Bemerkung und Fotos. Jeweils entsteht ein PDF im Briefbogen (Vorlage `inventar.leihprotokoll`,
+Fotos eingebettet), das per Mail (`inventar.ausgabe` / `inventar.rueckgabe`) an die beteiligten Nutzer, die ausleihende Person
+und den Verteiler aus Einstellungen → Allgemein geht. Die E-Mail der ausleihenden Person wird verschlüsselt gespeichert
+(`ENCRYPTION_KEY`) und vom Retention-Job 12 Monate nach der Rückgabe gelöscht.
 
 ## 6d. Satzung, Wahlen, Presse, Landing Pages, Beschlüsse
 

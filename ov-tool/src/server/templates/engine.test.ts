@@ -18,6 +18,7 @@ describe("Vorlagen-Engine", () => {
     const p = parseFrontMatter("---\nbetreff: Hallo {{a}}\n---\nText");
     expect(p.meta.betreff).toBe("Hallo {{a}}");
     expect(p.body).toBe("Text");
+    expect(parseFrontMatter('---\nbetreff: "Antrag: {{a}}"\n---\n').meta.betreff).toBe("Antrag: {{a}}");
   });
 
   it("rendert Betreff und Text aus einem einzigen Datumsfeld", () => {

@@ -149,6 +149,14 @@ export default async function GeneralSettingsPage() {
                 nach Genehmigung automatisch übersenden
               </label>
             </div>
+            <Field
+              label="Verteiler Leihprotokolle (Inventar)"
+              name="inventory.notifyEmails"
+              hint="erhält jedes Ausgabe- und Rückgabeprotokoll zusätzlich zu den Beteiligten; eine Adresse je Zeile"
+              className="sm:col-span-2"
+            >
+              <Textarea id="inventory.notifyEmails" name="inventory.notifyEmails" defaultValue={s["inventory.notifyEmails"]} rows={2} placeholder="lager@cdu-sf.de" />
+            </Field>
             {num("retention.transcriptDays", "Transkripte spätestens löschen nach (Tagen)", "sonst mit Genehmigung des Protokolls", 1)}
             {num("retention.citizenContactMonths", "Bürgerkontaktdaten löschen (Monate nach Erledigung)", undefined, 1)}
             <Field label="Kategorien für Stadtteil-Themen" name="topic.categories" hint="eine je Zeile" className="sm:col-span-2">

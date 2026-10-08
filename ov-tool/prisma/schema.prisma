@@ -1052,18 +1052,60 @@ model InventoryItem {
 }
 
 model InventoryLoan {
-  id          String        @id @default(cuid())
-  itemId      String
-  item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  borrower    String
-  lentAt      DateTime      @default(now())
-  dueAt       DateTime?
-  returnedAt  DateTime?
-  note        String        @default("")
-  createdById String?
-  createdBy   User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  id                  String               @id @default(cuid())
+  itemId              String
+  item                InventoryItem        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  /// Anzeige „Name (Organisation)“ – wie InventoryItem.lentTo
+  borrower            String
+  /// Datum der Abholung
+  lentAt              DateTime             @default(now())
+  dueAt               DateTime?
+  returnedAt          DateTime?
+  note                String               @default("")
+  createdById         String?
+  createdBy           User?                @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  // Leihprotokoll – Ausgabe
+  /// übergeben von (Nutzer-ID für die Mail, Name für das Protokoll)
+  handedOverById      String?
+  handedOverBy        String               @default("")
+  /// Person, die ausleiht
+  borrowerName        String               @default("")
+  organization        String               @default("")
+  /// E-Mail der ausleihenden Person, verschlüsselt (crypto.ts); gelöscht 12 Monate nach Rückgabe (Retention-Job)
+  borrowerEmail       String?
+  accessories         String               @default("")
+  conditionOut        String               @default("")
+  outMailSentAt       DateTime?
+  // Leihprotokoll – Rückgabe
+  returnedByName      String               @default("")
+  receivedById        String?
+  receivedBy          String               @default("")
+  conditionIn         String               @default("")
+  accessoriesComplete Boolean?
+  returnNote          String               @default("")
+  returnMailSentAt    DateTime?
+  photos              InventoryLoanPhoto[]
 
   @@index([itemId, lentAt])
+  @@index([returnedAt])
+}
+
+enum LoanPhase {
+  AUSGABE
+  RUECKGABE
+}
+
+/// Fotodokumentation zu Ausgabe und Rückgabe (WebP, ohne Metadaten)
+model InventoryLoanPhoto {
+  id          String        @id @default(cuid())
+  loanId      String
+  loan        InventoryLoan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  phase       LoanPhase
+  path        String
+  createdById String?
+  createdAt   DateTime      @default(now())
+
+  @@index([loanId, phase])
 }
 
 // ---------------------------------------------------------------------------

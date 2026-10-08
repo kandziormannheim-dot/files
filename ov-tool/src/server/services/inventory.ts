@@ -1,7 +1,7 @@
 import "server-only";
 import type { Prisma, User } from "@prisma/client";
 import { formatInventoryCode, MAX_INVENTORY_NUMBER, parseInventoryCode } from "@/lib/inventory-code";
-import { formatDate, parseDateInput } from "@/lib/dates";
+import { formatDate } from "@/lib/dates";
 import { formToObject, optionalInt, optionalText, requiredText, z } from "@/lib/validation";
 import { assertCan } from "@/server/auth/permissions";
 import { audit, changes } from "@/server/audit";
@@ -62,7 +62,14 @@ export async function getItem(actor: Actor, id: string) {
   assertCan(actor, "read");
   const item = await db.inventoryItem.findUnique({
     where: { id },
-    include: { loans: { orderBy: { lentAt: "desc" }, take: 50, include: { createdBy: { select: { name: true } } } }, createdBy: { select: { name: true } } },
+    include: {
+      loans: {
+        orderBy: { lentAt: "desc" },
+        take: 50,
+        include: { createdBy: { select: { name: true } }, photos: { select: { id: true, phase: true }, orderBy: { createdAt: "asc" } } },
+      },
+      createdBy: { select: { name: true } },
+    },
   });
   if (!item) throw new NotFoundError("Gegenstand nicht gefunden.");
   return item;
@@ -174,45 +181,6 @@ export async function removePhoto(actor: Actor, id: string) {
     await audit(tx, actor, "inventory.update", "InventoryItem", id, { photo: "entfernt" });
   });
   await deleteStoredFile(item.photoPath);
-}
-
-const lendSchema = z.object({
-  borrower: requiredText(200),
-  dueAt: optionalText(20),
-  note: optionalText(1000),
-});
-
-export async function lendItem(actor: Actor, id: string, formData: FormData) {
-  assertCan(actor, "inventory.edit");
-  const item = await getItem(actor, id);
-  if (item.retiredAt) throw new UserError("Ausgemusterte Gegenstände können nicht verliehen werden.");
-  if (item.lentTo) throw new UserError(`Bereits verliehen an ${item.lentTo}. Bitte zuerst die Rückgabe buchen.`);
-  const input = lendSchema.parse(formToObject(formData));
-  const dueAt = input.dueAt ? parseDateInput(input.dueAt) : null;
-  const now = new Date();
-  await db.$transaction(async (tx) => {
-    await tx.inventoryItem.update({ where: { id }, data: { lentTo: input.borrower, lentAt: now, lentDueAt: dueAt } });
-    await tx.inventoryLoan.create({ data: { itemId: id, borrower: input.borrower, lentAt: now, dueAt, note: input.note ?? "", createdById: actor.id } });
-    await audit(tx, actor, "inventory.lend", "InventoryItem", id, { borrower: input.borrower, dueAt });
-  });
-}
-
-export async function returnItem(actor: Actor, id: string, formData?: FormData) {
-  assertCan(actor, "inventory.edit");
-  const item = await getItem(actor, id);
-  if (!item.lentTo) throw new UserError("Der Gegenstand ist nicht verliehen.");
-  const note = formData ? optionalText(1000).parse(formData.get("returnNote") ?? undefined) : undefined;
-  const open = item.loans.find((l) => !l.returnedAt);
-  await db.$transaction(async (tx) => {
-    await tx.inventoryItem.update({ where: { id }, data: { lentTo: null, lentAt: null, lentDueAt: null } });
-    if (open) {
-      await tx.inventoryLoan.update({
-        where: { id: open.id },
-        data: { returnedAt: new Date(), ...(note ? { note: [open.note, `Rückgabe: ${note}`].filter(Boolean).join("\n") } : {}) },
-      });
-    }
-    await audit(tx, actor, "inventory.return", "InventoryItem", id, { borrower: item.lentTo, note });
-  });
 }
 
 export async function retireItem(actor: Actor, id: string, retire: boolean) {

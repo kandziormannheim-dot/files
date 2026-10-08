@@ -90,7 +90,10 @@ export function parseFrontMatter(source: string): ParsedTemplate {
   const meta: Record<string, string> = {};
   for (const line of m[1]!.split("\n")) {
     const idx = line.indexOf(":");
-    if (idx > 0) meta[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+    if (idx <= 0) continue;
+    const value = line.slice(idx + 1).trim();
+    // YAML-Schreibweise mit Anführungszeichen (betreff: "…: …") wie ohne behandeln
+    meta[line.slice(0, idx).trim()] = /^"(.*)"$/.test(value) ? value.slice(1, -1) : value;
   }
   return { meta, body: normalized.slice(m[0].length) };
 }

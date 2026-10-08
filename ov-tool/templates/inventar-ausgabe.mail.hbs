@@ -1,0 +1,19 @@
+---
+betreff: "Leihprotokoll Ausgabe: {{leihe.gegenstand}} an {{leihe.ausleiher}}"
+---
+Guten Tag,
+
+der folgende Gegenstand der {{ov.nameLang}} wurde ausgeliehen:
+
+**{{leihe.gegenstand}}** ({{leihe.code}})
+Abholung: {{leihe.abholung}}, übergeben von {{leihe.uebergebenVon}}
+Ausgeliehen von: {{leihe.ausleiher}}{{#if leihe.organisation}} ({{leihe.organisation}}){{/if}}
+{{#if leihe.zubehoer}}Zubehör: {{leihe.zubehoer}}
+{{/if}}Zustand: {{leihe.zustandAusgabe}}
+{{#if leihe.rueckgabeBis}}Rückgabe bis: {{leihe.rueckgabeBis}}
+{{/if}}
+Das Leihprotokoll{{#if leihe.anzahlFotos}} mit {{leihe.anzahlFotos}} Foto(s){{/if}} ist als PDF beigefügt. Bitte melden Sie Schäden oder Verlust umgehend.
+
+Mit freundlichen Grüßen
+{{leihe.uebergebenVon}}
+{{ov.nameLang}}

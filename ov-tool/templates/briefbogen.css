@@ -76,3 +76,10 @@ table.kopf th { width: 40mm; background: var(--akzent-hell); }
 p.notiz { margin: 2mm 0 1mm 8mm; }
 p.top-anlagen { margin: 1mm 0 1mm 8mm; font-size: 9pt; color: #2d3c4b; }
 ol.anlagen { list-style: none; padding-left: 0; }
+
+/* Fotodokumentation (Leihprotokoll) */
+.fotos-titel { page-break-after: avoid; }
+.fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.fotos figure { margin: 0; page-break-inside: avoid; }
+.fotos img { width: 100%; max-height: 80mm; object-fit: contain; border: 0.5pt solid #d0d6db; }
+.fotos figcaption { font-size: 8pt; color: var(--text); margin-top: 1mm; }

@@ -88,6 +88,10 @@ aufgabe.*             titel, frist, ueberfaellig, herkunft, link, von (Aufgaben-
 aktion.*, schichten[] (Helferaufruf)
 auslage.*             nummer, titel, anlass, antragsteller, erstellt, erstattungsart, spende/ueberweisung/bar, kontoinhaber, iban, anschrift, bemerkung, summe, positionen[] (nr, belegdatum, beschreibung, betrag, beleg), freigabeDurch, freigabeAm
 inventar.*            stand, filter, anzahl, inventur (Prüfspalte), positionen[] (code, name, kategorie, standort, menge, zustand, verliehenAn, faellig, ausgemustert)
+leihe.*               Leihprotokoll: art („Ausgabe“/„Rückgabe“), rueckgabe (ja/nein), code, gegenstand, kategorie, beschreibung, menge,
+                      abholung, uebergebenVon, ausleiher, organisation, email, zubehoer, zustandAusgabe, rueckgabeBis, notiz,
+                      rueckgabeAm, zurueckgegebenVon, angenommenVon, zustandRueckgabe, zustandGeaendert, zubehoerVollstaendig („ja“/„nein“/leer),
+                      bemerkungRueckgabe, anzahlFotos, erstellt, fotosAusgabe[] / fotosRueckgabe[] (nr, bild = eingebettetes Bild; nur im PDF)
 beschluss.*           nummer, gremium, gegenstand, datum, verfahren, top, topTitel, ergebnisText, stimmen, beschlussfaehigkeit, wortlaut, begruendung, ausgestelltAm
 eingabe.*             titel, empfaenger, datum, text, begruendung (Antrag aus einem Beschluss an den Kreisverband)
 seite.titel, seite.link   (Landing Page)
@@ -126,6 +130,9 @@ pressekontakt, abmeldeLink   (Versand an den Presseverteiler)
 | `email-bestaetigung.mail.hbs` | `email.bestaetigung` | Bestätigungslink an die neue Adresse, wenn jemand seine E-Mail-Adresse ändert |
 | `email-geaendert.mail.hbs` | `email.geaendert` | Hinweis an die bisherige Adresse nach erfolgter Änderung |
 | `inventar-liste.dokument.hbs` | `inventar.liste` | Inventarliste als PDF (Filter der Übersicht), optional Inventurliste mit Prüfspalte und Unterschriftszeile |
+| `inventar-leihprotokoll.dokument.hbs` | `inventar.leihprotokoll` | Leihprotokoll bei Ausgabe bzw. Rückgabe, mit Unterschriftszeilen und Fotos |
+| `inventar-ausgabe.mail.hbs` | `inventar.ausgabe` | Mail mit Ausgabeprotokoll an alle Beteiligten |
+| `inventar-rueckgabe.mail.hbs` | `inventar.rueckgabe` | Mail mit Rückgabeprotokoll an alle Beteiligten |
 | `auslagen.dokument.hbs` | `auslagen.dokument` | Antrag auf Auslagenerstattung (Positionen, Erstattungsart, Freigabe); Belege werden angehängt |
 | `auslagen-versand.mail.hbs` | `auslagen.versand` | Versand des freigegebenen Auslagenantrags an die Kreisgeschäftsstelle |
 | `beschluss.dokument.hbs` | `beschluss.dokument` | Beschlussauszug als PDF im Briefbogen |

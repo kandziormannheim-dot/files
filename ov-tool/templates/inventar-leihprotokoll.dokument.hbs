@@ -1,0 +1,57 @@
+<h1>Leihprotokoll – {{leihe.art}}</h1>
+<p class="untertitel">{{ov.nameLang}} · <strong>{{leihe.gegenstand}}</strong>{{#if leihe.kategorie}} ({{leihe.kategorie}}){{/if}} · Code {{leihe.code}}{{#if leihe.menge}} · Anzahl {{leihe.menge}}{{/if}}</p>
+
+{{#if leihe.beschreibung}}<p class="mehrzeilig">{{leihe.beschreibung}}</p>
+{{/if}}
+<h2>Ausgabe</h2>
+<table class="kopf">
+  <tr><th>Abholung am</th><td>{{leihe.abholung}}</td></tr>
+  <tr><th>Übergeben von</th><td>{{leihe.uebergebenVon}}</td></tr>
+  <tr><th>Ausgeliehen von</th><td>{{leihe.ausleiher}}</td></tr>
+  {{#if leihe.organisation}}<tr><th>Organisation</th><td>{{leihe.organisation}}</td></tr>{{/if}}
+  {{#if leihe.email}}<tr><th>E-Mail</th><td>{{leihe.email}}</td></tr>{{/if}}
+  <tr><th>Zubehör</th><td class="mehrzeilig">{{#if leihe.zubehoer}}{{leihe.zubehoer}}{{else}}–{{/if}}</td></tr>
+  <tr><th>Zustand bei Ausgabe</th><td>{{leihe.zustandAusgabe}}</td></tr>
+  {{#if leihe.rueckgabeBis}}<tr><th>Rückgabe bis</th><td>{{leihe.rueckgabeBis}}</td></tr>{{/if}}
+  {{#if leihe.notiz}}<tr><th>Notiz</th><td class="mehrzeilig">{{leihe.notiz}}</td></tr>{{/if}}
+</table>
+
+{{#if leihe.rueckgabe}}
+<div>
+<h2>Rückgabe</h2>
+<table class="kopf">
+  <tr><th>Rückgabe am</th><td>{{leihe.rueckgabeAm}}</td></tr>
+  <tr><th>Zurückgegeben von</th><td>{{leihe.zurueckgegebenVon}}</td></tr>
+  <tr><th>Angenommen von</th><td>{{leihe.angenommenVon}}</td></tr>
+  <tr><th>Zustand bei Rückgabe</th><td>{{leihe.zustandRueckgabe}}{{#if leihe.zustandGeaendert}} <strong>(bei Ausgabe: {{leihe.zustandAusgabe}})</strong>{{/if}}</td></tr>
+  {{#if leihe.zubehoerVollstaendig}}<tr><th>Zubehör vollständig</th><td>{{leihe.zubehoerVollstaendig}}</td></tr>{{/if}}
+  {{#if leihe.bemerkungRueckgabe}}<tr><th>Bemerkung</th><td class="mehrzeilig">{{leihe.bemerkungRueckgabe}}</td></tr>{{/if}}
+</table>
+{{else}}
+<p>Die ausleihende Person bestätigt den Empfang des Gegenstands im beschriebenen Zustand und verpflichtet sich, ihn pfleglich zu behandeln und{{#if leihe.rueckgabeBis}} bis zum {{leihe.rueckgabeBis}}{{/if}} vollständig zurückzugeben. Schäden oder Verlust sind unverzüglich zu melden.</p>
+{{/if}}
+
+<div class="unterschriften">
+  {{#if leihe.rueckgabe}}
+  <div><p class="linie">Zurückgegeben: {{leihe.zurueckgegebenVon}}</p></div>
+  <div><p class="linie">Angenommen: {{leihe.angenommenVon}}</p></div>
+  {{else}}
+  <div><p class="linie">Übergeben: {{leihe.uebergebenVon}}</p></div>
+  <div><p class="linie">Erhalten: {{leihe.ausleiher}}</p></div>
+  {{/if}}
+</div>
+
+{{#if leihe.fotosAusgabe}}
+<h2 class="fotos-titel">Fotos bei Ausgabe</h2>
+<div class="fotos">
+  {{#each leihe.fotosAusgabe}}<figure><img src="{{bild}}" alt=""><figcaption>Ausgabe, Foto {{nr}}</figcaption></figure>{{/each}}
+</div>
+{{/if}}
+{{#if leihe.fotosRueckgabe}}
+<h2 class="fotos-titel">Fotos bei Rückgabe</h2>
+<div class="fotos">
+  {{#each leihe.fotosRueckgabe}}<figure><img src="{{bild}}" alt=""><figcaption>Rückgabe, Foto {{nr}}</figcaption></figure>{{/each}}
+</div>
+{{/if}}
+
+<p class="version">Erstellt am {{leihe.erstellt}} mit dem OV-Management-Tool.</p>

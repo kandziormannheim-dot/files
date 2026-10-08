@@ -16,6 +16,7 @@ import { latestInvitationDay } from "@/server/services/statute";
 import { meetingContext, senderContext } from "@/server/services/template-context";
 import { enforceLandingRetention } from "@/server/services/landing";
 import { enforceExpenseRetention } from "@/server/services/expenses";
+import { purgeBorrowerEmails } from "@/server/services/inventory-loans";
 import { originText, taskInclude } from "@/server/services/tasks";
 
 // Hintergrundaufgaben (Paket 2.1). Jede Funktion ist idempotent (Merker in der DB) und bekommt „jetzt“ übergeben,
@@ -189,7 +190,8 @@ export async function enforceRetention(now = new Date()) {
   }
   const landing = await enforceLandingRetention(now);
   const expenses = await enforceExpenseRetention(now);
-  return { audio, texts, contacts, landing, expenses };
+  const borrowerEmails = await purgeBorrowerEmails(now);
+  return { audio, texts, contacts, landing, expenses, borrowerEmails };
 }
 
 export async function runOfficeAutoSend() {
