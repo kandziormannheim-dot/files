@@ -4,7 +4,7 @@ import { form, hasTestDb, makeUser, resetDb } from "../../../tests/db";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
 import { readStoredFile } from "@/server/files";
-import { createItem, findByCode, lendItem, listItems, retireItem, returnItem, updateItem } from "./inventory";
+import { createItem, findByCode, inventoryListContext, lendItem, listItems, retireItem, returnItem, updateItem } from "./inventory";
 
 const base = { name: "Stehtisch", location: "Garage", condition: "gut", acquiredYear: "2020" };
 
@@ -68,5 +68,18 @@ describe.skipIf(!hasTestDb)("Inventar (DB)", () => {
     await retireItem(admin, item.id, true);
     expect(await listItems(v)).toHaveLength(0);
     expect(await listItems(v, { status: "ausgemustert" })).toHaveLength(1);
+  });
+
+  it("liefert die Inventarliste mit Filtern und optional als Inventurliste", async () => {
+    const v = await makeUser({ role: "VORSTAND" });
+    const a = await createItem(v, form(base));
+    await createItem(v, form({ ...base, name: "Pavillon", location: "Keller" }));
+    await lendItem(v, a.id, form({ borrower: "Erika Beispiel", dueAt: "2026-12-01" }));
+    const all = await inventoryListContext(v, {});
+    expect(all.inventar.anzahl).toBe(2);
+    expect(all.inventar.positionen.map((p) => p.name)).toEqual(["Pavillon", "Stehtisch"]);
+    expect(all.inventar.positionen[1]).toMatchObject({ verliehenAn: "Erika Beispiel", faellig: "01.12.2026", standort: "Garage" });
+    const keller = await inventoryListContext(v, { location: "Keller" }, true);
+    expect(keller.inventar).toMatchObject({ anzahl: 1, inventur: true, filter: "Standort Keller" });
   });
 });

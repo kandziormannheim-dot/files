@@ -1,7 +1,7 @@
 import "server-only";
 import type { Prisma, User } from "@prisma/client";
 import { formatInventoryCode, MAX_INVENTORY_NUMBER, parseInventoryCode } from "@/lib/inventory-code";
-import { parseDateInput } from "@/lib/dates";
+import { formatDate, parseDateInput } from "@/lib/dates";
 import { formToObject, optionalInt, optionalText, requiredText, z } from "@/lib/validation";
 import { assertCan } from "@/server/auth/permissions";
 import { audit, changes } from "@/server/audit";
@@ -9,6 +9,7 @@ import { db } from "@/server/db";
 import { NotFoundError, UserError } from "@/server/errors";
 import { deleteStoredFile, saveFile } from "@/server/files";
 import { normalizePhoto } from "@/server/images";
+import { renderDocumentPdf } from "@/server/pdf/render";
 
 type Actor = Pick<User, "id" | "role">;
 
@@ -231,3 +232,50 @@ export async function itemsForLabels(actor: Actor, ids: string[]) {
 }
 
 export { currentYear };
+
+const STATUS_LABEL: Record<NonNullable<InventoryFilter["status"]>, string> = {
+  all: "alle inkl. ausgemusterter",
+  lager: "nur im Lager",
+  verliehen: "nur verliehene",
+  ausgemustert: "nur ausgemusterte",
+};
+
+/** Kontext für die Inventarliste (Vorlage inventar.liste) mit denselben Filtern wie die Übersicht. */
+export async function inventoryListContext(actor: Actor, filter: InventoryFilter, inventur = false) {
+  const items = await listItems(actor, filter);
+  const filterText = [
+    filter.q?.trim() ? `Suche „${filter.q.trim()}“` : "",
+    filter.location ? `Standort ${filter.location}` : "",
+    filter.status && filter.status !== "lager" ? STATUS_LABEL[filter.status] : filter.status === "lager" ? STATUS_LABEL.lager : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return {
+    inventar: {
+      stand: formatDate(new Date()),
+      filter: filterText,
+      anzahl: items.length,
+      inventur,
+      positionen: items.map((i) => ({
+        code: i.code,
+        name: i.name,
+        kategorie: i.category,
+        standort: i.location,
+        menge: i.quantity,
+        zustand: i.condition,
+        verliehenAn: i.lentTo ?? "",
+        faellig: i.lentDueAt ? formatDate(i.lentDueAt) : "",
+        ausgemustert: !!i.retiredAt,
+      })),
+    },
+  };
+}
+
+export async function inventoryListPdf(actor: Actor, filter: InventoryFilter, inventur = false) {
+  const ctx = await inventoryListContext(actor, filter, inventur);
+  const title = inventur ? "Inventurliste" : "Inventarliste";
+  const { pdf } = await renderDocumentPdf("inventar.liste", ctx, title);
+  await audit(db, actor, "inventory.list_pdf", "InventoryItem", null, { count: ctx.inventar.anzahl, inventur, filter });
+  const stamp = new Date().toISOString().slice(0, 10);
+  return { pdf, fileName: `${title}-${stamp}.pdf` };
+}

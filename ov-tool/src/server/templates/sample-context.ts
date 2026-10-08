@@ -127,6 +127,15 @@ export function sampleContext(appUrl: string) {
     },
     antrag: { titel: "Sondersitzung Haushalt", beschreibung: "", unterstuetzer: 5, erforderlich: 5, link: `${appUrl}/meetings/proposals` },
     transkript: { sitzung: "Vorstandssitzung am 12.11.2026", link: `${appUrl}/meetings/beispiel/minutes` },
+    inventar: {
+      stand: "08.10.2026",
+      filter: "",
+      anzahl: 1,
+      inventur: false,
+      positionen: [
+        { code: "OVMASF00001.24", name: "Pavillon 3 × 3 m", kategorie: "Infostand", standort: "Lager", menge: 1, zustand: "gut", verliehenAn: "", faellig: "", ausgemustert: false },
+      ],
+    },
     auslage: {
       nummer: "A-2026-01",
       titel: "Material Infostand Weihnachtsmarkt",

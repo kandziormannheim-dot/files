@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Package, Printer } from "lucide-react";
+import { ClipboardCheck, FileText, Package, Printer } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     const p = new URLSearchParams(Object.entries({ q: sp.q, status: sp.status, ort: sp.ort, ...patch }).filter(([, v]) => v) as [string, string][]);
     return `/inventory${p.size ? `?${p}` : ""}`;
   };
+  const lq = new URLSearchParams(Object.entries({ q: sp.q, status: sp.status, ort: sp.ort }).filter(([, v]) => v) as [string, string][]).toString();
+  const listQuery = lq ? `?${lq}` : "";
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -35,7 +37,17 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           title="Inventar"
           description={`${facets.total} Gegenstände im Bestand · ${facets.lent} verliehen${facets.overdue ? ` · ${facets.overdue} überfällig` : ""}`}
         />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <a href={`/api/inventory/list${listQuery}`} target="_blank" rel="noopener">
+              <FileText className="size-4" /> PDF-Liste
+            </a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href={`/api/inventory/list${listQuery}${listQuery ? "&" : "?"}inventur=1`} target="_blank" rel="noopener">
+              <ClipboardCheck className="size-4" /> Inventurliste
+            </a>
+          </Button>
           <Button asChild variant="outline">
             <Link href={`/inventory/labels${items.length && (sp.q || sp.ort || sp.status) ? `?ids=${items.map((i) => i.id).join(",")}` : ""}`} target="_blank">
               <Printer className="size-4" /> Etiketten

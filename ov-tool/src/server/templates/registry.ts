@@ -33,6 +33,7 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { key: "antrag.versand", file: "antrag-versand.mail.hbs", kind: "mail", name: "Antrag einreichen (E-Mail)", usage: "Begleit-Mail an die Kreisgeschäftsstelle mit Antrag und Beschluss als PDF" },
   { key: "auslagen.dokument", file: "auslagen.dokument.hbs", kind: "dokument", name: "Auslagenerstattung (PDF)", usage: "Antrag mit Positionen, Erstattungsart und Belegen" },
   { key: "auslagen.versand", file: "auslagen-versand.mail.hbs", kind: "mail", name: "Auslagenerstattung an die Kreisgeschäftsstelle", usage: "Versand des freigegebenen Antrags" },
+  { key: "inventar.liste", file: "inventar-liste.dokument.hbs", kind: "dokument", name: "Inventarliste (PDF)", usage: "Liste der Gegenstände im Inventar, wahlweise als Inventurliste mit Prüfspalte" },
   { key: "landing.bestaetigung", file: "landing-bestaetigung.mail.hbs", kind: "mail", name: "Landing Page: Newsletter bestätigen", usage: "Double-Opt-in, wenn auf einer Landing Page der Newsletter angekreuzt wurde" },
   { key: "presse.bestaetigung", file: "presse-bestaetigung.mail.hbs", kind: "mail", name: "Presseverteiler: Registrierung bestätigen", usage: "Double-Opt-in für Pressevertreter" },
   { key: "presse.mitteilung", file: "presse-mitteilung.mail.hbs", kind: "mail", name: "Pressemitteilung (Versand)", usage: "Einzelversand an den Presseverteiler" },

@@ -1,0 +1,43 @@
+<h1>{{#if inventar.inventur}}Inventurliste{{else}}Inventarliste{{/if}}</h1>
+<p class="untertitel">{{ov.nameLang}} · Stand {{inventar.stand}}{{#if inventar.filter}} · {{inventar.filter}}{{/if}} · {{inventar.anzahl}} Gegenstände</p>
+
+<table class="inventar">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Bezeichnung</th>
+      <th>Kategorie</th>
+      <th>Standort</th>
+      <th style="text-align:right">Menge</th>
+      <th>Zustand</th>
+      <th>Verliehen an / bis</th>
+      {{#if inventar.inventur}}<th>Geprüft</th>{{/if}}
+    </tr>
+  </thead>
+  <tbody>
+  {{#each inventar.positionen}}
+    <tr>
+      <td class="code">{{code}}</td>
+      <td><strong>{{name}}</strong>{{#if ausgemustert}} <em>(ausgemustert)</em>{{/if}}</td>
+      <td>{{kategorie}}</td>
+      <td>{{standort}}</td>
+      <td style="text-align:right">{{menge}}</td>
+      <td>{{zustand}}</td>
+      <td>{{#if verliehenAn}}{{verliehenAn}}{{#if faellig}} · bis {{faellig}}{{/if}}{{else}}–{{/if}}</td>
+      {{#if ../inventar.inventur}}<td class="pruef">☐</td>{{/if}}
+    </tr>
+  {{/each}}
+  </tbody>
+</table>
+
+{{#if inventar.inventur}}
+<p style="margin-top:10mm">Inventur durchgeführt am ____________________ von ________________________________</p>
+<p style="margin-top:8mm">Unterschrift: ________________________________</p>
+{{/if}}
+
+<style>
+  table.inventar { font-size: 8.5pt; }
+  table.inventar td.code { font-family: ui-monospace, Menlo, monospace; white-space: nowrap; }
+  table.inventar td.pruef { font-size: 12pt; text-align: center; }
+  table.inventar tr { page-break-inside: avoid; }
+</style>
