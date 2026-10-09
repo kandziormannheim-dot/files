@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { einblendungWindow, fallbackPlan, normalizePlan, parseWhisperJson, planDuration, shotText, snapToWords, subtitleCues, type Segment, type VideoPlan } from "./video-plan";
+import { effectiveTone, einblendungWindow, fallbackPlan, normalizePlan, pickStills, stillTimes, parseWhisperJson, planDuration, shotText, snapToWords, subtitleCues, type Segment, type VideoPlan } from "./video-plan";
 
 const words = (list: [number, number, string][]) => list.map(([start, end, word]) => ({ start, end, word }));
 const seg: Segment[] = [
@@ -103,6 +103,26 @@ describe("Schnittplan", () => {
     const { plan } = normalizePlan({ ...base, shots }, [long], 320);
     expect(planDuration(plan)).toBeLessThanOrEqual(320);
     expect(planDuration(plan)).toBeGreaterThan(310);
+  });
+
+  it("verteilt Standbilder nach Cliplänge und begrenzt die Bilder je KI-Anfrage", () => {
+    expect(stillTimes(10)).toEqual([1, 5, 8.5]);
+    const long = stillTimes(898);
+    expect(long).toHaveLength(24);
+    expect(long[0]).toBeGreaterThan(15);
+    expect(long[23]).toBeLessThan(898);
+    expect(stillTimes(100)).toHaveLength(5);
+    const picked = pickStills([Array.from({ length: 24 }, (_, i) => i), Array.from({ length: 24 }, (_, i) => i), Array.from({ length: 24 }, (_, i) => i)], 60);
+    expect(picked.reduce((n, l) => n + l.length, 0)).toBeLessThanOrEqual(60);
+    expect(picked[0]![0]).toBe(0);
+    expect(pickStills([[1, 2, 3]], 60)).toEqual([[1, 2, 3]]);
+  });
+
+  it("macht ohne Musik keine Stille", () => {
+    expect(effectiveTone("stumm", true, false)).toBe("leise");
+    expect(effectiveTone("stumm", true, true)).toBe("stumm");
+    expect(effectiveTone("original", false, false)).toBe("stumm");
+    expect(effectiveTone("original", true, false)).toBe("original");
   });
 
   it("liest das Whisper-JSON", () => {

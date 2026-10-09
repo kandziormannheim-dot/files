@@ -17,6 +17,8 @@ import {
   MIN_SECONDS,
   normalizePlan,
   parseWhisperJson,
+  pickStills,
+  stillTimes,
   type Shot,
   planSchema,
   shotText,
@@ -307,6 +309,53 @@ export async function removeMusic(actor: Actor, id: string) {
 // Ablauf: Analyse → Schnittplan (KI) → Rendern
 // ---------------------------------------------------------------------------
 
+/**
+ * Auftrag einstellen. Die Kennung am Projekt verhindert doppelte Läufe (z. B. wenn die Warteschlange einen
+ * abgebrochenen Job später wiederholt); die Art erlaubt das Fortsetzen nach einem Neustart des Servers.
+ */
+async function queueJob(id: string, mode: ProcessMode, actorId: string | null) {
+  const token = randomBytes(8).toString("hex");
+  await db.videoProject.update({ where: { id }, data: { jobToken: token, jobMode: mode } });
+  await enqueue("video-process", { projectId: id, mode, actorId, token });
+}
+
+/** Nach einem Neustart: unterbrochene Aufträge fortsetzen (läuft beim Serverstart). */
+export async function resumeInterruptedJobs() {
+  const stuck = await db.videoProject.findMany({ where: { status: { in: BUSY } }, select: { id: true, jobMode: true, plan: true } });
+  for (const p of stuck) {
+    const mode = (["full", "plan", "render", "revise"] as const).find((m) => m === p.jobMode) ?? (await lastRequestedMode(p.id, !!planOf(p)));
+    await audit(db, null, "video.resume", "VideoProject", p.id, { mode });
+    await queueJob(p.id, mode, null);
+  }
+  return stuck.length;
+}
+
+/** Für Aufträge ohne gespeicherte Art (vor Einführung von jobMode): letzte Anforderung aus dem Audit-Log. */
+async function lastRequestedMode(id: string, hasPlan: boolean): Promise<ProcessMode> {
+  const last = await db.auditLog.findFirst({
+    where: { entityType: "VideoProject", entityId: id, action: { in: ["video.process", "video.revise", "video.plan_edit"] } },
+    orderBy: { createdAt: "desc" },
+  });
+  if (last?.action === "video.revise") return "revise";
+  if (last?.action === "video.plan_edit") return "render";
+  const m = (last?.diff as { mode?: string } | null)?.mode;
+  return m === "plan" || m === "render" || m === "full" ? m : hasPlan ? "render" : "full";
+}
+
+/** Hängt ein Auftrag (15 Minuten ohne Fortschritt), lässt er sich von Hand neu starten. */
+export function isStalled(p: Pick<VideoProject, "status" | "updatedAt">) {
+  return BUSY.includes(p.status) && Date.now() - p.updatedAt.getTime() > 15 * 60_000;
+}
+
+export async function restartProcessing(actor: Actor, id: string) {
+  const p = await getProject(actor, id);
+  if (!isStalled(p)) throw new UserError("Das Video wird gerade bearbeitet – bitte noch etwas warten.");
+  const mode = (["full", "plan", "render", "revise"] as const).find((m) => m === p.jobMode) ?? (planOf(p) ? "render" : "full");
+  await db.videoProject.update({ where: { id }, data: { progress: 1, error: "" } });
+  await audit(db, actor, "video.restart", "VideoProject", id, { mode });
+  await queueJob(id, mode, actor.id);
+}
+
 export type ProcessMode = "full" | "plan" | "render" | "revise";
 
 export async function startProcessing(actor: Actor, id: string, mode: ProcessMode) {
@@ -317,7 +366,7 @@ export async function startProcessing(actor: Actor, id: string, mode: ProcessMod
   if (mode === "revise" && !aiConfigured()) throw new UserError("Nachbessern braucht die Claude API (ANTHROPIC_API_KEY).");
   await db.videoProject.update({ where: { id }, data: { status: mode === "render" ? "RENDERN" : "ANALYSE", progress: 1, error: "" } });
   await audit(db, actor, "video.process", "VideoProject", id, { mode });
-  await enqueue("video-process", { projectId: id, mode, actorId: actor.id });
+  await queueJob(id, mode, actor.id);
 }
 
 const editSchema = z.object({ plan: z.string().max(100_000) });
@@ -339,7 +388,7 @@ export async function savePlan(actor: Actor, id: string, formData: FormData) {
     await tx.videoProject.update({ where: { id }, data: { plan: plan as unknown as Prisma.InputJsonValue, planSource: "bearbeitet", status: "RENDERN", progress: 1, error: "" } });
     await audit(tx, actor, "video.plan_edit", "VideoProject", id, { shots: plan.shots.length, warnings: warnings.length });
   });
-  await enqueue("video-process", { projectId: id, mode: "render", actorId: actor.id });
+  await queueJob(id, "render", actor.id);
   return warnings;
 }
 
@@ -363,15 +412,17 @@ async function transcribeClip(file: string): Promise<Segment[]> {
 }
 
 async function analyze(project: Awaited<ReturnType<typeof loadForJob>>, warnings: string[]) {
-  const todo = project.clips.filter((c) => !c.analyzedAt);
+  // neue Clips vollständig; ältere Clips nur mit zu wenigen Standbildern (lange Clips bekommen mehr Bilder)
+  const todo = project.clips.filter((c) => !c.analyzedAt || stillsOf(c).length < stillTimes(c.duration ?? 1).length);
   for (const [i, clip] of todo.entries()) {
     const file = absoluteStoredPath(clip.path);
     const stills: Still[] = [];
     for (const [k, s] of (await extractStills(file, clip.duration ?? 1)).entries()) {
       stills.push({ t: s.t, path: await saveFile(path.join(dirOf(project.id), "stills"), `${clip.id}-${k}.jpg`, s.data) });
     }
+    for (const old of stillsOf(clip)) await deleteStoredFile(old.path);
     let transcript: Segment[] | null = null;
-    if (clip.hasAudio && project.subtitles) {
+    if (clip.hasAudio && project.subtitles && !transcriptOf(clip)) {
       try {
         transcript = await transcribeClip(file);
       } catch (err) {
@@ -398,7 +449,7 @@ export async function requestRevision(actor: Actor, id: string, formData: FormDa
     await tx.videoProject.update({ where: { id }, data: { revisionNotes: [...p.revisionNotes, anweisung].slice(-30), status: "SCHNITT", progress: 1, error: "" } });
     await audit(tx, actor, "video.revise", "VideoProject", id, { anweisung });
   });
-  await enqueue("video-process", { projectId: id, mode: "revise", actorId: actor.id });
+  await queueJob(id, "revise", actor.id);
 }
 
 const LOGO_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
@@ -449,7 +500,7 @@ export function clipAliases(clips: Pick<VideoClip, "id">[]) {
   return new Map(clips.map((c, i) => [`C${i + 1}`, c.id]));
 }
 
-export function buildPlanText(project: Pick<VideoProject, "title" | "topic" | "message" | "callToAction" | "direction" | "maxSeconds" | "formats">, clips: { alias: string; clip: VideoClip }[]) {
+export function buildPlanText(project: Pick<VideoProject, "title" | "topic" | "message" | "callToAction" | "direction" | "maxSeconds" | "formats" | "musicPath">, clips: { alias: string; clip: VideoClip }[]) {
   const lines = [
     `<titel>${project.title}</titel>`,
     `<worum_es_geht>${project.topic}</worum_es_geht>`,
@@ -458,6 +509,7 @@ export function buildPlanText(project: Pick<VideoProject, "title" | "topic" | "m
     project.direction ? `<regievorgaben>${project.direction}</regievorgaben>` : "",
     `<formate>${project.formats.join(", ")} (Bild wird füllend zugeschnitten – wichtige Motive in der Bildmitte)</formate>`,
     `<laenge>höchstens ${cutBudget(project.maxSeconds)} Sekunden Schnitt + Abschlusstafel</laenge>`,
+    `<musik>${project.musicPath ? "ja – Bild-Ausschnitte dürfen stumm sein" : "nein – Bild-Ausschnitte mit leisem Originalton (ton: leise), nie stumm"}</musik>`,
     "<clips>",
   ];
   for (const { alias, clip } of clips) {
@@ -497,8 +549,9 @@ async function generatePlan(project: Awaited<ReturnType<typeof loadForJob>>, cli
   const { source } = await getTemplateSource("prompt.video");
   const system = renderText(source, { ov: await ovContext(), video: { maxSekunden: project.maxSeconds, schnittSekunden: cutBudget(project.maxSeconds) } });
   const content: Anthropic.Beta.BetaContentBlockParam[] = [];
-  for (const { alias, clip } of aliases) {
-    for (const s of stillsOf(clip)) {
+  const picked = pickStills(aliases.map(({ clip }) => stillsOf(clip)));
+  for (const [k, { alias }] of aliases.entries()) {
+    for (const s of picked[k] ?? []) {
       content.push({ type: "text", text: `Standbild ${alias} bei ${s.t.toFixed(1)} s:` });
       content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: (await readStoredFile(s.path)).toString("base64") } });
     }
@@ -554,7 +607,11 @@ async function loadForJob(id: string) {
 }
 
 /** Job „video-process“: analysieren, Schnittplan erstellen, rendern. Fehler landen am Projekt. */
-export async function processProject(id: string, mode: ProcessMode, actorId: string | null, client?: Anthropic) {
+export async function processProject(id: string, mode: ProcessMode, actorId: string | null, client?: Anthropic, token?: string) {
+  if (token) {
+    const current = await db.videoProject.findUnique({ where: { id }, select: { jobToken: true } });
+    if (current?.jobToken !== token) return; // überholt durch einen neueren Auftrag
+  }
   const warnings: string[] = [];
   const work = await mkdtemp(path.join(tmpdir(), "ov-videoschnitt-"));
   try {
@@ -606,14 +663,14 @@ export async function processProject(id: string, mode: ProcessMode, actorId: str
     }
     await db.videoProject.update({
       where: { id },
-      data: { status: "FERTIG", progress: 100, error: "", renderedAt: new Date(), outputs: { files, warnings: [...new Set(warnings)] } as unknown as Prisma.InputJsonValue },
+      data: { status: "FERTIG", progress: 100, error: "", jobToken: null, jobMode: null, renderedAt: new Date(), outputs: { files, warnings: [...new Set(warnings)] } as unknown as Prisma.InputJsonValue },
     });
     await audit(db, null, "video.rendered", "VideoProject", id, { formats, actorId });
     for (const f of Object.values(old)) if (f) await deleteStoredFile(f);
   } catch (err) {
     console.error("[video]", err);
     const message = err instanceof UserError || err instanceof PlanRefusedError ? err.message : `Bearbeitung fehlgeschlagen: ${(err as Error).message}`;
-    await db.videoProject.update({ where: { id }, data: { status: "FEHLER", error: message.slice(0, 500), outputs: { ...outputsOf(await loadForJob(id)), warnings } as unknown as Prisma.InputJsonValue } }).catch(() => {});
+    await db.videoProject.update({ where: { id }, data: { status: "FEHLER", error: message.slice(0, 500), jobToken: null, jobMode: null, outputs: { ...outputsOf(await loadForJob(id)), warnings } as unknown as Prisma.InputJsonValue } }).catch(() => {});
   } finally {
     await rm(work, { recursive: true, force: true });
   }

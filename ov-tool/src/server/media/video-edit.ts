@@ -6,7 +6,9 @@ import path from "node:path";
 import { promisify } from "node:util";
 import {
   DEFAULT_LOGO,
+  effectiveTone,
   einblendungWindow,
+  stillTimes,
   LAYOUT,
   LOGO_SCALE,
   OUTRO_SECONDS,
@@ -77,15 +79,16 @@ export async function probe(file: string): Promise<ProbeResult> {
   return parseProbe(JSON.parse(stdout));
 }
 
-/** Standbilder (JPEG, 768 px breit) für Vorschau und KI bei 10 %, 50 % und 85 % der Länge. */
+/** Standbilder (JPEG) für Vorschau und KI zu den Zeitpunkten aus stillTimes(); bei vielen Bildern kleiner. */
 export async function extractStills(file: string, duration: number): Promise<{ t: number; data: Buffer }[]> {
   const dir = await mkdtemp(path.join(tmpdir(), "ov-stills-"));
+  const times = stillTimes(duration);
+  const width = times.length > 3 ? 512 : 768;
   try {
     const out: { t: number; data: Buffer }[] = [];
-    for (const [i, f] of [0.1, 0.5, 0.85].entries()) {
-      const t = Math.round(Math.max(0, Math.min(duration - 0.1, duration * f)) * 10) / 10;
+    for (const [i, t] of times.entries()) {
       const p = path.join(dir, `s${i}.jpg`);
-      await run(ffmpegBin(), ["-y", "-hide_banner", "-loglevel", "error", "-ss", String(t), "-i", file, "-frames:v", "1", "-vf", "scale=768:-2", "-q:v", "4", p], 60_000);
+      await run(ffmpegBin(), ["-y", "-hide_banner", "-loglevel", "error", "-ss", String(t), "-i", file, "-frames:v", "1", "-vf", `scale=${width}:-2`, "-q:v", "5", p], 60_000);
       out.push({ t, data: await readFile(p) });
     }
     return out;
@@ -336,7 +339,7 @@ export async function renderPlan(o: {
       }
     }
     const out = path.join(dir, `seg${String(i).padStart(2, "0")}.mp4`);
-    await run(ffmpegBin(), shotArgs({ input: clip.file, start: shot.start, duration, format: o.format, tone: shot.ton, hasAudio: clip.hasAudio, overlays, out, fadeIn: i === 0 }));
+    await run(ffmpegBin(), shotArgs({ input: clip.file, start: shot.start, duration, format: o.format, tone: effectiveTone(shot.ton, clip.hasAudio, !!o.music), hasAudio: clip.hasAudio, overlays, out, fadeIn: i === 0 }));
     segments.push(out);
     await o.onProgress?.((i + 1) / steps);
   }

@@ -39,6 +39,7 @@ export function PlanEditor({
   disabled,
   formats,
   logo,
+  hasMusic,
 }: {
   projectId: string;
   initial: VideoPlan;
@@ -47,6 +48,7 @@ export function PlanEditor({
   disabled?: boolean;
   formats: VideoFormat[];
   logo: LogoOptions;
+  hasMusic: boolean;
 }) {
   const [plan, setPlan] = useState<VideoPlan>(initial);
   const [layoutShot, setLayoutShot] = useState(0);
@@ -183,7 +185,7 @@ export function PlanEditor({
                     <NativeSelect value={s.ton} onChange={(e) => setShot(i, { ton: e.target.value as Shot["ton"] })} disabled={!clip?.hasAudio}>
                       {SHOT_TONES.map((t) => (
                         <option key={t} value={t}>
-                          {TONE_LABELS[t]}
+                          {t === "stumm" && !hasMusic ? "ohne Ton (ohne Musik: leise)" : TONE_LABELS[t]}
                         </option>
                       ))}
                     </NativeSelect>

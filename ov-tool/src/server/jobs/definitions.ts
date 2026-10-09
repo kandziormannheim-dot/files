@@ -18,5 +18,5 @@ defineJob("bbr-generate", async (d) => {
 defineJob("video-process", async (d) => {
   const { processProject } = await import("@/server/services/video");
   const mode = d.mode === "plan" || d.mode === "render" ? d.mode : "full";
-  return processProject(String(d.projectId), mode, d.actorId ? String(d.actorId) : null);
+  return processProject(String(d.projectId), mode, d.actorId ? String(d.actorId) : null, undefined, d.token ? String(d.token) : undefined);
 });

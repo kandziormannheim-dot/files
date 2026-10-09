@@ -24,6 +24,36 @@ export const SHOT_TONES = ["original", "leise", "stumm"] as const;
 export type ShotTone = (typeof SHOT_TONES)[number];
 export const TONE_LABELS: Record<ShotTone, string> = { original: "O-Ton", leise: "Ton leise", stumm: "ohne Ton" };
 
+/**
+ * Zeitpunkte der Standbilder für Vorschau und KI: kurze Clips 3 Bilder, lange Clips etwa alle 20 Sekunden (höchstens 24),
+ * damit die KI sieht, wer wann im Bild ist (z. B. wer am Rednerpult steht).
+ */
+export function stillTimes(duration: number): number[] {
+  const d = Math.max(0.2, duration);
+  if (d <= 60) return [0.1, 0.5, 0.85].map((f) => Math.round(Math.max(0, Math.min(d - 0.1, d * f)) * 10) / 10);
+  const count = Math.min(24, Math.ceil(d / 20));
+  const step = d / count;
+  return Array.from({ length: count }, (_, i) => Math.round(Math.min(d - 0.5, step * (i + 0.5)) * 10) / 10);
+}
+
+/** Höchstzahl Bilder je KI-Anfrage; bei vielen Clips gleichmäßig ausdünnen. */
+export const MAX_PLAN_IMAGES = 60;
+export function pickStills<T>(perClip: T[][], max = MAX_PLAN_IMAGES): T[][] {
+  const total = perClip.reduce((n, l) => n + l.length, 0);
+  if (total <= max) return perClip;
+  return perClip.map((list) => {
+    const keep = Math.max(1, Math.floor((list.length * max) / total));
+    if (keep >= list.length) return list;
+    return Array.from({ length: keep }, (_, i) => list[Math.floor(((i + 0.5) * list.length) / keep)]!);
+  });
+}
+
+/** Ohne Musik gibt es keine Stille: „ohne Ton“ wird dann mit leisem Originalton gerendert. */
+export function effectiveTone(tone: ShotTone, hasAudio: boolean, hasMusic: boolean): ShotTone {
+  if (!hasAudio) return "stumm";
+  return tone === "stumm" && !hasMusic ? "leise" : tone;
+}
+
 export const LOGO_POSITIONS = { "oben-links": "oben links", "oben-rechts": "oben rechts", "unten-links": "unten links", "unten-rechts": "unten rechts" } as const;
 export type LogoPosition = keyof typeof LOGO_POSITIONS;
 export const LOGO_SIZES = { klein: "klein", mittel: "mittel", gross: "groß", aus: "kein Logo" } as const;

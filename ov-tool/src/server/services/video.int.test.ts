@@ -10,7 +10,7 @@ import { planDuration, type VideoPlan } from "@/lib/video-plan";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
 import { storedFileExists } from "@/server/files";
-import { createProject, outputsOf, planOf, processProject, requestRevision, savePlan, toMarketingPost, updateLogo, uploadChunk } from "./video";
+import { createProject, outputsOf, planOf, processProject, requestRevision, resumeInterruptedJobs, savePlan, toMarketingPost, updateLogo, uploadChunk } from "./video";
 
 const hasFfmpeg = (() => {
   try {
@@ -230,6 +230,23 @@ describe.skipIf(!hasTestDb || !hasFfmpeg)("Videoschnitt (DB, ffmpeg)", () => {
     expect(revised.shots[0]).toMatchObject({ einblendung: "Fakt zwei", einblendungPos: { x: 50, y: 10 }, start: 2.8, end: 5 });
     expect(revised.titelPos).toEqual({ x: 20, y: 30 });
   }, 240_000);
+
+  it("überspringt überholte Aufträge und setzt unterbrochene nach einem Neustart fort", async () => {
+    const v = await makeUser({ role: "VORSTAND" });
+    const project = await createProject(v, form({ ...base, "formats[]": ["1:1"] }));
+    await upload(v as never, project.id, mutedFile, "k.mov", 1);
+    delete process.env.ANTHROPIC_API_KEY;
+    await db.videoProject.update({ where: { id: project.id }, data: { status: "SCHNITT", jobToken: "neu", jobMode: "full" } });
+    await processProject(project.id, "full", v.id, undefined, "alt"); // überholt → nichts passiert
+    expect((await db.videoProject.findUniqueOrThrow({ where: { id: project.id } })).status).toBe("SCHNITT");
+    // Neustart: Auftrag läuft erneut (in Tests sofort) und wird fertig
+    expect(await resumeInterruptedJobs()).toBe(1);
+    const done = await db.videoProject.findUniqueOrThrow({ where: { id: project.id } });
+    expect(done).toMatchObject({ status: "FERTIG", jobToken: null, jobMode: null });
+    // Standbilder für kurze Clips: drei
+    const clip = await db.videoClip.findFirstOrThrow({ where: { projectId: project.id } });
+    expect((clip.stills as unknown[]).length).toBe(3);
+  }, 120_000);
 
   it("geht ohne Whisper ohne Untertitel weiter und meldet das", async () => {
     const v = await makeUser({ role: "VORSTAND" });

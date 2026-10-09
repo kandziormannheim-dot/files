@@ -176,6 +176,9 @@ per Ziehen in der Vorschau verschiebbar, Einblendungen mit eigenem Zeitfenster),
 lässt Claude den bestehenden Schnitt nach einer neuen Anweisung überarbeiten (Verlauf in `revisionNotes`, Handanpassungen bleiben).
 Logo je Video: eigenes Logo (PNG/SVG/JPG/WebP) oder Kanal-Logo, Ecke, Größe, weißes Feld. „Als Social-Media-Beitrag übernehmen“ legt einen Entwurf an;
 veröffentlicht wird erst nach Freigabe. Beim Anlegen muss das Einverständnis der gezeigten Personen bestätigt werden, bei Musik die Nutzungsrechte.
+Ohne Musik gibt es keine stillen Ausschnitte: „ohne Ton“ wird dann mit leisem Originalton gerendert. Lange Clips bekommen
+etwa alle 20 s ein Standbild (max. 24, höchstens 60 Bilder je KI-Anfrage). Laufende Aufträge tragen `jobToken`/`jobMode`;
+nach einem Neustart (z. B. Deploy) setzt `resumeInterruptedJobs()` sie fort, hängende lassen sich nach 15 min von Hand neu starten.
 Clips liegen unter `video/<Projekt>/` in der Dateiablage, bis das Video gelöscht wird.
 ## 7. Variante: Plesk
 

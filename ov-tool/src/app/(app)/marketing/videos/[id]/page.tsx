@@ -16,7 +16,7 @@ import { isVideoFormat, LOGO_POSITIONS, LOGO_SIZES, logoOptions, planDuration, V
 import { requirePageCapability } from "@/server/auth/session";
 import { NotFoundError } from "@/server/errors";
 import { aiConfigured } from "@/server/services/ai-draft";
-import { getProject, isBusy, outputsOf, planOf, stillsOf, transcriptOf } from "@/server/services/video";
+import { getProject, isBusy, isStalled, outputsOf, planOf, stillsOf, transcriptOf } from "@/server/services/video";
 import { MARKETING_STATUS } from "../../labels";
 import {
   deleteProjectAction,
@@ -24,6 +24,7 @@ import {
   removeLogoAction,
   removeMusicAction,
   requestRevisionAction,
+  restartProcessingAction,
   setMusicAction,
   startProcessingAction,
   toMarketingPostAction,
@@ -69,6 +70,16 @@ export default async function VideoProjectPage({ params }: { params: Promise<{ i
         <Card className="mb-4">
           <CardContent className="pt-6">
             <StatusPoller projectId={p.id} status={p.status} progress={p.progress} />
+            {isStalled(p) ? (
+              <div className="mt-3 flex flex-wrap items-center gap-3 border-t pt-3 text-sm">
+                <span>Seit über 15 Minuten kein Fortschritt – möglicherweise wurde der Server neu gestartet.</span>
+                <ActionForm action={restartProcessingAction.bind(null, p.id)}>
+                  <SubmitButton variant="outline" size="sm" pendingText="…">
+                    Neu starten
+                  </SubmitButton>
+                </ActionForm>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
@@ -238,6 +249,7 @@ export default async function VideoProjectPage({ params }: { params: Promise<{ i
                 projectId={p.id}
                 initial={plan}
                 formats={p.formats.filter(isVideoFormat)}
+                hasMusic={!!p.musicPath}
                 logo={logoOptions(p)}
                 maxSeconds={p.maxSeconds}
                 disabled={busy}

@@ -12,6 +12,7 @@ import {
   removeLogo,
   removeMusic,
   requestRevision,
+  restartProcessing,
   savePlan,
   setMusic,
   startProcessing,
@@ -140,5 +141,13 @@ export async function removeLogoAction(id: string, _prev: ActionState): Promise<
     await removeLogo(await requireUser(), id);
     refresh(id);
     return "Eigenes Logo entfernt – es gilt wieder das Kanal-Logo.";
+  });
+}
+
+export async function restartProcessingAction(id: string, _prev: ActionState): Promise<ActionState> {
+  return runAction(async () => {
+    await restartProcessing(await requireUser(), id);
+    refresh(id);
+    return "Bearbeitung neu gestartet.";
   });
 }

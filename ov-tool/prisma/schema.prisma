@@ -1545,6 +1545,9 @@ model VideoProject {
   logoChip             Boolean       @default(true)
   /// Nachbesserungen per Regieanweisung (Verlauf, neueste zuletzt)
   revisionNotes        String[]      @default([])
+  /// laufender Auftrag: Kennung (gegen doppelte Läufe) und Art, damit er nach einem Neustart fortgesetzt werden kann
+  jobToken             String?
+  jobMode              String?
   status               VideoStatus   @default(ENTWURF)
   progress             Int           @default(0)
   error                String        @default("")
