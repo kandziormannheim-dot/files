@@ -110,9 +110,9 @@ describe.skipIf(!hasTestDb || !hasFfmpeg)("Videoschnitt (DB, ffmpeg)", () => {
       titel: "Gefährlicher Schulweg?",
       unterzeile: "",
       shots: [
-        { clipId: "C1", start: 0.6, end: 2.4, ton: "original", einblendung: "", untertitel: true }, // wird an Wortgrenzen gelegt
-        { clipId: "C2", start: 0.5, end: 3.5, ton: "original", einblendung: "300 Kinder täglich", untertitel: true }, // ohne Ton → stumm
-        { clipId: "C1", start: 3.0, end: 5.5, ton: "original", einblendung: "", untertitel: true },
+        { clipId: "C1", start: 0.6, end: 2.4, ton: "original", einblendung: "", untertitel: true, untertitelText: "" }, // wird an Wortgrenzen gelegt
+        { clipId: "C2", start: 0.5, end: 3.5, ton: "original", einblendung: "300 Kinder täglich", untertitel: true, untertitelText: "" }, // ohne Ton → stumm
+        { clipId: "C1", start: 3.0, end: 5.5, ton: "original", einblendung: "", untertitel: true, untertitelText: "" },
       ],
       abschluss: "Sichere Schulwege",
       aufruf: "Mehr auf cdu-sf.de",
@@ -144,7 +144,7 @@ describe.skipIf(!hasTestDb || !hasFfmpeg)("Videoschnitt (DB, ffmpeg)", () => {
     const saved = planOf(done)!;
     expect(saved.shots.map((s) => s.clipId)).toEqual([clips[0]!.id, clips[1]!.id, clips[0]!.id]);
     expect(saved.shots[0]).toMatchObject({ start: 0.28, end: 2.7 });
-    expect(saved.shots[1]).toMatchObject({ ton: "stumm", untertitel: false });
+    expect(saved.shots[1]).toMatchObject({ ton: "stumm", untertitel: false, untertitelText: "" });
     expect(planDuration(saved)).toBeLessThanOrEqual(20);
     const files = outputsOf(done).files;
     expect(Object.keys(files).sort()).toEqual(["1:1", "9:16"]);

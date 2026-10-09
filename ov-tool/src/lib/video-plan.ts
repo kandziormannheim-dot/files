@@ -33,6 +33,8 @@ export const shotSchema = z.object({
   ton: z.enum(SHOT_TONES),
   einblendung: z.string(),
   untertitel: z.boolean(),
+  /** korrigierter Untertiteltext (leer = Transkript von Whisper) */
+  untertitelText: z.string().default(""),
 });
 export type Shot = z.infer<typeof shotSchema>;
 
@@ -128,6 +130,7 @@ export function normalizePlan(plan: VideoPlan, clips: ClipInfo[], maxSeconds: nu
       ton: tone,
       einblendung: raw.einblendung.trim().slice(0, 80),
       untertitel: tone !== "stumm" && raw.untertitel && !!clip.transcript?.length,
+      untertitelText: (raw.untertitelText ?? "").replace(/\s+/g, " ").trim().slice(0, 400),
     };
     shots.push(shot);
     used += shot.end - shot.start;
@@ -164,6 +167,7 @@ export function fallbackPlan(clips: ClipInfo[], maxSeconds: number, texts: { tit
         ton: c.hasAudio ? "original" : "stumm",
         einblendung: i === Math.floor(usable.length / 2) ? texts.botschaft.slice(0, 60) : "",
         untertitel: c.hasAudio,
+        untertitelText: "",
       };
     }),
     abschluss: texts.botschaft,
@@ -180,8 +184,9 @@ export type Cue = { from: number; to: number; text: string };
  * Untertitel-Zeilen für einen Ausschnitt, Zeiten relativ zum Ausschnittbeginn.
  * Höchstens 7 Wörter, 42 Zeichen (zwei kurze Zeilen) oder 3 Sekunden je Untertitel; Umbruch bevorzugt nach Satzzeichen.
  */
-export function subtitleCues(shot: Pick<Shot, "start" | "end">, segments: Segment[] | null | undefined): Cue[] {
+export function subtitleCues(shot: Pick<Shot, "start" | "end"> & { untertitelText?: string }, segments: Segment[] | null | undefined): Cue[] {
   const words = wordsOf(segments).filter((w) => w.end > shot.start + 0.05 && w.start < shot.end - 0.05);
+  if (shot.untertitelText?.trim()) return correctedCues(shot.untertitelText, shot, words);
   const cues: Cue[] = [];
   let cur: Word[] = [];
   const flush = () => {
@@ -207,6 +212,38 @@ export function subtitleCues(shot: Pick<Shot, "start" | "end">, segments: Segmen
   return (segments ?? [])
     .filter((s) => s.end > shot.start && s.start < shot.end && s.text.trim())
     .map((s) => ({ from: r2(Math.max(0, s.start - shot.start)), to: r2(Math.min(shot.end, s.end) - shot.start), text: s.text.trim() }));
+}
+
+/**
+ * Korrigierter Text: in Zeilen wie oben teilen und über die Sprechzeit (erstes bis letztes erkanntes Wort) verteilen,
+ * anteilig nach Zeichen – Whisper-Fehler lassen sich so beheben, ohne Zeitstempel von Hand zu setzen.
+ */
+function correctedCues(text: string, shot: Pick<Shot, "start" | "end">, words: Word[]): Cue[] {
+  const dur = shot.end - shot.start;
+  const from = words.length ? Math.max(0, words[0]!.start - shot.start) : 0;
+  const to = words.length ? Math.min(dur, words[words.length - 1]!.end - shot.start + 0.15) : dur;
+  const lines: string[] = [];
+  let cur: string[] = [];
+  for (const w of text.replace(/\s+/g, " ").trim().split(" ")) {
+    if (cur.length && (cur.length >= 7 || [...cur, w].join(" ").length > 42)) {
+      lines.push(cur.join(" "));
+      cur = [];
+    }
+    cur.push(w);
+    if (/[.!?;:,]$/.test(w) && cur.length >= 2) {
+      lines.push(cur.join(" "));
+      cur = [];
+    }
+  }
+  if (cur.length) lines.push(cur.join(" "));
+  const total = lines.reduce((n, l) => n + l.length, 0) || 1;
+  let t = from;
+  return lines.map((l) => {
+    const len = ((to - from) * l.length) / total;
+    const cue = { from: r2(t), to: r2(t + len), text: l };
+    t += len;
+    return cue;
+  });
 }
 
 /** Transkripttext eines Ausschnitts (für Editor und KI-Kontrolle). */

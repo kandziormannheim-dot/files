@@ -56,8 +56,8 @@ describe.skipIf(!process.env.VIDEO_RENDER_TEST)("Videoschnitt – Rendern", () =
       titel: "Sicherer Schulweg?",
       unterzeile: "Kreuzung Hauptstraße",
       shots: [
-        { clipId: "q", start: 0.3, end: 3.0, ton: "original", einblendung: "", untertitel: true },
-        { clipId: "h", start: 1, end: 4, ton: "stumm", einblendung: "Täglich 300 Kinder", untertitel: false },
+        { clipId: "q", start: 0.3, end: 3.0, ton: "original", einblendung: "", untertitel: true, untertitelText: "" },
+        { clipId: "h", start: 1, end: 4, ton: "stumm", einblendung: "Täglich 300 Kinder", untertitel: false, untertitelText: "" },
       ],
       abschluss: "Gemeinsam für sichere Schulwege",
       aufruf: "Mehr auf cdu-sf.de",

@@ -37,16 +37,16 @@ describe("Schnittplan", () => {
     const plan: VideoPlan = {
       ...base,
       shots: [
-        { clipId: "x", start: 0, end: 3, ton: "original", einblendung: "", untertitel: true },
-        { clipId: "a", start: 0.4, end: 3.0, ton: "original", einblendung: "", untertitel: true },
-        { clipId: "b", start: 2, end: 14, ton: "original", einblendung: "Hier fehlt ein Überweg", untertitel: true },
-        { clipId: "a", start: 3.3, end: 5.7, ton: "original", einblendung: "", untertitel: true },
-        { clipId: "b", start: 15, end: 25, ton: "stumm", einblendung: "", untertitel: false },
+        { clipId: "x", start: 0, end: 3, ton: "original", einblendung: "", untertitel: true, untertitelText: "" },
+        { clipId: "a", start: 0.4, end: 3.0, ton: "original", einblendung: "", untertitel: true, untertitelText: "" },
+        { clipId: "b", start: 2, end: 14, ton: "original", einblendung: "Hier fehlt ein Überweg", untertitel: true, untertitelText: "" },
+        { clipId: "a", start: 3.3, end: 5.7, ton: "original", einblendung: "", untertitel: true, untertitelText: "" },
+        { clipId: "b", start: 15, end: 25, ton: "stumm", einblendung: "", untertitel: false, untertitelText: "" },
       ],
     };
     const { plan: out, warnings } = normalizePlan(plan, [clipA, clipB], 20);
     expect(out.shots.map((s) => s.clipId)).toEqual(["a", "b", "a"]);
-    expect(out.shots[1]).toMatchObject({ ton: "stumm", untertitel: false });
+    expect(out.shots[1]).toMatchObject({ ton: "stumm", untertitel: false, untertitelText: "" });
     expect(planDuration(out)).toBeLessThanOrEqual(20);
     expect(out.shots[2]!.end).toBeLessThanOrEqual(5.8);
     expect(warnings.some((w) => w.includes("unbekannten Clip"))).toBe(true);
@@ -54,7 +54,7 @@ describe("Schnittplan", () => {
   });
 
   it("verlängert zu kurze Ausschnitte auf 1,5 Sekunden", () => {
-    const { plan } = normalizePlan({ ...base, shots: [{ clipId: "b", start: 19.5, end: 19.8, ton: "stumm", einblendung: "", untertitel: false }] }, [clipB], 30);
+    const { plan } = normalizePlan({ ...base, shots: [{ clipId: "b", start: 19.5, end: 19.8, ton: "stumm", einblendung: "", untertitel: false, untertitelText: "" }] }, [clipB], 30);
     expect(plan.shots[0]).toMatchObject({ start: 18.5, end: 20 });
   });
 
@@ -64,6 +64,10 @@ describe("Schnittplan", () => {
     expect(cues[0]!.from).toBeCloseTo(0.1);
     expect(cues[1]!.to).toBeLessThanOrEqual(5.4);
     expect(shotText({ start: 3.3, end: 5.7 }, seg)).toBe("Wir brauchen einen Zebrastreifen.");
+    // korrigierter Text wird über die Sprechzeit verteilt
+    const fixed = subtitleCues({ start: 3.3, end: 5.7, untertitelText: "Wir brauchen endlich einen Zebrastreifen." }, seg);
+    expect(fixed).toEqual([{ from: 0.1, to: 2.4, text: "Wir brauchen endlich einen Zebrastreifen." }]);
+    expect(subtitleCues({ start: 0, end: 4, untertitelText: "Eins zwei drei vier fünf sechs sieben acht neun." }, []).map((c) => c.text)).toEqual(["Eins zwei drei vier fünf sechs sieben", "acht neun."]);
   });
 
   it("baut ohne KI einen gleichmäßigen Schnitt", () => {

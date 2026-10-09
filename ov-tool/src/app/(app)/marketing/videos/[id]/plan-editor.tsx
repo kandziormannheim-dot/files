@@ -35,7 +35,7 @@ export function PlanEditor({ projectId, initial, clips, maxSeconds, disabled }: 
   const add = () => {
     const c = clips[0];
     if (!c) return;
-    setPlan((p) => ({ ...p, shots: [...p.shots, { clipId: c.id, start: 0, end: Math.min(c.duration, 3), ton: c.hasAudio ? "original" : "stumm", einblendung: "", untertitel: c.hasAudio }] }));
+    setPlan((p) => ({ ...p, shots: [...p.shots, { clipId: c.id, start: 0, end: Math.min(c.duration, 3), ton: c.hasAudio ? "original" : "stumm", einblendung: "", untertitel: c.hasAudio, untertitelText: "" }] }));
   };
 
   const preview = (s: Shot) => {
@@ -161,8 +161,28 @@ export function PlanEditor({ projectId, initial, clips, maxSeconds, disabled }: 
               </div>
               <p className="mt-1 text-xs text-neutral-600">
                 {fmt(Math.max(0, s.end - s.start))} s{s.end - s.start < MIN_SHOT ? " – wird auf 1,5 s verlängert" : ""}
-                {text ? <> · „{text}“</> : null}
+                {text && !(s.untertitel && s.ton !== "stumm") ? <> · „{text}“</> : null}
               </p>
+              {s.untertitel && s.ton !== "stumm" && text ? (
+                <label className="mt-2 flex flex-col gap-0.5 text-xs">
+                  Untertitel – bei Erkennungsfehlern hier korrigieren
+                  <Textarea
+                    rows={2}
+                    maxLength={400}
+                    value={s.untertitelText || text}
+                    onChange={(e) => setShot(i, { untertitelText: e.target.value.trim() === text ? "" : e.target.value })}
+                    className={s.untertitelText ? "border-union-gold" : ""}
+                  />
+                  {s.untertitelText ? (
+                    <span>
+                      korrigiert · erkannt war: „{text}“{" "}
+                      <button type="button" className="underline" onClick={() => setShot(i, { untertitelText: "" })}>
+                        zurücksetzen
+                      </button>
+                    </span>
+                  ) : null}
+                </label>
+              ) : null}
             </li>
           );
         })}

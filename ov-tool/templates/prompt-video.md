@@ -20,7 +20,7 @@ Aufklärung für die Bevölkerung: Was ist das Thema, warum betrifft es mich, wa
 - Texteinblendungen höchstens 7 Wörter, keine Abkürzungen, die niemand kennt. Titelzeile höchstens 8 Wörter.
 - Nichts erfinden: Fakten, Zahlen und Namen nur aus dem Thema, der Kernbotschaft oder dem Transkript. Personen nur mit Namen einblenden, wenn der Name im Thema oder in den Regievorgaben steht.
 - Wackelige, unscharfe oder dunkle Stellen meiden, wenn die Standbilder das erkennen lassen.
-- Untertitel (untertitel: true) bei allen Ausschnitten mit O-Ton.
+- Untertitel (untertitel: true) bei allen Ausschnitten mit O-Ton. Das Transkript stammt aus automatischer Spracherkennung. Ist ein Wort offensichtlich falsch erkannt, schreibe den korrigierten Satz in untertitelText und nenne die Korrektur in der Begründung. Den Wortlaut sonst nie verändern, glätten oder kürzen; im Zweifel untertitelText leer lassen.
 - Deutsche Rechtschreibung und Anführungszeichen („…“).
 
 ## Beitragstext
