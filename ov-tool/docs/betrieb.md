@@ -174,6 +174,9 @@ Ablauf (Job `video-process`, `src/server/services/video.ts`):
 Der Schnitt bleibt ein Vorschlag: im Editor änderbar (Ausschnitte, Texte, Untertitel; Titelzeile, Einblendungen und Untertitel
 per Ziehen in der Vorschau verschiebbar, Einblendungen mit eigenem Zeitfenster), danach neu rendern. „Nachbessern mit Regieanweisung“
 lässt Claude den bestehenden Schnitt nach einer neuen Anweisung überarbeiten (Verlauf in `revisionNotes`, Handanpassungen bleiben).
+Zuschneiden je Ausschnitt: Originalclip abspielen, „Anfang hier“/„Ende hier“, Griffe auf der Zeitleiste, ±0,5 s, Sätze aus dem
+Transkript übernehmen („ab hier“, „bis hier“, „nur Satz“). Ausschnitte desselben Clips dürfen sich nicht überschneiden (Editor warnt,
+beim Speichern wird gekürzt), damit keine Stelle doppelt vorkommt.
 Logo je Video: eigenes Logo (PNG/SVG/JPG/WebP) oder Kanal-Logo, Ecke, Größe, weißes Feld. „Als Social-Media-Beitrag übernehmen“ legt einen Entwurf an;
 veröffentlicht wird erst nach Freigabe. Beim Anlegen muss das Einverständnis der gezeigten Personen bestätigt werden, bei Musik die Nutzungsrechte.
 Ohne Musik gibt es keine stillen Ausschnitte: „ohne Ton“ wird dann mit leisem Originalton gerendert. Lange Clips bekommen

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Play, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Play, Plus, Scissors, Trash2 } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import {
   cutBudget,
   MIN_SHOT,
   OUTRO_SECONDS,
+  overlappingShots,
   planDuration,
   SHOT_TONES,
   shotText,
@@ -25,6 +26,7 @@ import {
   type VideoPlan,
 } from "@/lib/video-plan";
 import { LayoutPreview } from "./layout-preview";
+import { ShotTrimmer } from "./shot-trimmer";
 import { savePlanAction } from "../actions";
 
 export type EditorClip = { id: string; name: string; duration: number; hasAudio: boolean; hasStill: boolean; transcript: Segment[] | null };
@@ -52,11 +54,13 @@ export function PlanEditor({
 }) {
   const [plan, setPlan] = useState<VideoPlan>(initial);
   const [layoutShot, setLayoutShot] = useState(0);
+  const [trimIndex, setTrimIndex] = useState<number | null>(null);
   const [layoutFormat, setLayoutFormat] = useState<VideoFormat>(formats[0] ?? "9:16");
   const video = useRef<HTMLVideoElement>(null);
   const stopAt = useRef<number | null>(null);
   const byId = new Map(clips.map((c) => [c.id, c]));
   const total = planDuration(plan);
+  const overlaps = overlappingShots(plan.shots);
   const over = total > maxSeconds + 0.05;
 
   const setShot = (i: number, patch: Partial<Shot>) => setPlan((p) => ({ ...p, shots: p.shots.map((s, k) => (k === i ? { ...s, ...patch } : s)) }));
@@ -152,7 +156,7 @@ export function PlanEditor({
           const clip = byId.get(s.clipId);
           const text = clip?.transcript ? shotText(s, clip.transcript) : "";
           return (
-            <li key={i} className="rounded-md border p-3">
+            <li key={i} className={`rounded-md border p-3 ${overlaps.has(i) ? "border-red-400" : ""}`}>
               <div className="flex flex-wrap items-start gap-3">
                 <div className="flex w-full items-center gap-2 sm:w-auto">
                   <span className="w-6 text-sm font-bold">{i + 1}.</span>
@@ -194,9 +198,9 @@ export function PlanEditor({
                     Texteinblendung (optional, max. 7 Wörter)
                     <Input value={s.einblendung} maxLength={80} onChange={(e) => setShot(i, { einblendung: e.target.value })} />
                   </label>
-                  <div className="flex gap-2 text-xs">
+                  <div className="flex gap-2 text-xs sm:col-span-2">
                     <label className="flex w-1/2 flex-col gap-0.5">
-                      Einbl. ab (s)
+                      Einblendung ab (s)
                       <Input
                         type="number"
                         step={0.1}
@@ -220,12 +224,22 @@ export function PlanEditor({
                       />
                     </label>
                   </div>
-                  <label className="flex items-center gap-2 self-end pb-2 text-xs">
+                  <label className="flex items-center gap-2 text-xs sm:col-span-4">
                     <input type="checkbox" className="size-4 accent-akzent-dunkel" checked={s.untertitel} disabled={!clip?.transcript?.length || s.ton === "stumm"} onChange={(e) => setShot(i, { untertitel: e.target.checked })} />
                     Untertitel
                   </label>
                 </div>
                 <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant={trimIndex === i ? "default" : "outline"}
+                    size="sm"
+                    aria-expanded={trimIndex === i}
+                    onClick={() => setTrimIndex(trimIndex === i ? null : i)}
+                    disabled={!clip}
+                  >
+                    <Scissors className="size-4" /> Zuschneiden
+                  </Button>
                   <Button type="button" variant="ghost" size="icon" aria-label="Ausschnitt abspielen" onClick={() => preview(s)}>
                     <Play className="size-4" />
                   </Button>
@@ -240,6 +254,22 @@ export function PlanEditor({
                   </Button>
                 </div>
               </div>
+              {trimIndex === i && clip ? (
+                <ShotTrimmer
+                  key={`${i}-${s.clipId}`}
+                  clipId={s.clipId}
+                  duration={clip.duration}
+                  transcript={clip.transcript}
+                  start={s.start}
+                  end={s.end}
+                  onChange={(r) => setShot(i, r)}
+                />
+              ) : null}
+              {overlaps.has(i) ? (
+                <p className="mt-1 text-xs font-semibold text-red-700" role="alert">
+                  Überschneidet sich mit Ausschnitt {overlaps.get(i)! + 1} – diese Stelle käme doppelt vor. Beim Speichern wird der Ausschnitt ab {fmt(plan.shots[overlaps.get(i)!]!.end)} s gekürzt; besser „von“ hier anpassen.
+                </p>
+              ) : null}
               <p className="mt-1 text-xs text-neutral-600">
                 {fmt(Math.max(0, s.end - s.start))} s{s.end - s.start < MIN_SHOT ? " – wird auf 1,5 s verlängert" : ""}
                 {text && !(s.untertitel && s.ton !== "stumm") ? <> · „{text}“</> : null}

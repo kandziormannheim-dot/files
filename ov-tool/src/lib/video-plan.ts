@@ -194,7 +194,7 @@ export function normalizePlan(plan: z.input<typeof planSchema> | VideoPlan, clip
   const budget = cutBudget(maxSeconds);
   let used = 0;
   const shots: Shot[] = [];
-  for (const raw of plan.shots.slice(0, MAX_SHOTS) as Shot[]) {
+  for (const [index, raw] of (plan.shots.slice(0, MAX_SHOTS) as Shot[]).entries()) {
     const clip = byId.get(raw.clipId);
     if (!clip) {
       warnings.push("Ein Ausschnitt verweist auf einen unbekannten Clip und wurde entfernt.");
@@ -210,6 +210,16 @@ export function normalizePlan(plan: z.input<typeof planSchema> | VideoPlan, clip
     if (end - start < MIN_SHOT - 0.01) {
       warnings.push("Ein Ausschnitt war kürzer als 1,5 Sekunden und wurde entfernt.");
       continue;
+    }
+    // Keine Stelle doppelt: Überschneidung mit einem früheren Ausschnitt aus demselben Clip abschneiden
+    const cut = removeOverlaps({ clipId: clip.id, start, end }, shots, clip.transcript);
+    if (cut.changed) {
+      if (!cut.range || cut.range.end - cut.range.start < MIN_SHOT - 0.01) {
+        warnings.push(`Ausschnitt ${index + 1} wiederholte eine Stelle aus einem früheren Ausschnitt und wurde entfernt.`);
+        continue;
+      }
+      ({ start, end } = cut.range);
+      warnings.push(`Ausschnitt ${index + 1} wiederholte eine Stelle aus einem früheren Ausschnitt und wurde gekürzt.`);
     }
     const remaining = budget - used;
     if (remaining < MIN_SHOT) {
@@ -252,6 +262,46 @@ export function normalizePlan(plan: z.input<typeof planSchema> | VideoPlan, clip
     },
     warnings: [...new Set(warnings)],
   };
+}
+
+/** Paare von Ausschnitten (Indizes), die dieselbe Stelle eines Clips zeigen würden – für die Warnung im Editor. */
+export function overlappingShots(shots: Pick<Shot, "clipId" | "start" | "end">[]): Map<number, number> {
+  const out = new Map<number, number>();
+  shots.forEach((s, i) => {
+    for (let k = 0; k < i; k++) {
+      const p = shots[k]!;
+      if (p.clipId === s.clipId && s.start < p.end - 0.05 && s.end > p.start + 0.05) {
+        out.set(i, k);
+        break;
+      }
+    }
+  });
+  return out;
+}
+
+/**
+ * Bereich ohne Überschneidung mit früheren Ausschnitten desselben Clips. Beginnt der Ausschnitt in einem früheren,
+ * startet er an dessen Ende (am nächsten Wortanfang); ragt er in einen späteren Bereich hinein, endet er davor.
+ */
+function removeOverlaps(shot: { clipId: string; start: number; end: number }, previous: Shot[], segments: Segment[] | null | undefined) {
+  let { start, end } = shot;
+  let changed = false;
+  const words = wordsOf(segments);
+  for (let pass = 0; pass < previous.length + 1; pass++) {
+    const hit = previous.find((p) => p.clipId === shot.clipId && start < p.end - 0.05 && end > p.start + 0.05);
+    if (!hit) break;
+    changed = true;
+    if (start >= hit.start - 0.05) {
+      // beginnt im früheren Ausschnitt → hinter dessen Ende, am nächsten Wortanfang
+      const next = words.find((w) => w.start >= hit.end - 0.02);
+      start = next && next.start - 0.05 < end ? Math.max(hit.end, next.start - 0.05) : hit.end;
+    } else {
+      // beginnt davor und läuft hinein → vor dem früheren Ausschnitt enden
+      end = hit.start;
+    }
+    if (end - start <= 0) return { changed, range: null };
+  }
+  return { changed, range: changed ? { start: r2(start), end: r2(end) } : { start, end } };
 }
 
 /** Einfacher Schnitt ohne KI: alle Clips nacheinander, gleich lang, Ton nach Verfügbarkeit. */

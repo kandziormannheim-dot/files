@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { effectiveTone, einblendungWindow, fallbackPlan, normalizePlan, pickStills, stillTimes, parseWhisperJson, planDuration, shotText, snapToWords, subtitleCues, type Segment, type VideoPlan } from "./video-plan";
+import { effectiveTone, overlappingShots, einblendungWindow, fallbackPlan, normalizePlan, pickStills, stillTimes, parseWhisperJson, planDuration, shotText, snapToWords, subtitleCues, type Segment, type VideoPlan } from "./video-plan";
 
 const words = (list: [number, number, string][]) => list.map(([start, end, word]) => ({ start, end, word }));
 const seg: Segment[] = [
@@ -116,6 +116,32 @@ describe("Schnittplan", () => {
     expect(picked.reduce((n, l) => n + l.length, 0)).toBeLessThanOrEqual(60);
     expect(picked[0]![0]).toBe(0);
     expect(pickStills([[1, 2, 3]], 60)).toEqual([[1, 2, 3]]);
+  });
+
+  it("wiederholt keine Stelle: Überschneidungen werden gekürzt oder entfernt", () => {
+    const long = { id: "g", duration: 900, hasAudio: false, transcript: null };
+    const shot = (start: number, end: number) => ({ clipId: "g", start, end, ton: "stumm" as const, einblendung: "", untertitel: false, untertitelText: "" });
+    // wie im Gemeinderats-Video: 11 = 886,34–894,92, 12 = 887,56–896,6
+    const shots = [shot(886.34, 894.92), shot(887.56, 896.6)];
+    expect(overlappingShots(shots)).toEqual(new Map([[1, 0]]));
+    const { plan, warnings } = normalizePlan({ ...base, shots }, [long], 320);
+    expect(plan.shots.map((s) => [s.start, s.end])).toEqual([
+      [886.34, 894.92],
+      [894.92, 896.6],
+    ]);
+    expect(warnings.join(" ")).toContain("Ausschnitt 2 wiederholte eine Stelle");
+    expect(overlappingShots(plan.shots).size).toBe(0);
+    // ganz enthalten → entfällt; endet im späteren Bereich → endet davor
+    expect(normalizePlan({ ...base, shots: [shot(100, 120), shot(105, 110)] }, [long], 320).plan.shots).toHaveLength(1);
+    expect(normalizePlan({ ...base, shots: [shot(100, 120), shot(90, 105)] }, [long], 320).plan.shots[1]).toMatchObject({ start: 90, end: 100 });
+    // O-Ton: neuer Anfang am nächsten Wortanfang
+    const { plan: p2 } = normalizePlan(
+      { ...base, shots: [{ ...shot(0.4, 3.0), ton: "original" as const }, { ...shot(1.0, 5.7), ton: "original" as const }] },
+      [{ id: "g", duration: 8, hasAudio: true, transcript: seg }],
+      30,
+    );
+    expect(p2.shots[1]!.start).toBeGreaterThanOrEqual(p2.shots[0]!.end);
+    expect(overlappingShots(p2.shots).size).toBe(0);
   });
 
   it("macht ohne Musik keine Stille", () => {

@@ -21,6 +21,7 @@ Aufklärung für die Bevölkerung: Was ist das Thema, warum betrifft es mich, wa
 ## Regeln
 
 - Nur Clips und Zeiten verwenden, die es gibt. Jeder Ausschnitt mindestens 1,5 Sekunden, O-Töne in kurzen Videos in der Regel 3–8 Sekunden.
+- Keine Stelle doppelt: Ausschnitte aus demselben Clip dürfen sich zeitlich nicht überschneiden (sonst springt das Video zurück und wiederholt sich).
 - Gesamtlänge aller Ausschnitte höchstens {{video.schnittSekunden}} Sekunden (die Abschlusstafel kommt dazu).
 - Texteinblendungen höchstens 7 Wörter, keine Abkürzungen, die niemand kennt. Titelzeile höchstens 8 Wörter.
 - Nichts erfinden: Fakten, Zahlen und Namen nur aus dem Thema, der Kernbotschaft oder dem Transkript. Personen nur mit Namen einblenden, wenn der Name im Thema oder in den Regievorgaben steht.
