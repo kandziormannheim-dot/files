@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionState } from "@/lib/action-state";
-import { FORMAT_KEYS, VIDEO_FORMATS } from "@/lib/video-plan";
+import { FORMAT_KEYS, MAX_SECONDS, MIN_SECONDS, VIDEO_FORMATS } from "@/lib/video-plan";
 
 type Action = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
@@ -65,8 +65,8 @@ export function ProjectForm({ action, project, submitLabel }: { action: Action; 
           <option value="BBR">CDU-Gruppe im Bezirksbeirat</option>
         </NativeSelect>
       </Field>
-      <Field label="Höchstlänge (Sekunden)" name="maxSeconds" hint="inklusive 3 Sekunden Abschlusstafel">
-        <Input id="maxSeconds" name="maxSeconds" type="number" min={10} max={60} defaultValue={project?.maxSeconds ?? 30} required />
+      <Field label="Höchstlänge (Sekunden)" name="maxSeconds" hint={`${MIN_SECONDS}–${MAX_SECONDS} s inklusive 3 s Abschlusstafel; Reels wirken bis 60 s am besten, längere Erklärvideos z. B. für YouTube oder Facebook`}>
+        <Input id="maxSeconds" name="maxSeconds" type="number" min={MIN_SECONDS} max={MAX_SECONDS} defaultValue={project?.maxSeconds ?? 30} required />
       </Field>
       <Field label="Musiklautstärke unter O-Tönen (%)" name="musicVolume" hint="nur wenn Musik hochgeladen ist; die Musik wird bei Sprache automatisch leiser">
         <Input id="musicVolume" name="musicVolume" type="number" min={0} max={60} defaultValue={project?.musicVolume ?? 15} />

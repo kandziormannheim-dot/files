@@ -9,11 +9,14 @@ import {
   createProject,
   deleteProject,
   removeClip,
+  removeLogo,
   removeMusic,
+  requestRevision,
   savePlan,
   setMusic,
   startProcessing,
   toMarketingPost,
+  updateLogo,
   updateProject,
   type ProcessMode,
 } from "@/server/services/video";
@@ -114,4 +117,28 @@ export async function autoStartAction(id: string): Promise<{ ok: boolean; error?
   });
   refresh(id);
   return r?.ok ? { ok: true } : { ok: false, error: r?.error };
+}
+
+export async function requestRevisionAction(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await requestRevision(await requireUser(), id, formData);
+    refresh(id);
+    return "Nachbesserung läuft – Claude überarbeitet den Schnitt, danach wird neu gerendert.";
+  });
+}
+
+export async function updateLogoAction(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
+  return runAction(async () => {
+    await updateLogo(await requireUser(), id, formData);
+    refresh(id);
+    return "Logo-Einstellungen gespeichert. Sie gelten beim nächsten Rendern.";
+  });
+}
+
+export async function removeLogoAction(id: string, _prev: ActionState): Promise<ActionState> {
+  return runAction(async () => {
+    await removeLogo(await requireUser(), id);
+    refresh(id);
+    return "Eigenes Logo entfernt – es gilt wieder das Kanal-Logo.";
+  });
 }

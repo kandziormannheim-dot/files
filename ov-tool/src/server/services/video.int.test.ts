@@ -10,7 +10,7 @@ import { planDuration, type VideoPlan } from "@/lib/video-plan";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
 import { storedFileExists } from "@/server/files";
-import { createProject, outputsOf, planOf, processProject, savePlan, toMarketingPost, uploadChunk } from "./video";
+import { createProject, outputsOf, planOf, processProject, requestRevision, savePlan, toMarketingPost, updateLogo, uploadChunk } from "./video";
 
 const hasFfmpeg = (() => {
   try {
@@ -165,6 +165,70 @@ describe.skipIf(!hasTestDb || !hasFfmpeg)("Videoschnitt (DB, ffmpeg)", () => {
     const post = await db.marketingPost.findUniqueOrThrow({ where: { id: postId } });
     expect(post).toMatchObject({ kind: "SOCIAL", status: "ENTWURF", body: "Wir setzen uns für einen Zebrastreifen ein.", hashtags: "#Seckenheim #Schulweg", account: "OV" });
     expect(await storedFileExists(post.videoPath)).toBe(true);
+  }, 240_000);
+
+  it("übernimmt Logo-Einstellungen und bessert den Schnitt per Regieanweisung nach, ohne Handanpassungen zu verlieren", async () => {
+    const v = await makeUser({ role: "VORSTAND" });
+    const project = await createProject(v, form({ ...base, "formats[]": ["16:9"], maxSeconds: "300" }));
+    expect(project.maxSeconds).toBe(300);
+    await upload(v as never, project.id, mutedFile, "kreuzung.mov", 1);
+
+    // Logo: nur Bilder, SVG ohne Skripte
+    const bad = form({ logoPosition: "unten-rechts", logoSize: "gross" });
+    bad.set("logo", new File(["<svg onload=alert(1)></svg>"], "x.svg", { type: "image/svg+xml" }));
+    await expect(updateLogo(v, project.id, bad)).rejects.toBeInstanceOf(UserError);
+    const good = form({ logoPosition: "unten-rechts", logoSize: "gross", logoChip: "on" });
+    good.set("logo", new File(['<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60"><rect width="200" height="60" fill="#2d3c4b"/></svg>'], "logo.svg", { type: "image/svg+xml" }));
+    await updateLogo(v, project.id, good);
+    const withLogo = await db.videoProject.findUniqueOrThrow({ where: { id: project.id } });
+    expect(withLogo).toMatchObject({ logoPosition: "unten-rechts", logoSize: "gross", logoChip: true, logoName: "logo.svg" });
+    expect(await storedFileExists(withLogo.logoPath)).toBe(true);
+
+    const first: VideoPlan = {
+      titel: "Titel",
+      unterzeile: "",
+      shots: [
+        { clipId: "C1", start: 0, end: 3, ton: "stumm", einblendung: "Fakt eins", untertitel: false, untertitelText: "" },
+        { clipId: "C1", start: 3, end: 5, ton: "stumm", einblendung: "Fakt zwei", untertitel: false, untertitelText: "" },
+      ],
+      abschluss: "A",
+      aufruf: "B",
+      beitragstext: "",
+      hashtags: "",
+      begruendung: "",
+    };
+    let prompt = "";
+    const client = (reply: VideoPlan) =>
+      ({
+        beta: {
+          messages: {
+            parse: async (req: { messages: { content: { type: string; text?: string }[] }[] }) => {
+              prompt = req.messages[0]!.content.map((c) => c.text ?? "").join("\n");
+              return { stop_reason: "end_turn", parsed_output: reply };
+            },
+          },
+        },
+      }) as unknown as Anthropic;
+    process.env.ANTHROPIC_API_KEY = "test";
+    await processProject(project.id, "full", v.id, client(first));
+    const cut = planOf(await db.videoProject.findUniqueOrThrow({ where: { id: project.id } }))!;
+    // Hand: Titel und Einblendung verschoben
+    await savePlan(v, project.id, form({ plan: JSON.stringify({ ...cut, titelPos: { x: 20, y: 30 }, shots: cut.shots.map((s, i) => (i === 1 ? { ...s, einblendungPos: { x: 50, y: 10 } } : s)) }) }));
+    await processProject(project.id, "render", v.id);
+
+    await expect(requestRevision(v, project.id, form({ anweisung: "kurz" }))).rejects.toThrow();
+    await requestRevision(v, project.id, form({ anweisung: "Fakt eins weglassen, Fakt zwei länger zeigen." }));
+    // Claude-Antwort: erster Ausschnitt entfällt, zweiter länger – Einblendung gleich
+    await processProject(project.id, "revise", v.id, client({ ...first, shots: [{ clipId: "C1", start: 2.8, end: 5, ton: "stumm", einblendung: "Fakt zwei", untertitel: false, untertitelText: "" }], begruendung: "Fakt eins entfernt." }));
+    expect(prompt).toContain("<nachbesserung>Fakt eins weglassen, Fakt zwei länger zeigen.</nachbesserung>");
+    expect(prompt).toContain("<aktueller_schnitt>");
+    expect(prompt).toContain('"einblendung": "Fakt eins"');
+    const after = await db.videoProject.findUniqueOrThrow({ where: { id: project.id } });
+    expect(after).toMatchObject({ status: "FERTIG", planSource: "nachgebessert", revisionNotes: ["Fakt eins weglassen, Fakt zwei länger zeigen."] });
+    const revised = planOf(after)!;
+    expect(revised.shots).toHaveLength(1);
+    expect(revised.shots[0]).toMatchObject({ einblendung: "Fakt zwei", einblendungPos: { x: 50, y: 10 }, start: 2.8, end: 5 });
+    expect(revised.titelPos).toEqual({ x: 20, y: 30 });
   }, 240_000);
 
   it("geht ohne Whisper ohne Untertitel weiter und meldet das", async () => {

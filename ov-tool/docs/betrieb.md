@@ -162,7 +162,7 @@ und den Verteiler aus Einstellungen → Allgemein geht. Die E-Mail der ausleihen
 
 ## 6f. Videoschnitt (Marketing → Videos schneiden)
 
-Clips hochladen → automatisch ein Aufklärungsvideo (Standard höchstens 30 s) in 9:16, 1:1 und/oder 16:9.
+Clips hochladen → automatisch ein Aufklärungsvideo (Standard 30 s, einstellbar 10–320 s) in 9:16, 1:1 und/oder 16:9.
 Ablauf (Job `video-process`, `src/server/services/video.ts`):
 1. Upload in Abschnitten zu 32 MB (`/api/video/[id]/upload`), weil Plesk-nginx je Anfrage nur 128 MB annimmt; je Clip bis 2 GB / 15 min, bis 12 Clips.
 2. Analyse: ffprobe, drei Standbilder je Clip, Tonspur an den eigenen Whisper-Dienst (`output=json&word_timestamps=true`).
@@ -171,7 +171,10 @@ Ablauf (Job `video-process`, `src/server/services/video.ts`):
    ohne `ANTHROPIC_API_KEY` ein einfacher Schnitt. Der Plan wird geprüft (`src/lib/video-plan.ts`): O-Töne an Wortgrenzen, Zeitbudget, Mindestlänge.
 4. Rendern mit ffmpeg (`src/server/media/video-edit.ts`): Titelzeile, Texteinblendungen, Untertitel, Logo (auf Weiß), Abschlusstafel,
    Lautheit nach EBU R128, optional Musik (wird unter Sprache automatisch leiser).
-Der Schnitt bleibt ein Vorschlag: im Editor änderbar, danach neu rendern. „Als Social-Media-Beitrag übernehmen“ legt einen Entwurf an;
+Der Schnitt bleibt ein Vorschlag: im Editor änderbar (Ausschnitte, Texte, Untertitel; Titelzeile, Einblendungen und Untertitel
+per Ziehen in der Vorschau verschiebbar, Einblendungen mit eigenem Zeitfenster), danach neu rendern. „Nachbessern mit Regieanweisung“
+lässt Claude den bestehenden Schnitt nach einer neuen Anweisung überarbeiten (Verlauf in `revisionNotes`, Handanpassungen bleiben).
+Logo je Video: eigenes Logo (PNG/SVG/JPG/WebP) oder Kanal-Logo, Ecke, Größe, weißes Feld. „Als Social-Media-Beitrag übernehmen“ legt einen Entwurf an;
 veröffentlicht wird erst nach Freigabe. Beim Anlegen muss das Einverständnis der gezeigten Personen bestätigt werden, bei Musik die Nutzungsrechte.
 Clips liegen unter `video/<Projekt>/` in der Dateiablage, bis das Video gelöscht wird.
 ## 7. Variante: Plesk

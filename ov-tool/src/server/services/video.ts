@@ -11,8 +11,13 @@ import {
   fallbackPlan,
   FORMAT_KEYS,
   isVideoFormat,
+  aiPlanSchema,
+  logoOptions,
+  MAX_SECONDS,
+  MIN_SECONDS,
   normalizePlan,
   parseWhisperJson,
+  type Shot,
   planSchema,
   shotText,
   type ClipInfo,
@@ -26,6 +31,7 @@ import { audit, changes } from "@/server/audit";
 import { db } from "@/server/db";
 import { ForbiddenError, NotFoundError, UserError } from "@/server/errors";
 import { absoluteStoredPath, deleteStoredFile, readStoredFile, saveFile } from "@/server/files";
+import { sniffType } from "@/lib/file-types";
 import { enqueue } from "@/server/jobs/queue";
 import { extractAudio, extractStills, probe, renderPlan } from "@/server/media/video-edit";
 import { ovContext } from "@/server/ov";
@@ -114,7 +120,7 @@ const projectSchema = z.object({
   direction: optionalText(3000),
   account: z.enum(["OV", "BBR"]),
   "formats[]": formatList,
-  maxSeconds: z.coerce.number().int().min(10).max(60),
+  maxSeconds: z.coerce.number().int().min(MIN_SECONDS).max(MAX_SECONDS),
   subtitles: checkbox,
   musicVolume: z.coerce.number().int().min(0).max(60).optional(),
 });
@@ -301,13 +307,14 @@ export async function removeMusic(actor: Actor, id: string) {
 // Ablauf: Analyse → Schnittplan (KI) → Rendern
 // ---------------------------------------------------------------------------
 
-export type ProcessMode = "full" | "plan" | "render";
+export type ProcessMode = "full" | "plan" | "render" | "revise";
 
 export async function startProcessing(actor: Actor, id: string, mode: ProcessMode) {
   const p = await getProject(actor, id);
   if (isBusy(p)) throw new UserError("Das Video wird bereits bearbeitet.");
   if (!p.clips.length) throw new UserError("Bitte zuerst mindestens einen Clip hochladen.");
-  if (mode === "render" && !planOf(p)) throw new UserError("Es gibt noch keinen Schnittplan.");
+  if ((mode === "render" || mode === "revise") && !planOf(p)) throw new UserError("Es gibt noch keinen Schnittplan.");
+  if (mode === "revise" && !aiConfigured()) throw new UserError("Nachbessern braucht die Claude API (ANTHROPIC_API_KEY).");
   await db.videoProject.update({ where: { id }, data: { status: mode === "render" ? "RENDERN" : "ANALYSE", progress: 1, error: "" } });
   await audit(db, actor, "video.process", "VideoProject", id, { mode });
   await enqueue("video-process", { projectId: id, mode, actorId: actor.id });
@@ -380,6 +387,61 @@ async function analyze(project: Awaited<ReturnType<typeof loadForJob>>, warnings
   }
 }
 
+/** Nachbessern per Regieanweisung: Claude überarbeitet den bestehenden Schnitt; die Anweisung bleibt im Verlauf. */
+export async function requestRevision(actor: Actor, id: string, formData: FormData) {
+  const p = await getProject(actor, id);
+  if (isBusy(p)) throw new UserError("Das Video wird gerade bearbeitet.");
+  const { anweisung } = z.object({ anweisung: z.string().trim().min(5, { error: "Bitte beschreiben, was geändert werden soll." }).max(2000) }).parse(formToObject(formData));
+  if (!planOf(p)) throw new UserError("Es gibt noch keinen Schnittplan.");
+  if (!aiConfigured()) throw new UserError("Nachbessern braucht die Claude API (ANTHROPIC_API_KEY).");
+  await db.$transaction(async (tx) => {
+    await tx.videoProject.update({ where: { id }, data: { revisionNotes: [...p.revisionNotes, anweisung].slice(-30), status: "SCHNITT", progress: 1, error: "" } });
+    await audit(tx, actor, "video.revise", "VideoProject", id, { anweisung });
+  });
+  await enqueue("video-process", { projectId: id, mode: "revise", actorId: actor.id });
+}
+
+const LOGO_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+const logoSettingsSchema = z.object({
+  logoPosition: z.enum(["oben-links", "oben-rechts", "unten-links", "unten-rechts"]),
+  logoSize: z.enum(["klein", "mittel", "gross", "aus"]),
+  logoChip: checkbox,
+});
+
+/** Logo-Einstellungen des Videos; optional eigenes Logo (PNG, JPG, WebP oder SVG, max. 5 MB). */
+export async function updateLogo(actor: Actor, id: string, formData: FormData) {
+  const p = await getProject(actor, id);
+  if (isBusy(p)) throw new UserError("Das Video wird gerade bearbeitet.");
+  const input = logoSettingsSchema.parse(formToObject(formData));
+  const file = formData.get("logo");
+  let upload: { path: string; name: string } | null = null;
+  if (file instanceof File && file.size > 0) {
+    if (file.size > 5 * 1024 * 1024) throw new UserError("Das Logo darf höchstens 5 MB groß sein.");
+    const data = Buffer.from(await file.arrayBuffer());
+    const type = sniffType(data);
+    const isSvg = !type && /\.svg$/i.test(file.name) && /<svg[\s>]/i.test(data.subarray(0, 2048).toString("utf8")) && !/<script|on\w+=/i.test(data.toString("utf8"));
+    if (!(type && LOGO_TYPES.has(type)) && !isSvg) throw new UserError("Bitte das Logo als PNG, JPG, WebP oder SVG hochladen.");
+    const ext = isSvg ? ".svg" : type === "image/png" ? ".png" : type === "image/webp" ? ".webp" : ".jpg";
+    upload = { path: await saveFile(path.join(dirOf(id), "logo"), `logo${ext}`, data), name: file.name.slice(0, 200) };
+  }
+  const data = { ...input, ...(upload ? { logoPath: upload.path, logoName: upload.name } : {}) };
+  await db.$transaction(async (tx) => {
+    await tx.videoProject.update({ where: { id }, data });
+    await audit(tx, actor, "video.logo", "VideoProject", id, { ...input, upload: upload?.name ?? null });
+  });
+  if (upload) await deleteStoredFile(p.logoPath);
+}
+
+export async function removeLogo(actor: Actor, id: string) {
+  const p = await getProject(actor, id);
+  if (isBusy(p)) throw new UserError("Das Video wird gerade bearbeitet.");
+  await db.$transaction(async (tx) => {
+    await tx.videoProject.update({ where: { id }, data: { logoPath: null, logoName: null } });
+    await audit(tx, actor, "video.logo", "VideoProject", id, { removed: true });
+  });
+  await deleteStoredFile(p.logoPath);
+}
+
 // --- Schnittplan von Claude ---------------------------------------------------
 
 /** Kurzkennungen C1, C2 … statt Datenbank-IDs, damit die KI sich nicht vertut. */
@@ -412,7 +474,25 @@ export function buildPlanText(project: Pick<VideoProject, "title" | "topic" | "m
 
 export class PlanRefusedError extends Error {}
 
-async function generatePlan(project: Awaited<ReturnType<typeof loadForJob>>, client = new Anthropic()): Promise<VideoPlan> {
+/** Aktueller Schnitt in Kurzform (Kennungen C1, C2 …) für die Nachbesserung. */
+export function planForRevision(plan: VideoPlan, clips: Pick<VideoClip, "id">[]) {
+  const alias = new Map([...clipAliases(clips).entries()].map(([a, id]) => [id, a]));
+  return JSON.stringify(
+    {
+      titel: plan.titel,
+      unterzeile: plan.unterzeile,
+      shots: plan.shots.map((s) => ({ clipId: alias.get(s.clipId) ?? s.clipId, start: s.start, end: s.end, ton: s.ton, einblendung: s.einblendung, untertitel: s.untertitel, untertitelText: s.untertitelText })),
+      abschluss: plan.abschluss,
+      aufruf: plan.aufruf,
+      beitragstext: plan.beitragstext,
+      hashtags: plan.hashtags,
+    },
+    null,
+    1,
+  );
+}
+
+async function generatePlan(project: Awaited<ReturnType<typeof loadForJob>>, client = new Anthropic(), revision?: { current: VideoPlan; notes: string[] }): Promise<VideoPlan> {
   const aliases = [...clipAliases(project.clips).entries()].map(([alias, id]) => ({ alias, clip: project.clips.find((c) => c.id === id)! }));
   const { source } = await getTemplateSource("prompt.video");
   const system = renderText(source, { ov: await ovContext(), video: { maxSekunden: project.maxSeconds, schnittSekunden: cutBudget(project.maxSeconds) } });
@@ -424,21 +504,47 @@ async function generatePlan(project: Awaited<ReturnType<typeof loadForJob>>, cli
     }
   }
   content.push({ type: "text", text: buildPlanText(project, aliases) });
+  if (revision) {
+    const [latest, ...earlier] = [...revision.notes].reverse();
+    content.push({
+      type: "text",
+      text: [
+        "<aktueller_schnitt>",
+        planForRevision(revision.current, project.clips),
+        "</aktueller_schnitt>",
+        earlier.length ? `<fruehere_anweisungen>\n${earlier.reverse().map((n) => `- ${n}`).join("\n")}\n</fruehere_anweisungen>` : "",
+        `<nachbesserung>${latest ?? ""}</nachbesserung>`,
+        "",
+        "Überarbeite den aktuellen Schnitt nach der Nachbesserung (frühere Anweisungen gelten weiter). Ändere nur, was die Anweisung verlangt, und behalte alles andere bei. Nenne die Änderungen kurz in der Begründung.",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    });
+  }
   const response = await client.beta.messages.parse(
     {
       model: draftModel(),
-      max_tokens: 8000,
+      max_tokens: 16000,
       system,
       messages: [{ role: "user", content }],
-      output_config: { effort: "medium", format: betaZodOutputFormat(planSchema) },
+      output_config: { effort: "medium", format: betaZodOutputFormat(aiPlanSchema) },
     },
-    { timeout: 5 * 60_000 },
+    { timeout: 10 * 60_000 },
   );
   if (response.stop_reason === "refusal") throw new PlanRefusedError("Die KI hat den Schnitt abgelehnt. Bitte Thema oder Regievorgaben anpassen.");
+  if (response.stop_reason === "max_tokens") throw new Error("Der Schnittplan wurde abgeschnitten (zu viele Ausschnitte).");
   if (!response.parsed_output) throw new Error("Die Antwort der KI konnte nicht gelesen werden.");
   const map = clipAliases(project.clips);
   const plan = response.parsed_output;
-  return { ...plan, shots: plan.shots.map((s) => ({ ...s, clipId: map.get(s.clipId.trim().toUpperCase()) ?? s.clipId })) };
+  const shots = plan.shots.map((s) => ({ ...s, clipId: map.get(s.clipId.trim().toUpperCase()) ?? s.clipId })) as Shot[];
+  if (!revision) return { ...plan, shots };
+  // Handanpassungen (verschobene Texte, Zeitfenster) bleiben erhalten, solange Ausschnitt und Einblendung gleich sind
+  const before = revision.current.shots;
+  for (const [i, s] of shots.entries()) {
+    const old = before.find((b, k) => b.clipId === s.clipId && b.einblendung === s.einblendung && (k === i || Math.abs(b.start - s.start) < 0.5));
+    if (old) Object.assign(s, { einblendungPos: old.einblendungPos, einblendungVon: old.einblendungVon, einblendungBis: old.einblendungBis });
+  }
+  return { ...plan, shots, titelPos: revision.current.titelPos, untertitelY: revision.current.untertitelY };
 }
 
 async function loadForJob(id: string) {
@@ -460,8 +566,10 @@ export async function processProject(id: string, mode: ProcessMode, actorId: str
       await setStatus(id, "SCHNITT", 45);
       let raw: VideoPlan;
       let source = "ki";
+      const current = planOf(project);
       if (aiConfigured()) {
-        raw = await generatePlan(project, client);
+        raw = await generatePlan(project, client, mode === "revise" && current ? { current, notes: project.revisionNotes } : undefined);
+        if (mode === "revise") source = "nachgebessert";
       } else {
         raw = fallbackPlan(clipInfos(project.clips, project.subtitles), project.maxSeconds, { titel: project.title, botschaft: project.message, aufruf: project.callToAction });
         source = "einfach";
@@ -487,7 +595,8 @@ export async function processProject(id: string, mode: ProcessMode, actorId: str
         plan,
         clips,
         format,
-        branding: brand,
+        branding: project.logoPath ? { ...brand, logoPath: project.logoPath } : brand,
+        logo: logoOptions(project),
         music: project.musicPath ? absoluteStoredPath(project.musicPath) : null,
         musicVolume: project.musicVolume,
         workDir: work,

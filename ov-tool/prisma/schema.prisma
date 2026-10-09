@@ -1534,6 +1534,17 @@ model VideoProject {
   musicName            String?
   /// Lautstärke der Musik unter O-Tönen in Prozent
   musicVolume          Int           @default(15)
+  /// eigenes Logo für dieses Video (sonst das Kanal-Logo aus den BBR-/Social-Einstellungen)
+  logoPath             String?
+  logoName             String?
+  /// oben-links, oben-rechts, unten-links, unten-rechts
+  logoPosition         String        @default("oben-links")
+  /// klein, mittel, gross, aus
+  logoSize             String        @default("mittel")
+  /// Logo auf weißem Feld (CD-Vorgabe); aus nur für Logos mit eigenem Hintergrund
+  logoChip             Boolean       @default(true)
+  /// Nachbesserungen per Regieanweisung (Verlauf, neueste zuletzt)
+  revisionNotes        String[]      @default([])
   status               VideoStatus   @default(ENTWURF)
   progress             Int           @default(0)
   error                String        @default("")

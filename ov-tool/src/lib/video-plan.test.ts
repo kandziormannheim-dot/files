@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fallbackPlan, normalizePlan, parseWhisperJson, planDuration, shotText, snapToWords, subtitleCues, type Segment, type VideoPlan } from "./video-plan";
+import { einblendungWindow, fallbackPlan, normalizePlan, parseWhisperJson, planDuration, shotText, snapToWords, subtitleCues, type Segment, type VideoPlan } from "./video-plan";
 
 const words = (list: [number, number, string][]) => list.map(([start, end, word]) => ({ start, end, word }));
 const seg: Segment[] = [
@@ -75,6 +75,34 @@ describe("Schnittplan", () => {
     expect(p.shots).toHaveLength(2);
     expect(planDuration(p)).toBeLessThanOrEqual(30.01);
     expect(normalizePlan(p, [clipA, clipB], 30).plan.shots).toHaveLength(2);
+  });
+
+  it("behält verschobene Texte und Zeitfenster und begrenzt sie", () => {
+    const { plan } = normalizePlan(
+      {
+        ...base,
+        titelPos: { x: 120, y: -5 },
+        untertitelY: 3,
+        shots: [{ clipId: "b", start: 0, end: 10, ton: "stumm", einblendung: "Fakt", untertitel: false, untertitelText: "", einblendungPos: { x: 10.04, y: 40 }, einblendungVon: 2, einblendungBis: 30 }],
+      },
+      [clipB],
+      320,
+    );
+    expect(plan.titelPos).toEqual({ x: 90, y: 0 });
+    expect(plan.untertitelY).toBe(10);
+    expect(plan.shots[0]).toMatchObject({ einblendungPos: { x: 10, y: 40 }, einblendungVon: 2, einblendungBis: 10 });
+    expect(einblendungWindow(plan.shots[0]!)).toEqual({ from: 2, to: 10 });
+    // erster Ausschnitt: ohne eigene Angabe erst nach der Titelzeile, bei zu kurzem Rest gar nicht
+    expect(einblendungWindow({ start: 0, end: 6 }, 3)).toEqual({ from: 3, to: 6 });
+    expect(einblendungWindow({ start: 0, end: 3.5 }, 3)).toBeNull();
+  });
+
+  it("erlaubt lange Videos bis 320 Sekunden", () => {
+    const long = { id: "l", duration: 600, hasAudio: false, transcript: null };
+    const shots = Array.from({ length: 30 }, (_, i) => ({ clipId: "l", start: i * 20, end: i * 20 + 15, ton: "stumm" as const, einblendung: "", untertitel: false, untertitelText: "" }));
+    const { plan } = normalizePlan({ ...base, shots }, [long], 320);
+    expect(planDuration(plan)).toBeLessThanOrEqual(320);
+    expect(planDuration(plan)).toBeGreaterThan(310);
   });
 
   it("liest das Whisper-JSON", () => {

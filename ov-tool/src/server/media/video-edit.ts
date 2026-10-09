@@ -4,7 +4,23 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { OUTRO_SECONDS, planDuration, subtitleCues, TITLE_SECONDS, VIDEO_FORMATS, type Segment, type ShotTone, type VideoFormat, type VideoPlan } from "@/lib/video-plan";
+import {
+  DEFAULT_LOGO,
+  einblendungWindow,
+  LAYOUT,
+  LOGO_SCALE,
+  OUTRO_SECONDS,
+  planDuration,
+  subtitleCues,
+  TITLE_SECONDS,
+  VIDEO_FORMATS,
+  type LogoOptions,
+  type Pos,
+  type Segment,
+  type ShotTone,
+  type VideoFormat,
+  type VideoPlan,
+} from "@/lib/video-plan";
 import { fontFaceCss, htmlToPng } from "@/server/pdf/render";
 import { logoDataUri, type Branding } from "./social";
 
@@ -96,40 +112,11 @@ export async function extractAudio(file: string): Promise<Buffer> {
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-type Layout = {
-  logo: { top: number; left: number; height: number };
-  title: { top: number; side: number; size: number; sub: number; maxWidth?: number };
-  lower: { bottom: number; side: number; size: number; align: "left" | "center" };
-  subs: { bottom: number; size: number; maxWidth: number };
-  outro: { band: number; text: number; cta: number; logo: number };
+const OUTRO: Record<VideoFormat, { band: number; text: number; cta: number; logo: number }> = {
+  "9:16": { band: 600, text: 92, cta: 50, logo: 300 },
+  "1:1": { band: 340, text: 76, cta: 42, logo: 200 },
+  "16:9": { band: 330, text: 80, cta: 44, logo: 210 },
 };
-
-/** Positionen je Format mit Abstand zu den Bedienelementen von Instagram/TikTok (oben, unten, rechts). */
-export function layoutFor(format: VideoFormat): Layout {
-  if (format === "9:16")
-    return {
-      logo: { top: 110, left: 60, height: 96 },
-      title: { top: 300, side: 60, size: 86, sub: 42 },
-      lower: { bottom: 700, side: 60, size: 54, align: "left" },
-      subs: { bottom: 470, size: 52, maxWidth: 900 },
-      outro: { band: 600, text: 92, cta: 50, logo: 300 },
-    };
-  if (format === "1:1")
-    return {
-      logo: { top: 50, left: 50, height: 80 },
-      title: { top: 170, side: 50, size: 72, sub: 36 },
-      lower: { bottom: 250, side: 50, size: 46, align: "left" },
-      subs: { bottom: 80, size: 44, maxWidth: 960 },
-      outro: { band: 340, text: 76, cta: 42, logo: 200 },
-    };
-  return {
-    logo: { top: 50, left: 60, height: 90 },
-    title: { top: 170, side: 80, size: 80, sub: 40, maxWidth: 1200 },
-    lower: { bottom: 210, side: 80, size: 50, align: "left" },
-    subs: { bottom: 70, size: 48, maxWidth: 1500 },
-    outro: { band: 330, text: 80, cta: 44, logo: 210 },
-  };
-}
 
 async function page(width: number, height: number, body: string, transparent: boolean) {
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><style>${await fontFaceCss()}
@@ -142,46 +129,73 @@ body{position:relative;font-family:Inter,"DejaVu Sans",sans-serif;color:${RHOEND
 
 type Logo = { uri: string; named: boolean };
 
-function logoChip(l: Layout, logo: Logo) {
-  // Logo laut CD nur auf weißem Grund
-  return `<div style="position:absolute;top:${l.logo.top}px;left:${l.logo.left}px;background:#fff;border-radius:10px;padding:${Math.round(l.logo.height * 0.14)}px ${Math.round(l.logo.height * 0.2)}px;box-shadow:0 4px 18px rgba(0,0,0,.18)">
-  <img src="${logo.uri}" alt="" style="display:block;height:${l.logo.height}px;max-width:${l.logo.height * 4}px;object-fit:contain"></div>`;
+/** Textblock an Position (Prozent), Breite bis zum rechten Rand abzüglich Randabstand. */
+function placed(format: VideoFormat, pos: Pos, inner: string) {
+  const m = LAYOUT[format].margin;
+  return `<div style="position:absolute;left:${pos.x}%;top:${pos.y}%;max-width:${Math.max(20, 100 - pos.x - m)}%">${inner}</div>`;
 }
 
-export async function decoHtml(format: VideoFormat, logo: Logo, einblendung: string) {
+/** Logo laut CD auf weißem Feld; Ecke und Größe aus den Logo-Einstellungen des Videos. */
+export async function logoHtml(format: VideoFormat, logo: Logo, opts: LogoOptions) {
   const { width, height } = VIDEO_FORMATS[format];
-  const l = layoutFor(format);
-  const lower = einblendung
-    ? `<div style="position:absolute;left:${l.lower.side}px;right:${l.lower.side}px;bottom:${l.lower.bottom}px;text-align:${l.lower.align}">
-  <p lang="de" style="font-weight:800;font-size:${l.lower.size}px;line-height:1.32;color:#fff"><span class="box" style="background:${TUERKIS};padding:.12em .35em">${esc(einblendung)}</span></p>
-  <div style="margin-top:14px;width:${Math.round(l.lower.size * 2.4)}px;height:${Math.round(l.lower.size * 0.22)}px;background:${GOLD};${l.lower.align === "center" ? "margin-left:auto;margin-right:auto" : ""}"></div>
-</div>`
-    : "";
-  return page(width, height, `${logoChip(l, logo)}${lower}`, true);
-}
-
-export async function titleHtml(format: VideoFormat, titel: string, unterzeile: string) {
-  const { width, height } = VIDEO_FORMATS[format];
-  const l = layoutFor(format);
+  if (opts.size === "aus") return page(width, height, "", true);
+  const l = LAYOUT[format];
+  const h = Math.round(l.logoHeight * LOGO_SCALE[opts.size]);
+  const mx = Math.round((width * l.margin) / 100);
+  // oben unter der Statusleiste, unten über den Bedienelementen der Apps
+  const my = format === "9:16" ? (opts.position.startsWith("oben") ? 110 : 330) : Math.round((height * 4.6) / 100);
+  const [v, hz] = opts.position.split("-") as ["oben" | "unten", "links" | "rechts"];
+  const pad = opts.chip ? `padding:${Math.round(h * 0.14)}px ${Math.round(h * 0.2)}px;background:#fff;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.18);` : "";
   return page(
     width,
     height,
-    `<div style="position:absolute;top:${l.title.top}px;left:${l.title.side}px;right:${l.title.side}px;${l.title.maxWidth ? `max-width:${l.title.maxWidth}px` : ""}">
-  <h1 lang="de" style="font-weight:900;font-size:${l.title.size}px;line-height:1.18;color:#fff;letter-spacing:-.01em"><span class="box" style="background:${TUERKIS};padding:.06em .3em">${esc(titel)}</span></h1>
-  ${unterzeile ? `<p lang="de" style="margin-top:22px;font-weight:700;font-size:${l.title.sub}px;line-height:1.35;color:${RHOENDORF}"><span class="box" style="background:#fff;padding:.12em .4em">${esc(unterzeile)}</span></p>` : ""}
-</div>`,
+    `<div style="position:absolute;${v === "oben" ? "top" : "bottom"}:${my}px;${hz === "links" ? "left" : "right"}:${mx}px;${pad}">
+  <img src="${logo.uri}" alt="" style="display:block;height:${h}px;max-width:${h * 4}px;object-fit:contain"></div>`,
     true,
   );
 }
 
-export async function cueHtml(format: VideoFormat, text: string) {
+export async function einblendungHtml(format: VideoFormat, text: string, pos?: Pos) {
   const { width, height } = VIDEO_FORMATS[format];
-  const l = layoutFor(format);
+  const size = LAYOUT[format].fonts.einblendung;
   return page(
     width,
     height,
-    `<div style="position:absolute;left:0;right:0;bottom:${l.subs.bottom}px;display:flex;justify-content:center">
-  <p lang="de" style="max-width:${l.subs.maxWidth}px;text-align:center;font-weight:800;font-size:${l.subs.size}px;line-height:1.34;color:#fff"><span class="box" style="background:rgba(45,60,75,.86);padding:.1em .35em;border-radius:8px">${esc(text)}</span></p>
+    placed(
+      format,
+      pos ?? LAYOUT[format].einblendung,
+      `<p lang="de" style="font-weight:800;font-size:${size}px;line-height:1.32;color:#fff"><span class="box" style="background:${TUERKIS};padding:.12em .35em">${esc(text)}</span></p>
+  <div style="margin-top:14px;width:${Math.round(size * 2.4)}px;height:${Math.round(size * 0.22)}px;background:${GOLD}"></div>`,
+    ),
+    true,
+  );
+}
+
+export async function titleHtml(format: VideoFormat, titel: string, unterzeile: string, pos?: Pos) {
+  const { width, height } = VIDEO_FORMATS[format];
+  const f = LAYOUT[format].fonts;
+  return page(
+    width,
+    height,
+    placed(
+      format,
+      pos ?? LAYOUT[format].titel,
+      `<h1 lang="de" style="font-weight:900;font-size:${f.titel}px;line-height:1.18;color:#fff;letter-spacing:-.01em"><span class="box" style="background:${TUERKIS};padding:.06em .3em">${esc(titel)}</span></h1>
+  ${unterzeile ? `<p lang="de" style="margin-top:22px;font-weight:700;font-size:${f.unterzeile}px;line-height:1.35;color:${RHOENDORF}"><span class="box" style="background:#fff;padding:.12em .4em">${esc(unterzeile)}</span></p>` : ""}`,
+    ),
+    true,
+  );
+}
+
+/** Untertitel mittig; senkrechte Mitte bei y Prozent der Bildhöhe. */
+export async function cueHtml(format: VideoFormat, text: string, y?: number) {
+  const { width, height } = VIDEO_FORMATS[format];
+  const l = LAYOUT[format];
+  return page(
+    width,
+    height,
+    `<div style="position:absolute;left:${l.margin}%;right:${l.margin}%;top:${y ?? l.untertitelY}%;transform:translateY(-50%);display:flex;justify-content:center">
+  <p lang="de" style="text-align:center;font-weight:800;font-size:${l.fonts.untertitel}px;line-height:1.34;color:#fff"><span class="box" style="background:rgba(45,60,75,.86);padding:.1em .35em;border-radius:8px">${esc(text)}</span></p>
 </div>`,
     true,
   );
@@ -189,7 +203,7 @@ export async function cueHtml(format: VideoFormat, text: string) {
 
 export async function outroHtml(format: VideoFormat, logo: Logo, abschluss: string, aufruf: string, accountName: string) {
   const { width, height } = VIDEO_FORMATS[format];
-  const l = layoutFor(format);
+  const l = { outro: OUTRO[format] };
   const pad = format === "16:9" ? 120 : 80;
   return page(
     width,
@@ -285,6 +299,7 @@ export async function renderPlan(o: {
   clips: RenderClip[];
   format: VideoFormat;
   branding: Pick<Branding, "logoPath" | "defaultLogo" | "accountName">;
+  logo?: LogoOptions;
   music?: string | null;
   musicVolume: number;
   workDir: string;
@@ -295,6 +310,8 @@ export async function renderPlan(o: {
   await rm(dir, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
   const logo = await logoDataUri(o.branding);
+  const logoOpts = o.logo ?? DEFAULT_LOGO;
+  let logoPng: string | undefined;
   const byId = new Map(o.clips.map((c) => [c.id, c]));
   const png = async (name: string, html: string, transparent = true) => {
     const p = path.join(dir, name);
@@ -308,19 +325,14 @@ export async function renderPlan(o: {
     if (!clip) continue;
     const duration = shot.end - shot.start;
     const titleEnd = i === 0 && o.plan.titel ? Math.min(TITLE_SECONDS, duration) : 0;
-    // Einblendung im ersten Ausschnitt erst nach der Titelzeile, damit nicht beides gleichzeitig im Bild steht
-    const lowerFrom = titleEnd && shot.einblendung ? (duration - titleEnd >= 1 ? titleEnd : null) : 0;
     const overlays: Overlay[] = [];
-    if (shot.einblendung && lowerFrom !== 0) {
-      overlays.push({ path: await png(`deko${i}.png`, await decoHtml(o.format, logo, "")) });
-      if (lowerFrom != null) overlays.push({ path: await png(`einblendung${i}.png`, await decoHtml(o.format, logo, shot.einblendung)), from: lowerFrom, to: duration });
-    } else {
-      overlays.push({ path: await png(`deko${i}.png`, await decoHtml(o.format, logo, shot.einblendung)) });
-    }
-    if (titleEnd) overlays.push({ path: await png("titel.png", await titleHtml(o.format, o.plan.titel, o.plan.unterzeile)), from: 0, to: titleEnd });
+    if (logoOpts.size !== "aus") overlays.push({ path: logoPng ?? (logoPng = await png("logo.png", await logoHtml(o.format, logo, logoOpts))) });
+    const win = shot.einblendung ? einblendungWindow(shot, titleEnd) : null;
+    if (shot.einblendung && win) overlays.push({ path: await png(`einblendung${i}.png`, await einblendungHtml(o.format, shot.einblendung, shot.einblendungPos)), from: win.from, to: win.to });
+    if (titleEnd) overlays.push({ path: await png("titel.png", await titleHtml(o.format, o.plan.titel, o.plan.unterzeile, o.plan.titelPos)), from: 0, to: titleEnd });
     if (shot.untertitel) {
       for (const [k, cue] of subtitleCues(shot, clip.transcript).entries()) {
-        overlays.push({ path: await png(`cue${i}-${k}.png`, await cueHtml(o.format, cue.text)), from: cue.from, to: cue.to });
+        overlays.push({ path: await png(`cue${i}-${k}.png`, await cueHtml(o.format, cue.text, o.plan.untertitelY)), from: cue.from, to: cue.to });
       }
     }
     const out = path.join(dir, `seg${String(i).padStart(2, "0")}.mp4`);

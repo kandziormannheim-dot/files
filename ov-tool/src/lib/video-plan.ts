@@ -17,16 +17,37 @@ export const OUTRO_SECONDS = 3;
 /** Titelzeile über dem ersten Ausschnitt */
 export const TITLE_SECONDS = 3;
 export const MIN_SHOT = 1.5;
-export const MAX_SHOTS = 16;
+export const MAX_SHOTS = 80;
+export const MIN_SECONDS = 10;
+export const MAX_SECONDS = 320;
 export const SHOT_TONES = ["original", "leise", "stumm"] as const;
 export type ShotTone = (typeof SHOT_TONES)[number];
 export const TONE_LABELS: Record<ShotTone, string> = { original: "O-Ton", leise: "Ton leise", stumm: "ohne Ton" };
+
+export const LOGO_POSITIONS = { "oben-links": "oben links", "oben-rechts": "oben rechts", "unten-links": "unten links", "unten-rechts": "unten rechts" } as const;
+export type LogoPosition = keyof typeof LOGO_POSITIONS;
+export const LOGO_SIZES = { klein: "klein", mittel: "mittel", gross: "groß", aus: "kein Logo" } as const;
+export type LogoSize = keyof typeof LOGO_SIZES;
+export type LogoOptions = { position: LogoPosition; size: LogoSize; chip: boolean };
+export const DEFAULT_LOGO: LogoOptions = { position: "oben-links", size: "mittel", chip: true };
+export function logoOptions(p: { logoPosition?: string | null; logoSize?: string | null; logoChip?: boolean | null }): LogoOptions {
+  return {
+    position: p.logoPosition && p.logoPosition in LOGO_POSITIONS ? (p.logoPosition as LogoPosition) : DEFAULT_LOGO.position,
+    size: p.logoSize && p.logoSize in LOGO_SIZES ? (p.logoSize as LogoSize) : DEFAULT_LOGO.size,
+    chip: p.logoChip ?? true,
+  };
+}
 
 export type Word = { start: number; end: number; word: string };
 export type Segment = { start: number; end: number; text: string; words?: Word[] };
 export type ClipInfo = { id: string; duration: number; hasAudio: boolean; transcript?: Segment[] | null };
 
-export const shotSchema = z.object({
+/** Position eines Textblocks in Prozent der Bildbreite/-höhe (linke obere Ecke). */
+export const posSchema = z.object({ x: z.number(), y: z.number() });
+export type Pos = z.infer<typeof posSchema>;
+
+/** Ausschnitt, wie ihn die KI liefert */
+export const aiShotSchema = z.object({
   clipId: z.string(),
   start: z.number(),
   end: z.number(),
@@ -36,19 +57,65 @@ export const shotSchema = z.object({
   /** korrigierter Untertiteltext (leer = Transkript von Whisper) */
   untertitelText: z.string().default(""),
 });
+
+/** Ausschnitt mit Anpassungen aus dem Editor: verschobene Einblendung, Zeitfenster der Einblendung */
+export const shotSchema = aiShotSchema.extend({
+  einblendungPos: posSchema.optional(),
+  /** Sekunden ab Beginn des Ausschnitts; leer = ganzer Ausschnitt (im ersten Ausschnitt nach der Titelzeile) */
+  einblendungVon: z.number().optional(),
+  einblendungBis: z.number().optional(),
+});
 export type Shot = z.infer<typeof shotSchema>;
 
-export const planSchema = z.object({
+const planFields = {
   titel: z.string(),
   unterzeile: z.string(),
-  shots: z.array(shotSchema),
   abschluss: z.string(),
   aufruf: z.string(),
   beitragstext: z.string(),
   hashtags: z.string(),
   begruendung: z.string(),
+};
+
+/** Schnittplan, den Claude als strukturierte Ausgabe liefert */
+export const aiPlanSchema = z.object({ ...planFields, shots: z.array(aiShotSchema) });
+
+/** gespeicherter Schnittplan: zusätzlich verschobene Titelzeile und Untertitel */
+export const planSchema = z.object({
+  ...planFields,
+  shots: z.array(shotSchema),
+  titelPos: posSchema.optional(),
+  /** senkrechte Mitte der Untertitel in Prozent der Bildhöhe */
+  untertitelY: z.number().optional(),
 });
 export type VideoPlan = z.infer<typeof planSchema>;
+
+/**
+ * Standardlayout je Format (Prozent; Schriftgrößen in Pixel der Zielgröße). Abstand zu den Bedienelementen von
+ * Instagram/TikTok oben, unten und rechts. Vorschau im Editor und Renderer nutzen dieselben Werte.
+ */
+export const LAYOUT: Record<VideoFormat, { titel: Pos; einblendung: Pos; untertitelY: number; fonts: { titel: number; unterzeile: number; einblendung: number; untertitel: number }; logoHeight: number; margin: number }> = {
+  "9:16": { titel: { x: 5.5, y: 15 }, einblendung: { x: 5.5, y: 56 }, untertitelY: 73, fonts: { titel: 86, unterzeile: 42, einblendung: 54, untertitel: 52 }, logoHeight: 96, margin: 5.5 },
+  "1:1": { titel: { x: 4.6, y: 15 }, einblendung: { x: 4.6, y: 64 }, untertitelY: 88, fonts: { titel: 72, unterzeile: 36, einblendung: 46, untertitel: 44 }, logoHeight: 80, margin: 4.6 },
+  "16:9": { titel: { x: 4.2, y: 15 }, einblendung: { x: 4.2, y: 66 }, untertitelY: 89, fonts: { titel: 80, unterzeile: 40, einblendung: 50, untertitel: 48 }, logoHeight: 90, margin: 3.2 },
+};
+
+export const LOGO_SCALE: Record<Exclude<LogoSize, "aus">, number> = { klein: 0.7, mittel: 1, gross: 1.45 };
+
+const clampPos = (p: Pos | undefined): Pos | undefined =>
+  p && Number.isFinite(p.x) && Number.isFinite(p.y) ? { x: Math.round(Math.max(0, Math.min(90, p.x)) * 10) / 10, y: Math.round(Math.max(0, Math.min(95, p.y)) * 10) / 10 } : undefined;
+
+/**
+ * Zeitfenster der Einblendung im Ausschnitt (Sekunden ab Ausschnittbeginn). Ohne eigene Angabe läuft sie über den ganzen
+ * Ausschnitt, im ersten Ausschnitt erst nach der Titelzeile (bleibt danach weniger als 1 s, entfällt sie).
+ */
+export function einblendungWindow(shot: Pick<Shot, "start" | "end" | "einblendungVon" | "einblendungBis">, titleEnd = 0): { from: number; to: number } | null {
+  const dur = shot.end - shot.start;
+  if (shot.einblendungVon == null && titleEnd && dur - titleEnd < 1) return null;
+  const from = Math.max(0, Math.min(shot.einblendungVon ?? titleEnd, dur - 0.5));
+  const to = Math.max(from + 0.5, Math.min(shot.einblendungBis ?? dur, dur));
+  return { from: r2(from), to: r2(to) };
+}
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -91,13 +158,13 @@ function wordEndBefore(limit: number, start: number, segments: Segment[] | null 
  * Schnittplan prüfen und korrigieren: unbekannte Clips und zu kurze Ausschnitte entfernen, Zeiten auf die Clip-Länge begrenzen,
  * O-Töne an Wortgrenzen ausrichten und alles auf das Zeitbudget (max. Länge minus Abschlusstafel) kürzen.
  */
-export function normalizePlan(plan: VideoPlan, clips: ClipInfo[], maxSeconds: number): { plan: VideoPlan; warnings: string[] } {
+export function normalizePlan(plan: z.input<typeof planSchema> | VideoPlan, clips: ClipInfo[], maxSeconds: number): { plan: VideoPlan; warnings: string[] } {
   const warnings: string[] = [];
   const byId = new Map(clips.map((c) => [c.id, c]));
   const budget = cutBudget(maxSeconds);
   let used = 0;
   const shots: Shot[] = [];
-  for (const raw of plan.shots.slice(0, MAX_SHOTS)) {
+  for (const raw of plan.shots.slice(0, MAX_SHOTS) as Shot[]) {
     const clip = byId.get(raw.clipId);
     if (!clip) {
       warnings.push("Ein Ausschnitt verweist auf einen unbekannten Clip und wurde entfernt.");
@@ -132,6 +199,11 @@ export function normalizePlan(plan: VideoPlan, clips: ClipInfo[], maxSeconds: nu
       untertitel: tone !== "stumm" && raw.untertitel && !!clip.transcript?.length,
       untertitelText: (raw.untertitelText ?? "").replace(/\s+/g, " ").trim().slice(0, 400),
     };
+    const pos = clampPos(raw.einblendungPos);
+    if (pos) shot.einblendungPos = pos;
+    const dur = shot.end - shot.start;
+    if (raw.einblendungVon != null && Number.isFinite(raw.einblendungVon)) shot.einblendungVon = r2(Math.max(0, Math.min(raw.einblendungVon, dur - 0.5)));
+    if (raw.einblendungBis != null && Number.isFinite(raw.einblendungBis)) shot.einblendungBis = r2(Math.max(shot.einblendungVon ?? 0.5, Math.min(raw.einblendungBis, dur)));
     shots.push(shot);
     used += shot.end - shot.start;
   }
@@ -144,7 +216,9 @@ export function normalizePlan(plan: VideoPlan, clips: ClipInfo[], maxSeconds: nu
       aufruf: plan.aufruf.trim().slice(0, 80),
       beitragstext: plan.beitragstext.trim().slice(0, 1500),
       hashtags: plan.hashtags.trim().slice(0, 200),
-      begruendung: plan.begruendung.trim().slice(0, 1500),
+      begruendung: plan.begruendung.trim().slice(0, 3000),
+      ...(clampPos(plan.titelPos) ? { titelPos: clampPos(plan.titelPos) } : {}),
+      ...(plan.untertitelY != null && Number.isFinite(plan.untertitelY) ? { untertitelY: Math.round(Math.max(10, Math.min(95, plan.untertitelY)) * 10) / 10 } : {}),
     },
     warnings: [...new Set(warnings)],
   };

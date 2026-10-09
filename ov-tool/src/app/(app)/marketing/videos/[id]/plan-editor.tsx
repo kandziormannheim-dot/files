@@ -7,15 +7,50 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
-import { cutBudget, MIN_SHOT, OUTRO_SECONDS, planDuration, SHOT_TONES, shotText, TONE_LABELS, type Segment, type Shot, type VideoPlan } from "@/lib/video-plan";
+import {
+  cutBudget,
+  MIN_SHOT,
+  OUTRO_SECONDS,
+  planDuration,
+  SHOT_TONES,
+  shotText,
+  subtitleCues,
+  TONE_LABELS,
+  VIDEO_FORMATS,
+  type LogoOptions,
+  type Pos,
+  type Segment,
+  type Shot,
+  type VideoFormat,
+  type VideoPlan,
+} from "@/lib/video-plan";
+import { LayoutPreview } from "./layout-preview";
 import { savePlanAction } from "../actions";
 
 export type EditorClip = { id: string; name: string; duration: number; hasAudio: boolean; hasStill: boolean; transcript: Segment[] | null };
 
 const fmt = (n: number) => n.toFixed(1).replace(".", ",");
 
-export function PlanEditor({ projectId, initial, clips, maxSeconds, disabled }: { projectId: string; initial: VideoPlan; clips: EditorClip[]; maxSeconds: number; disabled?: boolean }) {
+export function PlanEditor({
+  projectId,
+  initial,
+  clips,
+  maxSeconds,
+  disabled,
+  formats,
+  logo,
+}: {
+  projectId: string;
+  initial: VideoPlan;
+  clips: EditorClip[];
+  maxSeconds: number;
+  disabled?: boolean;
+  formats: VideoFormat[];
+  logo: LogoOptions;
+}) {
   const [plan, setPlan] = useState<VideoPlan>(initial);
+  const [layoutShot, setLayoutShot] = useState(0);
+  const [layoutFormat, setLayoutFormat] = useState<VideoFormat>(formats[0] ?? "9:16");
   const video = useRef<HTMLVideoElement>(null);
   const stopAt = useRef<number | null>(null);
   const byId = new Map(clips.map((c) => [c.id, c]));
@@ -92,6 +127,24 @@ export function PlanEditor({ projectId, initial, clips, maxSeconds, disabled }: 
         </div>
       </div>
 
+      <LayoutSection
+        plan={plan}
+        clips={clips}
+        formats={formats}
+        format={layoutFormat}
+        setFormat={setLayoutFormat}
+        shotIndex={Math.min(layoutShot, Math.max(0, plan.shots.length - 1))}
+        setShotIndex={setLayoutShot}
+        logo={logo}
+        logoUrl={`/api/video/${projectId}/logo`}
+        onMove={(kind, pos, i) => {
+          if (kind === "titel") setPlan((p) => ({ ...p, titelPos: pos }));
+          else if (kind === "untertitel") setPlan((p) => ({ ...p, untertitelY: pos.y }));
+          else setShot(i, { einblendungPos: pos });
+        }}
+        onReset={() => setPlan((p) => ({ ...p, titelPos: undefined, untertitelY: undefined, shots: p.shots.map((s) => ({ ...s, einblendungPos: undefined })) }))}
+      />
+
       <ol className="flex flex-col gap-3">
         {plan.shots.map((s, i) => {
           const clip = byId.get(s.clipId);
@@ -135,10 +188,36 @@ export function PlanEditor({ projectId, initial, clips, maxSeconds, disabled }: 
                       ))}
                     </NativeSelect>
                   </label>
-                  <label className="flex flex-col gap-0.5 text-xs sm:col-span-3">
+                  <label className="flex flex-col gap-0.5 text-xs sm:col-span-2">
                     Texteinblendung (optional, max. 7 Wörter)
                     <Input value={s.einblendung} maxLength={80} onChange={(e) => setShot(i, { einblendung: e.target.value })} />
                   </label>
+                  <div className="flex gap-2 text-xs">
+                    <label className="flex w-1/2 flex-col gap-0.5">
+                      Einbl. ab (s)
+                      <Input
+                        type="number"
+                        step={0.1}
+                        min={0}
+                        placeholder={i === 0 && plan.titel ? "nach Titel" : "0"}
+                        value={s.einblendungVon ?? ""}
+                        disabled={!s.einblendung}
+                        onChange={(e) => setShot(i, { einblendungVon: e.target.value === "" ? undefined : Number(e.target.value) })}
+                      />
+                    </label>
+                    <label className="flex w-1/2 flex-col gap-0.5">
+                      bis (s)
+                      <Input
+                        type="number"
+                        step={0.1}
+                        min={0}
+                        placeholder="Ende"
+                        value={s.einblendungBis ?? ""}
+                        disabled={!s.einblendung}
+                        onChange={(e) => setShot(i, { einblendungBis: e.target.value === "" ? undefined : Number(e.target.value) })}
+                      />
+                    </label>
+                  </div>
                   <label className="flex items-center gap-2 self-end pb-2 text-xs">
                     <input type="checkbox" className="size-4 accent-akzent-dunkel" checked={s.untertitel} disabled={!clip?.transcript?.length || s.ton === "stumm"} onChange={(e) => setShot(i, { untertitel: e.target.checked })} />
                     Untertitel
@@ -216,5 +295,77 @@ export function PlanEditor({ projectId, initial, clips, maxSeconds, disabled }: 
         </SubmitButton>
       </ActionForm>
     </div>
+  );
+}
+
+function LayoutSection(props: {
+  plan: VideoPlan;
+  clips: EditorClip[];
+  formats: VideoFormat[];
+  format: VideoFormat;
+  setFormat: (f: VideoFormat) => void;
+  shotIndex: number;
+  setShotIndex: (i: number) => void;
+  logo: LogoOptions;
+  logoUrl: string;
+  onMove: (kind: "titel" | "einblendung" | "untertitel", pos: Pos, shotIndex: number) => void;
+  onReset: () => void;
+}) {
+  const { plan, shotIndex } = props;
+  const shot = plan.shots[shotIndex];
+  if (!shot) return null;
+  const clip = props.clips.find((c) => c.id === shot.clipId);
+  const cue = shot.untertitel ? subtitleCues(shot, clip?.transcript)[0]?.text : "";
+  const vertical = VIDEO_FORMATS[props.format].height > VIDEO_FORMATS[props.format].width;
+  const moved = plan.titelPos || plan.untertitelY != null || plan.shots.some((s) => s.einblendungPos);
+  return (
+    <section className="rounded-md border p-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold">Texte verschieben</h3>
+        <div className="flex flex-wrap gap-2 text-xs">
+          {props.formats.map((f) => (
+            <button key={f} type="button" onClick={() => props.setFormat(f)} className={`rounded border px-2 py-1 ${f === props.format ? "border-rhoendorf bg-rhoendorf text-white" : ""}`}>
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
+        <div className={vertical ? "w-56 max-w-full" : props.format === "1:1" ? "w-72 max-w-full" : "w-96 max-w-full"}>
+          <LayoutPreview
+            format={props.format}
+            still={clip?.hasStill ? `/api/video/clip/${shot.clipId}/still/1` : null}
+            logoUrl={props.logoUrl}
+            logo={props.logo}
+            titel={shotIndex === 0 ? { text: plan.titel, unterzeile: plan.unterzeile, pos: plan.titelPos } : null}
+            einblendung={shot.einblendung ? { text: shot.einblendung, pos: shot.einblendungPos } : null}
+            untertitel={cue ? { text: cue, y: plan.untertitelY } : { text: "Beispiel für einen Untertitel", y: plan.untertitelY }}
+            onMove={(kind, pos) => props.onMove(kind, pos, shotIndex)}
+          />
+        </div>
+        <div className="flex flex-col gap-2 text-sm">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs">Ausschnitt</span>
+            <NativeSelect value={shotIndex} onChange={(e) => props.setShotIndex(Number(e.target.value))}>
+              {plan.shots.map((s, i) => (
+                <option key={i} value={i}>
+                  {i + 1}. {s.einblendung || (i === 0 && plan.titel ? plan.titel : props.clips.find((c) => c.id === s.clipId)?.name ?? "")}
+                </option>
+              ))}
+            </NativeSelect>
+          </label>
+          <p className="text-xs text-neutral-600">
+            Titelzeile (im ersten Ausschnitt) und Einblendung mit Maus oder Finger an die gewünschte Stelle ziehen, Untertitel nach oben oder unten. Mit den Pfeiltasten
+            geht es feiner. Titel und Untertitel gelten für das ganze Video, Einblendungen je Ausschnitt. Die Positionen gelten in Prozent für alle Formate; das
+            Standbild dient nur der Orientierung.
+          </p>
+          {moved ? (
+            <Button type="button" variant="outline" size="sm" className="self-start" onClick={props.onReset}>
+              Alle Positionen zurücksetzen
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }

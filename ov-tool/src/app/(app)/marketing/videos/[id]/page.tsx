@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, Music, Trash2 } from "lucide-react";
+import { Download, ImageIcon, Music, Trash2, Wand2 } from "lucide-react";
 import { ActionForm, Field, SubmitButton } from "@/components/form";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -9,14 +9,27 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/dates";
-import { isVideoFormat, planDuration, VIDEO_FORMATS } from "@/lib/video-plan";
+import { isVideoFormat, LOGO_POSITIONS, LOGO_SIZES, logoOptions, planDuration, VIDEO_FORMATS } from "@/lib/video-plan";
 import { requirePageCapability } from "@/server/auth/session";
 import { NotFoundError } from "@/server/errors";
 import { aiConfigured } from "@/server/services/ai-draft";
 import { getProject, isBusy, outputsOf, planOf, stillsOf, transcriptOf } from "@/server/services/video";
 import { MARKETING_STATUS } from "../../labels";
-import { deleteProjectAction, removeClipAction, removeMusicAction, setMusicAction, startProcessingAction, toMarketingPostAction, updateProjectAction } from "../actions";
+import {
+  deleteProjectAction,
+  removeClipAction,
+  removeLogoAction,
+  removeMusicAction,
+  requestRevisionAction,
+  setMusicAction,
+  startProcessingAction,
+  toMarketingPostAction,
+  updateLogoAction,
+  updateProjectAction,
+} from "../actions";
 import { VIDEO_STATUS } from "../labels";
 import { ProjectForm } from "../project-form";
 import { PlanEditor } from "./plan-editor";
@@ -115,7 +128,7 @@ export default async function VideoProjectPage({ params }: { params: Promise<{ i
               <p className="text-xs text-neutral-600">
                 Gerendert {p.renderedAt ? formatDateTime(p.renderedAt) : "–"}
                 {plan ? ` · ${fmtSec(planDuration(plan))}` : ""}
-                {p.planSource === "ki" ? " · Schnitt von Claude vorgeschlagen" : p.planSource === "bearbeitet" ? " · Schnitt von Hand angepasst" : p.planSource === "einfach" ? " · einfacher Schnitt ohne KI" : ""}
+                {p.planSource === "ki" ? " · Schnitt von Claude vorgeschlagen" : p.planSource === "nachgebessert" ? " · von Claude nachgebessert" : p.planSource === "bearbeitet" ? " · Schnitt von Hand angepasst" : p.planSource === "einfach" ? " · einfacher Schnitt ohne KI" : ""}
               </p>
             </CardContent>
           </Card>
@@ -174,6 +187,45 @@ export default async function VideoProjectPage({ params }: { params: Promise<{ i
           </CardContent>
         </Card>
 
+        {plan ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wand2 className="size-4" aria-hidden /> Nachbessern mit Regieanweisung
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 text-sm">
+              <ActionForm action={requestRevisionAction.bind(null, p.id)} className="flex flex-col gap-2" resetOnSuccess>
+                <Field label="Was soll anders werden?" name="anweisung" hint="Claude überarbeitet den bestehenden Schnitt und ändert nur, was hier steht. Verschobene Texte bleiben erhalten.">
+                  <Textarea
+                    id="anweisung"
+                    name="anweisung"
+                    rows={3}
+                    maxLength={2000}
+                    required
+                    placeholder={"z. B. Einstieg kürzer, mit dem O-Ton zur Ampel beginnen. Die Einblendung „300 Kinder“ früher zeigen. Am Ende mehr Bilder der Kreuzung, weniger Interview."}
+                  />
+                </Field>
+                <SubmitButton className="self-start" disabled={busy || !aiConfigured()} pendingText="…">
+                  Nachbessern lassen
+                </SubmitButton>
+              </ActionForm>
+              {p.revisionNotes.length ? (
+                <details>
+                  <summary className="cursor-pointer text-xs text-neutral-600">Bisherige Anweisungen ({p.revisionNotes.length})</summary>
+                  <ol className="mt-2 list-decimal pl-5 text-xs text-neutral-700">
+                    {p.revisionNotes.map((n, i) => (
+                      <li key={i} className="whitespace-pre-wrap">
+                        {n}
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              ) : null}
+            </CardContent>
+          </Card>
+        ) : null}
+
         {plan && !busy ? (
           <Card>
             <CardHeader>
@@ -185,6 +237,8 @@ export default async function VideoProjectPage({ params }: { params: Promise<{ i
                 key={p.updatedAt.toISOString()}
                 projectId={p.id}
                 initial={plan}
+                formats={p.formats.filter(isVideoFormat)}
+                logo={logoOptions(p)}
                 maxSeconds={p.maxSeconds}
                 disabled={busy}
                 clips={p.clips.map((c) => ({ id: c.id, name: c.originalName, duration: c.duration ?? 0, hasAudio: c.hasAudio, hasStill: stillsOf(c).length > 1, transcript: transcriptOf(c) }))}
@@ -192,6 +246,61 @@ export default async function VideoProjectPage({ params }: { params: Promise<{ i
             </CardContent>
           </Card>
         ) : null}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="size-4" aria-hidden /> Logo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 text-sm">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex h-16 items-center rounded border bg-white px-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/api/video/${p.id}/logo?v=${p.updatedAt.getTime()}`} alt="aktuelles Logo" className="max-h-12 max-w-48 object-contain" />
+              </div>
+              <span className="text-neutral-600">{p.logoPath ? `Eigenes Logo: ${p.logoName ?? "hochgeladen"}` : `Kanal-Logo (${p.account === "BBR" ? "CDU-Gruppe im Bezirksbeirat" : "CDU-Ortsverband"}) – änderbar unter Marketing → BBR-Anliegen`}</span>
+              {p.logoPath ? (
+                <ActionForm action={removeLogoAction.bind(null, p.id)}>
+                  <SubmitButton variant="ghost" size="sm" disabled={busy} pendingText="…">
+                    eigenes Logo entfernen
+                  </SubmitButton>
+                </ActionForm>
+              ) : null}
+            </div>
+            <ActionForm action={updateLogoAction.bind(null, p.id)} className="grid gap-3 sm:grid-cols-3">
+              <Field label="Eigenes Logo hochladen (optional)" name="logo" hint="PNG mit transparentem Hintergrund, SVG, JPG oder WebP, max. 5 MB" className="sm:col-span-3">
+                <Input id="logo" name="logo" type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" />
+              </Field>
+              <Field label="Position" name="logoPosition">
+                <NativeSelect id="logoPosition" name="logoPosition" defaultValue={p.logoPosition}>
+                  {Object.entries(LOGO_POSITIONS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </Field>
+              <Field label="Größe" name="logoSize">
+                <NativeSelect id="logoSize" name="logoSize" defaultValue={p.logoSize}>
+                  {Object.entries(LOGO_SIZES).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </Field>
+              <label className="flex items-center gap-2 self-end pb-2">
+                <Checkbox name="logoChip" defaultChecked={p.logoChip} />
+                auf weißem Feld (CD-Vorgabe)
+              </label>
+              <SubmitButton variant="outline" className="justify-self-start sm:col-span-3" disabled={busy} pendingText="…">
+                Logo-Einstellungen speichern
+              </SubmitButton>
+            </ActionForm>
+            {plan ? <p className="text-xs text-neutral-600">Wirkt beim nächsten Rendern („Schnitt speichern und neu rendern“). Das Logo auf der Abschlusstafel bleibt immer sichtbar.</p> : null}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

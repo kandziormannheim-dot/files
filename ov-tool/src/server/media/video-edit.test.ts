@@ -55,9 +55,11 @@ describe.skipIf(!process.env.VIDEO_RENDER_TEST)("Videoschnitt – Rendern", () =
     const plan: VideoPlan = {
       titel: "Sicherer Schulweg?",
       unterzeile: "Kreuzung Hauptstraße",
+      titelPos: { x: 10, y: 40 },
+      untertitelY: 50,
       shots: [
         { clipId: "q", start: 0.3, end: 3.0, ton: "original", einblendung: "", untertitel: true, untertitelText: "" },
-        { clipId: "h", start: 1, end: 4, ton: "stumm", einblendung: "Täglich 300 Kinder", untertitel: false, untertitelText: "" },
+        { clipId: "h", start: 1, end: 4, ton: "stumm", einblendung: "Täglich 300 Kinder", untertitel: false, untertitelText: "", einblendungPos: { x: 40, y: 20 }, einblendungVon: 0.5, einblendungBis: 2.5 },
       ],
       abschluss: "Gemeinsam für sichere Schulwege",
       aufruf: "Mehr auf cdu-sf.de",
@@ -70,7 +72,7 @@ describe.skipIf(!process.env.VIDEO_RENDER_TEST)("Videoschnitt – Rendern", () =
       { id: "h", file: hoch, hasAudio: false, transcript: null },
     ];
     for (const format of ["9:16", "16:9"] as const) {
-      const out = await renderPlan({ plan, clips, format, branding: { accountName: "CDU Seckenheim-Friedrichsfeld", defaultLogo: "logo-ov.png" }, music: musik, musicVolume: 15, workDir: dir });
+      const out = await renderPlan({ plan, clips, format, branding: { accountName: "CDU Seckenheim-Friedrichsfeld", defaultLogo: "logo-ov.png" }, logo: { position: "unten-rechts", size: "gross", chip: true }, music: musik, musicVolume: 15, workDir: dir });
       const p = await probe(out);
       expect(p.hasAudio).toBe(true);
       expect(p.width).toBe(format === "9:16" ? 1080 : 1920);
