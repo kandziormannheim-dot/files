@@ -129,7 +129,7 @@ NEXTCLOUD_URL= / NEXTCLOUD_CLIENT_ID= / NEXTCLOUD_CLIENT_SECRET=  # gemeinsamer 
 NEXTCLOUD_DECK_USER= / NEXTCLOUD_DECK_APP_PASSWORD=  # BBR-Anliegen: Lesezugriff auf die Deck-Boards „BBR Seckenheim“ / „BBR Friedrichsfeld“
 META_OV_PAGE_ID= / META_OV_PAGE_TOKEN= / META_OV_IG_ID=     # Facebook-Seite + Instagram des OV (Graph API)
 META_BBR_PAGE_ID= / META_BBR_PAGE_TOKEN= / META_BBR_IG_ID=  # dito BBR-Gruppe; META_GRAPH_VERSION= (leer = v23.0)
-FFMPEG_PATH=             # Kurzvideos (leer = ffmpeg aus PATH)
+FFMPEG_PATH=             # Kurzvideos und Videoschnitt (leer = ffmpeg aus PATH; ffprobe daneben)
 SEED_ADMIN_EMAIL=        # Seed: erster Admin
 SEED_ADMIN_NAME=
 SEED_ADMIN_FUNCTION=

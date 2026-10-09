@@ -13,3 +13,10 @@ defineJob("bbr-generate", async (d) => {
   const actor = d.actorId ? await db.user.findUnique({ where: { id: String(d.actorId) }, select: { id: true, role: true } }) : null;
   return generateForConcern(String(d.concernId), { targets: d.targets as never, actor });
 });
+
+// Videoschnitt: Analyse (Standbilder, Whisper), Schnittplan (Claude) und Rendern dauern je nach Länge einige Minuten
+defineJob("video-process", async (d) => {
+  const { processProject } = await import("@/server/services/video");
+  const mode = d.mode === "plan" || d.mode === "render" ? d.mode : "full";
+  return processProject(String(d.projectId), mode, d.actorId ? String(d.actorId) : null);
+});

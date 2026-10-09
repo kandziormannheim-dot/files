@@ -29,9 +29,14 @@ export default async function MarketingPage() {
             </Link>
           </Button>
           {can(user.role, "marketing.create") ? (
-            <Button asChild>
-              <Link href="/marketing/new">Neuer Beitrag</Link>
-            </Button>
+            <>
+              <Button asChild variant="outline">
+                <Link href="/marketing/videos">Videos schneiden</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/marketing/new">Neuer Beitrag</Link>
+              </Button>
+            </>
           ) : null}
         </div>
       </div>

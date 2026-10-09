@@ -159,6 +159,21 @@ und den Verteiler aus Einstellungen → Allgemein geht. Die E-Mail der ausleihen
 
 **Facebook/Instagram direkt:** Meta-App (Entwicklungsmodus genügt, solange nur Rolleninhaber der App posten) mit `pages_manage_posts`, `pages_read_engagement`, `instagram_basic`, `instagram_content_publish`. Je Kanal `META_<OV|BBR>_PAGE_ID`, `_PAGE_TOKEN` (Seiten-Token aus langlebigem Nutzer-Token, läuft nicht ab), `_IG_ID` (Instagram-Business-Konto der Seite). Blogartikel: nach Freigabe Häkchen bei cdu-sf.de, bbr.cdu-sf.de oder beiden, dann als Entwurf oder direkt veröffentlichen (je Seite ein WordPress-Beitrag, Tabelle `WordpressPublication`; erneutes Senden aktualisiert). Im Social-Beitrag nach Freigabe: „Facebook: Kachel/Video posten“, „Instagram: Kachel/Reel posten“; optional mit Link zum veröffentlichten Blogartikel. Instagram holt die Datei über einen signierten, 1 Stunde gültigen Link `/api/public-media/…` ab. X und TikTok bewusst nicht angebunden (Teilen übers Handy).
 
+
+## 6f. Videoschnitt (Marketing → Videos schneiden)
+
+Clips hochladen → automatisch ein Aufklärungsvideo (Standard höchstens 30 s) in 9:16, 1:1 und/oder 16:9.
+Ablauf (Job `video-process`, `src/server/services/video.ts`):
+1. Upload in Abschnitten zu 32 MB (`/api/video/[id]/upload`), weil Plesk-nginx je Anfrage nur 128 MB annimmt; je Clip bis 2 GB / 15 min, bis 12 Clips.
+2. Analyse: ffprobe, drei Standbilder je Clip, Tonspur an den eigenen Whisper-Dienst (`output=json&word_timestamps=true`).
+   Whisper läuft nur mit `COMPOSE_PROFILES=whisper` (bzw. `prod`); ohne Whisper geht es ohne Untertitel weiter (Hinweis am Video).
+3. Schnittplan von Claude nach den Regievorgaben (Vorlage `prompt.video`, je Video ergänzbar) mit Standbildern und Transkript;
+   ohne `ANTHROPIC_API_KEY` ein einfacher Schnitt. Der Plan wird geprüft (`src/lib/video-plan.ts`): O-Töne an Wortgrenzen, Zeitbudget, Mindestlänge.
+4. Rendern mit ffmpeg (`src/server/media/video-edit.ts`): Titelzeile, Texteinblendungen, Untertitel, Logo (auf Weiß), Abschlusstafel,
+   Lautheit nach EBU R128, optional Musik (wird unter Sprache automatisch leiser).
+Der Schnitt bleibt ein Vorschlag: im Editor änderbar, danach neu rendern. „Als Social-Media-Beitrag übernehmen“ legt einen Entwurf an;
+veröffentlicht wird erst nach Freigabe. Beim Anlegen muss das Einverständnis der gezeigten Personen bestätigt werden, bei Musik die Nutzungsrechte.
+Clips liegen unter `video/<Projekt>/` in der Dateiablage, bis das Video gelöscht wird.
 ## 7. Variante: Plesk
 
 Auf einem Plesk-Server gehören Ports 80/443 und die Zertifikate Plesk. Die App läuft trotzdem in Docker (app, db,

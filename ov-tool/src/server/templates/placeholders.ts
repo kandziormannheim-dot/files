@@ -119,6 +119,7 @@ export const KNOWN_PLACEHOLDERS: readonly string[] = [
   "inventar.positionen[].faellig",
   "inventar.positionen[].ausgemustert",
   "leihe.*",
+  "video.*",
   "leihe.fotosAusgabe",
   "leihe.fotosAusgabe[].nr",
   "leihe.fotosAusgabe[].bild",

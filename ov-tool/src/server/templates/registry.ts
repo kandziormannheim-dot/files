@@ -19,6 +19,7 @@ export const TEMPLATE_DEFS: TemplateDef[] = [
   { key: "aktion.helferaufruf", file: "helferaufruf.mail.hbs", kind: "mail", name: "Helferaufruf", usage: "Aktion veröffentlicht" },
   { key: "prompt.marketing", file: "prompt-marketing.md", kind: "prompt", name: "Prompt Social Media & Blog", usage: "Claude-Entwurf für Marketing-Beiträge" },
   { key: "prompt.bbr-social", file: "prompt-bbr-social.md", kind: "prompt", name: "Prompt BBR-Anliegen → Social Media", usage: "Claude-Entwürfe für BBR- und OV-Kanal aus der Kurzfassung eines BBR-Anliegens" },
+  { key: "prompt.video", file: "prompt-video.md", kind: "prompt", name: "Prompt Videoschnitt (Regievorgaben)", usage: "Claude-Schnittplan für Aufklärungsvideos aus hochgeladenen Clips" },
   { key: "prompt.protokoll", file: "prompt-protokollentwurf.md", kind: "prompt", name: "Prompt Protokollentwurf", usage: "Claude-Entwurf aus Transkript" },
   { key: "aufgabe.zugewiesen", file: "aufgabe-zugewiesen.mail.hbs", kind: "mail", name: "Neue Aufgabe zugewiesen", usage: "Aufgabe zugewiesen" },
   { key: "antrag.einberufung", file: "antrag-einberufung.mail.hbs", kind: "mail", name: "Antrag auf Einberufung", usage: "an Admins, sobald fünf Mitglieder einen Antrag tragen" },

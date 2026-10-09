@@ -136,6 +136,7 @@ export function sampleContext(appUrl: string) {
         { code: "OVMASF00001.24", name: "Pavillon 3 × 3 m", kategorie: "Infostand", standort: "Lager", menge: 1, zustand: "gut", verliehenAn: "", faellig: "", ausgemustert: false },
       ],
     },
+    video: { maxSekunden: 30, schnittSekunden: 27 },
     leihe: {
       art: "Rückgabe",
       rueckgabe: true,

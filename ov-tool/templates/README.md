@@ -88,6 +88,7 @@ aufgabe.*             titel, frist, ueberfaellig, herkunft, link, von (Aufgaben-
 aktion.*, schichten[] (Helferaufruf)
 auslage.*             nummer, titel, anlass, antragsteller, erstellt, erstattungsart, spende/ueberweisung/bar, kontoinhaber, iban, anschrift, bemerkung, summe, positionen[] (nr, belegdatum, beschreibung, betrag, beleg), freigabeDurch, freigabeAm
 inventar.*            stand, filter, anzahl, inventur (Prüfspalte), positionen[] (code, name, kategorie, standort, menge, zustand, verliehenAn, faellig, ausgemustert)
+video.*               Videoschnitt (prompt.video): maxSekunden, schnittSekunden (ohne Abschlusstafel)
 leihe.*               Leihprotokoll: art („Ausgabe“/„Rückgabe“), rueckgabe (ja/nein), code, gegenstand, kategorie, beschreibung, menge,
                       abholung, uebergebenVon, ausleiher, organisation, email, zubehoer, zustandAusgabe, rueckgabeBis, notiz,
                       rueckgabeAm, zurueckgegebenVon, angenommenVon, zustandRueckgabe, zustandGeaendert, zubehoerVollstaendig („ja“/„nein“/leer),
@@ -130,6 +131,7 @@ pressekontakt, abmeldeLink   (Versand an den Presseverteiler)
 | `email-bestaetigung.mail.hbs` | `email.bestaetigung` | Bestätigungslink an die neue Adresse, wenn jemand seine E-Mail-Adresse ändert |
 | `email-geaendert.mail.hbs` | `email.geaendert` | Hinweis an die bisherige Adresse nach erfolgter Änderung |
 | `inventar-liste.dokument.hbs` | `inventar.liste` | Inventarliste als PDF (Filter der Übersicht), optional Inventurliste mit Prüfspalte und Unterschriftszeile |
+| `prompt-video.md` | `prompt.video` | Regievorgaben für den automatischen Videoschnitt (Claude) |
 | `inventar-leihprotokoll.dokument.hbs` | `inventar.leihprotokoll` | Leihprotokoll bei Ausgabe bzw. Rückgabe, mit Unterschriftszeilen und Fotos |
 | `inventar-ausgabe.mail.hbs` | `inventar.ausgabe` | Mail mit Ausgabeprotokoll an alle Beteiligten |
 | `inventar-rueckgabe.mail.hbs` | `inventar.rueckgabe` | Mail mit Rückgabeprotokoll an alle Beteiligten |

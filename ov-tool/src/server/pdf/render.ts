@@ -98,14 +98,14 @@ export async function htmlToPdf(html: string): Promise<Buffer> {
 }
 
 /** HTML → PNG in fester Pixelgröße (Social-Media-Kacheln, Videotafeln). Keine Netzwerkzugriffe. */
-export async function htmlToPng(html: string, width: number, height: number): Promise<Buffer> {
+export async function htmlToPng(html: string, width: number, height: number, opts: { transparent?: boolean } = {}): Promise<Buffer> {
   const browser = await getBrowser();
   const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
   try {
     await page.route("**/*", (route) => (route.request().url().startsWith("data:") ? route.continue() : route.abort()));
     await page.setContent(html, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
-    return await page.screenshot({ type: "png", clip: { x: 0, y: 0, width, height } });
+    return await page.screenshot({ type: "png", clip: { x: 0, y: 0, width, height }, omitBackground: !!opts.transparent });
   } finally {
     await page.close();
   }

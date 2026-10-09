@@ -48,7 +48,7 @@ export function boldHtml(text: string): string {
 const MIME: Record<string, string> = { ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
 
 /** Logo als Data-URI; `named` = Kanal-Logo mit Namenszeile (dann entfällt der Kanalname als Text). */
-async function logoDataUri(b: Pick<Branding, "logoPath" | "defaultLogo">): Promise<{ uri: string; named: boolean }> {
+export async function logoDataUri(b: Pick<Branding, "logoPath" | "defaultLogo">): Promise<{ uri: string; named: boolean }> {
   if (b.logoPath && (await storedFileExists(b.logoPath))) {
     const mime = MIME[path.extname(b.logoPath).toLowerCase()] ?? "image/png";
     return { uri: `data:${mime};base64,${(await readStoredFile(b.logoPath)).toString("base64")}`, named: true };

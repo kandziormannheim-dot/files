@@ -87,6 +87,7 @@ model User {
   marketingApproved   MarketingPost[]     @relation("MarketingApprovedBy")
   inventoryCreated    InventoryItem[]     @relation("InventoryCreatedBy")
   inventoryLoans      InventoryLoan[]
+  videoProjects       VideoProject[]
 
   @@index([active, sortOrder])
   socialPublications SocialPublication[] @relation("SocialPublicationBy")
@@ -938,6 +939,8 @@ model MarketingPost {
   creative     Json?
   imagePath    String?
   videoPath    String?
+  /// aus einem Videoprojekt übernommen
+  videoProjects VideoProject[]
   /// Fehlermeldung der letzten Kachel-/Video-Erzeugung
   mediaError   String?
   createdAt    DateTime        @default(now())
@@ -1493,4 +1496,89 @@ model ExpenseItem {
   createdAt    DateTime     @default(now())
 
   @@index([claimId, date])
+}
+
+// ---------------------------------------------------------------------------
+// Videoschnitt (Marketing): Clips hochladen → Analyse (ffprobe, Standbilder, Whisper mit Wortzeiten)
+// → Schnittplan von Claude nach Regievorgaben → Rendern (9:16, 1:1, 16:9) mit Texten, Untertiteln, Logo, optional Musik.
+// Der Schnittplan ist ein Vorschlag und lässt sich bearbeiten und neu rendern.
+// ---------------------------------------------------------------------------
+
+enum VideoStatus {
+  ENTWURF
+  ANALYSE
+  SCHNITT
+  RENDERN
+  FERTIG
+  FEHLER
+}
+
+model VideoProject {
+  id                   String        @id @default(cuid())
+  title                String
+  /// worum es geht (Thema, Anlass, Fakten)
+  topic                String        @default("")
+  /// Kernbotschaft, die hängen bleiben soll
+  message              String        @default("")
+  /// Handlungsaufruf am Ende, z. B. „Mehr auf cdu-sf.de“
+  callToAction         String        @default("")
+  /// zusätzliche Regievorgaben für dieses Video (die allgemeinen stehen in der Vorlage prompt.video)
+  direction            String        @default("")
+  /// Kanal für Logo und Absender: OV oder BBR
+  account              String        @default("OV")
+  /// Formate: "9:16", "1:1", "16:9"
+  formats              String[]
+  maxSeconds           Int           @default(30)
+  subtitles            Boolean       @default(true)
+  musicPath            String?
+  musicName            String?
+  /// Lautstärke der Musik unter O-Tönen in Prozent
+  musicVolume          Int           @default(15)
+  status               VideoStatus   @default(ENTWURF)
+  progress             Int           @default(0)
+  error                String        @default("")
+  /// Schnittplan (src/lib/video-plan.ts)
+  plan                 Json?
+  /// „ki“ = Vorschlag von Claude, „bearbeitet“ = von Hand geändert
+  planSource           String?
+  /// fertige Videos je Format: { "9:16": "pfad.mp4", … }
+  outputs              Json?
+  renderedAt           DateTime?
+  /// Einverständnis der gezeigten und zu hörenden Personen bestätigt
+  consentConfirmedAt   DateTime?
+  consentConfirmedById String?
+  marketingPostId      String?
+  marketingPost        MarketingPost? @relation(fields: [marketingPostId], references: [id], onDelete: SetNull)
+  createdById          String?
+  createdBy            User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  clips                VideoClip[]
+
+  @@index([createdAt])
+}
+
+model VideoClip {
+  id           String       @id @default(cuid())
+  projectId    String
+  project      VideoProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  path         String
+  originalName String
+  size         Int
+  /// Sekunden
+  duration     Float?
+  width        Int?
+  height       Int?
+  /// Drehung laut Metadaten (Handy-Hochkant)
+  rotation     Int          @default(0)
+  hasAudio     Boolean      @default(false)
+  /// Standbilder für die Vorschau und die KI: [{ t, path }]
+  stills       Json?
+  /// Whisper-Ergebnis: [{ start, end, text, words: [{ start, end, word }] }]
+  transcript   Json?
+  analyzedAt   DateTime?
+  sortOrder    Int          @default(0)
+  createdAt    DateTime     @default(now())
+
+  @@index([projectId, sortOrder])
 }

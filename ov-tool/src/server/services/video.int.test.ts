@@ -1,0 +1,183 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { createServer, type Server } from "node:http";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import type Anthropic from "@anthropic-ai/sdk";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { form, hasTestDb, makeUser, resetDb } from "../../../tests/db";
+import { planDuration, type VideoPlan } from "@/lib/video-plan";
+import { db } from "@/server/db";
+import { ForbiddenError, UserError } from "@/server/errors";
+import { storedFileExists } from "@/server/files";
+import { createProject, outputsOf, planOf, processProject, savePlan, toMarketingPost, uploadChunk } from "./video";
+
+const hasFfmpeg = (() => {
+  try {
+    execFileSync("ffmpeg", ["-version"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+const base = {
+  title: "Schulweg",
+  topic: "An der Kreuzung queren täglich viele Schulkinder ohne Zebrastreifen.",
+  message: "Sichere Schulwege",
+  callToAction: "Mehr auf cdu-sf.de",
+  account: "OV",
+  "formats[]": ["9:16", "1:1"],
+  maxSeconds: "20",
+  subtitles: "on",
+  consent: "on",
+};
+
+describe.skipIf(!hasTestDb || !hasFfmpeg)("Videoschnitt (DB, ffmpeg)", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "ov-video-int-"));
+  let whisper: Server;
+  let clipFile: string;
+  let mutedFile: string;
+
+  beforeAll(async () => {
+    clipFile = path.join(dir, "interview.mp4");
+    execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc2=s=640x360:r=25:d=7", "-f", "lavfi", "-i", "sine=f=330:d=7", "-shortest", "-c:v", "libx264", "-c:a", "aac", clipFile]);
+    mutedFile = path.join(dir, "kreuzung.mov");
+    execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=s=360x640:r=30:d=5", "-c:v", "libx264", mutedFile]);
+    // Whisper-Attrappe mit Wort-Zeitstempeln
+    whisper = createServer((req, res) => {
+      req.resume();
+      req.on("end", () => {
+        res.setHeader("Content-Type", "application/json");
+        res.end(
+          JSON.stringify({
+            segments: [
+              { start: 0.4, end: 2.6, text: " Hier ist es gefährlich.", words: [{ start: 0.4, end: 0.8, word: " Hier" }, { start: 0.8, end: 1.0, word: " ist" }, { start: 1.0, end: 1.3, word: " es" }, { start: 1.3, end: 2.5, word: " gefährlich." }] },
+              { start: 3.0, end: 5.5, text: " Wir brauchen einen Zebrastreifen.", words: [{ start: 3.0, end: 3.3, word: " Wir" }, { start: 3.3, end: 3.9, word: " brauchen" }, { start: 3.9, end: 4.2, word: " einen" }, { start: 4.2, end: 5.4, word: " Zebrastreifen." }] },
+            ],
+          }),
+        );
+      });
+    });
+    await new Promise<void>((r) => whisper.listen(0, "127.0.0.1", () => r()));
+    const addr = whisper.address() as { port: number };
+    process.env.WHISPER_URL = `http://127.0.0.1:${addr.port}`;
+    process.env.ANTHROPIC_API_KEY = "test";
+  });
+  afterAll(() => {
+    whisper?.close();
+    delete process.env.WHISPER_URL;
+    delete process.env.ANTHROPIC_API_KEY;
+    rmSync(dir, { recursive: true, force: true });
+  });
+  beforeEach(resetDb);
+
+  async function upload(user: { id: string; role: never }, projectId: string, file: string, name: string, parts = 2) {
+    const data = readFileSync(file);
+    const size = Math.ceil(data.length / parts);
+    let result: Awaited<ReturnType<typeof uploadChunk>> = { done: false };
+    for (let i = 0; i < parts; i++) {
+      const chunk = data.subarray(i * size, Math.min(data.length, (i + 1) * size));
+      const meta = { uploadId: `up${name.toLowerCase().replace(/[^a-z0-9]/g, "")}abc`, index: i, total: parts, offset: i * size, fileName: name, fileSize: data.length };
+      result = await uploadChunk(user, projectId, meta, chunk);
+      if (i === 0 && parts > 1) expect(await uploadChunk(user, projectId, meta, chunk)).toEqual({ done: false }); // Wiederholung wird nicht doppelt angehängt
+    }
+    return result;
+  }
+
+  it("lädt in Stücken hoch, plant mit Claude, rendert alle Formate und übernimmt das Video als Beitrag", async () => {
+    const v = await makeUser({ role: "VORSTAND" });
+    const r = await makeUser({ role: "LESEZUGRIFF" });
+    await expect(createProject(v, form({ ...base, consent: undefined }))).rejects.toBeInstanceOf(UserError);
+    await expect(createProject(r, form(base))).rejects.toBeInstanceOf(ForbiddenError);
+    const project = await createProject(v, form(base));
+    expect(project.formats).toEqual(["9:16", "1:1"]);
+
+    const a = await upload(v as never, project.id, clipFile, "Interview Anwohnerin.mp4");
+    const b = await upload(v as never, project.id, mutedFile, "Kreuzung.mov", 1);
+    expect(a.done && b.done).toBe(true);
+    await expect(uploadChunk(v, project.id, { uploadId: "badfile123", index: 0, total: 1, offset: 0, fileName: "x.exe", fileSize: 3 }, Buffer.from("abc"))).rejects.toBeInstanceOf(UserError);
+    const clips = await db.videoClip.findMany({ where: { projectId: project.id }, orderBy: { sortOrder: "asc" } });
+    expect(clips.map((c) => [c.hasAudio, c.width, c.height])).toEqual([
+      [true, 640, 360],
+      [false, 360, 640],
+    ]);
+
+    // Claude-Attrappe: prüft, dass Standbilder und Transkript ankommen, und liefert einen Plan mit C1/C2
+    let seen = "";
+    let images = 0;
+    const plan: VideoPlan = {
+      titel: "Gefährlicher Schulweg?",
+      unterzeile: "",
+      shots: [
+        { clipId: "C1", start: 0.6, end: 2.4, ton: "original", einblendung: "", untertitel: true }, // wird an Wortgrenzen gelegt
+        { clipId: "C2", start: 0.5, end: 3.5, ton: "original", einblendung: "300 Kinder täglich", untertitel: true }, // ohne Ton → stumm
+        { clipId: "C1", start: 3.0, end: 5.5, ton: "original", einblendung: "", untertitel: true },
+      ],
+      abschluss: "Sichere Schulwege",
+      aufruf: "Mehr auf cdu-sf.de",
+      beitragstext: "Wir setzen uns für einen Zebrastreifen ein.",
+      hashtags: "#Seckenheim #Schulweg",
+      begruendung: "O-Ton, Bild, O-Ton",
+    };
+    const client = {
+      beta: {
+        messages: {
+          parse: async (req: { messages: { content: { type: string; text?: string }[] }[] }) => {
+            const content = req.messages[0]!.content;
+            images = content.filter((c) => c.type === "image").length;
+            seen = content.map((c) => c.text ?? "").join("\n");
+            return { stop_reason: "end_turn", parsed_output: plan };
+          },
+        },
+      },
+    } as unknown as Anthropic;
+    await db.videoProject.update({ where: { id: project.id }, data: { status: "ANALYSE" } });
+    await processProject(project.id, "full", v.id, client);
+
+    expect(images).toBe(6);
+    expect(seen).toContain('<clip id="C1"');
+    expect(seen).toContain("Wir brauchen einen Zebrastreifen.");
+    const done = await db.videoProject.findUniqueOrThrow({ where: { id: project.id } });
+    expect(done.error).toBe("");
+    expect(done.status).toBe("FERTIG");
+    const saved = planOf(done)!;
+    expect(saved.shots.map((s) => s.clipId)).toEqual([clips[0]!.id, clips[1]!.id, clips[0]!.id]);
+    expect(saved.shots[0]).toMatchObject({ start: 0.28, end: 2.7 });
+    expect(saved.shots[1]).toMatchObject({ ton: "stumm", untertitel: false });
+    expect(planDuration(saved)).toBeLessThanOrEqual(20);
+    const files = outputsOf(done).files;
+    expect(Object.keys(files).sort()).toEqual(["1:1", "9:16"]);
+    expect(await storedFileExists(files["9:16"])).toBe(true);
+    const clipAfter = await db.videoClip.findUniqueOrThrow({ where: { id: clips[0]!.id } });
+    expect(Array.isArray(clipAfter.transcript)).toBe(true);
+
+    // von Hand ändern → neu rendern
+    const edited = { ...saved, titel: "Neuer Titel", shots: saved.shots.slice(0, 2) };
+    await savePlan(v, project.id, form({ plan: JSON.stringify(edited) }));
+    await processProject(project.id, "render", v.id);
+    const again = await db.videoProject.findUniqueOrThrow({ where: { id: project.id } });
+    expect(again).toMatchObject({ status: "FERTIG", planSource: "bearbeitet" });
+    expect(planOf(again)!.titel).toBe("Neuer Titel");
+    expect(await storedFileExists(files["9:16"])).toBe(false); // alte Fassung gelöscht
+
+    const postId = await toMarketingPost(v, project.id);
+    const post = await db.marketingPost.findUniqueOrThrow({ where: { id: postId } });
+    expect(post).toMatchObject({ kind: "SOCIAL", status: "ENTWURF", body: "Wir setzen uns für einen Zebrastreifen ein.", hashtags: "#Seckenheim #Schulweg", account: "OV" });
+    expect(await storedFileExists(post.videoPath)).toBe(true);
+  }, 240_000);
+
+  it("geht ohne Whisper ohne Untertitel weiter und meldet das", async () => {
+    const v = await makeUser({ role: "VORSTAND" });
+    const project = await createProject(v, form({ ...base, "formats[]": ["16:9"] }));
+    await upload(v as never, project.id, clipFile, "a.mp4", 1);
+    process.env.WHISPER_URL = "http://127.0.0.1:1";
+    delete process.env.ANTHROPIC_API_KEY; // einfacher Schnitt ohne KI
+    await processProject(project.id, "full", v.id);
+    const done = await db.videoProject.findUniqueOrThrow({ where: { id: project.id } });
+    expect(done.status).toBe("FERTIG");
+    expect(done.planSource).toBe("einfach");
+    expect(outputsOf(done).warnings.join(" ")).toContain("Whisper");
+    expect(planOf(done)!.shots[0]!.untertitel).toBe(false);
+  }, 120_000);
+});
