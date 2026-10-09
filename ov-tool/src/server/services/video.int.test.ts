@@ -4,7 +4,7 @@ import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type Anthropic from "@anthropic-ai/sdk";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { form, hasTestDb, makeUser, resetDb } from "../../../tests/db";
 import { planDuration, type VideoPlan } from "@/lib/video-plan";
 import { db } from "@/server/db";
@@ -217,6 +217,16 @@ describe.skipIf(!hasTestDb || !hasFfmpeg)("Videoschnitt (DB, ffmpeg)", () => {
     await processProject(project.id, "render", v.id);
 
     await expect(requestRevision(v, project.id, form({ anweisung: "kurz" }))).rejects.toThrow();
+    // über die Job-Warteschlange (in Tests sofort): Auftrag muss als Nachbesserung ankommen, nicht als Neuschnitt
+    const { jobHandlers } = await import("@/server/jobs/queue");
+    await import("@/server/jobs/definitions");
+    const calls: unknown[] = [];
+    const vid = await import("./video");
+    const handler = jobHandlers().get("video-process")!;
+    const spy = vi.spyOn(vid, "processProject").mockImplementation(async (...a) => void calls.push(a));
+    await handler({ projectId: project.id, mode: "revise", actorId: v.id, token: "t" });
+    expect((calls[0] as unknown[])[1]).toBe("revise");
+    spy.mockRestore();
     await requestRevision(v, project.id, form({ anweisung: "Fakt eins weglassen, Fakt zwei länger zeigen." }));
     // Claude-Antwort: erster Ausschnitt entfällt, zweiter länger – Einblendung gleich
     await processProject(project.id, "revise", v.id, client({ ...first, shots: [{ clipId: "C1", start: 2.8, end: 5, ton: "stumm", einblendung: "Fakt zwei", untertitel: false, untertitelText: "" }], begruendung: "Fakt eins entfernt." }));

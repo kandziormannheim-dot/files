@@ -323,7 +323,7 @@ async function queueJob(id: string, mode: ProcessMode, actorId: string | null) {
 export async function resumeInterruptedJobs() {
   const stuck = await db.videoProject.findMany({ where: { status: { in: BUSY } }, select: { id: true, jobMode: true, plan: true } });
   for (const p of stuck) {
-    const mode = (["full", "plan", "render", "revise"] as const).find((m) => m === p.jobMode) ?? (await lastRequestedMode(p.id, !!planOf(p)));
+    const mode = p.jobMode ? toProcessMode(p.jobMode) : await lastRequestedMode(p.id, !!planOf(p));
     await audit(db, null, "video.resume", "VideoProject", p.id, { mode });
     await queueJob(p.id, mode, null);
   }
@@ -350,13 +350,15 @@ export function isStalled(p: Pick<VideoProject, "status" | "updatedAt">) {
 export async function restartProcessing(actor: Actor, id: string) {
   const p = await getProject(actor, id);
   if (!isStalled(p)) throw new UserError("Das Video wird gerade bearbeitet – bitte noch etwas warten.");
-  const mode = (["full", "plan", "render", "revise"] as const).find((m) => m === p.jobMode) ?? (planOf(p) ? "render" : "full");
+  const mode = p.jobMode ? toProcessMode(p.jobMode) : planOf(p) ? "render" : "full";
   await db.videoProject.update({ where: { id }, data: { progress: 1, error: "" } });
   await audit(db, actor, "video.restart", "VideoProject", id, { mode });
   await queueJob(id, mode, actor.id);
 }
 
 export type ProcessMode = "full" | "plan" | "render" | "revise";
+export const PROCESS_MODES: ProcessMode[] = ["full", "plan", "render", "revise"];
+export const toProcessMode = (v: unknown): ProcessMode => PROCESS_MODES.find((m) => m === v) ?? "full";
 
 export async function startProcessing(actor: Actor, id: string, mode: ProcessMode) {
   const p = await getProject(actor, id);

@@ -16,7 +16,6 @@ defineJob("bbr-generate", async (d) => {
 
 // Videoschnitt: Analyse (Standbilder, Whisper), Schnittplan (Claude) und Rendern dauern je nach Länge einige Minuten
 defineJob("video-process", async (d) => {
-  const { processProject } = await import("@/server/services/video");
-  const mode = d.mode === "plan" || d.mode === "render" ? d.mode : "full";
-  return processProject(String(d.projectId), mode, d.actorId ? String(d.actorId) : null, undefined, d.token ? String(d.token) : undefined);
+  const { processProject, toProcessMode } = await import("@/server/services/video");
+  return processProject(String(d.projectId), toProcessMode(d.mode), d.actorId ? String(d.actorId) : null, undefined, d.token ? String(d.token) : undefined);
 });
