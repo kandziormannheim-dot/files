@@ -233,7 +233,7 @@ export function shotArgs(o: { input: string; start: number; duration: number; fo
   parts.push(`[${last}]format=yuv420p${o.fadeIn ? ",fade=t=in:st=0:d=0.3" : ""}[v]`);
   if (withAudio) {
     const fadeOut = Math.max(0, o.duration - 0.06).toFixed(2);
-    parts.push(`[0:a]aresample=48000,aformat=channel_layouts=stereo,volume=${TONE_VOLUME[o.tone]},afade=t=in:d=0.05,afade=t=out:st=${fadeOut}:d=0.06[a]`);
+    parts.push(`[0:a]aresample=48000,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,volume=${TONE_VOLUME[o.tone]},afade=t=in:d=0.05,afade=t=out:st=${fadeOut}:d=0.06[a]`);
   }
   args.push("-filter_complex", parts.join(";"), "-map", "[v]", "-map", withAudio ? "[a]" : `${o.overlays.length + 1}:a`, ...ENCODE, "-t", d, "-movflags", "+faststart", o.out);
   return args;
@@ -253,7 +253,9 @@ export function outroArgs(png: string, out: string) {
 /** Lautheit angleichen (EBU R128) und optional Musik unterlegen, die unter Sprache automatisch leiser wird. */
 export function finalArgs(o: { joined: string; total: number; music?: string | null; musicVolume: number; out: string }) {
   const args = ["-y", "-hide_banner", "-loglevel", "error", "-i", o.joined];
-  const voice = "[0:a]loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000";
+  // Format ausdrücklich festlegen: ffmpeg 5.1 (Debian 12) findet nach loudnorm sonst kein Kanal-Layout
+  const fmt = "aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo";
+  const voice = `[0:a]loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,${fmt}`;
   if (o.music) {
     const v = Math.max(0, Math.min(100, o.musicVolume)) / 100;
     const fadeOut = Math.max(0, o.total - 1.5).toFixed(2);
@@ -262,7 +264,7 @@ export function finalArgs(o: { joined: string; total: number; music?: string | n
       "-filter_complex",
       [
         `${voice},asplit=2[voice][sc]`,
-        `[1:a]aresample=48000,aformat=channel_layouts=stereo,volume=${v.toFixed(2)},atrim=0:${o.total.toFixed(2)},afade=t=in:d=0.5,afade=t=out:st=${fadeOut}:d=1.5[m]`,
+        `[1:a]aresample=48000,${fmt},volume=${v.toFixed(2)},atrim=0:${o.total.toFixed(2)},afade=t=in:d=0.5,afade=t=out:st=${fadeOut}:d=1.5[m]`,
         `[m][sc]sidechaincompress=threshold=0.03:ratio=6:attack=15:release=350[duck]`,
         `[voice][duck]amix=inputs=2:duration=first:normalize=0[a]`,
       ].join(";"),
