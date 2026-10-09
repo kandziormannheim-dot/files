@@ -307,8 +307,17 @@ export async function renderPlan(o: {
     const clip = byId.get(shot.clipId);
     if (!clip) continue;
     const duration = shot.end - shot.start;
-    const overlays: Overlay[] = [{ path: await png(`deko${i}.png`, await decoHtml(o.format, logo, shot.einblendung)) }];
-    if (i === 0 && o.plan.titel) overlays.push({ path: await png("titel.png", await titleHtml(o.format, o.plan.titel, o.plan.unterzeile)), from: 0, to: Math.min(TITLE_SECONDS, duration) });
+    const titleEnd = i === 0 && o.plan.titel ? Math.min(TITLE_SECONDS, duration) : 0;
+    // Einblendung im ersten Ausschnitt erst nach der Titelzeile, damit nicht beides gleichzeitig im Bild steht
+    const lowerFrom = titleEnd && shot.einblendung ? (duration - titleEnd >= 1 ? titleEnd : null) : 0;
+    const overlays: Overlay[] = [];
+    if (shot.einblendung && lowerFrom !== 0) {
+      overlays.push({ path: await png(`deko${i}.png`, await decoHtml(o.format, logo, "")) });
+      if (lowerFrom != null) overlays.push({ path: await png(`einblendung${i}.png`, await decoHtml(o.format, logo, shot.einblendung)), from: lowerFrom, to: duration });
+    } else {
+      overlays.push({ path: await png(`deko${i}.png`, await decoHtml(o.format, logo, shot.einblendung)) });
+    }
+    if (titleEnd) overlays.push({ path: await png("titel.png", await titleHtml(o.format, o.plan.titel, o.plan.unterzeile)), from: 0, to: titleEnd });
     if (shot.untertitel) {
       for (const [k, cue] of subtitleCues(shot, clip.transcript).entries()) {
         overlays.push({ path: await png(`cue${i}-${k}.png`, await cueHtml(o.format, cue.text)), from: cue.from, to: cue.to });
