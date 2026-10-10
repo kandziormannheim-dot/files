@@ -1,5 +1,6 @@
 import sharp from "sharp";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { PDFDocument } from "pdf-lib";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { form, hasTestDb, makeUser, resetDb } from "../../../tests/db";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
@@ -7,6 +8,17 @@ import { captureMailsForTests } from "@/server/mail/transport";
 import { createItem } from "./inventory";
 import { addLoanPhotos, lendItem, loanContext, loanProtocolPdf, purgeBorrowerEmails, returnItem, sendLoanProtocol } from "./inventory-loans";
 import { updateSettings } from "./settings";
+
+// PDF-Erzeugung braucht Chromium; wie in den übrigen DB-Tests durch ein minimales PDF ersetzt.
+vi.mock("@/server/pdf/render", () => ({
+  renderDocumentPdf: vi.fn(async () => {
+    const d = await PDFDocument.create();
+    d.addPage();
+    return { pdf: Buffer.from(await d.save()), html: "", version: 1 };
+  }),
+  renderDocumentPreview: vi.fn(async () => ""),
+  wrapDocument: vi.fn(async (html: string) => html),
+}));
 
 const base = { name: "Pavillon 3 × 3 m", location: "Garage", condition: "gut", acquiredYear: "2022" };
 
