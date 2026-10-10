@@ -23,6 +23,17 @@ describe.skipIf(!hasTestDb)("Marketing (DB)", () => {
     expect((await db.marketingPost.findUniqueOrThrow({ where: { id: post.id } })).status).toBe("VEROEFFENTLICHT");
   });
 
+  it("übernimmt fertigen Titel und Text ohne KI (Übergabe aus dem Studio)", async () => {
+    const v = await makeUser({ role: "VORSTAND" });
+    const post = await createPost(
+      v,
+      form({ kind: "SOCIAL", brief: "Testthema Spielplatz am Beispielweg", "channels[]": ["instagram"], title: "Neuer Spielplatz", body: "Der Spielplatz am Beispielweg wird erneuert." }),
+    );
+    expect(post.title).toBe("Neuer Spielplatz");
+    expect(post.body).toBe("Der Spielplatz am Beispielweg wird erneuert.");
+    expect(post.status).toBe("ENTWURF");
+  });
+
   it("blockiert Freigabe mit offenen Platzhaltern", async () => {
     const admin = await makeUser({ role: "ADMIN" });
     const post = await createPost(admin, form({ kind: "BLOG", brief: "Bericht von der Vorstandssitzung", site: "SF" }));
