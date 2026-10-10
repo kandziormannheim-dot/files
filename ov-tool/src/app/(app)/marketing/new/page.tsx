@@ -7,22 +7,38 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { requirePageCapability } from "@/server/auth/session";
 import { aiConfigured } from "@/server/services/ai-draft";
-import { CHANNELS } from "@/server/services/marketing";
+import { prefillChoice, prefillList, prefillText, type SearchValue } from "@/lib/prefill";
+import { CHANNELS, type Channel } from "@/server/services/marketing";
 import { createPostAction } from "../actions";
 
 export const metadata: Metadata = { title: "Neuer Beitrag" };
 
-export default async function NewPostPage() {
+type Search = Record<"kind" | "brief" | "tone" | "channels" | "title" | "body" | "from", SearchValue>;
+
+export default async function NewPostPage({ searchParams }: { searchParams: Promise<Search> }) {
   await requirePageCapability("marketing.create");
   const ai = aiConfigured();
+  const sp = await searchParams;
+  const fromStudio = prefillText(sp.from, 20) === "studio";
+  const kind = prefillChoice(sp.kind, ["SOCIAL", "BLOG"] as const, "SOCIAL");
+  const channels = prefillList(sp.channels, Object.keys(CHANNELS) as Channel[], ["facebook", "instagram"]);
+  const title = prefillText(sp.title, 200);
+  const body = prefillText(sp.body, 40000);
+  const brief = prefillText(sp.brief, 8000);
+  const tone = prefillText(sp.tone, 200);
   return (
     <>
       <PageHeader title="Neuer Beitrag" description="Stichpunkte reichen – die KI schreibt einen Entwurf, den Sie danach überarbeiten." />
       <Card className="max-w-2xl">
         <CardContent className="pt-6">
           <ActionForm action={createPostAction} className="flex flex-col gap-4">
+            {fromStudio ? (
+              <p className="rounded-md border border-sky-300 bg-sky-50 p-3 text-sm">
+                Übernommen aus dem Kandzior Studio. Der fertige Text wird ohne KI-Entwurf angelegt; Freigabe und Veröffentlichung laufen wie gewohnt hier.
+              </p>
+            ) : null}
             <Field label="Art" name="kind">
-              <NativeSelect id="kind" name="kind" defaultValue="SOCIAL">
+              <NativeSelect id="kind" name="kind" defaultValue={kind}>
                 <option value="SOCIAL">Social-Media-Beitrag</option>
                 <option value="BLOG">Blogartikel (Webseite)</option>
               </NativeSelect>
@@ -32,7 +48,7 @@ export default async function NewPostPage() {
               <div className="flex flex-wrap gap-4">
                 {Object.entries(CHANNELS).map(([k, v]) => (
                   <label key={k} className="flex items-center gap-2">
-                    <input type="checkbox" name="channels[]" value={k} defaultChecked={k === "facebook" || k === "instagram"} /> {v}
+                    <input type="checkbox" name="channels[]" value={k} defaultChecked={channels.includes(k as Channel)} /> {v}
                   </label>
                 ))}
               </div>
@@ -49,14 +65,25 @@ export default async function NewPostPage() {
                 name="brief"
                 rows={8}
                 required
+                defaultValue={brief}
                 placeholder={"z. B.\n– Infostand am Samstag, 14.11., 10–12 Uhr, Rathausplatz Seckenheim\n– Thema: Verkehrsführung Hauptstraße\n– Ansprechpartner: Martin Kandzior, Christian Rasmus"}
               />
             </Field>
             <Field label="Tonalität (optional)" name="tone">
-              <Input id="tone" name="tone" placeholder="z. B. einladend, sachlich, feierlich" />
+              <Input id="tone" name="tone" defaultValue={tone} placeholder="z. B. einladend, sachlich, feierlich" />
             </Field>
+            {body ? (
+              <>
+                <Field label="Titel (intern)" name="title">
+                  <Input id="title" name="title" defaultValue={title} maxLength={200} />
+                </Field>
+                <Field label="Fertiger Beitragstext" name="body" hint="Wird so als Entwurf übernommen und kann danach noch bearbeitet werden.">
+                  <Textarea id="body" name="body" rows={10} defaultValue={body} />
+                </Field>
+              </>
+            ) : null}
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="useAi" defaultChecked={ai} disabled={!ai} /> Entwurf mit KI erstellen
+              <input type="checkbox" name="useAi" defaultChecked={ai && !body} disabled={!ai} /> Entwurf mit KI erstellen
               {!ai ? <span className="text-neutral-600">(kein API-Schlüssel hinterlegt)</span> : null}
             </label>
             <p className="text-xs text-neutral-600">

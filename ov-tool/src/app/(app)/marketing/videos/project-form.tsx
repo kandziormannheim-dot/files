@@ -9,28 +9,32 @@ import { FORMAT_KEYS, MAX_SECONDS, MIN_SECONDS, VIDEO_FORMATS } from "@/lib/vide
 
 type Action = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
-export function ProjectForm({ action, project, submitLabel }: { action: Action; project?: VideoProject; submitLabel: string }) {
+/** Vorgaben für ein neues Projekt, z. B. aus dem Kandzior Studio übergeben */
+type Initial = Partial<Pick<VideoProject, "title" | "topic" | "message" | "callToAction" | "account">>;
+
+export function ProjectForm({ action, project, initial, submitLabel }: { action: Action; project?: VideoProject; initial?: Initial; submitLabel: string }) {
   const formats = project?.formats ?? ["9:16"];
+  const v = { ...initial, ...(project ?? {}) };
   return (
     <ActionForm action={action} className="grid gap-4 sm:grid-cols-2">
       <Field label="Titel (intern)" name="title" className="sm:col-span-2">
-        <Input id="title" name="title" defaultValue={project?.title} required maxLength={150} placeholder="z. B. Schulweg Kloppenheimer Straße" />
+        <Input id="title" name="title" defaultValue={v.title || undefined} required maxLength={150} placeholder="z. B. Schulweg Kloppenheimer Straße" />
       </Field>
       <Field label="Worum geht es?" name="topic" hint="Thema, Anlass, Fakten – daraus entstehen Titelzeile und Einblendungen. Nur was hier steht, wird als Fakt verwendet." className="sm:col-span-2">
         <Textarea
           id="topic"
           name="topic"
           rows={4}
-          defaultValue={project?.topic}
+          defaultValue={v.topic || undefined}
           required
           placeholder="z. B. An der Kreuzung Kloppenheimer Straße/Hauptstraße queren täglich rund 300 Schulkinder ohne Zebrastreifen. Die CDU beantragt im Bezirksbeirat einen Fußgängerüberweg."
         />
       </Field>
       <Field label="Kernbotschaft (optional)" name="message" hint="Steht auf der Abschlusstafel.">
-        <Input id="message" name="message" defaultValue={project?.message} maxLength={300} placeholder="Sichere Schulwege für unsere Kinder" />
+        <Input id="message" name="message" defaultValue={v.message || undefined} maxLength={300} placeholder="Sichere Schulwege für unsere Kinder" />
       </Field>
       <Field label="Handlungsaufruf (optional)" name="callToAction">
-        <Input id="callToAction" name="callToAction" defaultValue={project?.callToAction} maxLength={120} placeholder="Mehr auf cdu-sf.de" />
+        <Input id="callToAction" name="callToAction" defaultValue={v.callToAction || undefined} maxLength={120} placeholder="Mehr auf cdu-sf.de" />
       </Field>
       <Field
         label="Regievorgaben (optional)"
@@ -60,7 +64,7 @@ export function ProjectForm({ action, project, submitLabel }: { action: Action; 
         </div>
       </fieldset>
       <Field label="Kanal (Logo)" name="account">
-        <NativeSelect id="account" name="account" defaultValue={project?.account ?? "OV"}>
+        <NativeSelect id="account" name="account" defaultValue={v.account || "OV"}>
           <option value="OV">CDU-Ortsverband</option>
           <option value="BBR">CDU-Gruppe im Bezirksbeirat</option>
         </NativeSelect>

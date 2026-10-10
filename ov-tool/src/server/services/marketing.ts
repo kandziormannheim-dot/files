@@ -119,13 +119,16 @@ const createSchema = z.object({
   tone: optionalText(200),
   site: siteKey,
   useAi: checkbox,
+  /** fertiger Text, z. B. aus dem Kandzior Studio übernommen; wird ohne KI-Entwurf als Beitragstext gesetzt */
+  title: optionalText(200),
+  body: optionalText(40000),
 });
 
 export async function createPost(actor: Actor, formData: FormData) {
   assertCan(actor, "marketing.create");
   const input = createSchema.parse(formToObject(formData));
   const channels = input.kind === "SOCIAL" ? input["channels[]"] : [];
-  let draft: MarketingDraft = { title: (input.brief.split("\n")[0] ?? "").slice(0, 80), body: "", hashtags: "" };
+  let draft: MarketingDraft = { title: input.title || (input.brief.split("\n")[0] ?? "").slice(0, 80), body: input.body ?? "", hashtags: "" };
   let aiUsed = false;
   if (input.useAi) {
     if (!aiConfigured()) throw new UserError("Für KI-Entwürfe ist kein ANTHROPIC_API_KEY hinterlegt. Ohne Häkchen wird ein leerer Entwurf angelegt.");
