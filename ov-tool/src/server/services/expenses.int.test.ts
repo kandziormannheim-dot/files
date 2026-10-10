@@ -1,6 +1,6 @@
 import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { form, hasTestDb, makeUser, resetDb } from "../../../tests/db";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
@@ -24,7 +24,24 @@ async function itemForm(desc: string, amount: string, file?: File) {
 }
 
 describe.skipIf(!hasTestDb)("Auslagenerstattung (DB)", () => {
+  beforeAll(() => {
+    process.env.ENCRYPTION_KEY = "test-schluessel";
+  });
+  afterAll(() => {
+    delete process.env.ENCRYPTION_KEY;
+  });
   beforeEach(resetDb);
+
+  it("speichert ohne ENCRYPTION_KEY keine personenbezogenen Daten im Klartext", async () => {
+    const v = await makeUser({ role: "VORSTAND" });
+    delete process.env.ENCRYPTION_KEY;
+    try {
+      await expect(createClaim(v, form({ memberName: "Eva Mitglied", title: "Infostand", payout: "UEBERWEISUNG", iban: "DE89 3704 0044 0532 0130 00" }))).rejects.toThrow(/ENCRYPTION_KEY/);
+      expect(await db.expenseClaim.count()).toBe(0);
+    } finally {
+      process.env.ENCRYPTION_KEY = "test-schluessel";
+    }
+  });
 
   it("erfasst Belege, prüft IBAN, Freigabe und Versand mit PDF an die Kreisgeschäftsstelle", async () => {
     const outbox = captureMailsForTests();

@@ -7,7 +7,7 @@ import { formatEuro, formatIban, normalizeIban, parseEuro } from "@/lib/money";
 import { formToObject, optionalText, requiredText, z } from "@/lib/validation";
 import { assertCan, can } from "@/server/auth/permissions";
 import { audit } from "@/server/audit";
-import { decrypt, encrypt, encryptionConfigured } from "@/server/crypto";
+import { decrypt, encrypt } from "@/server/crypto";
 import { db } from "@/server/db";
 import { ForbiddenError, NotFoundError, UserError } from "@/server/errors";
 import { deleteStoredFile, readStoredFile, saveFile } from "@/server/files";
@@ -55,10 +55,9 @@ function readPersonal(c: { personalData: string; personalEnc: boolean }): Person
   }
 }
 
+// Name, Anschrift, E-Mail und IBAN nur verschlüsselt speichern (CLAUDE.md Regel 1); ohne ENCRYPTION_KEY bricht encrypt() mit Hinweis ab.
 function writePersonal(data: PersonalData) {
-  const json = JSON.stringify(data);
-  const enc = encryptionConfigured();
-  return { personalData: enc ? encrypt(json) : json, personalEnc: enc };
+  return { personalData: encrypt(JSON.stringify(data)), personalEnc: true };
 }
 
 function canSee(actor: Actor, claim: { claimantId: string }) {

@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { PDFDocument } from "pdf-lib";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { form, hasTestDb, makeUser, resetDb } from "../../../tests/db";
 import { db } from "@/server/db";
 import { ForbiddenError, UserError } from "@/server/errors";
@@ -8,6 +9,17 @@ import { confirmNewsletter, createPage, enforceLandingRetention, getPublicPage, 
 import { createPoll, getPoll, votePoll } from "./polls";
 import { approveRelease, confirmContact, createRelease, publicReleases, publishRelease, registerContact, setContactStatus, unsubscribeContact } from "./press";
 import { saveMotion, sendMotion } from "./resolutions";
+
+// PDF-Erzeugung braucht Chromium; wie in den übrigen DB-Tests durch ein minimales PDF ersetzt.
+vi.mock("@/server/pdf/render", () => ({
+  renderDocumentPdf: vi.fn(async () => {
+    const d = await PDFDocument.create();
+    d.addPage();
+    return { pdf: Buffer.from(await d.save()), html: "", version: 1 };
+  }),
+  renderDocumentPreview: vi.fn(async () => ""),
+  wrapDocument: vi.fn(async (html: string) => html),
+}));
 
 const tokenFrom = (text: string, path: string) => text.match(new RegExp(`${path}/([A-Za-z0-9_-]+)`))?.[1] ?? "";
 
