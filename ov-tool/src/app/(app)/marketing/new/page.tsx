@@ -13,28 +13,28 @@ import { createPostAction } from "../actions";
 
 export const metadata: Metadata = { title: "Neuer Beitrag" };
 
-type Search = Record<"kind" | "brief" | "tone" | "channels" | "title" | "body" | "from", SearchValue>;
+type Search = Record<"kind" | "brief" | "tone" | "channels" | "title" | "body", SearchValue>;
 
 export default async function NewPostPage({ searchParams }: { searchParams: Promise<Search> }) {
   await requirePageCapability("marketing.create");
   const ai = aiConfigured();
   const sp = await searchParams;
-  const fromStudio = prefillText(sp.from, 20) === "studio";
   const kind = prefillChoice(sp.kind, ["SOCIAL", "BLOG"] as const, "SOCIAL");
   const channels = prefillList(sp.channels, Object.keys(CHANNELS) as Channel[], ["facebook", "instagram"]);
   const title = prefillText(sp.title, 200);
   const body = prefillText(sp.body, 40000);
   const brief = prefillText(sp.brief, 8000);
   const tone = prefillText(sp.tone, 200);
+  const prefilled = !!(brief || body || title);
   return (
     <>
       <PageHeader title="Neuer Beitrag" description="Stichpunkte reichen – die KI schreibt einen Entwurf, den Sie danach überarbeiten." />
       <Card className="max-w-2xl">
         <CardContent className="pt-6">
           <ActionForm action={createPostAction} className="flex flex-col gap-4">
-            {fromStudio ? (
+            {prefilled ? (
               <p className="rounded-md border border-sky-300 bg-sky-50 p-3 text-sm">
-                Übernommen aus dem Kandzior Studio. Der fertige Text wird ohne KI-Entwurf angelegt; Freigabe und Veröffentlichung laufen wie gewohnt hier.
+                Vorbelegt über einen Link. Bitte prüfen; ein fertiger Text wird ohne KI-Entwurf angelegt. Freigabe und Veröffentlichung laufen wie gewohnt hier.
               </p>
             ) : null}
             <Field label="Art" name="kind">

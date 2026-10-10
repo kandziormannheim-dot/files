@@ -1,6 +1,7 @@
 /**
- * Vorbelegung von Formularen über die Adresse, z. B. bei der Übergabe aus dem
- * Kandzior Studio (`/marketing/new?brief=…`, `/marketing/videos/new?title=…`).
+ * Vorbelegung von Formularen über die Adresse (`/marketing/new?brief=…`,
+ * `/marketing/videos/new?title=…`), z. B. aus einem externen Redaktionswerkzeug.
+ * Das Tool hängt von keinem bestimmten Werkzeug ab.
  * Werte werden nur als Formular-Vorgaben genutzt; geprüft wird wie immer beim Absenden.
  */
 export type SearchValue = string | string[] | undefined;

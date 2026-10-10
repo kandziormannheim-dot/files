@@ -9,7 +9,7 @@ import { FORMAT_KEYS, MAX_SECONDS, MIN_SECONDS, VIDEO_FORMATS } from "@/lib/vide
 
 type Action = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
-/** Vorgaben für ein neues Projekt, z. B. aus dem Kandzior Studio übergeben */
+/** Vorgaben für ein neues Projekt, z. B. über einen vorbelegten Link */
 type Initial = Partial<Pick<VideoProject, "title" | "topic" | "message" | "callToAction" | "account">>;
 
 export function ProjectForm({ action, project, initial, submitLabel }: { action: Action; project?: VideoProject; initial?: Initial; submitLabel: string }) {

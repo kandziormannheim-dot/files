@@ -23,7 +23,7 @@ describe.skipIf(!hasTestDb)("Marketing (DB)", () => {
     expect((await db.marketingPost.findUniqueOrThrow({ where: { id: post.id } })).status).toBe("VEROEFFENTLICHT");
   });
 
-  it("übernimmt fertigen Titel und Text ohne KI (Übergabe aus dem Studio)", async () => {
+  it("übernimmt fertigen Titel und Text ohne KI (Vorbelegung über Link)", async () => {
     const v = await makeUser({ role: "VORSTAND" });
     const post = await createPost(
       v,
