@@ -9,7 +9,7 @@ import { ProjectForm } from "../project-form";
 
 export const metadata: Metadata = { title: "Neues Video" };
 
-type Search = Record<"title" | "topic" | "message" | "callToAction" | "account" | "from", SearchValue>;
+type Search = Record<"title" | "topic" | "message" | "callToAction" | "account", SearchValue>;
 
 export default async function NewVideoPage({ searchParams }: { searchParams: Promise<Search> }) {
   await requirePageCapability("marketing.create");

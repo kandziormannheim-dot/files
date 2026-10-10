@@ -119,7 +119,7 @@ const createSchema = z.object({
   tone: optionalText(200),
   site: siteKey,
   useAi: checkbox,
-  /** fertiger Text, z. B. aus dem Kandzior Studio übernommen; wird ohne KI-Entwurf als Beitragstext gesetzt */
+  /** fertiger Text, z. B. über einen vorbelegten Link übernommen; wird ohne KI-Entwurf als Beitragstext gesetzt */
   title: optionalText(200),
   body: optionalText(40000),
 });
